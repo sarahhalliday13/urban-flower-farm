@@ -11,28 +11,46 @@ import { CartProvider, useCart } from './context/CartContext';
 function CartIcon() {
   const { getItemCount } = useCart();
   const [showCart, setShowCart] = useState(false);
+  const itemCount = getItemCount();
 
   return (
     <>
       <button className="cart-icon" onClick={() => setShowCart(true)}>
-        Cart{getItemCount() > 0 ? ` (${getItemCount()})` : ''}
+        🪴
+        {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
       </button>
       <CartModal isOpen={showCart} onClose={() => setShowCart(false)} />
     </>
   );
 }
 
-function Home() {
+function Home({ isFirstVisit }) {
   const { addToCart } = useCart();
+  const [showHero, setShowHero] = useState(true);
+
+  useEffect(() => {
+    const heroHidden = localStorage.getItem('heroHidden');
+    if (heroHidden === 'true') {
+      setShowHero(false);
+    }
+  }, []);
+
+  const hideHero = () => {
+    setShowHero(false);
+    localStorage.setItem('heroHidden', 'true');
+  };
   
   return (
     <main>
-      <section className="hero">
-        <div className="hero-content">
-          <h1>Welcome</h1>
-          <p>Discover beautiful plants for your home and garden</p>
-        </div>
-      </section>
+      {showHero && (
+        <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
+          <button className="hero-close" onClick={hideHero}>×</button>
+          <div className="hero-content">
+            <h1>Welcome</h1>
+            <p>Discover beautiful plants for your home and garden</p>
+          </div>
+        </section>
+      )}
 
       <section className="featured-plants">
         <div className="featured-plants-header">
@@ -46,11 +64,10 @@ function Home() {
                 <img src="/images/LavenderMist.jpg" alt="Lavender Mist" />
               </div>
               <h3>Lavender Mist</h3>
-              <p>$10</p>
+              <p className="plant-description">Magnificent sprays of delicate, lavender-purple flowers on tall stems. Perfect for adding height and airy texture to your garden.</p>
             </Link>
             <div className="plant-actions">
-              <Link to="/plant/1" className="plant-view">View</Link>
-              <button className="plant-buy" onClick={() => addToCart({ id: 1, name: 'Lavender Mist', price: 10, image: '/images/LavenderMist.jpg' })}>Buy</button>
+              <Link to="/plant/1" className="plant-view">View Details</Link>
             </div>
           </div>
           <div className="plant-card">
@@ -59,11 +76,10 @@ function Home() {
                 <img src="/images/penstemonpalmeri.jpg" alt="Palmer's Beardtongue" />
               </div>
               <h3>Palmer's Beardtongue</h3>
-              <p>$10</p>
+              <p className="plant-description">Tall stalks of fragrant, light pink flowers that smell like grapes. A favorite among hummingbirds and perfect for bouquets.</p>
             </Link>
             <div className="plant-actions">
-              <Link to="/plant/2" className="plant-view">View</Link>
-              <button className="plant-buy" onClick={() => addToCart({ id: 2, name: "Palmer's Beardtongue", price: 10, image: '/images/penstemonpalmeri.jpg' })}>Buy</button>
+              <Link to="/plant/2" className="plant-view">View Details</Link>
             </div>
           </div>
           <div className="plant-card">
@@ -72,13 +88,15 @@ function Home() {
                 <img src="/images/gaillardiapulchella.jpg" alt="Gaillardia Pulchella Mix" />
               </div>
               <h3>Gaillardia Pulchella Mix</h3>
-              <p>$6</p>
+              <p className="plant-description">Vibrant, daisy-like flowers in warm sunset colors. Drought-tolerant and beloved by pollinators, blooming all summer long.</p>
             </Link>
             <div className="plant-actions">
-              <Link to="/plant/4" className="plant-view">View</Link>
-              <button className="plant-buy" onClick={() => addToCart({ id: 4, name: 'Gaillardia Pulchella Mix', price: 6, image: '/images/gaillardiapulchella.jpg' })}>Buy</button>
+              <Link to="/plant/4" className="plant-view">View Details</Link>
             </div>
           </div>
+        </div>
+        <div className="featured-plants-footer">
+          <Link to="/shop" className="view-all-link">View All Plants</Link>
         </div>
       </section>
     </main>
@@ -88,13 +106,25 @@ function Home() {
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
   useEffect(() => {
-    // Check if this is the first visit
+    // Check if this is the first visit for hero visibility
     const hasVisited = localStorage.getItem('hasVisited');
     if (!hasVisited) {
-      setShowModal(true);
       localStorage.setItem('hasVisited', 'true');
+      setIsFirstVisit(true);
+    } else {
+      setIsFirstVisit(false);
+    }
+
+    // Track page views
+    const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
+    localStorage.setItem('pageViews', (pageViews + 1).toString());
+
+    // Show newsletter after 3 page views
+    if (pageViews === 2) { // Show on 3rd view (0-based counter)
+      setShowModal(true);
     }
   }, []);
 
@@ -111,9 +141,11 @@ function App() {
               <button className="hamburger-menu" onClick={toggleMenu}>
                 ☰
               </button>
-              <div className="logo">Buttons Urban Flower Farm</div>
+              <Link to="/" className="logo">Buttons Urban Flower Farm</Link>
               <div className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>
-                <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
+                <button className="nav-close" onClick={() => setIsMenuOpen(false)}>
+                  ×
+                </button>
                 <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
                 <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
                 <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
@@ -123,7 +155,7 @@ function App() {
           </header>
           
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
             <Route path="/about" element={<About />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
