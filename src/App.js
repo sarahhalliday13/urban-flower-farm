@@ -6,99 +6,43 @@ import About from './components/About';
 import Shop from './components/Shop';
 import CartModal from './components/CartModal';
 import PlantDetails from './components/PlantDetails';
+import Home from './components/Home';
 import { CartProvider, useCart } from './context/CartContext';
+import './cart-styles.css';
 
-function CartIcon() {
-  const { getItemCount } = useCart();
-  const [showCart, setShowCart] = useState(false);
-  const itemCount = getItemCount();
-
-  return (
-    <>
-      <button className="cart-icon" onClick={() => setShowCart(true)}>
-        🪴
-        {itemCount > 0 && <span className="cart-badge">{itemCount}</span>}
-      </button>
-      <CartModal isOpen={showCart} onClose={() => setShowCart(false)} />
-    </>
-  );
-}
-
-function Home({ isFirstVisit }) {
-  const [showHero, setShowHero] = useState(true);
-
-  useEffect(() => {
-    const heroHidden = localStorage.getItem('heroHidden');
-    if (heroHidden === 'true') {
-      setShowHero(false);
-    }
-  }, []);
-
-  const hideHero = () => {
-    setShowHero(false);
-    localStorage.setItem('heroHidden', 'true');
-  };
+function Navigation({ isMenuOpen, setIsMenuOpen }) {
+  const { cartItems, getItemCount } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
-  return (
-    <main>
-      {showHero && (
-        <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
-          <button className="hero-close" onClick={hideHero}>×</button>
-          <div className="hero-content">
-            <h1>Welcome</h1>
-            <p>Discover beautiful plants for your home and garden</p>
-          </div>
-        </section>
-      )}
+  // Calculate cart count using getItemCount function
+  const cartCount = getItemCount();
 
-      <section className="featured-plants">
-        <div className="featured-plants-header">
-          <h2>Featured Plants</h2>
-          <Link to="/shop" className="view-all-link">View All Plants</Link>
-        </div>
-        <div className="plant-grid">
-          <div className="plant-card">
-            <Link to="/plant/1" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="plant-image">
-                <img src="/images/LavenderMist.jpg" alt="Lavender Mist" />
-              </div>
-              <h3>Lavender Mist</h3>
-              <p className="plant-description">Magnificent sprays of delicate, lavender-purple flowers on tall stems. Perfect for adding height and airy texture to your garden.</p>
-            </Link>
-            <div className="plant-actions">
-              <Link to="/plant/1" className="plant-view">View Details</Link>
-            </div>
+  return (
+    <nav className="navbar">
+      <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        ☰
+      </button>
+      <Link to="/" className="logo">
+        Buttons Urban Flower Farm
+      </Link>
+      <div className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>
+        <button className="nav-close" onClick={() => setIsMenuOpen(false)}>
+          ×
+        </button>
+        <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
+        <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+        <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+      </div>
+      <button className="cart-button" onClick={() => setIsCartOpen(true)}>
+        🪴
+        {cartCount > 0 && (
+          <div className="cart-badge">
+            <span className="cart-count">{cartCount}</span>
           </div>
-          <div className="plant-card">
-            <Link to="/plant/2" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="plant-image">
-                <img src="/images/penstemonpalmeri.jpg" alt="Palmer's Beardtongue" />
-              </div>
-              <h3>Palmer's Beardtongue</h3>
-              <p className="plant-description">Tall stalks of fragrant, light pink flowers that smell like grapes. A favorite among hummingbirds and perfect for bouquets.</p>
-            </Link>
-            <div className="plant-actions">
-              <Link to="/plant/2" className="plant-view">View Details</Link>
-            </div>
-          </div>
-          <div className="plant-card">
-            <Link to="/plant/4" style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div className="plant-image">
-                <img src="/images/gaillardiapulchella.jpg" alt="Gaillardia Pulchella Mix" />
-              </div>
-              <h3>Gaillardia Pulchella Mix</h3>
-              <p className="plant-description">Vibrant, daisy-like flowers in warm sunset colors. Drought-tolerant and beloved by pollinators, blooming all summer long.</p>
-            </Link>
-            <div className="plant-actions">
-              <Link to="/plant/4" className="plant-view">View Details</Link>
-            </div>
-          </div>
-        </div>
-        <div className="featured-plants-footer">
-          <Link to="/shop" className="view-all-link">View All Plants</Link>
-        </div>
-      </section>
-    </main>
+        )}
+      </button>
+      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+    </nav>
   );
 }
 
@@ -127,30 +71,12 @@ function App() {
     }
   }, []);
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
   return (
     <CartProvider>
       <Router>
         <div className="App">
           <header className="App-header">
-            <nav className="navbar">
-              <button className="hamburger-menu" onClick={toggleMenu}>
-                ☰
-              </button>
-              <Link to="/" className="logo">Buttons Urban Flower Farm</Link>
-              <div className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>
-                <button className="nav-close" onClick={() => setIsMenuOpen(false)}>
-                  ×
-                </button>
-                <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
-                <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-                <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-              </div>
-              <CartIcon />
-            </nav>
+            <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
           </header>
           
           <Routes>

@@ -21,37 +21,45 @@ function CartModal({ isOpen, onClose }) {
               {cartItems.map(item => (
                 <div key={item.id} className="cart-item">
                   <div className="cart-item-image">
-                    {typeof item.image === 'string' && item.image.startsWith('🌱') ? (
-                      <div className="emoji-image">{item.image}</div>
+                    {item.images && item.images.length > 0 ? (
+                      <img src={item.images[0]} alt={item.name} />
                     ) : (
-                      <img src={item.image} alt={item.name} />
+                      <div className="emoji-image">🌱</div>
                     )}
                   </div>
-                  <div className="cart-item-details">
-                    <h3>{item.name}</h3>
-                    <p className="cart-item-price">${item.price}</p>
-                    <div className="cart-item-quantity">
+                  <div className="cart-item-content">
+                    <div className="cart-item-top-row">
+                      <div className="cart-item-name">
+                        <h3>{item.name}</h3>
+                      </div>
+                      <div className="cart-item-price">
+                        ${item.price}
+                      </div>
+                    </div>
+                    <div className="cart-item-bottom-row">
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="quantity-btn"
+                        className="remove-item"
+                        onClick={() => removeFromCart(item.id)}
                       >
-                        -
+                        Remove
                       </button>
-                      <span>{item.quantity}</span>
-                      <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="quantity-btn"
-                      >
-                        +
-                      </button>
+                      <div className="cart-item-quantity">
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="quantity-btn"
+                        >
+                          -
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="quantity-btn"
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <button 
-                    className="remove-item"
-                    onClick={() => removeFromCart(item.id)}
-                  >
-                    Remove
-                  </button>
                 </div>
               ))}
             </div>
