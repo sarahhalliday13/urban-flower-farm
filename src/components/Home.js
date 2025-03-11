@@ -75,6 +75,7 @@ function Home({ isFirstVisit }) {
     localStorage.setItem('heroHidden', 'true');
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleAddToCart = (plant) => {
     addToCart(plant);
     setToastMessage(`${plant.name} has been added to your cart`);
