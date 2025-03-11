@@ -25,7 +25,6 @@ function CartIcon() {
 }
 
 function Home({ isFirstVisit }) {
-  const { addToCart } = useCart();
   const [showHero, setShowHero] = useState(true);
 
   useEffect(() => {
