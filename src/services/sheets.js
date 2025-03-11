@@ -1,4 +1,4 @@
-const SHEETS_API_URL = 'https://script.google.com/macros/s/AKfycbw8STj53fmnI2DuiyhMwXLW3btLxJSC_rQH4YMhLADaw50Olkr8Y2-CcJ2Cr6IgZ0ZY/exec';
+const SHEETS_API_URL = process.env.REACT_APP_SHEETS_API_URL || 'https://script.google.com/macros/s/AKfycbw8STj53fmnI2DuiyhMwXLW3btLxJSC_rQH4YMhLADaw50Olkr8Y2-CcJ2Cr6IgZ0ZY/exec';
 
 // Function to get all plants
 export const fetchPlants = async () => {
