@@ -37,7 +37,7 @@ function Shop() {
     <main>
       <section className="shop-hero">
         <div className="hero-content">
-          <h1>Shop Our Plants</h1>
+          <h1><Link to="/">Button's Urban Flower Farm</Link></h1>
           <p>Discover our collection of beautiful, sustainably grown plants</p>
         </div>
       </section>
