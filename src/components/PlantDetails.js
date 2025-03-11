@@ -64,25 +64,6 @@ function PlantDetails() {
       hardinessZone: '4 - 9',
       height: '3-4 feet (up to 6 feet)'
     },
-    3: {
-      id: 3,
-      name: 'Peace Lily',
-      price: 20,
-      images: [
-        '/images/PeaceLily.jpg',
-        '/images/PeaceLily2.jpg'
-      ],
-      description: 'An elegant plant with glossy leaves and white flowers. Excellent for improving indoor air quality.',
-      care: 'Water when top soil is dry, prefers low to medium light.',
-      height: '24-36 inches',
-      spread: '24-36 inches',
-      features: [
-        'Air-purifying',
-        'Beautiful white blooms',
-        'Low light tolerant',
-        'Easy care'
-      ]
-    },
     4: {
       id: 4,
       name: 'Gaillardia Pulchella Mix',
@@ -107,6 +88,26 @@ function PlantDetails() {
       attributes: 'Native, Drought Tolerant, Attracts Pollinators, Easy to Grow',
       hardinessZone: 'Hardy Annual',
       height: '30-60 cm'
+    },
+    5: {
+      id: 5,
+      name: 'Golden Jubilee Anise Hyssop',
+      commonName: 'Korean Mint',
+      latinName: 'Agastache foeniculum',
+      price: 10,
+      images: [
+        '/images/koreanmint.jpg',
+        '/images/koreanmint2.jpg'
+      ],
+      description: 'Golden Jubilee Anise Hyssop will grow to be about 24 inches tall at maturity extending to 32 inches tall with the flowers, with a spread of 24 inches. It grows at a fast rate, and under ideal conditions can be expected to live for approximately 5 years. As an herbaceous perennial, this plant will usually die back to the crown each winter, and will regrow from the base each spring. Be careful not to disturb the crown in late winter when it may not be readily seen!\n\nIt has a long history of medicinal use by Native Americans and has many benefits to offer in the garden including attracting pollinators and beneficial insects.\n\nThis plant performs well in both full sun and full shade. It is very adaptable to both dry and moist growing conditions, but will not tolerate any standing water. It is considered to be drought-tolerant, and thus makes an ideal choice for a low-water garden or xeriscape application. It is not particular as to soil type, but has a definite preference for alkaline soils.\n\nGolden Jubilee Anise Hyssop is a fine choice for the garden, but it is also a good selection for planting in outdoor pots and containers. This would make an excellent Thriller!',
+      bloomSeason: 'Late Spring to Early Fall',
+      colour: 'Golden foliage, Purple flowers',
+      light: 'Full Sun to Full Shade',
+      spacing: '24 inches',
+      attributes: 'Native, Medicinal, Drought-Tolerant, Attracts Pollinators, Container Suitable',
+      hardinessZone: 'Perennial',
+      height: '24-32 inches',
+      availability: 'Ready end of March. Limited numbers.'
     }
   };
 
@@ -128,7 +129,6 @@ function PlantDetails() {
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>
       <div className="navigation-container">
-        <Link to="/shop" className="nav-button">Back</Link>
         <div className="nav-group">
           <button
             className="nav-button"
@@ -228,17 +228,19 @@ function PlantDetails() {
             )}
             <div className="price-action-container">
               <p className="price">${plant.price}</p>
-              <div className="quantity-selector">
-                <button onClick={() => handleQuantityChange(-1)}>-</button>
-                <span>{quantity}</span>
-                <button onClick={() => handleQuantityChange(1)}>+</button>
+              <div className="price-controls">
+                <div className="quantity-selector">
+                  <button onClick={() => handleQuantityChange(-1)}>-</button>
+                  <span>{quantity}</span>
+                  <button onClick={() => handleQuantityChange(1)}>+</button>
+                </div>
+                <button 
+                  className="plant-buy"
+                  onClick={handleAddToCart}
+                >
+                  Buy
+                </button>
               </div>
-              <button 
-                className="plant-buy"
-                onClick={handleAddToCart}
-              >
-                Buy
-              </button>
             </div>
             <p className="description">{plant.description}</p>
             <div className="plant-specs">

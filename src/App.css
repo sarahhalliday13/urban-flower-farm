@@ -964,3 +964,45 @@ footer {
     display: flex;
   }
 }
+
+.plant-status {
+  margin: 0.5rem 1rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.status-badge.in-stock {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.low-stock {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-badge.sold-out {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.status-badge.coming-soon {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.status-badge.pre-order {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+}
+
+.plant-buy:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
