@@ -1,4 +1,3 @@
 [build]
-  base = "my-react-app"
-  command = "npm install && npm run build"
+  command = "CI= npm install && npm run build"
   publish = "build" 
