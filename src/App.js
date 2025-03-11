@@ -54,7 +54,7 @@ function Home({ isFirstVisit }) {
       <section className="featured-plants">
         <div className="featured-plants-header">
           <h2>Featured Plants</h2>
-          <Link to="/shop" className="view-all-link">View All</Link>
+          <Link to="/shop" className="view-all-link">View All Plants</Link>
         </div>
         <div className="plant-grid">
           <div className="plant-card">
