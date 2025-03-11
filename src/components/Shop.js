@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
-import { fetchProductsWithInventory } from '../services/sheets';
+import { fetchPlants } from '../services/sheets';
 
 function Shop() {
   const { addToCart } = useCart();
@@ -13,11 +13,12 @@ function Shop() {
   useEffect(() => {
     const loadPlants = async () => {
       try {
-        const data = await fetchProductsWithInventory();
+        const data = await fetchPlants();
         setPlants(data);
-        setLoading(false);
       } catch (err) {
-        setError('Failed to load plants. Please try again later.');
+        setError('Failed to load plants');
+        console.error('Error loading plants:', err);
+      } finally {
         setLoading(false);
       }
     };
@@ -47,22 +48,20 @@ function Shop() {
                 </div>
                 <h3>{plant.name}</h3>
                 <p>${plant.price}</p>
-                {plant.inventory && (
-                  <div className="plant-status">
-                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-')}`}>
-                      {plant.inventory.status}
-                    </span>
-                  </div>
-                )}
+                <div className="plant-status">
+                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-')}`}>
+                    {plant.inventory.status}
+                  </span>
+                </div>
               </Link>
               <div className="plant-actions">
                 <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                 <button 
                   className="plant-buy" 
                   onClick={() => addToCart(plant)}
-                  disabled={plant.inventory?.currentStock === 0}
+                  disabled={plant.inventory.currentStock === 0}
                 >
-                  {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                  {plant.inventory.currentStock > 0 ? 'Add to Cart' : 'Sold Out'}
                 </button>
               </div>
             </div>
