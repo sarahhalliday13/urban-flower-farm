@@ -1300,12 +1300,14 @@ footer {
   }
 }
 
-/* My Orders link styling */
+/* My Orders link styling - removing the "New" badge */
 .nav-links a[href="/orders"] {
   position: relative;
   font-weight: 500;
 }
 
+/* Removing the :after pseudo-element that creates the "New" badge */
+/* 
 .nav-links a[href="/orders"]:after {
   content: "New";
   position: absolute;
@@ -1318,3 +1320,4 @@ footer {
   border-radius: 10px;
   font-weight: bold;
 }
+*/
