@@ -300,4 +300,43 @@ export const updateInventoryAfterOrder = async (orderItems) => {
     console.error('Error updating inventory after order:', error);
     throw new Error('Failed to update inventory after order. Please try again later.');
   }
-}; 
+};
+
+// Function to initialize default inventory data if none exists
+export const initializeDefaultInventory = () => {
+  try {
+    // Check if we already have inventory data
+    const existingData = localStorage.getItem('plantInventory');
+    if (existingData) {
+      const parsed = JSON.parse(existingData);
+      // If we have data for at least one plant, don't initialize
+      if (Object.keys(parsed).length > 0) {
+        console.log('Existing inventory data found, not initializing defaults');
+        return;
+      }
+    }
+    
+    console.log('No existing inventory data found, initializing defaults');
+    
+    // Create default inventory for plants 1-10 (assuming these IDs exist)
+    const defaultInventory = {};
+    for (let i = 1; i <= 10; i++) {
+      defaultInventory[i] = {
+        currentStock: 10,
+        status: "In Stock",
+        restockDate: "",
+        notes: "Default inventory",
+        lastUpdated: new Date().toISOString()
+      };
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('plantInventory', JSON.stringify(defaultInventory));
+    console.log('Default inventory initialized:', defaultInventory);
+  } catch (e) {
+    console.error('Error initializing default inventory:', e);
+  }
+};
+
+// Call this function when the module loads
+initializeDefaultInventory(); 
