@@ -200,7 +200,6 @@ const Checkout = () => {
       <div className="checkout-content">
         <div className="checkout-form-container">
           <h2>Contact Information</h2>
-          <p className="required-fields-note">* Required fields</p>
           <form onSubmit={handleSubmit} className="checkout-form">
             <div className="form-row">
               <div className="form-group">

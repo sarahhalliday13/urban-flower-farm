@@ -224,23 +224,17 @@ main {
 }
 
 .plant-card {
+  background: white;
   border-radius: 8px;
-  overflow: hidden;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background-color: white;
-}
-
-.plant-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .plant-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
 .plant-image {
@@ -1189,23 +1183,17 @@ footer {
   color: #2c3e50;
 }
 
-.plant-name {
-  margin: 0 0 0.5rem;
-  font-size: 1.2rem;
-  color: #2c3e50;
-}
-
-.plant-price {
-  font-weight: bold;
-  color: #27ae60;
-  margin: 0.5rem 0;
-}
-
 .scientific-name {
   font-style: italic;
   color: #7f8c8d;
   margin: 0 0 0.5rem;
   font-size: 0.9rem;
+}
+
+.price {
+  font-weight: bold;
+  color: #27ae60;
+  margin: 0.5rem 0;
 }
 
 .plant-actions {

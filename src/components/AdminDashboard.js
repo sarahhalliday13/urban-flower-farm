@@ -3,15 +3,9 @@ import { Link } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
 
 const AdminDashboard = () => {
-  const [latestOrders, setLatestOrders] = useState([]);
   const [lowStockItems, setLowStockItems] = useState([]);
 
   useEffect(() => {
-    // Load latest orders from localStorage
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    const sortedOrders = orders.sort((a, b) => new Date(b.date) - new Date(a.date));
-    setLatestOrders(sortedOrders.slice(0, 3)); // Get the 3 most recent orders
-
     // Load inventory data to check for low stock
     const plants = JSON.parse(localStorage.getItem('plants') || '[]');
     const lowStock = plants.filter(plant => 
@@ -40,30 +34,6 @@ const AdminDashboard = () => {
           <Link to="/admin/orders" className="admin-button">
             Manage Orders
           </Link>
-        </div>
-        
-        <div className="admin-card">
-          <h2>Latest Orders</h2>
-          {latestOrders.length > 0 ? (
-            <div className="latest-orders">
-              {latestOrders.map(order => (
-                <div key={order.id} className="order-item">
-                  <div className="order-info">
-                    <span className="order-id">{order.id}</span>
-                    <span className="order-date">{new Date(order.date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="customer-info">
-                    {order.customer.name} - ${parseFloat(order.total).toFixed(2)}
-                  </div>
-                </div>
-              ))}
-              <Link to="/admin/orders" className="view-all-link">
-                View All Orders →
-              </Link>
-            </div>
-          ) : (
-            <p>No orders found. New orders will appear here.</p>
-          )}
         </div>
       </div>
       

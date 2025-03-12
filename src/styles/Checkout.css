@@ -31,13 +31,6 @@
   font-size: 1.5rem;
 }
 
-.required-fields-note {
-  color: #777;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-  font-style: italic;
-}
-
 .checkout-form {
   display: flex;
   flex-direction: column;
