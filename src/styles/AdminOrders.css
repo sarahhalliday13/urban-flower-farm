@@ -148,6 +148,7 @@
   padding: 1.5rem;
   background-color: #f8f9fa;
   border-radius: 0 0 8px 8px;
+  width: 100%;
 }
 
 .order-details-header {
@@ -644,6 +645,8 @@
   /* Improve order details on mobile */
   .order-details {
     padding: 1rem;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .order-actions h4 {
@@ -736,4 +739,13 @@
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
   vertical-align: middle;
+}
+
+/* Fix for details row to match table width */
+.orders-table tbody tr.details-row {
+  box-shadow: none;
+}
+
+.orders-table tbody tr.details-row td {
+  padding: 0;
 } 
