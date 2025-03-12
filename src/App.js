@@ -1,7 +1,6 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import NewsletterModal from './components/NewsletterModal';
 import About from './components/About';
 import Shop from './components/Shop';
 import CartModal from './components/CartModal';
@@ -12,6 +11,7 @@ import Login from './components/Login';
 import Checkout from './components/Checkout';
 import Orders from './components/Orders';
 import AdminOrders from './components/AdminOrders';
+import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -57,6 +57,7 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
         <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
         {isAuthenticated && (
           <>
+            <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="admin-link">Admin Dashboard</Link>
             <Link to="/inventory" onClick={() => setIsMenuOpen(false)} className="admin-link">Inventory</Link>
             <Link to="/admin/orders" onClick={() => setIsMenuOpen(false)} className="admin-link">Orders</Link>
             <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
@@ -77,30 +78,8 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
 }
 
 function App() {
-  const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
   
-  useEffect(() => {
-    // Check if this is the first visit for hero visibility
-    const hasVisited = localStorage.getItem('hasVisited');
-    if (!hasVisited) {
-      localStorage.setItem('hasVisited', 'true');
-      setIsFirstVisit(true);
-    } else {
-      setIsFirstVisit(false);
-    }
-
-    // Track page views
-    const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
-    localStorage.setItem('pageViews', (pageViews + 1).toString());
-
-    // Show newsletter after 3 page views
-    if (pageViews === 2) { // Show on 3rd view (0-based counter)
-      setShowModal(true);
-    }
-  }, []);
-
   return (
     <AuthProvider>
       <CartProvider>
@@ -111,7 +90,7 @@ function App() {
             </header>
             
             <Routes>
-              <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+              <Route path="/" element={<Home />} />
               <Route path="/about" element={<About />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
@@ -119,6 +98,14 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/inventory" 
                 element={
@@ -140,8 +127,6 @@ function App() {
             <footer>
               <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
             </footer>
-
-            <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
           </div>
         </Router>
       </CartProvider>

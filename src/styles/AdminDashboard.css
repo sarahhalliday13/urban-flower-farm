@@ -1,0 +1,236 @@
+.admin-dashboard {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.admin-dashboard h1 {
+  color: #2c5530;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-size: 2.5rem;
+}
+
+.welcome-message {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #555;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.admin-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.admin-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-card h2 {
+  color: #2c5530;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.admin-card p {
+  color: #666;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.admin-button {
+  display: block;
+  background-color: #2c5530;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  width: 100%;
+  margin-top: auto;
+  box-sizing: border-box;
+}
+
+.admin-button:hover {
+  background-color: #1e3c22;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.quick-action-button {
+  display: block;
+  background-color: #f0f7f0;
+  color: #2c5530;
+  padding: 0.8rem 1rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  text-align: center;
+  border: 1px solid #2c5530;
+  box-sizing: border-box;
+}
+
+.quick-action-button:hover {
+  background-color: #e0efe0;
+}
+
+/* Low Stock Alert styles */
+.low-stock-alert {
+  background-color: #fff3e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  clear: both;
+}
+
+.low-stock-alert h3 {
+  color: #e65100;
+  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+}
+
+.low-stock-alert h3::before {
+  content: "⚠️";
+  margin-right: 0.5rem;
+}
+
+.low-stock-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.low-stock-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8rem;
+  background-color: white;
+  border-radius: 6px;
+  border-left: 3px solid #e65100;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.stock-count {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.admin-help {
+  background-color: #e0efe0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 3rem;
+  clear: both;
+  position: relative;
+  z-index: 1;
+}
+
+.admin-help h3 {
+  color: #2c5530;
+  margin-bottom: 0.5rem;
+}
+
+.admin-help p {
+  color: #555;
+  line-height: 1.5;
+}
+
+/* Latest Orders styles */
+.latest-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.order-item {
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 0.8rem;
+  border-left: 3px solid #2c5530;
+}
+
+.order-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.order-id {
+  font-weight: 600;
+  color: #2c5530;
+}
+
+.order-date {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.customer-info {
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.view-all-link, .view-inventory-link {
+  display: block;
+  text-align: right;
+  color: #2c5530;
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+.view-all-link:hover, .view-inventory-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+  
+  .admin-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+} 
