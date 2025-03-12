@@ -226,6 +226,7 @@
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
   text-align: right;
+  border-top: none;
 }
 
 .order-id {
@@ -280,6 +281,7 @@
   color: #2c5530;
   font-size: 1.1rem;
   display: inline-block;
+  margin-top: -1px;
 }
 
 .view-details-btn {
