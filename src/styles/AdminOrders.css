@@ -791,6 +791,16 @@
     padding: 10px;
     font-size: 14px;
   }
+  
+  .items-table tbody td > span,
+  .items-table tbody td > div,
+  .items-table tbody td > .order-total {
+    flex: 0 0 60%;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+  }
 }
 
 .orders-table tbody td {
@@ -805,17 +815,22 @@
 td[data-label="Total"] {
   border-top: none !important;
   background-color: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .order-total {
   font-weight: 600;
   color: #2c3e50;
   font-size: 1.1rem;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   background-color: transparent;
   border-top: none;
   padding: 0;
-  vertical-align: middle;
+  height: 100%;
+  line-height: normal;
 }
 
 /* Fix for details row to match table width */
