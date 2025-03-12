@@ -200,6 +200,7 @@ const Checkout = () => {
       <div className="checkout-content">
         <div className="checkout-form-container">
           <h2>Contact Information</h2>
+          <p className="required-fields-note">* Required fields</p>
           <form onSubmit={handleSubmit} className="checkout-form">
             <div className="form-row">
               <div className="form-group">
@@ -231,7 +232,7 @@ const Checkout = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="email">Email *</label>
+                <label htmlFor="email">Email * (for your invoice)</label>
                 <input
                   type="email"
                   id="email"
@@ -252,7 +253,7 @@ const Checkout = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   className={errors.phone ? 'error' : ''}
-                  placeholder="e.g., 2045551234"
+                  placeholder="604-123-4567"
                 />
                 {errors.phone && <span className="error-message">{errors.phone}</span>}
               </div>
@@ -268,9 +269,6 @@ const Checkout = () => {
                 placeholder="Please request your preferred pickup date and time. The flower farm will confirm by text message."
                 rows="3"
               />
-              <div className="field-help-text">
-                Let us know when you'd like to pick up your flowers. We'll confirm the exact time by text message.
-              </div>
             </div>
             
             <div className="form-actions">

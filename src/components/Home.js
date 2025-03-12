@@ -4,8 +4,7 @@ import { fetchPlants } from '../services/sheets';
 import { useCart } from '../context/CartContext';
 import Toast from './Toast';
 
-function Home({ isFirstVisit }) {
-  const [showHero, setShowHero] = useState(true);
+function Home() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [featuredPlants, setFeaturedPlants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,11 +14,6 @@ function Home({ isFirstVisit }) {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const heroHidden = localStorage.getItem('heroHidden');
-    if (heroHidden === 'true') {
-      setShowHero(false);
-    }
-    
     // Add event listener for window resize
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -70,12 +64,6 @@ function Home({ isFirstVisit }) {
     loadPlants();
   }, []);
 
-  const hideHero = () => {
-    setShowHero(false);
-    localStorage.setItem('heroHidden', 'true');
-  };
-
-  // eslint-disable-next-line no-unused-vars
   const handleAddToCart = (plant) => {
     addToCart(plant);
     setToastMessage(`${plant.name} has been added to your cart`);
@@ -84,16 +72,6 @@ function Home({ isFirstVisit }) {
   
   return (
     <main>
-      {showHero && (
-        <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
-          <button className="hero-close" onClick={hideHero}>×</button>
-          <div className="hero-content">
-            <h1>Welcome</h1>
-            <p>Discover beautiful plants for your home and garden</p>
-          </div>
-        </section>
-      )}
-
       <section className="featured-plants">
         <div className="featured-plants-header">
           {!isMobile && <h2>Featured</h2>}
@@ -101,45 +79,46 @@ function Home({ isFirstVisit }) {
         </div>
         
         {loading ? (
-          <div className="loading">Loading featured plants...</div>
+          <div className="loading">Loading plants...</div>
         ) : error ? (
           <div className="error">{error}</div>
         ) : (
           <div className="plant-grid">
             {featuredPlants.map(plant => (
               <div key={plant.id} className="plant-card">
-                <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="plant-image">
+                <Link to={`/plant/${plant.id}`} className="plant-link">
+                  <div className="plant-image-container">
                     <img 
-                      src={plant.mainImage} 
+                      src={plant.image || 'https://via.placeholder.com/300x300?text=Plant+Image'} 
                       alt={plant.name} 
+                      className="plant-image"
                       onError={(e) => {
-                        console.error('Image failed to load:', plant.mainImage);
-                        e.target.src = '/images/placeholder.jpg';
+                        e.target.onerror = null;
+                        e.target.src = 'https://via.placeholder.com/300x300?text=No+Image';
                       }}
                     />
                   </div>
-                  <h3>{plant.name}</h3>
-                  <p className="plant-description">
-                    {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
-                  </p>
-                  {plant.inventory?.status && (
-                    <div className="plant-status">
-                      <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                        {plant.inventory.status}
-                      </span>
-                    </div>
-                  )}
+                  <div className="plant-info">
+                    <h3 className="plant-name">{plant.name}</h3>
+                    <p className="plant-price">${parseFloat(plant.price).toFixed(2)}</p>
+                  </div>
                 </Link>
-                <div className="plant-actions">
-                  <Link to={`/plant/${plant.id}`} className="plant-view">View Details</Link>
-                </div>
+                <button 
+                  className="add-to-cart-btn"
+                  onClick={() => handleAddToCart(plant)}
+                  disabled={plant.status !== 'In Stock'}
+                >
+                  {plant.status === 'In Stock' ? 'Add to Cart' : 'Out of Stock'}
+                </button>
               </div>
             ))}
           </div>
         )}
       </section>
-      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
+      
+      {showToast && (
+        <Toast message={toastMessage} onClose={() => setShowToast(false)} />
+      )}
     </main>
   );
 }
