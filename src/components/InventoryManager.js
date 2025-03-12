@@ -29,7 +29,20 @@ const InventoryManager = () => {
     setError(null);
     
     try {
+      console.log("InventoryManager - Loading plants data...");
+      
+      // Check localStorage for inventory data
+      try {
+        const storedInventory = localStorage.getItem('plantInventory');
+        console.log("InventoryManager - localStorage inventory data:", 
+          storedInventory ? JSON.parse(storedInventory) : "None");
+      } catch (e) {
+        console.error("InventoryManager - Error reading localStorage:", e);
+      }
+      
       const plantsData = await fetchPlants();
+      console.log("InventoryManager - Plants data loaded:", plantsData);
+      
       setPlants(plantsData);
       
       // Initialize edit values for each plant
@@ -101,9 +114,19 @@ const InventoryManager = () => {
         notes: editValues[plantId].notes
       };
       
-      console.log(`Saving inventory for plant ${plantId}:`, inventoryData);
+      console.log(`InventoryManager - Saving inventory for plant ${plantId}:`, inventoryData);
+      
+      // Check localStorage before saving
+      try {
+        const storedInventory = localStorage.getItem('plantInventory');
+        console.log("InventoryManager - Current localStorage inventory before save:", 
+          storedInventory ? JSON.parse(storedInventory) : "None");
+      } catch (e) {
+        console.error("InventoryManager - Error reading localStorage before save:", e);
+      }
       
       const result = await updateInventory(plantId, inventoryData);
+      console.log(`InventoryManager - Save result:`, result);
       
       if (result.success) {
         // Update local state to reflect changes
@@ -138,7 +161,17 @@ const InventoryManager = () => {
           [plantId]: false
         }));
         
+        // Check localStorage after saving
+        try {
+          const storedInventory = localStorage.getItem('plantInventory');
+          console.log("InventoryManager - Current localStorage inventory after save:", 
+            storedInventory ? JSON.parse(storedInventory) : "None");
+        } catch (e) {
+          console.error("InventoryManager - Error reading localStorage after save:", e);
+        }
+        
         // Refresh plants data to ensure we have the latest
+        console.log("InventoryManager - Refreshing plants data after save");
         loadPlants();
       } else {
         throw new Error('Update failed');

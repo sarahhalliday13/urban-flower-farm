@@ -66,12 +66,31 @@ const AdminOrders = () => {
         throw new Error(`Order with ID ${orderId} not found`);
       }
       
-      console.log(`Updating inventory for order ${orderId} with items:`, order.items);
+      console.log(`AdminOrders - Updating inventory for order ${orderId} with items:`, order.items);
+      
+      // Check localStorage before updating
+      try {
+        const storedInventory = localStorage.getItem('plantInventory');
+        console.log("AdminOrders - Current localStorage inventory before update:", 
+          storedInventory ? JSON.parse(storedInventory) : "None");
+      } catch (e) {
+        console.error("AdminOrders - Error reading localStorage before update:", e);
+      }
       
       // Call the updateInventoryAfterOrder function
       const result = await updateInventoryAfterOrder(order.items);
+      console.log(`AdminOrders - Update inventory result:`, result);
       
       if (result.success) {
+        // Check localStorage after updating
+        try {
+          const storedInventory = localStorage.getItem('plantInventory');
+          console.log("AdminOrders - Current localStorage inventory after update:", 
+            storedInventory ? JSON.parse(storedInventory) : "None");
+        } catch (e) {
+          console.error("AdminOrders - Error reading localStorage after update:", e);
+        }
+        
         // Set status to success
         setInventoryUpdateStatus(prev => ({
           ...prev,
@@ -97,10 +116,19 @@ const AdminOrders = () => {
           return o;
         }));
         
+        // Save updated orders to localStorage
+        try {
+          localStorage.setItem('orders', JSON.stringify(orders));
+          console.log("AdminOrders - Updated orders saved to localStorage");
+        } catch (e) {
+          console.error("AdminOrders - Error saving orders to localStorage:", e);
+        }
+        
         // Show success message
         alert('Inventory has been updated successfully!');
         
         // Refresh the orders list
+        console.log("AdminOrders - Refreshing orders list after inventory update");
         loadOrders();
       } else {
         throw new Error('Some inventory updates failed');

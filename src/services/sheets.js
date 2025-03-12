@@ -3,6 +3,7 @@ const SHEETS_API_URL = process.env.REACT_APP_SHEETS_API_URL || 'https://script.g
 // Function to get all plants
 export const fetchPlants = async () => {
   try {
+    console.log('Fetching plants data...');
     const response = await fetch(`${SHEETS_API_URL}?sheet=plants`);
     if (!response.ok) {
       throw new Error('Failed to fetch plants');
@@ -27,6 +28,20 @@ export const fetchPlants = async () => {
       console.warn('Could not fetch inventory data, using fallback inventory status');
     }
     
+    // Check if we have any localStorage inventory data
+    let localStorageInventory = {};
+    try {
+      const storedInventory = localStorage.getItem('plantInventory');
+      if (storedInventory) {
+        localStorageInventory = JSON.parse(storedInventory);
+        console.log('Found localStorage inventory data:', localStorageInventory);
+      } else {
+        console.log('No localStorage inventory data found');
+      }
+    } catch (e) {
+      console.error('Error reading from localStorage:', e);
+    }
+    
     // Filter out empty entries and map the data to match our app's structure
     return plantsData
       .filter(plant => plant.name) // Remove empty entries
@@ -48,17 +63,9 @@ export const fetchPlants = async () => {
         
         // Check if we have updated inventory in localStorage
         let localInventory = {};
-        try {
-          const storedInventory = localStorage.getItem('plantInventory');
-          if (storedInventory) {
-            const parsedInventory = JSON.parse(storedInventory);
-            if (parsedInventory[plant.id]) {
-              localInventory = parsedInventory[plant.id];
-              console.log(`Found localStorage inventory for plant ${plant.id}:`, localInventory);
-            }
-          }
-        } catch (e) {
-          console.error('Error reading from localStorage:', e);
+        if (localStorageInventory[plant.id]) {
+          localInventory = localStorageInventory[plant.id];
+          console.log(`Found localStorage inventory for plant ${plant.id}:`, localInventory);
         }
         
         // Determine inventory status
@@ -179,9 +186,18 @@ export const updateInventory = async (plantId, inventoryData) => {
     console.log(`Updating inventory for plant ${plantId}:`, inventoryData);
     
     // Get current inventory from localStorage or initialize empty object
-    const storedInventory = localStorage.getItem('plantInventory') 
-      ? JSON.parse(localStorage.getItem('plantInventory')) 
-      : {};
+    let storedInventory = {};
+    try {
+      const existingData = localStorage.getItem('plantInventory');
+      if (existingData) {
+        storedInventory = JSON.parse(existingData);
+        console.log('Existing localStorage inventory:', storedInventory);
+      } else {
+        console.log('No existing localStorage inventory found, creating new');
+      }
+    } catch (e) {
+      console.error('Error reading localStorage:', e);
+    }
     
     // Update the inventory for this plant
     storedInventory[plantId] = {
@@ -190,7 +206,12 @@ export const updateInventory = async (plantId, inventoryData) => {
     };
     
     // Save back to localStorage
-    localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+    try {
+      localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      console.log('Updated localStorage inventory:', storedInventory);
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
     
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -260,6 +281,15 @@ export const updateInventoryAfterOrder = async (orderItems) => {
     
     // Check if all updates were successful
     const allSuccessful = results.every(result => result && result.success);
+    
+    // Force a refresh of the plants data to ensure we have the latest
+    try {
+      // Clear any cached data
+      localStorage.setItem('plantsDataCache', '');
+      console.log('Cleared plants data cache to force refresh');
+    } catch (e) {
+      console.error('Error clearing plants data cache:', e);
+    }
     
     return {
       success: allSuccessful,
