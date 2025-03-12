@@ -379,19 +379,21 @@
 .order-info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  gap: 2rem;
   margin-bottom: 2rem;
   background-color: white;
   padding: 1.5rem;
   border-radius: 8px;
+  overflow: hidden;
 }
 
 .customer-info, 
 .order-notes {
-  padding: 1rem;
+  padding: 1.5rem;
   background-color: #f8f9fa;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  min-height: 200px;
 }
 
 .customer-info p, 
@@ -401,15 +403,18 @@
   line-height: 1.5;
 }
 
-/* Ensure order notes has proper height */
-.order-notes {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+/* Improve spacing in items table */
+.items-table tbody tr {
+  border-bottom: 1px solid #eee;
 }
 
-.order-notes p {
-  flex-grow: 1;
+.items-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.items-table td {
+  padding: 16px;
+  vertical-align: middle;
 }
 
 .orders-actions {
@@ -531,12 +536,14 @@
 @media (max-width: 768px) {
   .order-info-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.5rem;
   }
   
   .customer-info, 
   .order-notes {
     height: auto;
+    min-height: auto;
+    padding: 1rem;
   }
   
   .orders-table tbody tr.details-row {
