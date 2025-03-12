@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2rem 1.5rem;
   font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
 }
 
 .orders-container h1 {
@@ -174,10 +175,13 @@
 .orders-list {
   margin-bottom: 2rem;
   width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .orders-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0 12px;
 }
@@ -304,6 +308,9 @@
   border-radius: 0 0 8px 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .order-details-header {
@@ -539,11 +546,14 @@
     border-radius: 0 0 8px 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     width: 100%;
+    max-width: 100%;
   }
   
   .order-details {
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
   }
 }
 
@@ -572,8 +582,15 @@
 /* Fix for details row to match table width */
 .orders-table tbody tr.details-row {
   box-shadow: none;
+  width: 100%;
 }
 
 .orders-table tbody tr.details-row td {
   padding: 0;
+  width: 100%;
+}
+
+.orders-table tbody tr.details-row td[colspan] {
+  width: 100%;
+  box-sizing: border-box;
 } 
