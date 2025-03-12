@@ -346,19 +346,6 @@ const AdminOrders = () => {
                               )}
                             </div>
                             
-                            {(order.customer.address || order.customer.city || order.customer.postalCode) && (
-                              <div className="shipping-info">
-                                <h4>Shipping Address</h4>
-                                {order.customer.address && <p>{order.customer.address}</p>}
-                                {(order.customer.city || order.customer.postalCode) && (
-                                  <p>
-                                    {order.customer.city}{order.customer.city && order.customer.postalCode ? ', ' : ''}
-                                    {order.customer.postalCode}
-                                  </p>
-                                )}
-                              </div>
-                            )}
-                            
                             {order.notes && (
                               <div className="order-notes">
                                 <h4>Order Notes</h4>
