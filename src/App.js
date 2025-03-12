@@ -111,18 +111,12 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [isFirstVisit, setIsFirstVisit] = useState(false);
   
   useEffect(() => {
-    // Check if this is the first visit for hero visibility
-    const hasVisited = localStorage.getItem('hasVisited');
-    if (!hasVisited) {
-      localStorage.setItem('hasVisited', 'true');
-      setIsFirstVisit(true);
-    } else {
-      setIsFirstVisit(false);
-    }
-
+    // Always set hasVisited to true to ensure hero panel stays hidden
+    localStorage.setItem('hasVisited', 'true');
+    
     // Track page views
     const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
     localStorage.setItem('pageViews', (pageViews + 1).toString());
