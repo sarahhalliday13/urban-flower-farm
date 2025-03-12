@@ -1,6 +1,7 @@
 import './App.css';
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import NewsletterModal from './components/NewsletterModal';
 import About from './components/About';
 import Shop from './components/Shop';
 import CartModal from './components/CartModal';
@@ -78,8 +79,30 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
 }
 
 function App() {
+  const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
   
+  useEffect(() => {
+    // Check if this is the first visit for hero visibility
+    const hasVisited = localStorage.getItem('hasVisited');
+    if (!hasVisited) {
+      localStorage.setItem('hasVisited', 'true');
+      setIsFirstVisit(true);
+    } else {
+      setIsFirstVisit(false);
+    }
+
+    // Track page views
+    const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
+    localStorage.setItem('pageViews', (pageViews + 1).toString());
+
+    // Show newsletter after 3 page views
+    if (pageViews === 2) { // Show on 3rd view (0-based counter)
+      setShowModal(true);
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <CartProvider>
@@ -90,7 +113,7 @@ function App() {
             </header>
             
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
               <Route path="/about" element={<About />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
@@ -127,6 +150,8 @@ function App() {
             <footer>
               <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
             </footer>
+
+            <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
           </div>
         </Router>
       </CartProvider>

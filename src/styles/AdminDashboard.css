@@ -23,7 +23,7 @@
 
 .admin-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
   margin-bottom: 3rem;
 }
@@ -37,7 +37,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
 }
 
 .admin-card:hover {
@@ -77,29 +76,22 @@
   background-color: #1e3c22;
 }
 
-.quick-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  width: 100%;
-}
-
-.quick-action-button {
-  display: block;
-  background-color: #f0f7f0;
-  color: #2c5530;
-  padding: 0.8rem 1rem;
-  border-radius: 4px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-  text-align: center;
-  border: 1px solid #2c5530;
-  box-sizing: border-box;
-}
-
-.quick-action-button:hover {
+.admin-help {
   background-color: #e0efe0;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+  clear: both;
+}
+
+.admin-help h3 {
+  color: #2c5530;
+  margin-bottom: 0.5rem;
+}
+
+.admin-help p {
+  color: #555;
+  line-height: 1.5;
 }
 
 /* Low Stock Alert styles */
@@ -107,9 +99,8 @@
   background-color: #fff3e0;
   border-radius: 8px;
   padding: 1.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  clear: both;
 }
 
 .low-stock-alert h3 {
@@ -150,62 +141,7 @@
   font-weight: 600;
 }
 
-.admin-help {
-  background-color: #e0efe0;
-  padding: 1.5rem;
-  border-radius: 8px;
-  margin-top: 3rem;
-  clear: both;
-  position: relative;
-  z-index: 1;
-}
-
-.admin-help h3 {
-  color: #2c5530;
-  margin-bottom: 0.5rem;
-}
-
-.admin-help p {
-  color: #555;
-  line-height: 1.5;
-}
-
-/* Latest Orders styles */
-.latest-orders {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.order-item {
-  background-color: #f9f9f9;
-  border-radius: 6px;
-  padding: 0.8rem;
-  border-left: 3px solid #2c5530;
-}
-
-.order-info {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.3rem;
-}
-
-.order-id {
-  font-weight: 600;
-  color: #2c5530;
-}
-
-.order-date {
-  color: #777;
-  font-size: 0.9rem;
-}
-
-.customer-info {
-  font-size: 0.95rem;
-  color: #444;
-}
-
-.view-all-link, .view-inventory-link {
+.view-inventory-link {
   display: block;
   text-align: right;
   color: #2c5530;
@@ -215,7 +151,7 @@
   font-size: 0.95rem;
 }
 
-.view-all-link:hover, .view-inventory-link:hover {
+.view-inventory-link:hover {
   text-decoration: underline;
 }
 
@@ -228,9 +164,6 @@
   
   .admin-cards {
     grid-template-columns: 1fr;
-  }
-  
-  .quick-actions {
-    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 } 
