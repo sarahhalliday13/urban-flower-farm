@@ -3,6 +3,7 @@
   margin: 0 auto;
   padding: 2rem 1rem;
   font-family: 'Poppins', sans-serif;
+  overflow-x: hidden;
 }
 
 .admin-orders-container h1 {
@@ -66,11 +67,13 @@
 /* Orders list */
 .orders-list {
   width: 100%;
-  overflow-x: auto;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .orders-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin-bottom: 1rem;
   background-color: white;
@@ -149,6 +152,9 @@
   background-color: #f8f9fa;
   border-radius: 0 0 8px 8px;
   width: 100%;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .order-details-header {
@@ -594,6 +600,8 @@
     border-top: none;
     border-radius: 0 0 8px 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 100%;
   }
   
   .orders-table tbody td {
@@ -646,7 +654,9 @@
   .order-details {
     padding: 1rem;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
   }
   
   .order-actions h4 {
@@ -744,8 +754,15 @@
 /* Fix for details row to match table width */
 .orders-table tbody tr.details-row {
   box-shadow: none;
+  width: 100%;
 }
 
 .orders-table tbody tr.details-row td {
   padding: 0;
+  width: 100%;
+}
+
+.orders-table tbody tr.details-row td[colspan] {
+  width: 100%;
+  box-sizing: border-box;
 } 
