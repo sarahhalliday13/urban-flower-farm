@@ -70,18 +70,28 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
         <button className="nav-close" onClick={() => setIsMenuOpen(false)}>
           ×
         </button>
-        <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
-        <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-        <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-        {hasOrders && (
-          <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
-        )}
+        
+        {/* Customer Navigation Links */}
+        <div className="nav-section customer-links">
+          <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
+          <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+          <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+          {hasOrders && (
+            <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
+          )}
+        </div>
+        
+        {/* Admin Navigation Links */}
         {isAuthenticated && (
           <>
-            <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="admin-link">Admin Dashboard</Link>
-            <Link to="/inventory" onClick={() => setIsMenuOpen(false)} className="admin-link">Inventory</Link>
-            <Link to="/admin/orders" onClick={() => setIsMenuOpen(false)} className="admin-link">Orders</Link>
-            <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
+            <div className="nav-divider"></div>
+            <div className="nav-section admin-links">
+              <span className="section-label">Admin</span>
+              <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="admin-link">Dashboard</Link>
+              <Link to="/inventory" onClick={() => setIsMenuOpen(false)} className="admin-link">Inventory</Link>
+              <Link to="/admin/orders" onClick={() => setIsMenuOpen(false)} className="admin-link">Orders</Link>
+              <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
+            </div>
           </>
         )}
       </div>
