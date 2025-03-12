@@ -219,6 +219,125 @@ const Orders = () => {
     }
   };
 
+  // Force create sample orders and reload
+  const forceSampleOrders = () => {
+    // Clear existing orders
+    localStorage.removeItem('orders');
+    localStorage.removeItem('userEmail');
+    
+    // Create and set sample email
+    const sampleEmail = 'customer@example.com';
+    localStorage.setItem('userEmail', sampleEmail);
+    
+    // Create sample orders
+    const sampleOrders = [
+      {
+        id: 'ORD-2023-001',
+        date: new Date(2023, 5, 15).toISOString(),
+        status: 'Completed',
+        total: 78.50,
+        customer: {
+          name: 'Jane Smith',
+          email: sampleEmail,
+          phone: '555-123-4567',
+          address: '123 Garden Lane',
+          city: 'Flowertown',
+          postalCode: 'F1W 2R3'
+        },
+        items: [
+          { id: 'PLT-001', name: 'Lavender - French', price: 12.50, quantity: 3 },
+          { id: 'PLT-002', name: 'Sunflower - Giant', price: 8.00, quantity: 2 },
+          { id: 'PLT-003', name: 'Rose - Climbing', price: 25.00, quantity: 1 }
+        ],
+        notes: 'Please leave the package by the side gate if no one is home.'
+      },
+      {
+        id: 'ORD-2023-002',
+        date: new Date(2023, 6, 22).toISOString(),
+        status: 'Shipped',
+        total: 45.75,
+        customer: {
+          name: 'Jane Smith',
+          email: sampleEmail,
+          phone: '555-123-4567',
+          address: '123 Garden Lane',
+          city: 'Flowertown',
+          postalCode: 'F1W 2R3'
+        },
+        items: [
+          { id: 'PLT-004', name: 'Dahlia - Mixed Colors', price: 15.25, quantity: 3 }
+        ],
+        notes: 'Birthday gift for mom, please include a note saying "Happy Birthday!"'
+      },
+      {
+        id: 'ORD-2023-003',
+        date: new Date().toISOString(),
+        status: 'Processing',
+        total: 120.00,
+        customer: {
+          name: 'Jane Smith',
+          email: sampleEmail,
+          phone: '555-123-4567',
+          address: '123 Garden Lane',
+          city: 'Flowertown',
+          postalCode: 'F1W 2R3'
+        },
+        items: [
+          { id: 'PLT-005', name: 'Garden Starter Kit - Vegetables', price: 45.00, quantity: 1 },
+          { id: 'PLT-006', name: 'Herb Collection - Culinary', price: 35.00, quantity: 1 },
+          { id: 'PLT-007', name: 'Soil - Premium Organic', price: 20.00, quantity: 2 }
+        ],
+        notes: 'Starting a new garden, would appreciate any tips for beginners!'
+      },
+      {
+        id: 'ORD-2023-004',
+        date: new Date(2023, 4, 5).toISOString(),
+        status: 'Cancelled',
+        total: 65.25,
+        customer: {
+          name: 'Jane Smith',
+          email: sampleEmail,
+          phone: '555-123-4567',
+          address: '123 Garden Lane',
+          city: 'Flowertown',
+          postalCode: 'F1W 2R3'
+        },
+        items: [
+          { id: 'PLT-008', name: 'Tulip Bulbs - Spring Mix', price: 18.75, quantity: 2 },
+          { id: 'PLT-009', name: 'Garden Tools - Basic Set', price: 27.75, quantity: 1 }
+        ],
+        notes: 'Order cancelled due to items being out of season. Customer requested a refund.'
+      },
+      {
+        id: 'ORD-2023-005',
+        date: new Date(2023, 7, 10).toISOString(),
+        status: 'Pending',
+        total: 32.50,
+        customer: {
+          name: 'Jane Smith',
+          email: sampleEmail,
+          phone: '555-123-4567',
+          address: '123 Garden Lane',
+          city: 'Flowertown',
+          postalCode: 'F1W 2R3'
+        },
+        items: [
+          { id: 'PLT-010', name: 'Succulent Collection - Small', price: 32.50, quantity: 1 }
+        ],
+        notes: 'Please deliver on a weekday between 9am and 5pm.'
+      }
+    ];
+    
+    // Save to localStorage
+    localStorage.setItem('orders', JSON.stringify(sampleOrders));
+    console.log('Sample orders added to localStorage');
+    
+    // Set email and reload orders
+    setUserEmail(sampleEmail);
+    setEmailInput(sampleEmail);
+    loadOrders(sampleEmail);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!emailInput.trim()) {
@@ -278,6 +397,21 @@ const Orders = () => {
             </div>
             <button type="submit" className="lookup-btn">Find My Orders</button>
           </form>
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <button 
+              onClick={forceSampleOrders}
+              style={{
+                padding: '10px 15px',
+                backgroundColor: '#4CAF50',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+              }}
+            >
+              Load Sample Orders (For Testing)
+            </button>
+          </div>
         </div>
       ) : (
         <>
