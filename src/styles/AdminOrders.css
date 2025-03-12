@@ -713,8 +713,15 @@
 
 @media (max-width: 576px) {
   .items-table {
-    margin: 0 -1rem;
-    width: calc(100% + 2rem);
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .order-items {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
   }
   
   .items-table tbody td {
@@ -808,6 +815,7 @@ td[data-label="Total"] {
   background-color: transparent;
   border-top: none;
   padding: 0;
+  vertical-align: middle;
 }
 
 /* Fix for details row to match table width */
