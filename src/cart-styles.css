@@ -1,8 +1,8 @@
 /* Cart Badge Styles */
 .cart-badge {
   position: absolute;
-  top: 5px;
-  right: 5px;
+  top: 3px;
+  right: 3px;
 }
 
 .cart-count {
@@ -10,9 +10,9 @@
   background-color: #2c5530;
   color: white;
   border-radius: 50%;
-  width: 14px;
-  height: 14px;
-  font-size: 9px;
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
   font-weight: bold;
   align-items: center;
   justify-content: center;
