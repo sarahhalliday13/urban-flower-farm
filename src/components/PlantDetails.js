@@ -215,14 +215,16 @@ function PlantDetails() {
             
             {/* Inventory Status Information */}
             <div className="inventory-status">
-              <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                {plant.inventory?.status || 'Status Unknown'}
-              </span>
-              
               {plant.inventory?.currentStock > 0 && (
-                <span className="stock-count">
-                  {plant.inventory.currentStock} {plant.inventory.currentStock === 1 ? 'item' : 'items'} in stock
-                </span>
+                <div className="inventory-status-row">
+                  <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                    In Stock
+                  </span>
+                  
+                  <span className="stock-quantity">
+                    {plant.inventory.currentStock} in stock
+                  </span>
+                </div>
               )}
               
               {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
