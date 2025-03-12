@@ -21,6 +21,128 @@
   color: #555;
 }
 
+/* Sales Summary Styles */
+.sales-summary {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.sales-header h2 {
+  color: #2c5530;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.time-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.time-filter label {
+  font-weight: 500;
+  color: #555;
+}
+
+.time-filter select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #333;
+}
+
+.sales-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.metric-card {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-top: 4px solid transparent;
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.metric-card.pending {
+  border-top-color: #f39c12;
+}
+
+.metric-card.completed {
+  border-top-color: #27ae60;
+}
+
+.metric-card.total {
+  border-top-color: #3498db;
+}
+
+.metric-card h3 {
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+  color: #2c5530;
+}
+
+.metric-card.pending .metric-value {
+  color: #f39c12;
+}
+
+.metric-card.completed .metric-value {
+  color: #27ae60;
+}
+
+.metric-card.total .metric-value {
+  color: #3498db;
+}
+
+.metric-label {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.view-all-orders {
+  display: block;
+  text-align: right;
+  color: #2c5530;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+}
+
+.view-all-orders:hover {
+  text-decoration: underline;
+}
+
 .admin-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -165,5 +287,24 @@
   .admin-cards {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+  
+  .sales-metrics {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .sales-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .time-filter {
+    width: 100%;
+  }
+  
+  .time-filter select {
+    flex-grow: 1;
   }
 } 
