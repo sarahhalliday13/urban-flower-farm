@@ -97,10 +97,12 @@ function App() {
     const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
     localStorage.setItem('pageViews', (pageViews + 1).toString());
 
-    // Show newsletter after 3 page views
-    if (pageViews === 2) { // Show on 3rd view (0-based counter)
-      setShowModal(true);
-    }
+    // Newsletter popup temporarily disabled
+    // Original code:
+    // if (pageViews === 2) { // Show on 3rd view (0-based counter)
+    //   setShowModal(true);
+    // }
+    setShowModal(false); // Keep popup disabled for now
   }, []);
 
   return (
