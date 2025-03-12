@@ -20,64 +20,105 @@ const AdminDashboard = () => {
     setLowStockItems(lowStock.slice(0, 5)); // Get up to 5 low stock items
     
     // Calculate sales data based on time filter
-    calculateSalesData(timeFilter);
+    try {
+      calculateSalesData(timeFilter);
+    } catch (error) {
+      console.error('Error calculating sales data:', error);
+      setSalesData({
+        pending: 0,
+        completed: 0,
+        totalOrders: 0
+      });
+    }
   }, [timeFilter]);
 
   const calculateSalesData = (filter) => {
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    if (orders.length === 0) return;
+    try {
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      if (orders.length === 0) return;
 
-    const now = new Date();
-    let startDate;
+      const now = new Date();
+      let startDate;
 
-    // Determine the start date based on the filter
-    switch (filter) {
-      case 'lastWeek':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case 'last30Days':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case 'lastMonth':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 1);
-        break;
-      case 'last3Months':
-        startDate = new Date(now);
-        startDate.setMonth(now.getMonth() - 3);
-        break;
-      default:
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - 30);
-    }
-
-    // Filter orders by date
-    const filteredOrders = orders.filter(order => {
-      const orderDate = new Date(order.date);
-      return orderDate >= startDate && orderDate <= now;
-    });
-
-    // Calculate totals
-    let pendingTotal = 0;
-    let completedTotal = 0;
-
-    filteredOrders.forEach(order => {
-      const orderTotal = parseFloat(order.total.replace('$', ''));
-      
-      if (order.status === 'Pending' || order.status === 'Processing') {
-        pendingTotal += orderTotal;
-      } else if (order.status === 'Completed') {
-        completedTotal += orderTotal;
+      // Determine the start date based on the filter
+      switch (filter) {
+        case 'lastWeek':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case 'last30Days':
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 30);
+          break;
+        case 'lastMonth':
+          startDate = new Date(now);
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case 'last3Months':
+          startDate = new Date(now);
+          startDate.setMonth(now.getMonth() - 3);
+          break;
+        default:
+          startDate = new Date(now);
+          startDate.setDate(now.getDate() - 30);
       }
-    });
 
-    setSalesData({
-      pending: pendingTotal.toFixed(2),
-      completed: completedTotal.toFixed(2),
-      totalOrders: filteredOrders.length
-    });
+      // Filter orders by date
+      const filteredOrders = orders.filter(order => {
+        try {
+          const orderDate = new Date(order.date);
+          return orderDate >= startDate && orderDate <= now;
+        } catch (error) {
+          console.warn('Invalid date format:', order.date);
+          return false;
+        }
+      });
+
+      // Calculate totals
+      let pendingTotal = 0;
+      let completedTotal = 0;
+
+      filteredOrders.forEach(order => {
+        try {
+          // Handle both string and number formats for order.total
+          let orderTotal = 0;
+          
+          if (typeof order.total === 'string') {
+            // Remove currency symbol and convert to number
+            orderTotal = parseFloat(order.total.replace(/[^0-9.-]+/g, ''));
+          } else if (typeof order.total === 'number') {
+            orderTotal = order.total;
+          }
+          
+          // Check for NaN and use 0 if invalid
+          if (isNaN(orderTotal)) {
+            orderTotal = 0;
+            console.warn('Invalid order total found:', order.total);
+          }
+          
+          if (order.status === 'Pending' || order.status === 'Processing') {
+            pendingTotal += orderTotal;
+          } else if (order.status === 'Completed') {
+            completedTotal += orderTotal;
+          }
+        } catch (error) {
+          console.warn('Error processing order:', error, order);
+        }
+      });
+
+      setSalesData({
+        pending: pendingTotal.toFixed(2),
+        completed: completedTotal.toFixed(2),
+        totalOrders: filteredOrders.length
+      });
+    } catch (error) {
+      console.error('Error in calculateSalesData:', error);
+      setSalesData({
+        pending: 0,
+        completed: 0,
+        totalOrders: 0
+      });
+    }
   };
 
   const handleFilterChange = (e) => {
