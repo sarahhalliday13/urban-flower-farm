@@ -11,3 +11,18 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Admin link styles */
+.admin-link {
+  background-color: #f8f9fa;
+  color: #2c3e50;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.admin-link:hover {
+  background-color: #e9ecef;
+}
