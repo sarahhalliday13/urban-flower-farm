@@ -413,8 +413,12 @@
 }
 
 .items-table td {
-  padding: 16px;
+  padding: 20px 16px;
   vertical-align: middle;
+}
+
+.items-table tbody tr:hover {
+  background-color: #f9f9f9;
 }
 
 .orders-actions {
