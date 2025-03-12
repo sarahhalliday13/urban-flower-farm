@@ -312,10 +312,20 @@
 .inventory-section,
 .invoice-section {
   margin-bottom: 2rem;
-  padding: 1rem;
+  padding: 1.5rem;
   background-color: white;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.status-section h5, 
+.inventory-section h5,
+.invoice-section h5 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .status-buttons {
@@ -774,7 +784,8 @@
 
 .orders-table tbody td {
   padding: 16px;
-  border-top: 1px solid #eee;
+  /* Removing border-top to eliminate the line above total */
+  /* border-top: 1px solid #eee; */
   border-bottom: 1px solid #eee;
   vertical-align: middle;
 }
