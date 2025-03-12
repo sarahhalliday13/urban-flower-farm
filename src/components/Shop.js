@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants } from '../services/sheets';
 import Toast from './Toast';
 
 function Shop() {
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,7 @@ function Shop() {
                   <h3>{plant.name}</h3>
                   <p>${plant.price}</p>
                   <div className="plant-status">
-                    <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                    <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
                       {plant.inventory?.status || 'Status Unknown'}
                     </span>
                   </div>
@@ -78,7 +79,7 @@ function Shop() {
                     onClick={() => handleAddToCart(plant)}
                     disabled={!plant.inventory?.currentStock}
                   >
-                    {plant.inventory?.currentStock > 0 ? 'Add to Cart' : 'Sold Out'}
+                    {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                   </button>
                 </div>
               </div>

@@ -476,6 +476,7 @@ footer {
   margin-left: 1rem;
 }
 
+/* Commented out to prevent conflicts with cart-styles.css
 .cart-count {
   position: absolute;
   top: -5px;
@@ -488,10 +489,8 @@ footer {
   font-weight: bold;
   min-width: 8px;
   height: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
+*/
 
 .logo {
   text-decoration: none;
@@ -589,10 +588,12 @@ footer {
     font-size: 28px;
   }
 
+  /* Commented out to prevent conflicts with cart-styles.css
   .cart-count {
     font-size: 10px;
     padding: 0.15rem 0.4rem;
   }
+  */
 }
 
 .plant-actions {

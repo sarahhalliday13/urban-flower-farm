@@ -1,11 +1,23 @@
 import React from 'react';
 import './CartModal.css';
 import { useCart } from '../context/CartContext';
+import { useNavigate } from 'react-router-dom';
 
 function CartModal({ isOpen, onClose }) {
   const { cartItems, removeFromCart, updateQuantity, getTotal } = useCart();
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
+
+  const handleCheckout = () => {
+    onClose();
+    navigate('/checkout');
+  };
+
+  const viewOrders = () => {
+    onClose();
+    navigate('/orders');
+  };
 
   return (
     <div className="cart-modal-overlay">
@@ -14,15 +26,25 @@ function CartModal({ isOpen, onClose }) {
         <h2>Shopping Cart</h2>
         
         {cartItems.length === 0 ? (
-          <p className="empty-cart">Your cart is empty</p>
+          <div className="empty-cart-container">
+            <p className="empty-cart">Your cart is empty</p>
+            <button className="view-orders-btn" onClick={viewOrders}>View My Orders</button>
+          </div>
         ) : (
           <>
             <div className="cart-items">
               {cartItems.map(item => (
                 <div key={item.id} className="cart-item">
                   <div className="cart-item-image">
-                    {item.images && item.images.length > 0 ? (
-                      <img src={item.images[0]} alt={item.name} />
+                    {item.mainImage ? (
+                      <img 
+                        src={item.mainImage} 
+                        alt={item.name}
+                        onError={(e) => {
+                          console.error('Cart image failed to load:', item.mainImage);
+                          e.target.src = '/images/placeholder.jpg';
+                        }}
+                      />
                     ) : (
                       <div className="emoji-image">🌱</div>
                     )}
@@ -69,7 +91,8 @@ function CartModal({ isOpen, onClose }) {
                 <span>Total:</span>
                 <span>${getTotal().toFixed(2)}</span>
               </div>
-              <button className="checkout-btn">Proceed to Checkout</button>
+              <button className="checkout-btn" onClick={handleCheckout}>Proceed to Checkout</button>
+              <button className="view-orders-btn" onClick={viewOrders}>View My Orders</button>
             </div>
           </>
         )}

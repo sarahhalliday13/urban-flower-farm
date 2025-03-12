@@ -6,34 +6,6 @@
   box-sizing: border-box;
 }
 
-.shop-hero {
-  background-color: #f1f5f2;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.shop-hero .hero-content {
-  padding: 2rem;
-  max-width: 800px;
-}
-
-.shop-hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
-  color: #2c5530;
-}
-
-.shop-hero p {
-  font-size: 1.2rem;
-  margin: 0;
-  color: #666;
-  line-height: 1.4;
-}
-
 .shop-content {
   display: flex;
   flex-direction: column;
@@ -52,9 +24,10 @@
 }
 
 .shop-main {
-  display: flex;
-  gap: 2rem;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
   box-sizing: border-box;
 }
 
@@ -146,35 +119,41 @@
 
 .plant-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
-  padding: 0 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3.5rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .plant-card {
-  background: white;
+  background-color: white;
   border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  transition: transform 0.3s, box-shadow 0.3s;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.5rem;
 }
 
 .plant-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
 }
 
 .plant-image {
   width: 100%;
-  height: 200px;
+  height: 220px;
   overflow: hidden;
+  position: relative;
 }
 
 .plant-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.3s;
 }
 
 .plant-card h3 {
@@ -225,6 +204,11 @@
   background-color: #1e3c21;
 }
 
+.plant-buy:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 .close-filters {
   display: none;
   position: absolute;
@@ -244,65 +228,33 @@
   color: #1f3d22;
 }
 
-/* Mobile styles */
-@media screen and (max-width: 768px) {
-  .shop-section {
-    padding: 0 1rem;
-  }
-
-  .shop-hero {
-    height: 200px;
-  }
-
-  .shop-hero h1 {
-    font-size: 2rem;
-  }
-
-  .shop-hero p {
-    font-size: 1rem;
-  }
-
-  .shop-main {
-    flex-direction: column;
-  }
-
-  .shop-header {
-    justify-content: center;
-  }
-
-  .filter-toggle {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .close-filters {
-    display: block;
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-  }
-
-  .filters {
-    position: fixed;
-    top: 0;
-    left: -100%;
-    width: 80%;
-    height: 100vh;
-    z-index: 1000;
-    border-radius: 0;
-    transition: left 0.3s ease-in-out;
-    max-height: none;
-    padding: 2.5rem 1.5rem 1.5rem 1.5rem;
-    background-color: white;
-  }
-
-  .filters.filters-open {
-    left: 0;
-  }
-
+/* Media queries for responsive design */
+@media screen and (max-width: 1200px) {
   .plant-grid {
-    padding: 0 1rem;
-    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .plant-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .shop-main {
+    padding: 1rem;
+  }
+  
+  .plant-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .plant-image {
+    height: 220px;
   }
 }
 
@@ -387,9 +339,38 @@
 .loading, .error {
   text-align: center;
   padding: 2rem;
-  font-size: 1.2rem;
+  color: #666;
 }
 
 .error {
-  color: #e74c3c;
+  color: #c62828;
+}
+
+.featured-plants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: none;
+}
+
+.featured-plants-header h2 {
+  font-size: inherit;
+  margin: 0;
+  font-weight: 500;
+  color: #333;
+}
+
+@media screen and (max-width: 768px) {
+  .featured-plants-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .featured-plants-header h2 {
+    font-size: inherit;
+  }
 } 

@@ -138,7 +138,13 @@ function PlantDetails() {
   };
 
   // Handle different image field names from spreadsheet
-  const images = plant.images || [plant.mainImage];
+  // Create a complete array of images by combining mainImage with additionalImages
+  const images = plant.mainImage 
+    ? [plant.mainImage, ...(plant.additionalImages || [])]
+    : plant.images || [];
+  
+  // Log the images for debugging
+  console.log('Plant images:', images);
   
   return (
     <main>
@@ -178,28 +184,58 @@ function PlantDetails() {
           </div>
           <div className="plant-details-info">
             <h1>{plant.name}</h1>
-            {plant.commonName && plant.latinName && (
+            {plant.commonName && plant.scientificName && (
               <p className="plant-names">
-                {plant.commonName} <span className="latin-name">({plant.latinName})</span>
+                {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
               </p>
             )}
             <div className="price-action-container">
               <p className="price">${plant.price}</p>
               <div className="price-controls">
                 <div className="quantity-selector">
-                  <button onClick={() => handleQuantityChange(-1)}>-</button>
+                  <button 
+                    onClick={() => handleQuantityChange(-1)}
+                    disabled={quantity <= 1}
+                  >-</button>
                   <span>{quantity}</span>
-                  <button onClick={() => handleQuantityChange(1)}>+</button>
+                  <button 
+                    onClick={() => handleQuantityChange(1)}
+                    disabled={plant.inventory?.maxOrderQuantity && quantity >= plant.inventory.maxOrderQuantity}
+                  >+</button>
                 </div>
                 <button 
                   className="plant-buy"
                   onClick={handleAddToCart}
-                  disabled={!plant.inventory?.currentStock}
+                  disabled={!plant.inventory?.currentStock || plant.inventory.currentStock <= 0}
                 >
                   {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                 </button>
               </div>
             </div>
+            
+            {/* Inventory Status Information */}
+            <div className="inventory-status">
+              <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                {plant.inventory?.status || 'Status Unknown'}
+              </span>
+              
+              {plant.inventory?.currentStock > 0 && (
+                <span className="stock-count">
+                  {plant.inventory.currentStock} {plant.inventory.currentStock === 1 ? 'item' : 'items'} in stock
+                </span>
+              )}
+              
+              {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
+                <span className="restock-date">
+                  Expected restock: {plant.inventory.restockDate}
+                </span>
+              )}
+              
+              {plant.inventory?.notes && (
+                <p className="inventory-notes">{plant.inventory.notes}</p>
+              )}
+            </div>
+            
             <p className="description">{plant.description}</p>
             <div className="plant-specs">
               <h3>Plant Specifications</h3>

@@ -7,15 +7,38 @@ import Shop from './components/Shop';
 import CartModal from './components/CartModal';
 import PlantDetails from './components/PlantDetails';
 import Home from './components/Home';
+import InventoryManager from './components/InventoryManager';
+import Login from './components/Login';
+import Checkout from './components/Checkout';
+import Orders from './components/Orders';
+import AdminOrders from './components/AdminOrders';
+import ProtectedRoute from './components/ProtectedRoute';
 import { CartProvider, useCart } from './context/CartContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import './cart-styles.css';
 
 function Navigation({ isMenuOpen, setIsMenuOpen }) {
-  const { cartItems, getItemCount } = useCart();
+  const { getItemCount, cartItems } = useCart();
+  const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [, forceUpdate] = useState();
   
   // Calculate cart count using getItemCount function
   const cartCount = getItemCount();
+
+  // Force re-render when cart count changes
+  useEffect(() => {
+    // This empty dependency array ensures the effect runs when cartCount changes
+  }, [cartCount]);
+
+  const toggleCart = () => {
+    setIsCartOpen(!isCartOpen);
+    forceUpdate({});
+  };
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <nav className="navbar">
@@ -32,8 +55,15 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
         <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
         <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
         <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+        {isAuthenticated && (
+          <>
+            <Link to="/inventory" onClick={() => setIsMenuOpen(false)} className="admin-link">Inventory</Link>
+            <Link to="/admin/orders" onClick={() => setIsMenuOpen(false)} className="admin-link">Orders</Link>
+            <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
+          </>
+        )}
       </div>
-      <button className="cart-button" onClick={() => setIsCartOpen(true)}>
+      <button className="cart-button" onClick={toggleCart}>
         🪴
         {cartCount > 0 && (
           <div className="cart-badge">
@@ -50,7 +80,7 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
-
+  
   useEffect(() => {
     // Check if this is the first visit for hero visibility
     const hasVisited = localStorage.getItem('hasVisited');
@@ -72,29 +102,50 @@ function App() {
   }, []);
 
   return (
-    <CartProvider>
-      <Router>
-        <div className="App">
-          <header className="App-header">
-            <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-          </header>
-          
-          <Routes>
-            <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/shop" element={<Shop />} />
-            <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
-            <Route path="/plant/:id" element={<PlantDetails />} />
-          </Routes>
+    <AuthProvider>
+      <CartProvider>
+        <Router>
+          <div className="App">
+            <header className="App-header">
+              <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+            </header>
+            
+            <Routes>
+              <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/shop" element={<Shop />} />
+              <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
+              <Route path="/plant/:id" element={<PlantDetails />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route 
+                path="/inventory" 
+                element={
+                  <ProtectedRoute>
+                    <InventoryManager />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/orders" 
+                element={
+                  <ProtectedRoute>
+                    <AdminOrders />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
 
-          <footer>
-            <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
-          </footer>
+            <footer>
+              <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
+            </footer>
 
-          <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
-        </div>
-      </Router>
-    </CartProvider>
+            <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
+          </div>
+        </Router>
+      </CartProvider>
+    </AuthProvider>
   );
 }
 
