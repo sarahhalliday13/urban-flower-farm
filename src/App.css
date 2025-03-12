@@ -64,12 +64,12 @@
 }
 
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
   color: #2c5530;
   text-decoration: none;
   margin-right: auto;
-  padding: 1rem;
+  padding: 1rem 0.5rem;
 }
 
 .logo:hover {
@@ -78,15 +78,18 @@
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
   margin-right: 0;
+  flex-wrap: nowrap;
 }
 
 .nav-links a {
   text-decoration: none;
   color: #333;
   font-weight: 500;
+  white-space: nowrap;
+  font-size: 0.95rem;
 }
 
 .nav-links a:hover {
@@ -323,6 +326,7 @@ footer {
     z-index: 999;
     align-items: flex-start;
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .nav-close {
@@ -469,7 +473,7 @@ footer {
   padding: 0.5rem;
   display: flex;
   align-items: center;
-  margin-left: 2rem;
+  margin-left: 1rem;
 }
 
 .cart-count {
@@ -492,9 +496,9 @@ footer {
 .logo {
   text-decoration: none;
   color: #2c5530;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
   font-weight: bold;
-  padding: 1rem;
+  padding: 1rem 0.5rem;
 }
 
 .hamburger-menu {
@@ -543,6 +547,7 @@ footer {
     z-index: 999;
     align-items: flex-start;
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
 
   .nav-close {
