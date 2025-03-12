@@ -284,6 +284,7 @@
   background-color: transparent;
   border-top: none;
   padding: 0;
+  vertical-align: middle;
 }
 
 .view-details-btn {
@@ -593,6 +594,19 @@
   
   .close-details-btn {
     align-self: flex-end;
+  }
+  
+  /* Fix items table width to match customer info card */
+  .items-table {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  .order-items {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
   }
   
   /* Improve items table on small screens */
