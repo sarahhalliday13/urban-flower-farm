@@ -709,6 +709,16 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 0.75rem;
   }
+  
+  td[data-label="Total"] {
+    display: flex;
+    align-items: center;
+  }
+  
+  .order-total {
+    margin-left: auto;
+    top: 0;
+  }
 }
 
 @media (max-width: 576px) {
@@ -801,6 +811,11 @@
     justify-content: flex-end;
     align-items: center;
   }
+  
+  .items-table tbody td .order-total {
+    position: static;
+    margin-left: auto;
+  }
 }
 
 .orders-table tbody td {
@@ -815,22 +830,21 @@
 td[data-label="Total"] {
   border-top: none !important;
   background-color: transparent !important;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  vertical-align: middle;
 }
 
 .order-total {
   font-weight: 600;
   color: #2c3e50;
   font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   background-color: transparent;
   border-top: none;
   padding: 0;
-  height: 100%;
-  line-height: normal;
+  margin: 0;
+  vertical-align: middle;
+  position: relative;
+  top: 2px;
 }
 
 /* Fix for details row to match table width */

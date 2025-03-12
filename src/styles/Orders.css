@@ -280,22 +280,21 @@
   font-weight: 600;
   color: #2c5530;
   font-size: 1.1rem;
-  display: inline-flex;
-  align-items: center;
+  display: inline-block;
   background-color: transparent;
   border-top: none;
   padding: 0;
-  height: 100%;
-  line-height: normal;
+  margin: 0;
+  vertical-align: middle;
+  position: relative;
+  top: 2px;
 }
 
 /* Add specific styling for the total cell */
 td[data-label="Total"] {
   border-top: none !important;
   background-color: transparent !important;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  vertical-align: middle;
 }
 
 .view-details-btn {
@@ -555,7 +554,13 @@ td[data-label="Total"] {
   }
   
   td[data-label="Total"] {
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+  }
+  
+  .order-total {
+    margin-left: auto;
+    top: 0;
   }
 }
 
@@ -647,13 +652,14 @@ td[data-label="Total"] {
   
   /* Ensure the value part has proper alignment */
   .items-table tbody td > span,
-  .items-table tbody td > div,
-  .items-table tbody td > .order-total {
+  .items-table tbody td > div {
     flex: 0 0 60%;
     text-align: right;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
+  }
+  
+  .items-table tbody td .order-total {
+    position: static;
+    margin-left: auto;
   }
 }
 
