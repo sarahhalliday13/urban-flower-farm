@@ -1299,3 +1299,22 @@ footer {
     border-top: 1px solid #eee;
   }
 }
+
+/* My Orders link styling */
+.nav-links a[href="/orders"] {
+  position: relative;
+  font-weight: 500;
+}
+
+.nav-links a[href="/orders"]:after {
+  content: "New";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #2c5530;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: bold;
+}

@@ -23,9 +23,26 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
   const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [, forceUpdate] = useState();
+  const [hasOrders, setHasOrders] = useState(false);
   
   // Calculate cart count using getItemCount function
   const cartCount = getItemCount();
+
+  // Check if user has orders
+  useEffect(() => {
+    const userEmail = localStorage.getItem('userEmail');
+    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+    
+    if (userEmail && orders.length > 0) {
+      // Check if any orders belong to this user
+      const userOrders = orders.filter(
+        order => order.customer.email.toLowerCase() === userEmail.toLowerCase()
+      );
+      setHasOrders(userOrders.length > 0);
+    } else {
+      setHasOrders(false);
+    }
+  }, []);
 
   // Force re-render when cart count changes
   useEffect(() => {
@@ -56,6 +73,9 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
         <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
         <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
         <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+        {hasOrders && (
+          <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
+        )}
         {isAuthenticated && (
           <>
             <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="admin-link">Admin Dashboard</Link>
