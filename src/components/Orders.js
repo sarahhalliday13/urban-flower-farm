@@ -140,87 +140,122 @@ const Orders = () => {
             </div>
           ) : (
             <div className="orders-list">
-              {orders.map(order => (
-                <div key={order.id} className="order-card">
-                  <div 
-                    className="order-header" 
-                    onClick={() => toggleOrderDetails(order.id)}
-                  >
-                    <div className="order-summary">
-                      <h3>Order #{order.id}</h3>
-                      <p className="order-date">{formatDate(order.date)}</p>
-                    </div>
-                    <div className="order-meta">
-                      <span className={`order-status ${getStatusClass(order.status)}`}>
-                        {order.status}
-                      </span>
-                      <span className="order-total">${order.total.toFixed(2)}</span>
-                      <span className="toggle-icon">
-                        {activeOrder === order.id ? '▼' : '▶'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  {activeOrder === order.id && (
-                    <div className="order-details">
-                      <div className="order-items">
-                        <h4>Items</h4>
-                        <table className="items-table">
-                          <thead>
-                            <tr>
-                              <th>Product</th>
-                              <th>Price</th>
-                              <th>Quantity</th>
-                              <th>Total</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {order.items.map(item => (
-                              <tr key={item.id}>
-                                <td data-label="Product">{item.name}</td>
-                                <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
-                                <td data-label="Quantity">{item.quantity}</td>
-                                <td data-label="Total">${(item.price * item.quantity).toFixed(2)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                      
-                      <div className="order-info-grid">
-                        <div className="customer-info">
-                          <h4>Customer Information</h4>
-                          <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
-                          <p><strong>Email:</strong> {order.customer.email}</p>
-                          {order.customer.phone && order.customer.phone !== 'Not provided' && (
-                            <p><strong>Phone:</strong> {order.customer.phone}</p>
-                          )}
-                        </div>
-                        
-                        {(order.customer.address || order.customer.city || order.customer.postalCode) && (
-                          <div className="shipping-info">
-                            <h4>Shipping Address</h4>
-                            {order.customer.address && <p>{order.customer.address}</p>}
-                            {(order.customer.city || order.customer.postalCode) && (
-                              <p>
-                                {order.customer.city}{order.customer.city && order.customer.postalCode ? ', ' : ''}
-                                {order.customer.postalCode}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        
-                        {order.notes && (
-                          <div className="order-notes">
-                            <h4>Order Notes</h4>
-                            <p>{order.notes}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+              <table className="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map(order => (
+                    <React.Fragment key={order.id}>
+                      <tr onClick={() => toggleOrderDetails(order.id)}>
+                        <td data-label="Order">
+                          <span className="order-id">#{order.id}</span>
+                        </td>
+                        <td data-label="Date">
+                          <span className="order-date">{formatDate(order.date)}</span>
+                        </td>
+                        <td data-label="Status">
+                          <span className={`order-status ${getStatusClass(order.status)}`}>
+                            {order.status}
+                          </span>
+                        </td>
+                        <td data-label="Total">
+                          <span className="order-total">${order.total.toFixed(2)}</span>
+                        </td>
+                        <td data-label="Actions">
+                          <button 
+                            className="view-details-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleOrderDetails(order.id);
+                            }}
+                          >
+                            {activeOrder === order.id ? 'Hide Details' : 'View Details'}
+                          </button>
+                        </td>
+                      </tr>
+                      {activeOrder === order.id && (
+                        <tr className="details-row">
+                          <td colSpan="5" style={{ padding: 0, border: 'none' }}>
+                            <div className="order-details">
+                              <div className="order-details-header">
+                                <h3>Order Details #{order.id}</h3>
+                                <button 
+                                  className="close-details-btn"
+                                  onClick={() => setActiveOrder(null)}
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              
+                              <div className="order-items">
+                                <h4>Items</h4>
+                                <table className="items-table">
+                                  <thead>
+                                    <tr>
+                                      <th>Product</th>
+                                      <th>Price</th>
+                                      <th>Quantity</th>
+                                      <th>Total</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {order.items.map(item => (
+                                      <tr key={item.id}>
+                                        <td data-label="Product">{item.name}</td>
+                                        <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
+                                        <td data-label="Quantity">{item.quantity}</td>
+                                        <td data-label="Total">${(item.price * item.quantity).toFixed(2)}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                              
+                              <div className="order-info-grid">
+                                <div className="customer-info">
+                                  <h4>Customer Information</h4>
+                                  <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
+                                  <p><strong>Email:</strong> {order.customer.email}</p>
+                                  {order.customer.phone && order.customer.phone !== 'Not provided' && (
+                                    <p><strong>Phone:</strong> {order.customer.phone}</p>
+                                  )}
+                                </div>
+                                
+                                {(order.customer.address || order.customer.city || order.customer.postalCode) && (
+                                  <div className="shipping-info">
+                                    <h4>Shipping Address</h4>
+                                    {order.customer.address && <p>{order.customer.address}</p>}
+                                    {(order.customer.city || order.customer.postalCode) && (
+                                      <p>
+                                        {order.customer.city}{order.customer.city && order.customer.postalCode ? ', ' : ''}
+                                        {order.customer.postalCode}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {order.notes && (
+                                  <div className="order-notes">
+                                    <h4>Order Notes</h4>
+                                    <p>{order.notes}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </>
