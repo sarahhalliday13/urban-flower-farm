@@ -1090,6 +1090,18 @@ footer {
   gap: 0.5rem;
 }
 
+.inventory-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stock-quantity {
+  font-size: 0.9rem;
+  color: #777;
+  font-weight: normal;
+}
+
 .stock-count {
   font-size: 0.9rem;
   color: #2e7d32;
