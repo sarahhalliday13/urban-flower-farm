@@ -5,7 +5,7 @@ import { useCart } from '../context/CartContext';
 import Toast from './Toast';
 
 function Home({ isFirstVisit }) {
-  const [showHero, setShowHero] = useState(true);
+  const [showHero, setShowHero] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [featuredPlants, setFeaturedPlants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,10 +15,8 @@ function Home({ isFirstVisit }) {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const heroHidden = localStorage.getItem('heroHidden');
-    if (heroHidden === 'true') {
-      setShowHero(false);
-    }
+    // Set heroHidden to true in localStorage to ensure it stays hidden across sessions
+    localStorage.setItem('heroHidden', 'true');
     
     // Add event listener for window resize
     const handleResize = () => {
