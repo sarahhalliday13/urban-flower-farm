@@ -251,167 +251,206 @@ const AdminOrders = () => {
         </div>
       ) : (
         <div className="orders-list">
-          {filteredOrders.map(order => (
-            <div key={order.id} className="order-card">
-              <div 
-                className="order-header" 
-                onClick={() => toggleOrderDetails(order.id)}
-              >
-                <div className="order-summary">
-                  <h3>Order #{order.id}</h3>
-                  <p className="order-date">{formatDate(order.date)}</p>
-                  <p className="customer-name">
-                    {order.customer.name || 'No name provided'} ({order.customer.email})
-                  </p>
-                </div>
-                <div className="order-meta">
-                  <span className={`order-status ${getStatusClass(order.status)}`}>
-                    {order.status}
-                  </span>
-                  <span className="order-total">${order.total.toFixed(2)}</span>
-                  <span className="toggle-icon">
-                    {activeOrder === order.id ? '▼' : '▶'}
-                  </span>
-                </div>
-              </div>
-              
-              {activeOrder === order.id && (
-                <div className="order-details">
-                  <div className="order-items">
-                    <h4>Items</h4>
-                    <table className="items-table">
-                      <thead>
-                        <tr>
-                          <th>Product</th>
-                          <th>Price</th>
-                          <th>Quantity</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {order.items.map(item => (
-                          <tr key={item.id}>
-                            <td data-label="Product">{item.name}</td>
-                            <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
-                            <td data-label="Quantity">{item.quantity}</td>
-                            <td data-label="Total">${(item.price * item.quantity).toFixed(2)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  
-                  <div className="order-info-grid">
-                    <div className="customer-info">
-                      <h4>Customer Information</h4>
-                      <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
-                      <p><strong>Email:</strong> {order.customer.email}</p>
-                      {order.customer.phone && order.customer.phone !== 'Not provided' && (
-                        <p><strong>Phone:</strong> {order.customer.phone}</p>
-                      )}
-                    </div>
-                    
-                    {(order.customer.address || order.customer.city || order.customer.postalCode) && (
-                      <div className="shipping-info">
-                        <h4>Shipping Address</h4>
-                        {order.customer.address && <p>{order.customer.address}</p>}
-                        {(order.customer.city || order.customer.postalCode) && (
-                          <p>
-                            {order.customer.city}{order.customer.city && order.customer.postalCode ? ', ' : ''}
-                            {order.customer.postalCode}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    
-                    {order.notes && (
-                      <div className="order-notes">
-                        <h4>Order Notes</h4>
-                        <p>{order.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="order-actions">
-                    <h4>Order Actions</h4>
-                    <div className="action-buttons">
-                      <div className="status-section">
-                        <h5>Update Order Status</h5>
-                        <div className="status-buttons">
-                          <button 
-                            className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
-                            onClick={() => updateOrderStatus(order.id, 'Pending')}
-                          >
-                            Pending
-                          </button>
-                          <button 
-                            className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
-                            onClick={() => updateOrderStatus(order.id, 'Processing')}
-                          >
-                            Processing
-                          </button>
-                          <button 
-                            className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
-                            onClick={() => updateOrderStatus(order.id, 'Shipped')}
-                          >
-                            Shipped
-                          </button>
-                          <button 
-                            className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
-                            onClick={() => updateOrderStatus(order.id, 'Completed')}
-                          >
-                            Completed
-                          </button>
-                          <button 
-                            className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
-                            onClick={() => updateOrderStatus(order.id, 'Cancelled')}
-                          >
-                            Cancelled
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="inventory-section">
-                        <h5>Inventory Management</h5>
-                        <button 
-                          className={`inventory-update-btn ${inventoryUpdateStatus[order.id] || ''}`}
-                          onClick={() => updateInventoryForOrder(order.id)}
-                          disabled={inventoryUpdateStatus[order.id] === 'updating'}
-                        >
-                          {inventoryUpdateStatus[order.id] === 'updating' ? 'Updating...' : 
-                           inventoryUpdateStatus[order.id] === 'success' ? 'Updated!' : 
-                           inventoryUpdateStatus[order.id] === 'error' ? 'Failed - Try Again' : 
-                           'Update Inventory'}
-                        </button>
-                        <p className="inventory-note">
-                          This will reduce stock levels for all items in this order.
-                        </p>
-                      </div>
+          <table className="orders-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Status</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredOrders.map(order => (
+                <React.Fragment key={order.id}>
+                  <tr onClick={() => toggleOrderDetails(order.id)}>
+                    <td data-label="Order">
+                      <span className="order-id">#{order.id}</span>
+                    </td>
+                    <td data-label="Date">
+                      <span className="order-date">{formatDate(order.date)}</span>
+                    </td>
+                    <td data-label="Customer">
+                      <span className="customer-name">
+                        {order.customer.name || 'No name provided'}
+                      </span>
+                      <span className="customer-email">{order.customer.email}</span>
+                    </td>
+                    <td data-label="Status">
+                      <span className={`order-status ${getStatusClass(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td data-label="Total">
+                      <span className="order-total">${order.total.toFixed(2)}</span>
+                    </td>
+                    <td data-label="Actions">
+                      <button 
+                        className="view-details-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOrderDetails(order.id);
+                        }}
+                      >
+                        {activeOrder === order.id ? 'Hide Details' : 'View Details'}
+                      </button>
+                    </td>
+                  </tr>
+                  {activeOrder === order.id && (
+                    <tr className="details-row">
+                      <td colSpan="6" style={{ padding: 0, border: 'none' }}>
+                        <div className="order-details">
+                          <div className="order-details-header">
+                            <h3>Order Details #{order.id}</h3>
+                            <button 
+                              className="close-details-btn"
+                              onClick={() => setActiveOrder(null)}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          
+                          <div className="order-items">
+                            <h4>Items</h4>
+                            <table className="items-table">
+                              <thead>
+                                <tr>
+                                  <th>Product</th>
+                                  <th>Price</th>
+                                  <th>Quantity</th>
+                                  <th>Total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {order.items.map(item => (
+                                  <tr key={item.id}>
+                                    <td data-label="Product">{item.name}</td>
+                                    <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
+                                    <td data-label="Quantity">{item.quantity}</td>
+                                    <td data-label="Total">${(item.price * item.quantity).toFixed(2)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          
+                          <div className="order-info-grid">
+                            <div className="customer-info">
+                              <h4>Customer Information</h4>
+                              <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
+                              <p><strong>Email:</strong> {order.customer.email}</p>
+                              {order.customer.phone && order.customer.phone !== 'Not provided' && (
+                                <p><strong>Phone:</strong> {order.customer.phone}</p>
+                              )}
+                            </div>
+                            
+                            {(order.customer.address || order.customer.city || order.customer.postalCode) && (
+                              <div className="shipping-info">
+                                <h4>Shipping Address</h4>
+                                {order.customer.address && <p>{order.customer.address}</p>}
+                                {(order.customer.city || order.customer.postalCode) && (
+                                  <p>
+                                    {order.customer.city}{order.customer.city && order.customer.postalCode ? ', ' : ''}
+                                    {order.customer.postalCode}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+                            
+                            {order.notes && (
+                              <div className="order-notes">
+                                <h4>Order Notes</h4>
+                                <p>{order.notes}</p>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="order-actions">
+                            <h4>Order Actions</h4>
+                            <div className="action-buttons">
+                              <div className="status-section">
+                                <h5>Update Order Status</h5>
+                                <div className="status-buttons">
+                                  <button 
+                                    className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, 'Pending')}
+                                  >
+                                    Pending
+                                  </button>
+                                  <button 
+                                    className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, 'Processing')}
+                                  >
+                                    Processing
+                                  </button>
+                                  <button 
+                                    className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, 'Shipped')}
+                                  >
+                                    Shipped
+                                  </button>
+                                  <button 
+                                    className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, 'Completed')}
+                                  >
+                                    Completed
+                                  </button>
+                                  <button 
+                                    className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
+                                    onClick={() => updateOrderStatus(order.id, 'Cancelled')}
+                                  >
+                                    Cancelled
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="inventory-section">
+                                <h5>Inventory Management</h5>
+                                <button 
+                                  className={`inventory-update-btn ${inventoryUpdateStatus[order.id] || ''}`}
+                                  onClick={() => updateInventoryForOrder(order.id)}
+                                  disabled={inventoryUpdateStatus[order.id] === 'updating'}
+                                >
+                                  {inventoryUpdateStatus[order.id] === 'updating' ? 'Updating...' : 
+                                   inventoryUpdateStatus[order.id] === 'success' ? 'Updated!' : 
+                                   inventoryUpdateStatus[order.id] === 'error' ? 'Failed - Try Again' : 
+                                   'Update Inventory'}
+                                </button>
+                                <p className="inventory-note">
+                                  This will reduce stock levels for all items in this order.
+                                </p>
+                              </div>
 
-                      <div className="invoice-section">
-                        <h5>Invoice Options</h5>
-                        <div className="invoice-buttons">
-                          <button 
-                            className="view-invoice-btn"
-                            onClick={() => viewInvoice(order.id)}
-                          >
-                            View & Print Invoice
-                          </button>
-                          <button 
-                            className="email-invoice-btn"
-                            onClick={() => sendInvoiceEmail(order)}
-                            disabled={!order.customer.email || order.customer.email === 'Not provided'}
-                          >
-                            Email Invoice
-                          </button>
+                              <div className="invoice-section">
+                                <h5>Invoice Options</h5>
+                                <div className="invoice-buttons">
+                                  <button 
+                                    className="view-invoice-btn"
+                                    onClick={() => viewInvoice(order.id)}
+                                  >
+                                    View & Print Invoice
+                                  </button>
+                                  <button 
+                                    className="email-invoice-btn"
+                                    onClick={() => sendInvoiceEmail(order)}
+                                    disabled={!order.customer.email || order.customer.email === 'Not provided'}
+                                  >
+                                    Email Invoice
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       
@@ -426,10 +465,16 @@ const AdminOrders = () => {
       
       <div className="admin-actions">
         <button 
+          onClick={() => navigate('/admin')} 
+          className="back-to-admin"
+        >
+          Back to Admin Dashboard
+        </button>
+        <button 
           onClick={() => navigate('/inventory')} 
           className="back-to-inventory"
         >
-          Back to Inventory
+          Go to Inventory
         </button>
       </div>
     </div>
