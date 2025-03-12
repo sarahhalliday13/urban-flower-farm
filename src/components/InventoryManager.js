@@ -201,10 +201,8 @@ const InventoryManager = () => {
       filtered = filtered.filter(plant => {
         if (!plant.inventory?.status) return false;
         
-        const statusLower = plant.inventory.status.toLowerCase();
-        const filterValue = filter.replace(/-/g, ' ');
-        
-        return statusLower.includes(filterValue);
+        // Exact match on status
+        return plant.inventory.status === filter;
       });
     }
     
@@ -247,11 +245,10 @@ const InventoryManager = () => {
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="all">All Plants</option>
-            <option value="in-stock">In Stock</option>
-            <option value="low-stock">Low Stock</option>
-            <option value="out-of-stock">Out of Stock</option>
-            <option value="coming-soon">Coming Soon</option>
-            <option value="pre-order">Pre-order</option>
+            <option value="In Stock">In Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+            <option value="Coming Soon">Coming Soon</option>
+            <option value="Pre-order">Pre-order</option>
           </select>
         </div>
         
@@ -313,10 +310,10 @@ const InventoryManager = () => {
                           value={editValues[plant.id].status}
                           onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
                         >
-                          <option value="in-stock">In Stock</option>
-                          <option value="out-of-stock">Out of Stock</option>
-                          <option value="coming-soon">Coming Soon</option>
-                          <option value="pre-order">Pre-order</option>
+                          <option value="In Stock">In Stock</option>
+                          <option value="Out of Stock">Out of Stock</option>
+                          <option value="Coming Soon">Coming Soon</option>
+                          <option value="Pre-order">Pre-order</option>
                         </select>
                       </td>
                       <td data-label="Restock Date">
