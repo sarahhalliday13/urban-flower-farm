@@ -1,5 +1,6 @@
 // Firebase configuration and utility functions
 import { initializeApp } from "firebase/app";
+// eslint-disable-next-line no-unused-vars
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 
 // Your web app's Firebase configuration

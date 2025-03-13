@@ -225,7 +225,7 @@ const SheetMigration = () => {
       
       setStatus({ 
         loading: false, 
-        message: `Successfully imported ${transformedPlantsData.length} plants to Firebase! (${skippedCount} blank/invalid plants were skipped)`,
+        message: `Successfully imported ${result.plantsCount} plants and ${result.inventoryCount} inventory items to Firebase! (${skippedCount} blank/invalid plants were skipped)`,
         success: true
       });
     } catch (error) {

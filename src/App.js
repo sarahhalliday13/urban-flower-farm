@@ -17,12 +17,12 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ApiDebugger from './components/ApiDebugger';
 import FirebaseMigration from './components/FirebaseMigration';
 import FirebaseTest from './components/FirebaseTest';
-import SheetMigration from './components/SheetMigration';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './cart-styles.css';
 
 function Navigation({ isMenuOpen, setIsMenuOpen }) {
+  // eslint-disable-next-line no-unused-vars
   const { getItemCount, cartItems } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -121,7 +121,9 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [isFirstVisit, setIsFirstVisit] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [showDebugger, setShowDebugger] = useState(true); // Set to true to show the debugger
   
   useEffect(() => {
@@ -159,7 +161,6 @@ function App() {
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
               <Route path="/firebase-test" element={<FirebaseTest />} />
-              <Route path="/sheet-migration" element={<SheetMigration />} />
               <Route 
                 path="/admin" 
                 element={

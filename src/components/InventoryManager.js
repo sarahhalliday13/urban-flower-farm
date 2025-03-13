@@ -39,7 +39,8 @@ const InventoryManager = () => {
     bloomSeason: '',
     attributes: '',
     hardinessZone: '',
-    spacing: ''
+    spacing: '',
+    featured: false
   });
   const [plantSaveStatus, setPlantSaveStatus] = useState('');
   const [plantSearchTerm, setPlantSearchTerm] = useState('');
@@ -60,6 +61,13 @@ const InventoryManager = () => {
     message: '',
     plantsCount: 0
   });
+
+  // CSV Migration tab states
+  const [plantsFileInput, setPlantsFileInput] = useState(null);
+  const [inventoryFileInput, setInventoryFileInput] = useState(null);
+  const [plantsCsvUrl, setPlantsCsvUrl] = useState('');
+  const [inventoryCsvUrl, setInventoryCsvUrl] = useState('');
+  const [csvStatus, setCsvStatus] = useState({ loading: false, message: '' });
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
@@ -128,6 +136,10 @@ const InventoryManager = () => {
       clearTimeout(loadingTimerRef.current);
       loadingTimerRef.current = null;
     }
+    
+    setLoading(true);
+    setLoadingMessage('Loading inventory data...');
+    console.log('DEBUG: Starting loadPlants, forceRefresh =', true);
     
     // Try to load from cache first
     try {
@@ -301,7 +313,7 @@ const InventoryManager = () => {
       console.log('DEBUG: Error occurred, falling back to sample data');
       loadSampleData();
     }
-  }, [forceLoadData, loadSampleData]);
+  }, [loadSampleData, forceLoadData]);
   
   // Subscribe to real-time inventory updates
   useEffect(() => {
@@ -614,7 +626,8 @@ const InventoryManager = () => {
       bloomSeason: '',
       attributes: '',
       hardinessZone: '',
-      spacing: ''
+      spacing: '',
+      featured: false
     });
     setPlantEditMode(false);
     setCurrentPlant(null);
@@ -635,7 +648,8 @@ const InventoryManager = () => {
       bloomSeason: plant.bloomSeason || '',
       attributes: plant.attributes || '',
       hardinessZone: plant.hardinessZone || '',
-      spacing: plant.spacing || ''
+      spacing: plant.spacing || '',
+      featured: plant.featured === true || plant.featured === 'true'
     });
     setPlantEditMode(true);
     setActiveTab('addPlant'); // Switch to the add/edit plant tab
@@ -691,6 +705,233 @@ const InventoryManager = () => {
         error: error.message,
         message: `Failed to import plants: ${error.message}`,
         plantsCount: 0
+      });
+    }
+  };
+
+  // Helper function to parse CSV data
+  const parseCSV = (csvText) => {
+    // Split by lines and remove empty lines
+    const lines = csvText.split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      throw new Error('CSV file is empty');
+    }
+    
+    // Parse headers
+    const headers = lines[0].split(',').map(header => 
+      header.trim().toLowerCase().replace(/["']/g, '')
+    );
+    
+    // Parse data rows
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      // Handle quoted fields correctly
+      let line = lines[i];
+      const values = [];
+      let inQuotes = false;
+      let currentValue = '';
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        
+        if (char === '"' && (j === 0 || line[j-1] !== '\\')) {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentValue.trim().replace(/^"|"$/g, ''));
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      
+      values.push(currentValue.trim().replace(/^"|"$/g, ''));
+      
+      // Create object from headers and values
+      if (values.length === headers.length) {
+        const obj = {};
+        headers.forEach((header, index) => {
+          // Skip empty headers
+          if (header) {
+            obj[header] = values[index];
+          }
+        });
+        data.push(obj);
+      }
+    }
+    
+    return data;
+  };
+  
+  const fetchCsvFromUrl = async (url) => {
+    try {
+      setCsvStatus({ loading: true, message: `Fetching CSV from URL: ${url}...` });
+      
+      // Using a proxy to avoid CORS issues
+      const corsProxy = 'https://corsproxy.io/?';
+      const response = await fetch(`${corsProxy}${encodeURIComponent(url)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch CSV data: ${response.status}`);
+      }
+      
+      const csvText = await response.text();
+      return parseCSV(csvText);
+    } catch (error) {
+      console.error('Error fetching from CSV URL:', error);
+      throw error;
+    }
+  };
+  
+  const readFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        try {
+          const csvText = event.target.result;
+          const parsedData = parseCSV(csvText);
+          resolve(parsedData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      
+      reader.onerror = () => reject(new Error('Error reading file'));
+      
+      reader.readAsText(file);
+    });
+  };
+  
+  const handleCsvMigration = async (e) => {
+    e.preventDefault();
+    
+    // Check that we have at least one plants data source
+    if (!plantsFileInput && !plantsCsvUrl) {
+      setCsvStatus({ 
+        loading: false, 
+        message: 'Please either upload a plants CSV file or provide a Google Sheets CSV URL' 
+      });
+      return;
+    }
+    
+    try {
+      setCsvStatus({ loading: true, message: 'Starting migration...' });
+      
+      // Get plants data
+      let plantsData;
+      if (plantsFileInput) {
+        setCsvStatus({ loading: true, message: 'Reading plants CSV file...' });
+        plantsData = await readFile(plantsFileInput);
+      } else if (plantsCsvUrl) {
+        plantsData = await fetchCsvFromUrl(plantsCsvUrl);
+      }
+      
+      if (!plantsData || plantsData.length === 0) {
+        throw new Error('Invalid plants data format or empty CSV');
+      }
+      
+      // Filter out empty or invalid plant records
+      const validPlants = plantsData.filter(plant => {
+        // Check for required fields - at minimum we need id and name
+        if (!plant.id || !plant.name) {
+          return false;
+        }
+        
+        // Additional validation can be added here
+        return true;
+      });
+      
+      const skippedCount = plantsData.length - validPlants.length;
+      
+      setCsvStatus({ 
+        loading: true, 
+        message: `Found ${plantsData.length} plants in the CSV. ${skippedCount} blank/invalid plants will be skipped. Processing ${validPlants.length} valid plants...` 
+      });
+      
+      // Transform plant data to match Firebase expected structure
+      const transformedPlantsData = validPlants.map(plant => ({
+        id: parseInt(plant.id) || 0,
+        name: plant.name || '',
+        scientificName: plant.latinname || plant.scientificname || '',
+        commonName: plant.commonname || '',
+        price: plant.price || 0,
+        featured: plant.featured === 'true' || plant.featured === true,
+        description: plant.description || '',
+        bloomSeason: plant.bloomseason || '',
+        colour: plant.colour || '',
+        light: plant.light || '',
+        spacing: plant.spacing || '',
+        attributes: plant.attributes || '',
+        hardinessZone: plant.hardinesszone || '',
+        height: plant.height || '',
+        mainImage: plant.mainimage || '',
+        additionalImages: plant.additionalimages || ''
+      }));
+      
+      // Get inventory data (if available)
+      let inventoryData = [];
+      if (inventoryFileInput) {
+        setCsvStatus({ loading: true, message: 'Reading inventory CSV file...' });
+        inventoryData = await readFile(inventoryFileInput);
+        
+        // Filter inventory data to match only the valid plants we're importing
+        const validPlantIds = transformedPlantsData.map(p => p.id.toString());
+        inventoryData = inventoryData.filter(item => 
+          item.plant_id && validPlantIds.includes(item.plant_id.toString())
+        );
+      } else if (inventoryCsvUrl) {
+        try {
+          inventoryData = await fetchCsvFromUrl(inventoryCsvUrl);
+          
+          // Filter inventory data to match only the valid plants we're importing
+          const validPlantIds = transformedPlantsData.map(p => p.id.toString());
+          inventoryData = inventoryData.filter(item => 
+            item.plant_id && validPlantIds.includes(item.plant_id.toString())
+          );
+        } catch (error) {
+          console.error('Error fetching inventory data:', error);
+          setCsvStatus({ 
+            loading: true, 
+            message: `Warning: Could not fetch inventory data: ${error.message}. Continuing with plants only...` 
+          });
+          inventoryData = [];
+        }
+      }
+      
+      if (inventoryData.length > 0) {
+        setCsvStatus({ 
+          loading: true, 
+          message: `Found ${validPlants.length} valid plants and ${inventoryData.length} inventory records. Importing to Firebase...` 
+        });
+      } else {
+        // If no inventory data provided, create default inventory records
+        inventoryData = transformedPlantsData.map(plant => ({
+          plant_id: plant.id,
+          current_stock: 0,
+          status: 'out_of_stock',
+          restock_date: '',
+          notes: 'Auto-generated during migration'
+        }));
+      }
+      
+      // Send the data to Firebase
+      const result = await importPlantsFromSheets(transformedPlantsData, inventoryData);
+      
+      setCsvStatus({ 
+        loading: false, 
+        message: `Successfully imported ${result.plantsCount} plants and ${result.inventoryCount} inventory items to Firebase! (${skippedCount} blank/invalid plants were skipped)`,
+        success: true
+      });
+      
+      // Force reload of inventory data
+      loadPlants(true);
+    } catch (error) {
+      console.error('Migration error:', error);
+      setCsvStatus({ 
+        loading: false, 
+        message: `Error: ${error.message}`,
+        error: true
       });
     }
   };
@@ -767,10 +1008,10 @@ const InventoryManager = () => {
           Add New Flower
         </button>
         <button 
-          className={`tab-button ${activeTab === 'bulkUpload' ? 'active' : ''}`}
-          onClick={() => setActiveTab('bulkUpload')}
+          className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
+          onClick={() => setActiveTab('csvMigration')}
         >
-          Sample Data
+          Import Data
         </button>
       </div>
       
@@ -1203,51 +1444,201 @@ const InventoryManager = () => {
         </div>
       )}
       
-      {/* New Bulk Upload Tab */}
-      {activeTab === 'bulkUpload' && (
+      {/* New CSV Migration Tab */}
+      {activeTab === 'csvMigration' && (
         <div className="tab-content">
-          <h2>Bulk Upload from Sample Data</h2>
+          <h2>Data Import Options</h2>
           
-          <div className="bulk-upload-section">
-            <p>
-              Import sample plant data to Firebase. This is useful for quickly populating your 
-              database with a predefined set of plants.
-            </p>
-            <p className="note">
-              <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
-              they will be updated with the sample data.
-            </p>
-            
-            <button 
-              className={`migration-button ${migrationStatus?.loading ? 'loading' : ''}`}
-              onClick={handleMigration}
-              disabled={migrationStatus?.loading}
-            >
-              {migrationStatus?.loading ? 'Importing...' : 'Import Sample Plants'}
-            </button>
-            
-            {migrationStatus?.success && (
-              <div className="success-message">
-                <p>{migrationStatus.message}</p>
+          <div className="migration-tabs">
+            <div className="csv-migration">
+              <div className="migration-section">
+                <h3>CSV Data Import</h3>
+                <p>
+                  Import plants and inventory data from CSV files. This is useful for migrating data
+                  from spreadsheets to your Firebase database.
+                </p>
+                
+                <div className="instructions">
+                  <h4>Instructions</h4>
+                  <ol>
+                    <li>
+                      You have two options for importing your data:
+                      <ul>
+                        <li><strong>Option 1:</strong> Upload CSV files directly from your computer</li>
+                        <li><strong>Option 2:</strong> Provide URLs to CSV files published from Google Sheets</li>
+                      </ul>
+                    </li>
+                    <li>
+                      If using Google Sheets URLs:
+                      <ol>
+                        <li>Publish your sheets to the web (File &gt; Share &gt; Publish to web)</li>
+                        <li>Select "Comma-separated values (.csv)" format</li>
+                        <li>Copy the published URLs and paste them below</li>
+                      </ol>
+                    </li>
+                  </ol>
+                </div>
+                
+                <form onSubmit={handleCsvMigration} className="migration-form">
+                  <h4>Plants Data (Required)</h4>
+                  
+                  <div className="form-section">
+                    <h5>Option 1: Upload Plants CSV File</h5>
+                    <div className="form-field">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => setPlantsFileInput(e.target.files[0])}
+                        className="file-input"
+                      />
+                      <p className="input-help">
+                        Select a CSV file from your computer
+                      </p>
+                    </div>
+                    
+                    <h5>OR Option 2: Google Sheets CSV URL</h5>
+                    <div className="form-field">
+                      <input
+                        type="text"
+                        value={plantsCsvUrl}
+                        onChange={(e) => setPlantsCsvUrl(e.target.value)}
+                        className="text-input"
+                        placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
+                      />
+                      <p className="input-help">
+                        Paste the URL from Google Sheets "Publish to web" (CSV format)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <h4>Inventory Data (Optional)</h4>
+                  
+                  <div className="form-section">
+                    <h5>Option 1: Upload Inventory CSV File</h5>
+                    <div className="form-field">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => setInventoryFileInput(e.target.files[0])}
+                        className="file-input"
+                      />
+                      <p className="input-help">
+                        Select a CSV file from your computer
+                      </p>
+                    </div>
+                    
+                    <h5>OR Option 2: Google Sheets CSV URL</h5>
+                    <div className="form-field">
+                      <input
+                        type="text"
+                        value={inventoryCsvUrl}
+                        onChange={(e) => setInventoryCsvUrl(e.target.value)}
+                        className="text-input"
+                        placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
+                      />
+                      <p className="input-help">
+                        Paste the URL from Google Sheets "Publish to web" (CSV format)
+                      </p>
+                    </div>
+                    
+                    <p className="note">
+                      <strong>Note:</strong> If inventory data is not provided, default inventory records will be created automatically with 0 stock.
+                    </p>
+                  </div>
+                  
+                  <button 
+                    type="submit"
+                    disabled={csvStatus.loading || (!plantsFileInput && !plantsCsvUrl)}
+                    className={`migration-button ${csvStatus.loading ? 'loading' : ''}`}
+                  >
+                    {csvStatus.loading ? 'Migrating...' : 'Start CSV Migration'}
+                  </button>
+                </form>
+                
+                {csvStatus.message && (
+                  <div className={csvStatus.error ? "error-message" : csvStatus.success ? "success-message" : "info-message"}>
+                    <p>{csvStatus.message}</p>
+                  </div>
+                )}
+                
+                <div className="csv-format-info">
+                  <h4>Data Format Requirements</h4>
+                  
+                  <div className="format-section">
+                    <h5>Plants CSV Format</h5>
+                    <p>Your Plants CSV should have the following columns:</p>
+                    <div className="columns-container">
+                      <ul className="format-columns">
+                        <li><strong>id</strong> - Unique identifier (number)</li>
+                        <li><strong>name</strong> - Plant name</li>
+                        <li><strong>latinName</strong> - Latin/scientific name</li>
+                        <li><strong>commonName</strong> - Common name</li>
+                        <li><strong>price</strong> - Price</li>
+                        <li><strong>featured</strong> - Featured (true/false)</li>
+                        <li><strong>description</strong> - Description</li>
+                        <li><strong>bloomSeason</strong> - Bloom season</li>
+                      </ul>
+                      <ul className="format-columns">
+                        <li><strong>colour</strong> - Color/colour</li>
+                        <li><strong>light</strong> - Light requirements</li>
+                        <li><strong>spacing</strong> - Spacing requirements</li>
+                        <li><strong>attributes</strong> - Attributes</li>
+                        <li><strong>hardinessZone</strong> - Hardiness zone</li>
+                        <li><strong>height</strong> - Height</li>
+                        <li><strong>mainImage</strong> - URL to main image</li>
+                        <li><strong>additionalImages</strong> - Additional image URLs</li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div className="format-section">
+                    <h5>Inventory CSV Format</h5>
+                    <p>Your Inventory CSV should have the following columns:</p>
+                    <ul>
+                      <li><strong>plant_id</strong> - ID matching the plant's ID</li>
+                      <li><strong>current_stock</strong> - Current stock level</li>
+                      <li><strong>status</strong> - Status (e.g., in_stock, out_of_stock, low_stock)</li>
+                      <li><strong>restock_date</strong> - Expected restock date</li>
+                      <li><strong>notes</strong> - Additional notes</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
             
-            {migrationStatus?.error && (
-              <div className="error-message">
-                <p>{migrationStatus.message}</p>
+            <div className="sample-data-section">
+              <div className="migration-option">
+                <h3>Sample Data Import</h3>
+                <p>
+                  Import sample plant data to Firebase. This is useful for quickly populating
+                  your database with a predefined set of plants for testing.
+                </p>
+                <p className="note">
+                  <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
+                  they will be updated with the sample data.
+                </p>
+                
+                <button 
+                  className={`migration-button ${migrationStatus?.loading ? 'loading' : ''}`}
+                  onClick={handleMigration}
+                  disabled={migrationStatus?.loading}
+                >
+                  {migrationStatus?.loading ? 'Importing...' : 'Import Sample Plants'}
+                </button>
+                
+                {migrationStatus?.success && (
+                  <div className="success-message">
+                    <p>{migrationStatus.message}</p>
+                  </div>
+                )}
+                
+                {migrationStatus?.error && (
+                  <div className="error-message">
+                    <p>{migrationStatus.message}</p>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          
-          <div className="migration-help">
-            <h3>How Sample Data Import Works</h3>
-            <ol>
-              <li>The sample data consists of 10 pre-defined plants with images and details</li>
-              <li>When you click "Import Sample Plants", the data will be loaded from the public directory</li>
-              <li>The plants will be imported into your Firebase database</li>
-              <li>Default inventory data will be created for each plant</li>
-              <li>After import completes, verify your plants in the Inventory tab</li>
-            </ol>
+            </div>
           </div>
         </div>
       )}

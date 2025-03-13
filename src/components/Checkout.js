@@ -16,8 +16,11 @@ const Checkout = () => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [orderComplete, setOrderComplete] = useState(false);
+  // eslint-disable-next-line no-unused-vars
   const [orderId, setOrderId] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
 
   useEffect(() => {
