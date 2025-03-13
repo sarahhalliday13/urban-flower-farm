@@ -255,4 +255,247 @@
   .tab-content {
     padding: 15px;
   }
+}
+
+.image-migration-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.image-migration-container h1 {
+  color: #3c4043;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 1rem;
+}
+
+.migration-info {
+  margin-bottom: 2rem;
+}
+
+.migration-info p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #5f6368;
+  margin-bottom: 1.5rem;
+}
+
+.warning-box {
+  background-color: #fef8e8;
+  border: 1px solid #fdde81;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-box h3 {
+  color: #d97706;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.warning-box ul {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.warning-box li {
+  margin-bottom: 0.5rem;
+  color: #5f6368;
+}
+
+.migration-controls {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.migration-button {
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.migration-button:hover {
+  background-color: #3367d6;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.migration-button:disabled {
+  background-color: #9aa0a6;
+  cursor: not-allowed;
+}
+
+.back-button {
+  background-color: #fff;
+  color: #4285f4;
+  border: 1px solid #4285f4;
+  border-radius: 4px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.back-button:hover {
+  background-color: #f8f9fa;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.migration-progress {
+  margin-bottom: 2rem;
+}
+
+.progress-bar-container {
+  height: 20px;
+  background-color: #f1f3f4;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color: #34a853;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3c4043;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.8);
+}
+
+.migration-stats {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.stat {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #5f6368;
+}
+
+.stat-value {
+  font-weight: 600;
+}
+
+.stat-value.success {
+  color: #34a853;
+}
+
+.stat-value.error {
+  color: #ea4335;
+}
+
+.migration-log {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 1rem;
+  background-color: #f8f9fa;
+}
+
+.migration-log h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #3c4043;
+  font-size: 1.1rem;
+}
+
+.log-container {
+  max-height: 300px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 0.5rem;
+  background-color: #fff;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.log-empty {
+  color: #9aa0a6;
+  text-align: center;
+  font-style: italic;
+}
+
+.log-message {
+  margin-bottom: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 3px;
+}
+
+.log-message:hover {
+  background-color: #f1f3f4;
+}
+
+.log-message.error {
+  background-color: #fee8e7;
+  border-left: 3px solid #ea4335;
+}
+
+.log-time {
+  color: #5f6368;
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.log-text {
+  color: #3c4043;
+}
+
+.log-message.error .log-text {
+  color: #c5221f;
+}
+
+.debug-info {
+  background-color: #f1f7ff;
+  border: 1px solid #c2d7ff;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  font-family: monospace;
+}
+
+.debug-info h3 {
+  color: #4285f4;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.debug-info p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: #3c4043;
 } 

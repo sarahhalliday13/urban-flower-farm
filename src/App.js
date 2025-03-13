@@ -1,29 +1,51 @@
 import './App.css';
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import NewsletterModal from './components/NewsletterModal';
 import About from './components/About';
 import Shop from './components/Shop';
 import CartModal from './components/CartModal';
 import PlantDetails from './components/PlantDetails';
 import Home from './components/Home';
-import InventoryManager from './components/InventoryManager';
 import Login from './components/Login';
 import Checkout from './components/Checkout';
 import Orders from './components/Orders';
-import AdminOrders from './components/AdminOrders';
-import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ApiDebugger from './components/ApiDebugger';
 import FirebaseMigration from './components/FirebaseMigration';
 import FirebaseTest from './components/FirebaseTest';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AdminProvider } from './context/AdminContext';
 import './cart-styles.css';
 
-function Navigation({ isMenuOpen, setIsMenuOpen }) {
-  // eslint-disable-next-line no-unused-vars
-  const { getItemCount, cartItems } = useCart();
+// Lazy load heavy admin components
+const InventoryManager = lazy(() => import('./components/InventoryManager'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const AdminOrders = lazy(() => import('./components/AdminOrders'));
+
+// Custom NavigationLink component for admin links
+function AdminNavLink({ to, children, currentPath, onClick }) {
+  // Dashboard link should be active only if the path is exactly '/admin'
+  // Other links should match their exact paths
+  const isActive = to === '/admin' 
+    ? currentPath === '/admin'
+    : currentPath === to;
+    
+  return (
+    <Link 
+      to={to} 
+      onClick={onClick}
+      className={`admin-link ${isActive ? 'active' : ''}`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+// Base Navigation component without router
+function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
+  const { getItemCount } = useCart();
   const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [, forceUpdate] = useState();
@@ -62,9 +84,6 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
     logout();
   };
 
-  // Determine the current page for active tab highlighting
-  const currentPath = window.location.pathname;
-
   return (
     <nav className="navbar">
       <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -98,27 +117,27 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
             <div className="nav-divider"></div>
             <div className="nav-section admin-links">
               <span className="section-label">Admin</span>
-              <Link 
+              <AdminNavLink 
                 to="/admin" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`admin-link ${currentPath === '/admin' ? 'active' : ''}`}
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
-              </Link>
-              <Link 
+              </AdminNavLink>
+              <AdminNavLink 
                 to="/inventory" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`admin-link ${currentPath === '/inventory' ? 'active' : ''}`}
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
               >
                 Inventory
-              </Link>
-              <Link 
+              </AdminNavLink>
+              <AdminNavLink 
                 to="/admin/orders" 
-                onClick={() => setIsMenuOpen(false)} 
-                className={`admin-link ${currentPath === '/admin/orders' ? 'active' : ''}`}
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
               >
                 Orders
-              </Link>
+              </AdminNavLink>
               <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
             </div>
           </>
@@ -138,6 +157,20 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
     </nav>
   );
 }
+
+// Navigation component that uses the router - ensure it's wrapped in the Router component 
+const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
+  const location = useLocation();
+  return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
+};
+
+// Loading component for Suspense fallback
+const Loading = () => (
+  <div className="admin-loading">
+    <div className="admin-loading-spinner"></div>
+    <p>Loading admin interface...</p>
+  </div>
+);
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -166,66 +199,74 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <Router>
-          <div className="App">
-            <header className="App-header">
-              <Navigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-            </header>
-            
-            <Routes>
-              <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/shop" element={<Shop />} />
-              <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
-              <Route path="/plant/:id" element={<PlantDetails />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/firebase-test" element={<FirebaseTest />} />
-              <Route 
-                path="/admin" 
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/inventory" 
-                element={
-                  <ProtectedRoute>
-                    <InventoryManager />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/orders" 
-                element={
-                  <ProtectedRoute>
-                    <AdminOrders />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/firebase-migration" 
-                element={
-                  <ProtectedRoute>
-                    <FirebaseMigration />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
+        <AdminProvider>
+          <Router>
+            <div className="App">
+              <header className="App-header">
+                <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+              </header>
+              
+              <Routes>
+                <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/shop" element={<Shop />} />
+                <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
+                <Route path="/plant/:id" element={<PlantDetails />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/firebase-test" element={<FirebaseTest />} />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<Loading />}>
+                        <AdminDashboard />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/inventory" 
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<Loading />}>
+                        <InventoryManager />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/orders" 
+                  element={
+                    <ProtectedRoute>
+                      <Suspense fallback={<Loading />}>
+                        <AdminOrders />
+                      </Suspense>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/firebase-migration" 
+                  element={
+                    <ProtectedRoute>
+                      <FirebaseMigration />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Routes>
 
-            <footer>
-              <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
-            </footer>
+              <footer>
+                <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
+              </footer>
 
-            <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
-            
-            {/* API Debugger component */}
-            {showDebugger && <ApiDebugger />}
-          </div>
-        </Router>
+              <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
+              
+              {/* API Debugger component */}
+              {showDebugger && <ApiDebugger />}
+            </div>
+          </Router>
+        </AdminProvider>
       </CartProvider>
     </AuthProvider>
   );

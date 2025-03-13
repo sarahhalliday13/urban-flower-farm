@@ -28,6 +28,10 @@ function PlantDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Add image loading state
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const placeholderImage = '/images/placeholder.jpg';
+
   // Fetch plants from Firebase with fallbacks
   useEffect(() => {
     const loadPlants = async () => {
@@ -85,7 +89,72 @@ function PlantDetails() {
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < plantIds.length - 1;
 
+  // Handle different image field names from spreadsheet and filter out any empty/null images
+  // Create a complete array of valid images
+  const getValidImages = () => {
+    if (!plant) return [placeholderImage];
+    
+    // Start with the main image if it exists
+    let allImages = [];
+    
+    // Add main image if it exists and isn't empty
+    if (plant.mainImage && typeof plant.mainImage === 'string' && plant.mainImage.trim() !== '') {
+      allImages.push(plant.mainImage);
+    }
+    
+    // Add additional images if they exist
+    if (plant.additionalImages && Array.isArray(plant.additionalImages)) {
+      // Filter out empty strings and null values
+      const validAdditionalImages = plant.additionalImages.filter(
+        img => img && typeof img === 'string' && img.trim() !== ''
+      );
+      allImages = [...allImages, ...validAdditionalImages];
+    } else if (plant.images && Array.isArray(plant.images)) {
+      // Use images array if it exists (alternative format)
+      const validImages = plant.images.filter(
+        img => img && typeof img === 'string' && img.trim() !== ''
+      );
+      allImages = validImages;
+    }
+    
+    // If no valid images were found, use placeholder
+    return allImages.length > 0 ? allImages : [placeholderImage];
+  };
+  
+  const images = getValidImages();
+
+  // Preload images
+  useEffect(() => {
+    if (!plant) return;
+    
+    const imageObjects = images.map(src => {
+      const img = new Image();
+      img.src = src;
+      img.onerror = () => console.log('Image failed to load:', src);
+      return img;
+    });
+    
+    // Mark images as loaded after a short delay, regardless of actual load status
+    // This ensures we don't wait forever for broken images
+    const timer = setTimeout(() => {
+      setImagesLoaded(true);
+    }, 1000);
+    
+    return () => {
+      clearTimeout(timer);
+      // Clean up image objects
+      imageObjects.forEach(img => {
+        img.onload = null;
+        img.onerror = null;
+      });
+    };
+  }, [plant, images]);
+
   const handleNavigation = (direction) => {
+    // Reset image loaded state when navigating
+    setImagesLoaded(false);
+    setSelectedImageIndex(0);
+    
     const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     if (newIndex >= 0 && newIndex < plantIds.length) {
       navigate(`/plant/${plantIds[newIndex]}`);
@@ -164,12 +233,6 @@ function PlantDetails() {
     localStorage.setItem(`plant-${id}-quantity`, '1');
   };
 
-  // Handle different image field names from spreadsheet
-  // Create a complete array of images by combining mainImage with additionalImages
-  const images = plant.mainImage 
-    ? [plant.mainImage, ...(plant.additionalImages || [])]
-    : plant.images || [];
-  
   // Log the images for debugging
   console.log('Plant images:', images);
   
@@ -180,14 +243,21 @@ function PlantDetails() {
         <div className="plant-details-container">
           <div className="plant-details-gallery">
             <div className="plant-details-image">
+              {/* Show default placeholder while custom loading state is active */}
               <img 
-                src={images[selectedImageIndex]} 
+                src={imagesLoaded ? images[selectedImageIndex] : placeholderImage} 
                 alt={plant.name}
                 onError={(e) => {
                   console.error('Image failed to load:', images[selectedImageIndex]);
-                  e.target.src = '/images/placeholder.jpg';
+                  e.target.src = placeholderImage;
                 }}
+                style={{ opacity: imagesLoaded ? 1 : 0.6 }}
               />
+              {!imagesLoaded && (
+                <div className="image-loading-overlay">
+                  <div className="loading-spinner"></div>
+                </div>
+              )}
             </div>
             {images.length > 1 && (
               <div className="image-thumbnails">
@@ -201,7 +271,7 @@ function PlantDetails() {
                       src={image} 
                       alt={`${plant.name} view ${index + 1}`}
                       onError={(e) => {
-                        e.target.src = '/images/placeholder.jpg';
+                        e.target.src = placeholderImage;
                       }}
                     />
                   </button>
