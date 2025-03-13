@@ -16,6 +16,8 @@ import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ApiDebugger from './components/ApiDebugger';
 import FirebaseMigration from './components/FirebaseMigration';
+import FirebaseTest from './components/FirebaseTest';
+import SheetMigration from './components/SheetMigration';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './cart-styles.css';
@@ -156,6 +158,8 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/firebase-test" element={<FirebaseTest />} />
+              <Route path="/sheet-migration" element={<SheetMigration />} />
               <Route 
                 path="/admin" 
                 element={
