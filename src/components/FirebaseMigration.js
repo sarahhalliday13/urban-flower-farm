@@ -4,6 +4,10 @@ import '../styles/FirebaseMigration.css';
 import { Link } from 'react-router-dom';
 
 const FirebaseMigration = () => {
+  // Tab state
+  const [activeTab, setActiveTab] = useState('sample'); // Default to sample data tab
+  
+  // Sample Data tab states
   const [migrationStatus, setMigrationStatus] = useState({
     loading: false,
     success: false,
@@ -12,7 +16,8 @@ const FirebaseMigration = () => {
     plantsCount: 0
   });
 
-  const handleMigration = async () => {
+  // Sample data import handler
+  const handleSampleDataImport = async () => {
     setMigrationStatus({
       loading: true,
       success: false,
@@ -40,16 +45,16 @@ const FirebaseMigration = () => {
         loading: false,
         success: true,
         error: null,
-        message: `Successfully imported ${plantsData.length} plants to Firebase`,
-        plantsCount: plantsData.length
+        message: `Successfully imported ${result.plantsCount} sample plants to Firebase!`,
+        plantsCount: result.plantsCount
       });
     } catch (error) {
-      console.error('Import error:', error);
+      console.error('Error importing sample data:', error);
       setMigrationStatus({
         loading: false,
         success: false,
-        error: error.message,
-        message: `Import failed: ${error.message}`,
+        error: error,
+        message: `Error importing sample data: ${error.message}`,
         plantsCount: 0
       });
     }
@@ -59,65 +64,107 @@ const FirebaseMigration = () => {
     <div className="firebase-migration">
       <h1>Plant Data Management</h1>
       
-      <div className="migration-options">
-        <div className="migration-option">
-          <h2>Sample Data Import</h2>
-          <p>
-            Import sample plant data to Firebase. This is useful for quickly populating
-            your database with a predefined set of plants.
-          </p>
-          <p className="note">
-            <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
-            they will be updated with the sample data.
-          </p>
-          
+      <div className="tab-container">
+        <div className="tabs">
           <button 
-            className={`migration-button ${migrationStatus.loading ? 'loading' : ''}`}
-            onClick={handleMigration}
-            disabled={migrationStatus.loading}
+            className={`tab-button ${activeTab === 'sample' ? 'active' : ''}`}
+            onClick={() => setActiveTab('sample')}
           >
-            {migrationStatus.loading ? 'Importing...' : 'Import Sample Plants'}
+            Sample Data
           </button>
-          
-          {migrationStatus.success && (
-            <div className="success-message">
-              <p>{migrationStatus.message}</p>
-            </div>
-          )}
-          
-          {migrationStatus.error && (
-            <div className="error-message">
-              <p>{migrationStatus.message}</p>
-            </div>
-          )}
+          <button 
+            className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            Plant Inventory
+          </button>
         </div>
         
-        <div className="migration-option">
-          <h2>UI-Based Plant Management</h2>
-          <p>
-            Use our user-friendly interface to add, edit, and manage individual plants.
-            This is ideal for making quick updates or adding new plants one at a time.
-          </p>
-          <p className="note">
-            <strong>Tip:</strong> The Plant Inventory page now includes both inventory management and plant details 
-            management in one place with a tabbed interface.
-          </p>
-          
-          <Link to="/inventory" className="migration-button">
-            Go to Plant Inventory
-          </Link>
-        </div>
+        {/* Sample Data Tab */}
+        {activeTab === 'sample' && (
+          <div className="tab-content">
+            <div className="migration-option full-width">
+              <h2>Sample Data Import</h2>
+              <p>
+                Import sample plant data to Firebase. This is useful for quickly populating
+                your database with a predefined set of plants for testing.
+              </p>
+              <p className="note">
+                <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
+                they will be updated with the sample data.
+              </p>
+              
+              <button 
+                className={`migration-button ${migrationStatus.loading ? 'loading' : ''}`}
+                onClick={handleSampleDataImport}
+                disabled={migrationStatus.loading}
+              >
+                {migrationStatus.loading ? 'Importing...' : 'Import Sample Plants'}
+              </button>
+              
+              {migrationStatus.success && (
+                <div className="success-message">
+                  <p>{migrationStatus.message}</p>
+                </div>
+              )}
+              
+              {migrationStatus.error && (
+                <div className="error-message">
+                  <p>{migrationStatus.message}</p>
+                </div>
+              )}
+
+              <div className="migration-help">
+                <h3>How Sample Data Import Works</h3>
+                <ol>
+                  <li>The sample data consists of pre-defined plants with images and details</li>
+                  <li>When you click "Import Sample Plants", the data will be loaded from the public directory</li>
+                  <li>The plants will be imported into your Firebase database</li>
+                  <li>Default inventory data will be created for each plant</li>
+                  <li>After import completes, verify your plants in the Inventory tab</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Plant Inventory Tab */}
+        {activeTab === 'inventory' && (
+          <div className="tab-content">
+            <div className="migration-option full-width">
+              <h2>UI-Based Plant Management</h2>
+              <p>
+                Use our user-friendly interface to add, edit, and manage individual plants.
+                This is ideal for making quick updates or adding new plants one at a time.
+              </p>
+              <p className="note">
+                <strong>Tip:</strong> The Plant Inventory page includes both inventory management and plant details 
+                management in one place with a tabbed interface.
+              </p>
+              
+              <div className="inventory-link-container">
+                <Link to="/inventory" className="inventory-link">
+                  Go to Plant Inventory Manager
+                </Link>
+              </div>
+              
+              <div className="migration-help">
+                <h3>Inventory Manager Features</h3>
+                <ul>
+                  <li><strong>Inventory Tab:</strong> View, search and filter all plants</li>
+                  <li><strong>Add New Flower Tab:</strong> Add new plants with detailed information</li>
+                  <li><strong>Edit Plants:</strong> Click on any plant to edit its details</li>
+                  <li><strong>Update Inventory:</strong> Manage stock levels, status, and restock dates</li>
+                  <li><strong>Image Management:</strong> Add and update plant images</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       
-      <div className="migration-help">
-        <h3>Which option should I use?</h3>
-        <ul>
-          <li><strong>Sample Data Import:</strong> Best for quickly populating your database with sample plants. Use when setting up a new system or for testing.</li>
-          <li><strong>UI-Based Management:</strong> Best for individual plant additions or edits. More user-friendly and includes image upload capabilities.</li>
-        </ul>
-        <p>
-          You can use both options interchangeably. Changes made in either system will be reflected in your plant catalog.
-        </p>
+      <div className="navigation-links">
+        <Link to="/" className="nav-link">Back to Home</Link>
       </div>
     </div>
   );
