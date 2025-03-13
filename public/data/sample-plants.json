@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "name": "Lavender",
+    "scientificName": "Lavandula angustifolia",
+    "price": "12.99",
+    "description": "Fragrant perennial with purple flowers, perfect for borders and containers.",
+    "mainImage": "https://images.unsplash.com/photo-1468327768560-75b778cbb551?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Purple",
+    "light": "Full Sun",
+    "height": "24-36 inches",
+    "bloomSeason": "Summer",
+    "attributes": "Drought-tolerant, Deer-resistant, Fragrant",
+    "hardinessZone": "5-9",
+    "spacing": "18-24 inches",
+    "inventory": {
+      "currentStock": 25,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": "Popular item, consider increasing stock"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Echinacea",
+    "scientificName": "Echinacea purpurea",
+    "price": "9.99",
+    "description": "Native perennial with daisy-like flowers that attract butterflies and bees.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Pink",
+    "light": "Full Sun to Part Shade",
+    "height": "24-36 inches",
+    "bloomSeason": "Summer to Fall",
+    "attributes": "Drought-tolerant, Attracts pollinators, Native",
+    "hardinessZone": "3-8",
+    "spacing": "18-24 inches",
+    "inventory": {
+      "currentStock": 15,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": ""
+    }
+  },
+  {
+    "id": 3,
+    "name": "Black-Eyed Susan",
+    "scientificName": "Rudbeckia hirta",
+    "price": "8.99",
+    "description": "Cheerful native perennial with golden-yellow flowers and dark centers.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Yellow",
+    "light": "Full Sun to Part Shade",
+    "height": "24-36 inches",
+    "bloomSeason": "Summer to Fall",
+    "attributes": "Drought-tolerant, Attracts pollinators, Native",
+    "hardinessZone": "3-9",
+    "spacing": "12-18 inches",
+    "inventory": {
+      "currentStock": 0,
+      "status": "Out of Stock",
+      "restockDate": "2024-06-15",
+      "notes": "New stock arriving mid-June"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Shasta Daisy",
+    "scientificName": "Leucanthemum x superbum",
+    "price": "7.99",
+    "description": "Classic perennial with white daisy flowers on tall stems.",
+    "mainImage": "https://images.unsplash.com/photo-1588695334618-56881f24cb61?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "White",
+    "light": "Full Sun",
+    "height": "24-36 inches",
+    "bloomSeason": "Summer",
+    "attributes": "Deer-resistant, Cut flower",
+    "hardinessZone": "5-9",
+    "spacing": "18-24 inches",
+    "inventory": {
+      "currentStock": 8,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": "Low stock"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Autumn Joy Sedum",
+    "scientificName": "Hylotelephium 'Herbstfreude'",
+    "price": "10.99",
+    "description": "Succulent perennial with pink to copper flower heads that attract butterflies.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Pink to Copper",
+    "light": "Full Sun",
+    "height": "18-24 inches",
+    "bloomSeason": "Late Summer to Fall",
+    "attributes": "Drought-tolerant, Deer-resistant, Attracts butterflies",
+    "hardinessZone": "3-9",
+    "spacing": "18-24 inches",
+    "inventory": {
+      "currentStock": 0,
+      "status": "Coming Soon",
+      "restockDate": "2024-05-30",
+      "notes": "New variety arriving end of May"
+    }
+  },
+  {
+    "id": 6,
+    "name": "Russian Sage",
+    "scientificName": "Perovskia atriplicifolia",
+    "price": "11.99",
+    "description": "Aromatic sub-shrub with silver-gray foliage and lavender-blue flowers.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Lavender-Blue",
+    "light": "Full Sun",
+    "height": "36-48 inches",
+    "bloomSeason": "Summer to Fall",
+    "attributes": "Drought-tolerant, Deer-resistant, Heat-tolerant",
+    "hardinessZone": "4-9",
+    "spacing": "24-36 inches",
+    "inventory": {
+      "currentStock": 12,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": ""
+    }
+  },
+  {
+    "id": 7,
+    "name": "Bleeding Heart",
+    "scientificName": "Dicentra spectabilis",
+    "price": "14.99",
+    "description": "Shade-loving perennial with heart-shaped pink and white flowers on arching stems.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Pink and White",
+    "light": "Part to Full Shade",
+    "height": "24-36 inches",
+    "bloomSeason": "Spring to Early Summer",
+    "attributes": "Shade-loving, Deer-resistant",
+    "hardinessZone": "3-9",
+    "spacing": "24-30 inches",
+    "inventory": {
+      "currentStock": 5,
+      "status": "Pre-order",
+      "restockDate": "2024-04-15",
+      "notes": "Limited quantity available for pre-order"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Coreopsis",
+    "scientificName": "Coreopsis verticillata",
+    "price": "8.99",
+    "description": "Easy-care perennial with bright yellow daisy-like flowers.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Yellow",
+    "light": "Full Sun",
+    "height": "18-24 inches",
+    "bloomSeason": "Summer",
+    "attributes": "Drought-tolerant, Deer-resistant, Long-blooming",
+    "hardinessZone": "4-9",
+    "spacing": "12-18 inches",
+    "inventory": {
+      "currentStock": 20,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": ""
+    }
+  },
+  {
+    "id": 9,
+    "name": "Foxglove",
+    "scientificName": "Digitalis purpurea",
+    "price": "9.99",
+    "description": "Biennial with tall spikes of tubular flowers, perfect for cottage gardens.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Purple, Pink, White",
+    "light": "Part Sun to Part Shade",
+    "height": "36-48 inches",
+    "bloomSeason": "Early to Mid Summer",
+    "attributes": "Deer-resistant, Attracts hummingbirds",
+    "hardinessZone": "4-8",
+    "spacing": "12-18 inches",
+    "inventory": {
+      "currentStock": 0,
+      "status": "Out of Stock",
+      "restockDate": "2024-07-01",
+      "notes": "Seasonal item, back in stock July"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Bee Balm",
+    "scientificName": "Monarda didyma",
+    "price": "10.99",
+    "description": "Native perennial with vibrant flowers that attract pollinators.",
+    "mainImage": "https://images.unsplash.com/photo-1597848212624-a19eb35e2651?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60",
+    "colour": "Red, Pink, Purple",
+    "light": "Full Sun to Part Shade",
+    "height": "24-48 inches",
+    "bloomSeason": "Summer",
+    "attributes": "Native, Attracts pollinators, Fragrant",
+    "hardinessZone": "4-9",
+    "spacing": "18-24 inches",
+    "inventory": {
+      "currentStock": 15,
+      "status": "In Stock",
+      "restockDate": "",
+      "notes": ""
+    }
+  }
+] 

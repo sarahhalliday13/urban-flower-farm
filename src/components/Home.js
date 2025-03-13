@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchPlants } from '../services/sheets';
+import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
 import Toast from './Toast';
 
@@ -31,38 +31,68 @@ function Home({ isFirstVisit }) {
     };
   }, []);
 
-  // Fetch plants from spreadsheet
+  // Fetch plants from Firebase with fallbacks
   useEffect(() => {
     const loadPlants = async () => {
+      setLoading(true);
+      
+      // Create a timeout to handle cases where Firebase fetch hangs
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Firebase fetch timed out')), 5000);
+      });
+      
       try {
-        const data = await fetchPlants();
+        // Race between the actual fetch and the timeout
+        const data = await Promise.race([
+          fetchPlants(),
+          timeoutPromise
+        ]);
+        
         if (!data || data.length === 0) {
-          setError('No plants found');
-          return;
-        }
-        
-        // Filter for featured plants
-        // Assuming there's a 'featured' field in the spreadsheet that's set to 'yes', 'true', or '1'
-        const featured = data.filter(plant => 
-          plant.featured === 'yes' || 
-          plant.featured === 'true' || 
-          plant.featured === true || 
-          plant.featured === '1' || 
-          plant.featured === 1
-        );
-        
-        // If no plants are marked as featured, just show the first 2-3 plants
-        if (featured.length === 0) {
-          setFeaturedPlants(data.slice(0, 3));
+          console.log('No plants found in Firebase, trying sample data');
+          const sampleData = await loadSamplePlants();
+          if (sampleData.length === 0) {
+            setError('No plants found');
+            setLoading(false);
+            return;
+          }
+          processPlantsData(sampleData);
         } else {
-          setFeaturedPlants(featured);
+          processPlantsData(data);
         }
       } catch (err) {
-        console.error('Error loading plants:', err);
-        setError(`Failed to load plants: ${err.message}`);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching plants from Firebase:', err);
+        try {
+          // Try sample data if Firebase fetch fails
+          const sampleData = await loadSamplePlants();
+          processPlantsData(sampleData);
+        } catch (sampleErr) {
+          console.error('Failed to load sample data:', sampleErr);
+          setError(`Failed to load plants: ${err.message}`);
+          setLoading(false);
+        }
       }
+    };
+    
+    // Helper function to process the fetched plants data
+    const processPlantsData = (data) => {
+      // Filter for featured plants
+      const featured = data.filter(plant => 
+        plant.featured === 'yes' || 
+        plant.featured === 'true' || 
+        plant.featured === true || 
+        plant.featured === '1' || 
+        plant.featured === 1
+      );
+      
+      // If no plants are marked as featured, just show the first 3 plants
+      if (featured.length === 0) {
+        setFeaturedPlants(data.slice(0, 3));
+      } else {
+        setFeaturedPlants(featured);
+      }
+      
+      setLoading(false);
     };
 
     loadPlants();

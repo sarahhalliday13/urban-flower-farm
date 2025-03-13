@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateInventoryAfterOrder } from '../services/sheets';
+import { updateInventory } from '../services/firebase';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
 
@@ -77,11 +77,29 @@ const AdminOrders = () => {
         console.error("AdminOrders - Error reading localStorage before update:", e);
       }
       
-      // Call the updateInventoryAfterOrder function
-      const result = await updateInventoryAfterOrder(order.items);
-      console.log(`AdminOrders - Update inventory result:`, result);
+      // Update inventory for each item in the order
+      const updateResults = [];
+      for (const item of order.items) {
+        const plantId = item.id;
+        // Get current inventory to calculate new stock level
+        const inventoryData = JSON.parse(localStorage.getItem('plantInventory') || '{}');
+        const currentInventory = inventoryData[plantId] || { currentStock: 0 };
+        const newStock = Math.max(0, currentInventory.currentStock - item.quantity);
+        
+        // Update the inventory
+        const result = await updateInventory(plantId, {
+          currentStock: newStock,
+          status: newStock > 0 ? 'In Stock' : 'Out of Stock',
+          notes: `Updated after order ${orderId}`
+        });
+        
+        updateResults.push(result);
+      }
       
-      if (result.success) {
+      // If all updates were successful
+      const allSuccessful = updateResults.every(result => result && result.success);
+      
+      if (allSuccessful) {
         // Check localStorage after updating
         try {
           const storedInventory = localStorage.getItem('plantInventory');
