@@ -43,6 +43,7 @@ const InventoryManager = () => {
   const [plantFormData, setPlantFormData] = useState({
     name: '',
     scientificName: '',
+    commonName: '',
     price: '',
     description: '',
     mainImage: '',
@@ -515,6 +516,7 @@ const InventoryManager = () => {
     setPlantFormData({
       name: '',
       scientificName: '',
+      commonName: '',
       price: '',
       description: '',
       mainImage: '',
@@ -542,6 +544,7 @@ const InventoryManager = () => {
     setPlantFormData({
       name: plant.name || '',
       scientificName: plant.scientificName || '',
+      commonName: plant.commonName || '',
       price: plant.price || '',
       description: plant.description || '',
       mainImage: plant.mainImage || '',
@@ -1239,7 +1242,7 @@ const InventoryManager = () => {
               </div>
               
               <div className="form-group">
-                <label htmlFor="scientificName">Scientific Name</label>
+                <label htmlFor="scientificName">Latin Name</label>
                 <input
                   type="text"
                   id="scientificName"
@@ -1252,6 +1255,18 @@ const InventoryManager = () => {
             
             <div className="form-row">
               <div className="form-group">
+                <label htmlFor="commonName">Common Name</label>
+                <input
+                  type="text"
+                  id="commonName"
+                  name="commonName"
+                  value={plantFormData.commonName || ''}
+                  onChange={handlePlantFormChange}
+                  placeholder="Alternative names, separated by commas"
+                />
+              </div>
+              
+              <div className="form-group">
                 <label htmlFor="price">Price</label>
                 <input
                   type="text"
@@ -1261,6 +1276,24 @@ const InventoryManager = () => {
                   onChange={handlePlantFormChange}
                   required
                 />
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <div className="checkbox-container">
+                <input
+                  type="checkbox"
+                  id="featured"
+                  name="featured"
+                  checked={plantFormData.featured}
+                  onChange={(e) => {
+                    setPlantFormData(prev => ({
+                      ...prev,
+                      featured: e.target.checked
+                    }));
+                  }}
+                />
+                <label htmlFor="featured">Feature on homepage</label>
               </div>
             </div>
             
@@ -1277,21 +1310,23 @@ const InventoryManager = () => {
                     name="mainImage"
                     value={plantFormData.mainImage}
                     onChange={handlePlantFormChange}
-                    placeholder="https://example.com/image.jpg"
+                    placeholder="Enter image URL or use upload below"
                     className="main-image-input"
                   />
                   
                   <div className="image-upload-container">
-                    <label htmlFor="imageFile" className="image-upload-label">
-                      Upload Image
-                    </label>
-                    <input
-                      type="file"
-                      id="imageFile"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="image-file-input"
-                    />
+                    <div className="file-upload-wrapper">
+                      <input
+                        type="file"
+                        id="imageFile"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="image-file-input"
+                      />
+                      <label htmlFor="imageFile" className="image-upload-label green-button">
+                        Select Image File
+                      </label>
+                    </div>
                     
                     {imagePreview && (
                       <div className="image-preview main-preview">
@@ -1349,39 +1384,42 @@ const InventoryManager = () => {
                   {/* Display previews for new additional images */}
                   {additionalImagePreviews.length > 0 && (
                     <div className="new-additional-images">
-                      <h5>New Images to Upload</h5>
+                      <h5>New Additional Images</h5>
                       <div className="additional-images-grid">
-                        {additionalImagePreviews.map((previewUrl, index) => (
+                        {additionalImagePreviews.map((preview, index) => (
                           <div key={`new-${index}`} className="additional-image-item">
                             <div className="image-preview">
-                              <img src={previewUrl} alt={`Preview ${index + 1}`} />
+                              <img src={preview} alt={`Additional ${index + 1}`} />
                             </div>
-                            <button 
-                              type="button"
-                              className="remove-button"
-                              onClick={() => handleRemoveAdditionalImage(index)}
-                            >
-                              Remove
-                            </button>
+                            <div className="image-actions">
+                              <button 
+                                type="button"
+                                className="remove-button"
+                                onClick={() => handleRemoveAdditionalImage(index)}
+                              >
+                                Remove
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                   
-                  {/* Upload new additional images */}
                   <div className="upload-additional-images">
-                    <label htmlFor="additionalImageFiles" className="image-upload-label">
-                      Add More Images
-                    </label>
-                    <input
-                      type="file"
-                      id="additionalImageFiles"
-                      accept="image/*"
-                      multiple
-                      onChange={handleAdditionalImagesSelect}
-                      className="image-file-input"
-                    />
+                    <div className="file-upload-wrapper">
+                      <input
+                        type="file"
+                        id="additionalImageFiles"
+                        accept="image/*"
+                        multiple
+                        onChange={handleAdditionalImagesSelect}
+                        className="image-file-input"
+                      />
+                      <label htmlFor="additionalImageFiles" className="image-upload-label green-button">
+                        Select Additional Images
+                      </label>
+                    </div>
                     
                     {isUploadingAdditional && (
                       <div className="upload-progress">
@@ -1508,7 +1546,7 @@ const InventoryManager = () => {
                 className={`save-btn ${plantSaveStatus}`}
                 disabled={plantSaveStatus === 'saving'}
               >
-                {plantSaveStatus === 'saving' ? 'Saving...' : plantEditMode ? 'Update Flower' : 'Add Flower'}
+                {plantSaveStatus === 'saving' ? 'Saving...' : plantEditMode ? 'Update Flower' : 'Save'}
               </button>
               
               {plantSaveStatus === 'success' && (
