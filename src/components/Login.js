@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Login.css';
@@ -10,6 +10,14 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const usernameInputRef = useRef(null);
+  
+  // Focus the username input field when the component mounts
+  useEffect(() => {
+    if (usernameInputRef.current) {
+      usernameInputRef.current.focus();
+    }
+  }, []);
   
   // Get the page the user was trying to access
   const from = location.state?.from?.pathname || '/';
@@ -47,6 +55,7 @@ function Login() {
             <input
               type="text"
               id="username"
+              ref={usernameInputRef}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter username"

@@ -333,19 +333,42 @@
   margin-top: 10px;
 }
 
+.file-upload-wrapper {
+  position: relative;
+  margin-bottom: 15px;
+  display: inline-block;
+}
+
+.file-upload-wrapper input[type="file"] {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 2;
+}
+
 .image-upload-label {
   display: inline-block;
-  background-color: #4CAF50;
+  background-color: #27ae60;
   color: white;
-  padding: 8px 12px;
+  padding: 10px 20px;
   border-radius: 4px;
   cursor: pointer;
   margin-bottom: 10px;
   font-size: 14px;
+  position: relative;
+  z-index: 1;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  min-width: 120px;
+  text-align: center;
 }
 
 .image-upload-label:hover {
-  background-color: #3e8e41;
+  background-color: #219653;
 }
 
 .image-file-input {
@@ -542,7 +565,9 @@
     display: block;
     text-align: center;
     margin: 10px 0;
-    padding: 10px;
+    padding: 10px 20px;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   /* Make image previews more appropriately sized on mobile */
@@ -648,4 +673,44 @@
   .additional-image-item .remove-button {
     padding: 8px 5px;
   }
+}
+
+/* Add checkbox container styles */
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.checkbox-container input[type="checkbox"] {
+  margin-right: 10px;
+  width: auto;
+  height: auto;
+}
+
+.checkbox-container label {
+  font-weight: normal;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+/* Green button style matching Update Flower button */
+.green-button {
+  display: inline-block;
+  background-color: #27ae60;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  font-size: 14px;
+  border: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  min-width: 120px;
+  text-align: center;
+}
+
+.green-button:hover {
+  background-color: #219653;
 } 
