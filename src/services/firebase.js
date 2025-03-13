@@ -26,17 +26,27 @@ const database = getDatabase(app);
  */
 export const fetchPlants = async () => {
   try {
-    console.log('Fetching plants from Firebase...');
+    console.log('DEBUG: fetchPlants - Starting to fetch plants from Firebase');
+    console.log('DEBUG: fetchPlants - Database URL:', process.env.REACT_APP_FIREBASE_DATABASE_URL);
+    
+    console.log('DEBUG: fetchPlants - Getting plants snapshot...');
     const plantsSnapshot = await get(ref(database, 'plants'));
+    console.log('DEBUG: fetchPlants - Plants snapshot exists:', plantsSnapshot.exists());
+    
+    console.log('DEBUG: fetchPlants - Getting inventory snapshot...');
     const inventorySnapshot = await get(ref(database, 'inventory'));
+    console.log('DEBUG: fetchPlants - Inventory snapshot exists:', inventorySnapshot.exists());
     
     if (!plantsSnapshot.exists()) {
-      console.log('No plants data found in Firebase');
+      console.log('DEBUG: fetchPlants - No plants data found in Firebase');
       return [];
     }
     
     const plantsData = plantsSnapshot.val();
+    console.log('DEBUG: fetchPlants - Plants data keys:', Object.keys(plantsData || {}).length);
+    
     const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+    console.log('DEBUG: fetchPlants - Inventory data keys:', Object.keys(inventoryData || {}).length);
     
     // Convert the object to an array and add inventory data
     const plantsArray = Object.keys(plantsData).map(key => {
@@ -53,10 +63,23 @@ export const fetchPlants = async () => {
       };
     });
     
-    console.log(`Fetched ${plantsArray.length} plants from Firebase`);
+    console.log(`DEBUG: fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
+    // Log a sample plant for verification
+    if (plantsArray.length > 0) {
+      console.log('DEBUG: fetchPlants - Sample plant:', 
+        {name: plantsArray[0].name, id: plantsArray[0].id, hasInventory: !!plantsArray[0].inventory});
+    }
+    
     return plantsArray;
   } catch (error) {
     console.error('Error fetching plants from Firebase:', error);
+    console.error('DEBUG: fetchPlants - Detailed error:', error.stack || error.message || error);
+    
+    // Check if it's a Firebase error and log additional details
+    if (error.code) {
+      console.error('DEBUG: fetchPlants - Firebase error code:', error.code);
+    }
+    
     throw error;
   }
 };
@@ -365,33 +388,67 @@ export const subscribeToInventory = (callback) => {
  * Import plants data from Google Sheets to Firebase
  * This is a one-time migration function
  * @param {Array} plantsData - Array of plant objects from Google Sheets
+ * @param {Array} inventoryData - Array of inventory objects from Google Sheets (optional)
  * @returns {Promise<Object>} Result of the import operation
  */
-export const importPlantsFromSheets = async (plantsData) => {
+export const importPlantsFromSheets = async (plantsData, inventoryData = []) => {
   try {
     console.log('Importing plants data from Google Sheets to Firebase...');
+    console.log('Plants data:', plantsData.length, 'items');
+    console.log('Inventory data:', inventoryData.length, 'items');
     
     // Prepare plants data for Firebase
     const plantsObject = {};
     const inventoryObject = {};
     
+    // Process plant data
     plantsData.forEach(plant => {
-      // Extract inventory data
-      const inventory = {
-        currentStock: plant.inventory?.currentStock || 0,
-        status: plant.inventory?.status || 'Unknown',
-        restockDate: plant.inventory?.restockDate || '',
-        notes: plant.inventory?.notes || '',
-        lastUpdated: new Date().toISOString()
+      // Ensure the plant has an ID
+      if (!plant.id) {
+        console.warn('Plant missing ID, skipping:', plant);
+        return;
+      }
+      
+      // Store plant in plantsObject
+      plantsObject[plant.id] = {
+        ...plant
       };
-      
-      // Store inventory separately
-      inventoryObject[plant.id] = inventory;
-      
-      // Remove inventory from plant object to avoid duplication
-      const { inventory: _, ...plantWithoutInventory } = plant;
-      plantsObject[plant.id] = plantWithoutInventory;
     });
+    
+    // Process inventory data
+    if (inventoryData.length > 0) {
+      inventoryData.forEach(item => {
+        // Use plant_id as the key to match with plants
+        const plantId = item.plant_id;
+        
+        if (!plantId) {
+          console.warn('Inventory item missing plant_id, skipping:', item);
+          return;
+        }
+        
+        // Create inventory object
+        inventoryObject[plantId] = {
+          currentStock: parseInt(item.current_stock) || 0,
+          status: item.status || 'Unknown',
+          restockDate: item.restock_date || '',
+          notes: item.notes || '',
+          lastUpdated: new Date().toISOString()
+        };
+      });
+    } else {
+      // If no inventory data provided, create default entries for each plant
+      Object.keys(plantsObject).forEach(plantId => {
+        inventoryObject[plantId] = {
+          currentStock: 0,
+          status: 'Out of Stock',
+          restockDate: '',
+          notes: 'Auto-generated during migration',
+          lastUpdated: new Date().toISOString()
+        };
+      });
+    }
+    
+    console.log(`Prepared ${Object.keys(plantsObject).length} plants and ${Object.keys(inventoryObject).length} inventory items for import`);
     
     // Update Firebase
     const plantsRef = ref(database, 'plants');
@@ -402,8 +459,9 @@ export const importPlantsFromSheets = async (plantsData) => {
     
     return {
       success: true,
-      message: `Imported ${plantsData.length} plants to Firebase`,
-      plantsCount: plantsData.length
+      message: `Imported ${Object.keys(plantsObject).length} plants and ${Object.keys(inventoryObject).length} inventory items to Firebase`,
+      plantsCount: Object.keys(plantsObject).length,
+      inventoryCount: Object.keys(inventoryObject).length
     };
   } catch (error) {
     console.error('Error importing plants to Firebase:', error);
@@ -457,13 +515,19 @@ export const initializeDefaultInventory = async () => {
  */
 export const loadSamplePlants = async () => {
   try {
-    console.log('Loading sample plant data as fallback...');
+    console.log('DEBUG: loadSamplePlants - Starting to load sample plant data');
+    console.log('DEBUG: loadSamplePlants - Fetching from path:', '/data/sample-plants.json');
     const response = await fetch('/data/sample-plants.json');
+    console.log('DEBUG: loadSamplePlants - Fetch response status:', response.status, response.statusText);
+    
     if (!response.ok) {
+      console.error('DEBUG: loadSamplePlants - Failed to fetch sample data:', response.status, response.statusText);
       throw new Error(`Failed to fetch sample data: ${response.status} ${response.statusText}`);
     }
+    
     const data = await response.json();
-    console.log(`Loaded ${data.length} sample plants`);
+    console.log(`DEBUG: loadSamplePlants - Successfully loaded ${data.length} sample plants`);
+    console.log('DEBUG: loadSamplePlants - First sample plant:', data[0]?.name || 'No name available');
     
     // Cache the sample data
     try {
@@ -472,13 +536,15 @@ export const loadSamplePlants = async () => {
         data: data,
         source: 'sample'
       }));
+      console.log('DEBUG: loadSamplePlants - Sample data cached to localStorage');
     } catch (e) {
-      console.error('Error caching sample data:', e);
+      console.error('DEBUG: loadSamplePlants - Error caching sample data:', e);
     }
     
     return data;
   } catch (error) {
     console.error('Error loading sample plant data:', error);
+    console.error('DEBUG: loadSamplePlants - Detailed error:', error.stack || error.message || error);
     throw error;
   }
 };

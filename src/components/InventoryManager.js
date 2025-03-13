@@ -88,9 +88,12 @@ const InventoryManager = () => {
   const loadSampleData = useCallback(async () => {
     setLoading(true);
     setLoadingMessage('Loading sample plant data...');
+    console.log('DEBUG: Starting loadSampleData');
     
     try {
+      console.log('DEBUG: Calling loadSamplePlants');
       const sampleData = await loadSamplePlants();
+      console.log('DEBUG: Received sample data with', sampleData.length, 'plants');
       setPlants(sampleData);
       
       // Initialize edit values
@@ -107,10 +110,13 @@ const InventoryManager = () => {
       setEditValues(initialValues);
       setLoading(false);
       setError(null);
+      console.log('DEBUG: Completed loadSampleData successfully');
     } catch (err) {
       console.error('Error loading sample data:', err);
+      console.log('DEBUG: Error in loadSampleData:', err.message);
       setError(`Failed to load sample data: ${err.message}`);
       setLoading(false);
+      console.log('DEBUG: Falling back to localStorage due to sample data failure');
       forceLoadData(); // Fall back to localStorage if even sample data fails
     }
   }, []);
@@ -198,45 +204,55 @@ const InventoryManager = () => {
     try {
       setLoading(true);
       setLoadingMessage('Fetching plants from Firebase...');
+      console.log('DEBUG: Starting loadPlants, forceRefresh =', forceRefresh);
       
       // Clear any existing timeout
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
+        console.log('DEBUG: Cleared existing fetch timeout');
       }
       
       // Set a timeout to prevent infinite loading - reduced to 5 seconds
+      console.log('DEBUG: Setting 5 second timeout for Firebase fetch');
       fetchTimeoutRef.current = setTimeout(() => {
         console.error('Firebase fetch timed out after 5 seconds');
+        console.log('DEBUG: Timeout triggered, loading sample data instead');
         setApiRetryCount(prev => prev + 1);
         setError('Firebase connection timed out. Loading sample data instead.');
         loadSampleData(); // Load sample data instead of forcing local data
       }, 5000); // 5 second timeout - reduced from 10 seconds
       
+      console.log('DEBUG: Calling fetchPlants() from Firebase service');
       const plantsData = await fetchPlants();
+      console.log('DEBUG: Received response from fetchPlants():', plantsData ? plantsData.length : 'null', 'plants');
       
       // Clear the timeout since we got a response
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = null;
+        console.log('DEBUG: Cleared timeout after successful fetch');
       }
       
       if (plantsData.length === 0) {
-        console.log('No plants found, initializing default inventory');
+        console.log('DEBUG: No plants found, initializing default inventory');
         // If no plants found, initialize default inventory
         await initializeDefaultInventory();
         // Try fetching again
+        console.log('DEBUG: Fetching plants again after initialization');
         const defaultPlants = await fetchPlants();
+        console.log('DEBUG: Second fetch returned', defaultPlants ? defaultPlants.length : 'null', 'plants');
         
         if (defaultPlants.length === 0) {
           // If still no plants, use sample data
-          console.log('Still no plants after initialization, using sample data');
+          console.log('DEBUG: Still no plants after initialization, using sample data');
           loadSampleData();
           return;
         }
         
         setPlants(defaultPlants);
+        console.log('DEBUG: Using default plants:', defaultPlants.length);
       } else {
-        console.log(`Loaded ${plantsData.length} plants successfully`);
+        console.log('DEBUG: Successfully loaded', plantsData.length, 'plants from Firebase');
         setPlants(plantsData);
         
         // Cache the data for offline use
@@ -246,6 +262,7 @@ const InventoryManager = () => {
             data: plantsData,
             source: 'firebase'
           }));
+          console.log('DEBUG: Cached', plantsData.length, 'plants to localStorage');
         } catch (e) {
           console.error('Error caching plants data:', e);
         }
@@ -265,19 +282,23 @@ const InventoryManager = () => {
       setEditValues(initialValues);
       setLoading(false);
       setError(null);
+      console.log('DEBUG: Completed loadPlants successfully');
     } catch (err) {
       console.error('Error loading plants:', err);
+      console.log('DEBUG: Error in loadPlants:', err.message);
       
       // Clear the timeout if it exists
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = null;
+        console.log('DEBUG: Cleared timeout due to error');
       }
       
       setError(`Failed to load plants: ${err.message}`);
       setApiRetryCount(prev => prev + 1);
       
       // Try to use sample data instead of localStorage
+      console.log('DEBUG: Error occurred, falling back to sample data');
       loadSampleData();
     }
   }, [forceLoadData, loadSampleData]);
