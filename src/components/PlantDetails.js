@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Toast from './Toast';
-import { fetchPlants } from '../services/sheets';
+import { fetchPlants, loadSamplePlants } from '../services/firebase';
 
 function PlantDetails() {
   const { id } = useParams();
@@ -28,21 +28,48 @@ function PlantDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch plants from spreadsheet
+  // Fetch plants from Firebase with fallbacks
   useEffect(() => {
     const loadPlants = async () => {
+      setLoading(true);
+      
+      // Create a timeout to handle cases where Firebase fetch hangs
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Firebase fetch timed out')), 5000);
+      });
+      
       try {
-        const data = await fetchPlants();
+        // Race between the actual fetch and the timeout
+        const data = await Promise.race([
+          fetchPlants(),
+          timeoutPromise
+        ]);
+        
         if (!data || data.length === 0) {
-          setError('No plants found');
-          return;
+          console.log('No plants found in Firebase, trying sample data');
+          const sampleData = await loadSamplePlants();
+          if (sampleData.length === 0) {
+            setError('No plants found');
+            setLoading(false);
+            return;
+          }
+          setPlants(sampleData);
+        } else {
+          setPlants(data);
         }
-        setPlants(data);
-      } catch (err) {
-        console.error('Error loading plants:', err);
-        setError(`Failed to load plants: ${err.message}`);
-      } finally {
         setLoading(false);
+      } catch (err) {
+        console.error('Error fetching plants from Firebase:', err);
+        try {
+          // Try sample data if Firebase fetch fails
+          const sampleData = await loadSamplePlants();
+          setPlants(sampleData);
+          setLoading(false);
+        } catch (sampleErr) {
+          console.error('Failed to load sample data:', sampleErr);
+          setError(`Failed to load plants: ${err.message}`);
+          setLoading(false);
+        }
       }
     };
 

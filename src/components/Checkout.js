@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { updateInventoryAfterOrder } from '../services/sheets';
+import { updateInventory } from '../services/firebase';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -70,24 +70,29 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      return;
+    }
     
+    // Show processing
     setIsSubmitting(true);
     
     try {
-      // Generate a simple order ID (in a real app, this would come from the backend)
-      const generatedOrderId = 'ORD-' + Date.now().toString().slice(-6);
-      
-      // Create order object
-      const order = {
-        id: generatedOrderId,
+      // Format the order data
+      const orderData = {
+        id: `ORD-${Date.now()}`,
         date: new Date().toISOString(),
         customer: {
-          name: `${formData.firstName} ${formData.lastName}`,
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          phone: formData.phone
+          phone: formData.phone,
+          address: {
+            street: formData.street,
+            city: formData.city,
+            state: formData.state,
+            zip: formData.zip
+          }
         },
         items: cartItems.map(item => ({
           id: item.id,
@@ -95,45 +100,40 @@ const Checkout = () => {
           price: item.price,
           quantity: item.quantity
         })),
-        total: getTotal(),
-        notes: formData.notes,
-        status: 'Pending'
+        total: getTotal().toFixed(2),
+        payment: {
+          method: 'Credit Card',
+          cardNumber: `**** **** **** ${formData.cardNumber.slice(-4)}`,
+          nameOnCard: formData.nameOnCard,
+          expiry: formData.expiry
+        },
+        status: 'Processing'
       };
       
-      // In a real app, you would send this to your backend
-      console.log('Order submitted:', order);
-      
-      // Store order in localStorage for now (in a real app, this would be in a database)
+      // Save the order to localStorage
       const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...existingOrders, order]));
+      localStorage.setItem('orders', JSON.stringify([...existingOrders, orderData]));
+      localStorage.setItem('userEmail', formData.email.toLowerCase());
       
-      // Store the user's email in localStorage to identify their orders later
-      if (formData.email) {
-        localStorage.setItem('userEmail', formData.email);
+      // Update inventory using Firebase
+      for (const item of cartItems) {
+        await updateInventory(item.id, {
+          currentStock: Math.max(0, (item.inventory?.currentStock || 0) - item.quantity),
+          lastUpdated: new Date().toISOString()
+        });
       }
       
-      // Update inventory after order is placed
-      try {
-        const inventoryResult = await updateInventoryAfterOrder(order.items);
-        setInventoryUpdateStatus(inventoryResult.success ? 'success' : 'warning');
-        console.log('Inventory update result:', inventoryResult);
-      } catch (inventoryError) {
-        console.error('Error updating inventory:', inventoryError);
-        setInventoryUpdateStatus('error');
-      }
-      
-      // Set order as complete
-      setOrderId(generatedOrderId);
-      setOrderComplete(true);
-      
-      // Clear the cart
+      // Clear cart and navigate to confirmation
       clearCart();
-      
-    } catch (error) {
-      console.error('Error submitting order:', error);
-      alert('There was an error processing your order. Please try again.');
-    } finally {
       setIsSubmitting(false);
+      navigate('/checkout/confirmation', { state: { order: orderData } });
+    } catch (error) {
+      console.error('Error processing order:', error);
+      setIsSubmitting(false);
+      setErrors({
+        ...errors,
+        submit: 'There was an error processing your order. Please try again.'
+      });
     }
   };
 

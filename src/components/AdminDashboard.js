@@ -137,7 +137,6 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <h1>Admin Dashboard</h1>
       <p className="welcome-message">Welcome, Colleen! Manage your flower farm from this dashboard.</p>
       
       <div className="sales-summary">
@@ -185,15 +184,15 @@ const AdminDashboard = () => {
       
       <div className="admin-cards">
         <div className="admin-card">
-          <h2>Inventory Management</h2>
-          <p>Update stock levels, product status, and restock dates.</p>
+          <h2>Inventory</h2>
+          <p>Add, edit, and manage plants and inventory levels in one place.</p>
           <Link to="/inventory" className="admin-button">
             Manage Inventory
           </Link>
         </div>
         
         <div className="admin-card">
-          <h2>Order Management</h2>
+          <h2>Orders</h2>
           <p>View and process customer orders, update order status, and print invoices.</p>
           <Link to="/admin/orders" className="admin-button">
             Manage Orders
@@ -222,7 +221,7 @@ const AdminDashboard = () => {
         <h3>Need Help?</h3>
         <p>
           This dashboard gives you quick access to all the administrative features of your flower farm website.
-          You can try to text Sarah, but she only responds when chocolate is offered or free plants are mentioned! 🍫🌱
+          For assistance, please contact your website administrator.
         </p>
       </div>
     </div>

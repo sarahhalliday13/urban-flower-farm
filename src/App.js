@@ -14,6 +14,8 @@ import Orders from './components/Orders';
 import AdminOrders from './components/AdminOrders';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
+import ApiDebugger from './components/ApiDebugger';
+import FirebaseMigration from './components/FirebaseMigration';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import './cart-styles.css';
@@ -74,8 +76,12 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
         {/* Customer Navigation Links */}
         <div className="nav-section customer-links">
           <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
-          <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
-          <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+          {!isAuthenticated && (
+            <>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+              <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+            </>
+          )}
           {hasOrders && (
             <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
           )}
@@ -95,14 +101,16 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
           </>
         )}
       </div>
-      <button className="cart-button" onClick={toggleCart}>
-        🪴
-        {cartCount > 0 && (
-          <div className="cart-badge">
-            <span className="cart-count">{cartCount}</span>
-          </div>
-        )}
-      </button>
+      {!isAuthenticated && (
+        <button className="cart-button" onClick={toggleCart}>
+          🪴
+          {cartCount > 0 && (
+            <div className="cart-badge">
+              <span className="cart-count">{cartCount}</span>
+            </div>
+          )}
+        </button>
+      )}
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </nav>
   );
@@ -112,6 +120,7 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFirstVisit, setIsFirstVisit] = useState(false);
+  const [showDebugger, setShowDebugger] = useState(true); // Set to true to show the debugger
   
   useEffect(() => {
     // Always set hasVisited to true to ensure hero panel stays hidden
@@ -171,6 +180,14 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route 
+                path="/firebase-migration" 
+                element={
+                  <ProtectedRoute>
+                    <FirebaseMigration />
+                  </ProtectedRoute>
+                } 
+              />
             </Routes>
 
             <footer>
@@ -178,6 +195,9 @@ function App() {
             </footer>
 
             <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
+            
+            {/* API Debugger component */}
+            {showDebugger && <ApiDebugger />}
           </div>
         </Router>
       </CartProvider>
