@@ -814,4 +814,22 @@
   .format-columns {
     min-width: 100%;
   }
+}
+
+.image-manager-link {
+  display: inline-block;
+  background-color: #4285F4;
+  color: white;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  margin-left: 10px;
+}
+
+.image-manager-link:hover {
+  background-color: #3367D6;
+  color: white;
 } 

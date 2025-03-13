@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 // eslint-disable-next-line no-unused-vars
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Your web app's Firebase configuration
 // Replace these values with your actual Firebase project configuration
@@ -18,6 +19,37 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
+const storage = getStorage(app);
+
+// Export Firebase utilities
+export { set, onValue };
+
+// Utility to get a reference to the database
+export const getDatabaseRef = (path) => {
+  return ref(database, path);
+};
+
+// Utility to get a Firebase storage URL
+export const getFirebaseStorageURL = async (path) => {
+  try {
+    return await getDownloadURL(storageRef(storage, path));
+  } catch (error) {
+    console.error('Error getting file URL:', error);
+    return null;
+  }
+};
+
+// Utility to upload an image to Firebase storage
+export const uploadImageToFirebase = async (file, path) => {
+  try {
+    const fileRef = storageRef(storage, path);
+    await uploadBytes(fileRef, file);
+    return await getDownloadURL(fileRef);
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+};
 
 // ===== INVENTORY MANAGEMENT FUNCTIONS =====
 

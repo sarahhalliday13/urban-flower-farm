@@ -1,12 +1,25 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { fetchPlants, updateInventory, subscribeToInventory, processSyncQueue, initializeDefaultInventory, addPlant, updatePlant, loadSamplePlants, importPlantsFromSheets } from '../services/firebase';
+import { 
+  updateInventory,
+  subscribeToInventory,
+  getFirebaseStorageURL,
+  uploadImageToFirebase,
+  getDatabaseRef,
+  onValue,
+  set,
+  processSyncQueue,
+  initializeDefaultInventory,
+  importPlantsFromSheets
+} from '../services/firebase';
+import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
+import { useAdmin, updatePlantData } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
 
 const InventoryManager = () => {
-  const [plants, setPlants] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
+  const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Loading inventory data...');
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState({});
@@ -33,6 +46,7 @@ const InventoryManager = () => {
     price: '',
     description: '',
     mainImage: '',
+    additionalImages: [],
     colour: '',
     light: '',
     height: '',
@@ -69,6 +83,18 @@ const InventoryManager = () => {
   const [inventoryCsvUrl, setInventoryCsvUrl] = useState('');
   const [csvStatus, setCsvStatus] = useState({ loading: false, message: '' });
 
+  // Add state for image upload
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // New state for multiple image uploads
+  const [additionalImageFiles, setAdditionalImageFiles] = useState([]);
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
+  const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
+  const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
+
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
     try {
@@ -92,267 +118,68 @@ const InventoryManager = () => {
     }
   }, []);
 
-  // Load sample data directly
-  const loadSampleData = useCallback(async () => {
-    setLoading(true);
-    setLoadingMessage('Loading sample plant data...');
-    console.log('DEBUG: Starting loadSampleData');
-    
-    try {
-      console.log('DEBUG: Calling loadSamplePlants');
-      const sampleData = await loadSamplePlants();
-      console.log('DEBUG: Received sample data with', sampleData.length, 'plants');
-      setPlants(sampleData);
-      
-      // Initialize edit values
-      const initialValues = {};
-      sampleData.forEach(plant => {
-        initialValues[plant.id] = {
-          currentStock: plant.inventory?.currentStock || 0,
-          status: plant.inventory?.status || 'Unknown',
-          restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
-        };
-      });
-      
-      setEditValues(initialValues);
-      setLoading(false);
-      setError(null);
-      console.log('DEBUG: Completed loadSampleData successfully');
-    } catch (err) {
-      console.error('Error loading sample data:', err);
-      console.log('DEBUG: Error in loadSampleData:', err.message);
-      setError(`Failed to load sample data: ${err.message}`);
-      setLoading(false);
-      console.log('DEBUG: Falling back to localStorage due to sample data failure');
-      forceLoadData(); // Fall back to localStorage if even sample data fails
-    }
-  }, []);
+  // Load sample data functionality is now handled by the AdminContext
+  // const loadSampleData = useCallback(async () => {
+  //   // Function removed - now using AdminContext
+  // }, [handleLoadPlants]);
 
-  // Define forceLoadData before using it in loadPlants
-  const forceLoadData = useCallback(() => {
-    // Clear any existing loading timer
-    if (loadingTimerRef.current) {
-      clearTimeout(loadingTimerRef.current);
-      loadingTimerRef.current = null;
-    }
-    
-    setLoading(true);
-    setLoadingMessage('Loading inventory data...');
-    console.log('DEBUG: Starting loadPlants, forceRefresh =', true);
-    
-    // Try to load from cache first
-    try {
-      const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
-      if (cachedData) {
-        const { data } = JSON.parse(cachedData);
-        console.log(`Force loading ${data.length} plants from cache`);
-        setPlants(data);
-        
-        // Initialize edit values
-        const initialValues = {};
-        data.forEach(plant => {
-          initialValues[plant.id] = {
-            currentStock: plant.inventory?.currentStock || 0,
-            status: plant.inventory?.status || 'Unknown',
-            restockDate: plant.inventory?.restockDate || '',
-            notes: plant.inventory?.notes || ''
-          };
-        });
-        
-        setEditValues(initialValues);
-        setLoading(false);
-        return;
-      }
-    } catch (e) {
-      console.error('Error force loading from cache:', e);
-    }
-    
-    // If no cache, initialize default inventory
-    initializeDefaultInventory();
-    
-    // Get default inventory from localStorage
-    try {
-      const storedInventory = localStorage.getItem('plantInventory');
-      if (storedInventory) {
-        const parsedInventory = JSON.parse(storedInventory);
-        
-        // Create minimal plant data from the default inventory
-        const fallbackPlants = Object.keys(parsedInventory).map(id => ({
-          id: parseInt(id),
-          name: `Plant ${id}`,
-          scientificName: `Scientific Name ${id}`,
-          mainImage: '',
-          price: '0',
-          inventory: parsedInventory[id]
-        }));
-        
-        console.log(`Created ${fallbackPlants.length} fallback plants`);
-        setPlants(fallbackPlants);
-        
-        // Initialize edit values for fallback plants
-        const initialValues = {};
-        fallbackPlants.forEach(plant => {
-          initialValues[plant.id] = {
-            currentStock: plant.inventory?.currentStock || 0,
-            status: plant.inventory?.status || 'Unknown',
-            restockDate: plant.inventory?.restockDate || '',
-            notes: plant.inventory?.notes || ''
-          };
-        });
-        
-        setEditValues(initialValues);
-        setLoading(false);
-      }
-    } catch (e) {
-      console.error('Error creating fallback data:', e);
-      setError('Failed to load inventory data. Please refresh the page and try again.');
-      setLoading(false);
-    }
-  }, []);
+  // Local cache loading functionality is now handled by the AdminContext
+  // const forceLoadData = useCallback(() => {
+  //   // Function removed - now using AdminContext
+  // }, []);
 
-  // Load plants from Firebase
-  const loadPlants = useCallback(async (forceRefresh = false) => {
-    try {
-      setLoading(true);
-      setLoadingMessage('Fetching plants from Firebase...');
-      console.log('DEBUG: Starting loadPlants, forceRefresh =', forceRefresh);
-      
-      // Clear any existing timeout
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-        console.log('DEBUG: Cleared existing fetch timeout');
-      }
-      
-      // Set a timeout to prevent infinite loading - reduced to 5 seconds
-      console.log('DEBUG: Setting 5 second timeout for Firebase fetch');
-      fetchTimeoutRef.current = setTimeout(() => {
-        console.error('Firebase fetch timed out after 5 seconds');
-        console.log('DEBUG: Timeout triggered, loading sample data instead');
-        setApiRetryCount(prev => prev + 1);
-        setError('Firebase connection timed out. Loading sample data instead.');
-        loadSampleData(); // Load sample data instead of forcing local data
-      }, 5000); // 5 second timeout - reduced from 10 seconds
-      
-      console.log('DEBUG: Calling fetchPlants() from Firebase service');
-      const plantsData = await fetchPlants();
-      console.log('DEBUG: Received response from fetchPlants():', plantsData ? plantsData.length : 'null', 'plants');
-      
-      // Clear the timeout since we got a response
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = null;
-        console.log('DEBUG: Cleared timeout after successful fetch');
-      }
-      
-      if (plantsData.length === 0) {
-        console.log('DEBUG: No plants found, initializing default inventory');
-        // If no plants found, initialize default inventory
-        await initializeDefaultInventory();
-        // Try fetching again
-        console.log('DEBUG: Fetching plants again after initialization');
-        const defaultPlants = await fetchPlants();
-        console.log('DEBUG: Second fetch returned', defaultPlants ? defaultPlants.length : 'null', 'plants');
-        
-        if (defaultPlants.length === 0) {
-          // If still no plants, use sample data
-          console.log('DEBUG: Still no plants after initialization, using sample data');
-          loadSampleData();
-          return;
-        }
-        
-        setPlants(defaultPlants);
-        console.log('DEBUG: Using default plants:', defaultPlants.length);
-      } else {
-        console.log('DEBUG: Successfully loaded', plantsData.length, 'plants from Firebase');
-        setPlants(plantsData);
-        
-        // Cache the data for offline use
-        try {
-          localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
-            timestamp: new Date().toISOString(),
-            data: plantsData,
-            source: 'firebase'
-          }));
-          console.log('DEBUG: Cached', plantsData.length, 'plants to localStorage');
-        } catch (e) {
-          console.error('Error caching plants data:', e);
-        }
-      }
-      
-      // Initialize edit values for all plants
-      const initialValues = {};
-      plantsData.forEach(plant => {
-        initialValues[plant.id] = {
-          currentStock: plant.inventory?.currentStock || 0,
-          status: plant.inventory?.status || 'Unknown',
-          restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
-        };
+  // Modify loadPlants to use context loadPlants
+  const handleLoadPlants = useCallback((forceRefresh = false) => {
+    setLoading(true);
+    setLoadingMessage('Refreshing inventory data...');
+    
+    loadPlants(forceRefresh)
+      .then(() => {
+        setLoading(false);
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
       });
-      
-      setEditValues(initialValues);
-      setLoading(false);
-      setError(null);
-      console.log('DEBUG: Completed loadPlants successfully');
-    } catch (err) {
-      console.error('Error loading plants:', err);
-      console.log('DEBUG: Error in loadPlants:', err.message);
-      
-      // Clear the timeout if it exists
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = null;
-        console.log('DEBUG: Cleared timeout due to error');
-      }
-      
-      setError(`Failed to load plants: ${err.message}`);
-      setApiRetryCount(prev => prev + 1);
-      
-      // Try to use sample data instead of localStorage
-      console.log('DEBUG: Error occurred, falling back to sample data');
-      loadSampleData();
-    }
-  }, [loadSampleData, forceLoadData]);
+  }, [loadPlants]);
   
   // Subscribe to real-time inventory updates
   useEffect(() => {
     // Load plants initially
-    loadPlants();
+    handleLoadPlants();
     
     // Subscribe to inventory changes
     const unsubscribe = subscribeToInventory((inventoryData) => {
-      console.log('Received real-time inventory update:', inventoryData);
-      
-      // Update plants with new inventory data
-      setPlants(prevPlants => 
-        prevPlants.map(plant => ({
-          ...plant,
-          inventory: inventoryData[plant.id] || plant.inventory
-        }))
-      );
+      console.log('Inventory updated in real-time:', Object.keys(inventoryData || {}).length, 'items');
+      checkSyncQueue();
     });
     
-    // Set up periodic sync check
-    syncTimerRef.current = setInterval(() => {
-      checkSyncQueue();
-    }, 60 * 1000); // Check sync status every minute
+    // Check for pending sync items initially
+    checkSyncQueue();
     
-    // Store refreshTimerRef value in a variable for cleanup
-    const refreshTimer = refreshTimerRef.current;
-    const loadingTimer = loadingTimerRef.current;
-    const syncTimer = syncTimerRef.current;
-    const fetchTimeout = fetchTimeoutRef.current;
+    // Set up auto-refresh timer (every 5 minutes)
+    const refreshTimer = setInterval(() => {
+      handleLoadPlants(true); // Force refresh every 5 minutes
+    }, 5 * 60 * 1000);
     
-    // Cleanup on unmount
+    // Store references to timers for cleanup
+    refreshTimerRef.current = refreshTimer;
+    
     return () => {
-      if (unsubscribe) unsubscribe();
-      if (refreshTimer) clearInterval(refreshTimer);
-      if (loadingTimer) clearTimeout(loadingTimer);
-      if (syncTimer) clearInterval(syncTimer);
+      // Clean up on unmount
+      unsubscribe();
+      // Clear timers using the current value at cleanup time
+      const refresh = refreshTimerRef.current;
+      const sync = syncTimerRef.current;
+      const loading = loadingTimerRef.current;
+      const fetchTimeout = fetchTimeoutRef.current;
+      
+      if (refresh) clearInterval(refresh);
+      if (sync) clearInterval(sync);
+      if (loading) clearTimeout(loading);
       if (fetchTimeout) clearTimeout(fetchTimeout);
     };
-  }, [loadPlants, checkSyncQueue]);
+  }, [handleLoadPlants, checkSyncQueue]);
 
   // Process pending updates
   const processPendingUpdates = useCallback(async () => {
@@ -376,7 +203,7 @@ const InventoryManager = () => {
       
       // Refresh plants data to reflect synced changes
       if (result.syncedItems > 0) {
-        loadPlants(true);
+        handleLoadPlants(true);
       }
     } catch (error) {
       console.error('Error processing sync queue:', error);
@@ -387,7 +214,7 @@ const InventoryManager = () => {
         message: `Sync error: ${error.message}`
       }));
     }
-  }, [syncStatus.syncing, loadPlants]);
+  }, [syncStatus.syncing, handleLoadPlants]);
 
   // Handle edit button click
   const handleEdit = useCallback((plantId) => {
@@ -454,22 +281,18 @@ const InventoryManager = () => {
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
       
-      // Update local plant data to reflect changes
-      setPlants(prev => prev.map(plant => {
-        if (plant.id === plantId) {
-          return {
-            ...plant,
-            inventory: {
-              ...plant.inventory,
-              currentStock: inventoryData.currentStock,
-              status: inventoryData.status,
-              restockDate: inventoryData.restockDate,
-              notes: inventoryData.notes
-            }
-          };
+      // Update plant data in context
+      const updatedPlant = {
+        ...plants.find(p => p.id === plantId),
+        inventory: {
+          ...plants.find(p => p.id === plantId)?.inventory,
+          currentStock: inventoryData.currentStock,
+          status: inventoryData.status,
+          restockDate: inventoryData.restockDate,
+          notes: inventoryData.notes
         }
-        return plant;
-      }));
+      };
+      updatePlantData(updatedPlant);
       
       // Set success status
       setSaveStatus(prev => ({
@@ -517,7 +340,7 @@ const InventoryManager = () => {
         });
       }, 3000);
     }
-  }, [editValues, checkSyncQueue]);
+  }, [editValues, checkSyncQueue, plants, updatePlantData]);
 
   const getFilteredPlants = useCallback(() => {
     let filtered = [...plants];
@@ -555,7 +378,7 @@ const InventoryManager = () => {
     
     // Force a refresh after a short delay to allow the component to render
     const refreshTimer = setTimeout(() => {
-      loadPlants(true); // Force refresh
+      handleLoadPlants(true); // Force refresh
     }, 500);
     
     return () => clearTimeout(refreshTimer);
@@ -570,15 +393,88 @@ const InventoryManager = () => {
     }));
   };
 
-  // New function for handling plant form submission
+  // Handle image file selection
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setImageFile(file);
+    
+    // Create a preview URL
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImagePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Upload image to Firebase Storage
+  const uploadImageFile = async (file) => {
+    if (!file) return null;
+    
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      // Create a unique path for the image based on the current time and file name
+      const timestamp = new Date().getTime();
+      const fileExtension = file.name.split('.').pop();
+      const path = `plant_images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
+      
+      // Simulate progress (Firebase Storage doesn't provide progress updates easily)
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          const newProgress = prev + Math.random() * 20;
+          return newProgress > 90 ? 90 : newProgress;
+        });
+      }, 500);
+      
+      // Upload the file to Firebase Storage
+      const downloadUrl = await uploadImageToFirebase(file, path);
+      
+      // Clear the interval and set progress to 100%
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setIsUploading(false);
+      
+      console.log('Image uploaded successfully:', downloadUrl);
+      return downloadUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      setIsUploading(false);
+      return null;
+    }
+  };
+
+  // Modified handlePlantSubmit to include image upload
   const handlePlantSubmit = async (e) => {
     e.preventDefault();
     setPlantSaveStatus('saving');
 
     try {
+      // Upload main image if selected
+      let mainImageUrl = plantFormData.mainImage;
+      
+      if (imageFile) {
+        const uploadedUrl = await uploadImageFile(imageFile);
+        if (uploadedUrl) {
+          mainImageUrl = uploadedUrl;
+        }
+      }
+      
+      // Upload additional images if selected
+      let additionalImagesUrls = [...plantFormData.additionalImages];
+      
+      if (additionalImageFiles.length > 0) {
+        const newUrls = await uploadAdditionalImages();
+        additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+      }
+      
       // Prepare plant data
       const plantData = {
         ...plantFormData,
+        mainImage: mainImageUrl, // Use uploaded URL or existing URL
+        additionalImages: additionalImagesUrls,
         // If editing, keep the existing ID, otherwise generate a new one
         id: plantEditMode && currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
       };
@@ -588,23 +484,25 @@ const InventoryManager = () => {
         await updatePlant(currentPlant.id, plantData);
         setPlantSaveStatus('success');
         
-        // Update local plants array
-        setPlants(prev => prev.map(p => 
-          p.id === currentPlant.id ? { ...p, ...plantData } : p
-        ));
+        // Update plant in context
+        updatePlantData(plantData);
       } else {
         // Add new plant
-        await addPlant(plantData);
+        const result = await addPlant(plantData);
         setPlantSaveStatus('success');
         
-        // Add to local plants array
-        setPlants(prev => [...prev, plantData]);
+        // Add to plants in context
+        updatePlantData({...plantData, id: result.plantId});
       }
 
       // Reset form after successful save
       setTimeout(() => {
         resetPlantForm();
         setPlantSaveStatus('');
+        setImageFile(null);
+        setImagePreview(null);
+        setAdditionalImageFiles([]);
+        setAdditionalImagePreviews([]);
       }, 2000);
     } catch (error) {
       console.error('Error saving plant:', error);
@@ -612,7 +510,7 @@ const InventoryManager = () => {
     }
   };
 
-  // New function to reset plant form
+  // Modify resetPlantForm to also reset image state
   const resetPlantForm = () => {
     setPlantFormData({
       name: '',
@@ -620,6 +518,7 @@ const InventoryManager = () => {
       price: '',
       description: '',
       mainImage: '',
+      additionalImages: [],
       colour: '',
       light: '',
       height: '',
@@ -631,6 +530,10 @@ const InventoryManager = () => {
     });
     setPlantEditMode(false);
     setCurrentPlant(null);
+    setImageFile(null);
+    setImagePreview(null);
+    setAdditionalImageFiles([]);
+    setAdditionalImagePreviews([]);
   };
 
   // New function to handle edit plant button click
@@ -642,6 +545,7 @@ const InventoryManager = () => {
       price: plant.price || '',
       description: plant.description || '',
       mainImage: plant.mainImage || '',
+      additionalImages: plant.additionalImages || [],
       colour: plant.colour || '',
       light: plant.light || '',
       height: plant.height || '',
@@ -688,7 +592,7 @@ const InventoryManager = () => {
       await initializeDefaultInventory();
       
       // Step 4: Refresh the plants data
-      loadPlants(true);
+      handleLoadPlants(true);
 
       setMigrationStatus({
         loading: false,
@@ -925,7 +829,7 @@ const InventoryManager = () => {
       });
       
       // Force reload of inventory data
-      loadPlants(true);
+      handleLoadPlants(true);
     } catch (error) {
       console.error('Migration error:', error);
       setCsvStatus({ 
@@ -934,6 +838,102 @@ const InventoryManager = () => {
         error: true
       });
     }
+  };
+
+  // Use data from context instead of doing separate fetch
+  useEffect(() => {
+    if (plantsError) {
+      setError(plantsError);
+    }
+    
+    if (!plantsLoading && plants.length > 0) {
+      // Initialize edit values from context data
+      const initialValues = {};
+      plants.forEach(plant => {
+        initialValues[plant.id] = {
+          currentStock: plant.inventory?.currentStock || 0,
+          status: plant.inventory?.status || 'Unknown',
+          restockDate: plant.inventory?.restockDate || '',
+          notes: plant.inventory?.notes || ''
+        };
+      });
+      setEditValues(initialValues);
+    }
+  }, [plants, plantsLoading, plantsError]);
+
+  // Handle additional images selection
+  const handleAdditionalImagesSelect = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setAdditionalImageFiles([...additionalImageFiles, ...newFiles]);
+      
+      // Create previews for the new files
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setAdditionalImagePreviews([...additionalImagePreviews, ...newPreviews]);
+    }
+  };
+  
+  // Upload multiple images
+  const uploadAdditionalImages = async () => {
+    if (additionalImageFiles.length === 0) return [];
+    
+    setIsUploadingAdditional(true);
+    setAdditionalUploadProgress(0);
+    
+    const urls = [];
+    try {
+      for (let i = 0; i < additionalImageFiles.length; i++) {
+        const file = additionalImageFiles[i];
+        const url = await uploadImageFile(file);
+        urls.push(url);
+        
+        // Update progress
+        setAdditionalUploadProgress(Math.round(((i + 1) / additionalImageFiles.length) * 100));
+      }
+    } catch (error) {
+      console.error('Error uploading additional images:', error);
+    } finally {
+      setIsUploadingAdditional(false);
+      setAdditionalImageFiles([]);
+      setAdditionalImagePreviews([]);
+    }
+    
+    return urls;
+  };
+  
+  // Remove an additional image
+  const handleRemoveAdditionalImage = (index) => {
+    // If it's a new file (not yet uploaded)
+    if (index < additionalImagePreviews.length) {
+      const newFiles = [...additionalImageFiles];
+      const newPreviews = [...additionalImagePreviews];
+      
+      URL.revokeObjectURL(newPreviews[index]); // Free up memory
+      
+      newFiles.splice(index, 1);
+      newPreviews.splice(index, 1);
+      
+      setAdditionalImageFiles(newFiles);
+      setAdditionalImagePreviews(newPreviews);
+    } else {
+      // If it's an existing image in the plant data
+      const imageIndex = index - additionalImagePreviews.length;
+      const newImages = [...plantFormData.additionalImages];
+      newImages.splice(imageIndex, 1);
+      
+      setPlantFormData({
+        ...plantFormData,
+        additionalImages: newImages
+      });
+    }
+  };
+  
+  // Set an image as the main image
+  const handleSetAsMainImage = (imageUrl) => {
+    setPlantFormData({
+      ...plantFormData,
+      mainImage: imageUrl
+    });
   };
 
   if (loading) return (
@@ -946,13 +946,13 @@ const InventoryManager = () => {
       <div className="loading-buttons">
         <button 
           className="force-load-btn"
-          onClick={loadSampleData}
+          onClick={() => handleLoadPlants(true)}
         >
           Load Sample Data
         </button>
         <button 
           className="force-load-btn secondary"
-          onClick={forceLoadData}
+          onClick={() => handleLoadPlants(true)}
         >
           Load from Local Cache
         </button>
@@ -969,13 +969,13 @@ const InventoryManager = () => {
       <div className="error-buttons">
         <button 
           className="force-load-btn"
-          onClick={loadSampleData}
+          onClick={() => handleLoadPlants(true)}
         >
           Load Sample Data
         </button>
         <button 
           className="force-load-btn secondary"
-          onClick={forceLoadData}
+          onClick={() => handleLoadPlants(true)}
         >
           Load from Local Cache
         </button>
@@ -1046,7 +1046,7 @@ const InventoryManager = () => {
             <div className="admin-buttons">
               <button 
                 className="refresh-btn"
-                onClick={() => loadPlants(true)}
+                onClick={() => handleLoadPlants(true)}
                 disabled={loading}
               >
                 {loading ? 'Loading...' : 'Refresh Data'}
@@ -1262,17 +1262,138 @@ const InventoryManager = () => {
                   required
                 />
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="mainImage">Main Image URL</label>
-                <input
-                  type="text"
-                  id="mainImage"
-                  name="mainImage"
-                  value={plantFormData.mainImage}
-                  onChange={handlePlantFormChange}
-                  placeholder="https://example.com/image.jpg"
-                />
+            </div>
+            
+            {/* Consolidated Images Area */}
+            <div className="form-group full-width">
+              <label>Images</label>
+              <div className="images-container">
+                {/* Main Image Section */}
+                <div className="main-image-section">
+                  <h4>Main Image</h4>
+                  <input
+                    type="text"
+                    id="mainImage"
+                    name="mainImage"
+                    value={plantFormData.mainImage}
+                    onChange={handlePlantFormChange}
+                    placeholder="https://example.com/image.jpg"
+                    className="main-image-input"
+                  />
+                  
+                  <div className="image-upload-container">
+                    <label htmlFor="imageFile" className="image-upload-label">
+                      Upload Image
+                    </label>
+                    <input
+                      type="file"
+                      id="imageFile"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="image-file-input"
+                    />
+                    
+                    {imagePreview && (
+                      <div className="image-preview main-preview">
+                        <img src={imagePreview} alt="Preview" />
+                      </div>
+                    )}
+                    
+                    {isUploading && (
+                      <div className="upload-progress">
+                        <div 
+                          className="progress-bar" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
+                        <span>{Math.round(uploadProgress)}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Additional Images Section */}
+                <div className="additional-images-section">
+                  <h4>Additional Images</h4>
+                  
+                  {/* Display existing additional images */}
+                  {plantFormData.additionalImages && plantFormData.additionalImages.length > 0 && (
+                    <div className="existing-additional-images">
+                      <div className="additional-images-grid">
+                        {plantFormData.additionalImages.map((imageUrl, index) => (
+                          <div key={`existing-${index}`} className="additional-image-item">
+                            <div className="image-preview">
+                              <img src={imageUrl} alt={`Additional ${index + 1}`} />
+                            </div>
+                            <div className="image-actions">
+                              <button 
+                                type="button"
+                                className="set-main-button"
+                                onClick={() => handleSetAsMainImage(imageUrl)}
+                              >
+                                Set as Main
+                              </button>
+                              <button 
+                                type="button"
+                                className="remove-button"
+                                onClick={() => handleRemoveAdditionalImage(additionalImagePreviews.length + index)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Display previews for new additional images */}
+                  {additionalImagePreviews.length > 0 && (
+                    <div className="new-additional-images">
+                      <h5>New Images to Upload</h5>
+                      <div className="additional-images-grid">
+                        {additionalImagePreviews.map((previewUrl, index) => (
+                          <div key={`new-${index}`} className="additional-image-item">
+                            <div className="image-preview">
+                              <img src={previewUrl} alt={`Preview ${index + 1}`} />
+                            </div>
+                            <button 
+                              type="button"
+                              className="remove-button"
+                              onClick={() => handleRemoveAdditionalImage(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Upload new additional images */}
+                  <div className="upload-additional-images">
+                    <label htmlFor="additionalImageFiles" className="image-upload-label">
+                      Add More Images
+                    </label>
+                    <input
+                      type="file"
+                      id="additionalImageFiles"
+                      accept="image/*"
+                      multiple
+                      onChange={handleAdditionalImagesSelect}
+                      className="image-file-input"
+                    />
+                    
+                    {isUploadingAdditional && (
+                      <div className="upload-progress">
+                        <div 
+                          className="progress-bar" 
+                          style={{ width: `${additionalUploadProgress}%` }}
+                        ></div>
+                        <span>{Math.round(additionalUploadProgress)}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1372,14 +1493,6 @@ const InventoryManager = () => {
             </div>
             
             <div className="form-actions">
-              <button 
-                type="submit" 
-                className={`save-btn ${plantSaveStatus}`}
-                disabled={plantSaveStatus === 'saving'}
-              >
-                {plantSaveStatus === 'saving' ? 'Saving...' : plantEditMode ? 'Update Flower' : 'Add Flower'}
-              </button>
-              
               {plantEditMode && (
                 <button 
                   type="button" 
@@ -1389,6 +1502,14 @@ const InventoryManager = () => {
                   Cancel
                 </button>
               )}
+              
+              <button 
+                type="submit" 
+                className={`save-btn ${plantSaveStatus}`}
+                disabled={plantSaveStatus === 'saving'}
+              >
+                {plantSaveStatus === 'saving' ? 'Saving...' : plantEditMode ? 'Update Flower' : 'Add Flower'}
+              </button>
               
               {plantSaveStatus === 'success' && (
                 <span className="success-message">Flower saved successfully!</span>
@@ -1400,47 +1521,6 @@ const InventoryManager = () => {
             </div>
           </form>
           
-          <div className="plants-list-section">
-            <h2>Existing Plants</h2>
-            
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search plants..."
-                value={plantSearchTerm}
-                onChange={(e) => setPlantSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="plants-list">
-              {filteredPlantsForManagement.length === 0 ? (
-                <p className="no-plants">No plants found matching your search.</p>
-              ) : (
-                filteredPlantsForManagement.map(plant => (
-                  <div key={plant.id} className="plant-item">
-                    <div className="plant-info">
-                      <h3>{plant.name}</h3>
-                      <p className="scientific-name">{plant.scientificName}</p>
-                      <p className="price">${plant.price}</p>
-                    </div>
-                    <div className="plant-image">
-                      {plant.mainImage ? (
-                        <img src={plant.mainImage} alt={plant.name} />
-                      ) : (
-                        <div className="no-image">No Image</div>
-                      )}
-                    </div>
-                    <button 
-                      className="edit-btn"
-                      onClick={() => handleEditPlant(plant)}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
         </div>
       )}
       

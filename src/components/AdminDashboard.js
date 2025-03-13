@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
+import { useAdmin } from '../context/AdminContext';
 
 const AdminDashboard = () => {
+  const { plants, loading } = useAdmin();
   const [lowStockItems, setLowStockItems] = useState([]);
   const [salesData, setSalesData] = useState({
     pending: 0,
@@ -12,12 +14,15 @@ const AdminDashboard = () => {
   const [timeFilter, setTimeFilter] = useState('lastWeek');
 
   useEffect(() => {
-    // Load inventory data to check for low stock
-    const plants = JSON.parse(localStorage.getItem('plants') || '[]');
-    const lowStock = plants.filter(plant => 
-      plant.stock && parseInt(plant.stock) <= 5 && plant.status === 'In Stock'
-    );
-    setLowStockItems(lowStock.slice(0, 5)); // Get up to 5 low stock items
+    // Use plants data from context instead of directly from localStorage
+    if (plants.length > 0) {
+      const lowStock = plants.filter(plant => 
+        plant.inventory?.currentStock && 
+        plant.inventory?.currentStock < 5 &&
+        plant.inventory?.status !== 'Discontinued'
+      );
+      setLowStockItems(lowStock);
+    }
     
     // Calculate sales data based on time filter
     try {
@@ -30,7 +35,7 @@ const AdminDashboard = () => {
         totalOrders: 0
       });
     }
-  }, [timeFilter]);
+  }, [timeFilter, plants]);
 
   const calculateSalesData = (filter) => {
     try {
@@ -207,7 +212,7 @@ const AdminDashboard = () => {
             {lowStockItems.map(item => (
               <div key={item.id} className="low-stock-item">
                 <span className="item-name">{item.name}</span>
-                <span className="stock-count">Only {item.stock} left</span>
+                <span className="stock-count">Only {item.inventory?.currentStock} left</span>
               </div>
             ))}
             <Link to="/inventory" className="view-inventory-link">
