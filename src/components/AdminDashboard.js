@@ -9,7 +9,7 @@ const AdminDashboard = () => {
     completed: 0,
     totalOrders: 0
   });
-  const [timeFilter, setTimeFilter] = useState('last30Days');
+  const [timeFilter, setTimeFilter] = useState('lastWeek');
 
   useEffect(() => {
     // Load inventory data to check for low stock
@@ -137,7 +137,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <p className="welcome-message">Welcome, Colleen! Manage your flower farm from this dashboard.</p>
+      <p className="welcome-message">Welcome Cunt! Have a great day!</p>
       
       <div className="sales-summary">
         <div className="sales-header">
@@ -216,14 +216,6 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
-      
-      <div className="admin-help">
-        <h3>Need Help?</h3>
-        <p>
-          This dashboard gives you quick access to all the administrative features of your flower farm website.
-          For assistance, please contact your website administrator.
-        </p>
-      </div>
     </div>
   );
 };

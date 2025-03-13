@@ -62,6 +62,9 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
     logout();
   };
 
+  // Determine the current page for active tab highlighting
+  const currentPath = window.location.pathname;
+
   return (
     <nav className="navbar">
       <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -95,9 +98,27 @@ function Navigation({ isMenuOpen, setIsMenuOpen }) {
             <div className="nav-divider"></div>
             <div className="nav-section admin-links">
               <span className="section-label">Admin</span>
-              <Link to="/admin" onClick={() => setIsMenuOpen(false)} className="admin-link">Dashboard</Link>
-              <Link to="/inventory" onClick={() => setIsMenuOpen(false)} className="admin-link">Inventory</Link>
-              <Link to="/admin/orders" onClick={() => setIsMenuOpen(false)} className="admin-link">Orders</Link>
+              <Link 
+                to="/admin" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`admin-link ${currentPath === '/admin' ? 'active' : ''}`}
+              >
+                Dashboard
+              </Link>
+              <Link 
+                to="/inventory" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`admin-link ${currentPath === '/inventory' ? 'active' : ''}`}
+              >
+                Inventory
+              </Link>
+              <Link 
+                to="/admin/orders" 
+                onClick={() => setIsMenuOpen(false)} 
+                className={`admin-link ${currentPath === '/admin/orders' ? 'active' : ''}`}
+              >
+                Orders
+              </Link>
               <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
             </div>
           </>
@@ -124,7 +145,7 @@ function App() {
   // eslint-disable-next-line no-unused-vars
   const [isFirstVisit, setIsFirstVisit] = useState(false);
   // eslint-disable-next-line no-unused-vars
-  const [showDebugger, setShowDebugger] = useState(true); // Set to true to show the debugger
+  const [showDebugger, setShowDebugger] = useState(false); // Set to false to hide the debugger
   
   useEffect(() => {
     // Always set hasVisited to true to ensure hero panel stays hidden

@@ -1326,6 +1326,15 @@ footer {
 .admin-link {
   color: #4caf50 !important;
   font-weight: 500;
+  position: relative;
+  padding-bottom: 3px;
+}
+
+.admin-link.active {
+  border: 1px solid #4caf50;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 
 .admin-links {

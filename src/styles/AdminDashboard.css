@@ -17,10 +17,11 @@
 .welcome-message {
   text-align: center;
   font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
   color: #2c5530;
   font-weight: 500;
+  padding: 0.25rem 0;
 }
 
 /* Sales Summary Styles */
