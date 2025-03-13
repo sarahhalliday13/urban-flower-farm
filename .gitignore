@@ -34,3 +34,6 @@ yarn-error.log*
 
 # credentials
 src/config/sheets-credentials.json
+
+# Local Netlify folder
+.netlify
