@@ -18,8 +18,7 @@ const AdminDashboard = () => {
     if (plants.length > 0) {
       const lowStock = plants.filter(plant => 
         plant.inventory?.currentStock && 
-        plant.inventory?.currentStock < 5 &&
-        plant.inventory?.status !== 'Discontinued'
+        plant.inventory?.currentStock < 5
       );
       setLowStockItems(lowStock);
     }

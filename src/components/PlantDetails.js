@@ -349,6 +349,7 @@ function PlantDetails() {
           </div>
         </div>
 
+        {/* Customer comments section hidden temporarily
         <div className="comments-section">
           <h2>Customer Comments</h2>
           <form className="comment-form" onSubmit={handleSubmitComment}>
@@ -368,11 +369,12 @@ function PlantDetails() {
                   <span>{comment.author}</span>
                   <span>{comment.date}</span>
                 </div>
-                <p className="comment-content">{comment.content}</p>
+                <p>{comment.text}</p>
               </div>
             ))}
           </div>
         </div>
+        */}
       </div>
       <NavigationButtons className="bottom" />
       {showToast && (
