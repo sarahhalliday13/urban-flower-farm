@@ -25,16 +25,46 @@ const AdminOrders = () => {
       const firebaseOrders = await getOrders();
       
       if (firebaseOrders && firebaseOrders.length > 0) {
-        setOrders(firebaseOrders);
+        // Process orders to ensure they have consistent format
+        const processedOrders = firebaseOrders.map(order => {
+          // Create a name field for backwards compatibility with the existing code
+          if (order.customer && (order.customer.firstName || order.customer.lastName)) {
+            return {
+              ...order,
+              customer: {
+                ...order.customer,
+                // Add a name field that combines firstName and lastName
+                name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+              }
+            };
+          }
+          return order;
+        });
+        
+        setOrders(processedOrders);
       } else {
         // Fallback to localStorage if no orders in Firebase
         console.log('No orders found in Firebase, falling back to localStorage');
         const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         
-        // Sort by date (newest first)
-        localOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        // Process local orders as well for consistency
+        const processedLocalOrders = localOrders.map(order => {
+          if (order.customer && (order.customer.firstName || order.customer.lastName)) {
+            return {
+              ...order,
+              customer: {
+                ...order.customer,
+                name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+              }
+            };
+          }
+          return order;
+        });
         
-        setOrders(localOrders);
+        // Sort by date (newest first)
+        processedLocalOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setOrders(processedLocalOrders);
       }
     } catch (error) {
       console.error('Error loading orders:', error);
@@ -42,8 +72,22 @@ const AdminOrders = () => {
       // Fallback to localStorage if Firebase fails
       try {
         const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        localOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-        setOrders(localOrders);
+        // Process local orders for consistency
+        const processedLocalOrders = localOrders.map(order => {
+          if (order.customer && (order.customer.firstName || order.customer.lastName)) {
+            return {
+              ...order,
+              customer: {
+                ...order.customer,
+                name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+              }
+            };
+          }
+          return order;
+        });
+        
+        processedLocalOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setOrders(processedLocalOrders);
       } catch (localError) {
         console.error('Error loading orders from localStorage:', localError);
       }
@@ -240,17 +284,32 @@ const AdminOrders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
+    // Ensure the order has required fields to prevent errors
+    if (!order || !order.customer) return false;
+    
+    // Add defaults for missing fields to prevent errors
+    const safeOrder = {
+      ...order,
+      status: order.status || 'Processing',
+      customer: {
+        ...order.customer,
+        name: order.customer.name || `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || 'No name provided',
+        email: order.customer.email || 'Not provided'
+      },
+      id: order.id || 'Unknown'
+    };
+    
     // Filter by status
-    if (filter !== 'all' && order.status.toLowerCase() !== filter.toLowerCase()) {
+    if (filter !== 'all' && safeOrder.status.toLowerCase() !== filter.toLowerCase()) {
       return false;
     }
     
     // Filter by search term (customer name, email, or order ID)
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      const customerName = `${order.customer.name || 'No name provided'}`.toLowerCase();
-      const email = order.customer.email.toLowerCase();
-      const orderId = order.id.toLowerCase();
+      const customerName = safeOrder.customer.name.toLowerCase();
+      const email = safeOrder.customer.email.toLowerCase();
+      const orderId = safeOrder.id.toLowerCase();
       
       return customerName.includes(searchLower) || 
              email.includes(searchLower) || 
@@ -314,24 +373,24 @@ const AdminOrders = () => {
                 <React.Fragment key={order.id}>
                   <tr onClick={() => toggleOrderDetails(order.id)}>
                     <td data-label="Order">
-                      <span className="order-id">#{order.id}</span>
+                      <span className="order-id">#{order.id || 'Unknown'}</span>
                     </td>
                     <td data-label="Date">
-                      <span className="order-date">{formatDate(order.date)}</span>
+                      <span className="order-date">{order.date ? formatDate(order.date) : 'Unknown'}</span>
                     </td>
                     <td data-label="Customer">
                       <span className="customer-name">
-                        {order.customer.name || 'No name provided'}
+                        {order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || 'No name provided'}
                       </span>
-                      <span className="customer-email">{order.customer.email}</span>
+                      <span className="customer-email">{order.customer?.email || 'No email'}</span>
                     </td>
                     <td data-label="Status">
-                      <span className={`order-status ${getStatusClass(order.status)}`}>
-                        {order.status}
+                      <span className={`order-status ${getStatusClass(order.status || 'Pending')}`}>
+                        {order.status || 'Pending'}
                       </span>
                     </td>
                     <td data-label="Total">
-                      <span className="order-total">${order.total.toFixed(2)}</span>
+                      <span className="order-total">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(order.total || 0).toFixed(2)}</span>
                     </td>
                     <td data-label="Actions">
                       <button 
