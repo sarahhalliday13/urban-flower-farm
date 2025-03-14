@@ -335,6 +335,10 @@
   letter-spacing: 0.01em;
 }
 
+.inventory-table th:last-child {
+  text-align: right; /* Align with action buttons which are right-aligned */
+}
+
 .inventory-table tr:last-child td {
   border-bottom: none;
 }
@@ -409,8 +413,16 @@
   justify-content: flex-end;
 }
 
+/* 
+ * BUTTON STYLE GUIDE
+ * ------------------
+ * Primary buttons: Green background (#10b981) with white text - Used for main actions like Save
+ * Secondary buttons: Blue background (#3b82f6) with white text - Used for secondary actions like Edit/Update
+ * Tertiary buttons: White background with grey text (#4b5563) - Used for less important actions like Cancel
+ */
+
 .edit-btn, .edit-plant-btn {
-  background-color: #3b82f6;
+  background-color: #3b82f6; /* Secondary button: Blue for secondary actions */
   color: white;
   border: none;
   padding: 0.6rem 1.2rem;
@@ -425,18 +437,18 @@
 }
 
 .edit-btn:hover {
-  background-color: #2563eb;
+  background-color: #2563eb; /* Darker blue on hover */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .edit-plant-btn {
-  background-color: #10b981;
+  background-color: #3b82f6; /* Secondary button: Consistent with edit-btn */
   min-width: 90px;
 }
 
 .edit-plant-btn:hover {
-  background-color: #059669;
+  background-color: #2563eb; /* Darker blue on hover */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -455,12 +467,12 @@
 }
 
 .save-btn {
-  background-color: #10b981;
+  background-color: #10b981; /* Primary button: Green for primary actions */
   color: white;
 }
 
 .save-btn:hover {
-  background-color: #059669;
+  background-color: #059669; /* Darker green on hover */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -472,12 +484,13 @@
 }
 
 .cancel-btn {
-  background-color: #f3f4f6;
-  color: #4b5563;
+  background-color: #ffffff; /* Tertiary button: White background */
+  color: #4b5563; /* Grey text */
+  border: 1px solid #d1d5db; /* Light grey border */
 }
 
 .cancel-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #f3f4f6; /* Light grey background on hover */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -1299,87 +1312,68 @@
 
 /* Mobile styles for form - ONLY apply at appropriate screen sizes */
 @media (max-width: 768px) {
-  /* Action buttons in a column on mobile */
+  .inventory-table td:before {
+    content: attr(data-label);
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  /* Hide "Actions" label in mobile view */
+  .inventory-table td[data-label="Actions"]:before {
+    display: none;
+  }
+  
+  /* Improve action buttons container for mobile */
+  .inventory-table td[data-label="Actions"] {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+  }
+  
+  /* Fix action buttons to fit within their container on mobile */
   .action-buttons {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+    max-width: 100%;
     gap: 0.6rem;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0;
+    overflow: hidden; /* Add overflow hidden to prevent content from spilling out */
   }
   
+  /* Force the Update button to fit inside its container */
   .edit-btn, 
   .edit-plant-btn, 
   .save-btn, 
   .cancel-btn {
     width: 100%;
-    margin-bottom: 0;
-    padding: 0.75rem;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0.75rem 0.5rem; /* Reduce padding to help fit better */
     text-align: center;
     justify-content: center;
     display: flex;
     align-items: center;
     font-weight: 500;
+    overflow: hidden;
+    min-width: 0; /* Override the min-width that could cause overflow */
   }
   
-  /* Make status badges more visible */
-  .status-badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
+  .inventory-table td[data-label="Flowers"] .plant-details {
+    margin-left: 0;
+    margin-top: 10px;
   }
   
-  /* Add New Flower tab specific styles */
-  .tab-content h2 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  
-  /* Ensure form elements aren't too tight */
-  .plant-form input,
-  .plant-form textarea,
-  .plant-form select {
-    font-size: 16px; /* Prevents iOS zoom on focus */
-    padding: 10px;
-  }
-  
-  /* Specific improvements for the consolidated Images section */
-  .plant-form .full-width {
-    margin-bottom: 20px;
-  }
-  
-  .plant-form .full-width label {
-    font-size: 16px;
-    margin-bottom: 10px;
-    display: block;
-  }
-  
-  /* Better handling of the description textarea */
-  .plant-form textarea {
-    min-height: 100px;
-  }
-  
-  /* Improve spacing in form-row elements */
-  .plant-form .form-row {
-    margin-bottom: 10px;
+  .inventory-table td[data-label="Flowers"] {
     flex-direction: column;
-    gap: 10px;
-  }
-  
-  /* Fix upload button alignment */
-  .image-file-input {
-    width: 100%;
-  }
-  
-  /* Form actions responsive styles */
-  .form-actions {
-    flex-direction: column-reverse;
-    width: 100%;
-  }
-  
-  .save-btn, 
-  .cancel-btn {
-    width: 100%;
-    margin-bottom: 10px;
+    align-items: flex-start;
   }
   
   /* Make images container more compact */
@@ -1393,6 +1387,12 @@
   
   .additional-image-item .image-preview {
     height: 120px;
+  }
+  
+  /* Form actions responsive styles */
+  .form-actions {
+    flex-direction: column-reverse;
+    width: 100%;
   }
   
   /* Form actions in the plant form */
@@ -1555,26 +1555,6 @@
 
 .sortable-header:hover {
   background-color: #f5f5f5;
-}
-
-/* Mobile responsive styles */
-@media (max-width: 768px) {
-  .inventory-table td:before {
-    content: attr(data-label);
-    font-weight: bold;
-    display: block;
-    margin-bottom: 5px;
-  }
-  
-  .inventory-table td[data-label="Flowers"] .plant-details {
-    margin-left: 0;
-    margin-top: 10px;
-  }
-  
-  .inventory-table td[data-label="Flowers"] {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 /* Page header styling for Update Flower screen */
