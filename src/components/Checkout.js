@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory } from '../services/firebase';
 import '../styles/Checkout.css';
@@ -7,6 +7,7 @@ import '../styles/Checkout.css';
 const Checkout = () => {
   const { cartItems, getTotal, clearCart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -16,19 +17,51 @@ const Checkout = () => {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [orderComplete, setOrderComplete] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [orderId, setOrderId] = useState(null);
-  // eslint-disable-next-line no-unused-vars
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+
+  // Check if we're on the confirmation page
+  useEffect(() => {
+    if (location.pathname === '/checkout/confirmation') {
+      // Get the latest order ID from localStorage
+      const latestOrderId = localStorage.getItem('latestOrderId');
+      
+      if (latestOrderId) {
+        // Find the order in the orders array
+        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const foundOrder = allOrders.find(order => order.id === latestOrderId);
+        
+        if (foundOrder) {
+          // Set state with the found order
+          setOrderComplete(true);
+          setOrderId(foundOrder.id);
+          setFormData(prevData => ({
+            ...prevData,
+            firstName: foundOrder.customer.firstName,
+            lastName: foundOrder.customer.lastName,
+            email: foundOrder.customer.email,
+            phone: foundOrder.customer.phone,
+            notes: foundOrder.customer.notes || ''
+          }));
+        } else {
+          // No order found, redirect to shop
+          navigate('/shop');
+        }
+      } else {
+        // No order ID in localStorage, redirect to shop
+        navigate('/shop');
+      }
+    }
+  }, [location, navigate]);
 
   useEffect(() => {
-    // Redirect to shop if cart is empty
-    if (cartItems.length === 0 && !orderComplete) {
+    // Redirect to shop if cart is empty and not on confirmation page
+    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
       navigate('/shop');
     }
-  }, [cartItems, navigate, orderComplete]);
+  }, [cartItems, navigate, orderComplete, location.pathname]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -81,20 +114,24 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Generate a unique order ID
+      const newOrderId = `ORD-${Date.now()}`;
+      
       // Format the order data
-      const orderData = {
-        id: `ORD-${Date.now()}`,
+      const newOrderData = {
+        id: newOrderId,
         date: new Date().toISOString(),
         customer: {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
+          notes: formData.notes || '',
           address: {
-            street: formData.street,
-            city: formData.city,
-            state: formData.state,
-            zip: formData.zip
+            street: formData.street || '',
+            city: formData.city || '',
+            state: formData.state || '',
+            zip: formData.zip || ''
           }
         },
         items: cartItems.map(item => ({
@@ -104,32 +141,36 @@ const Checkout = () => {
           quantity: item.quantity
         })),
         total: getTotal().toFixed(2),
-        payment: {
-          method: 'Credit Card',
-          cardNumber: `**** **** **** ${formData.cardNumber.slice(-4)}`,
-          nameOnCard: formData.nameOnCard,
-          expiry: formData.expiry
-        },
         status: 'Processing'
       };
       
       // Save the order to localStorage
       const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...existingOrders, orderData]));
+      localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
       localStorage.setItem('userEmail', formData.email.toLowerCase());
       
+      // Save the latest order ID for the confirmation page
+      localStorage.setItem('latestOrderId', newOrderId);
+      
       // Update inventory using Firebase
-      for (const item of cartItems) {
-        await updateInventory(item.id, {
-          currentStock: Math.max(0, (item.inventory?.currentStock || 0) - item.quantity),
-          lastUpdated: new Date().toISOString()
-        });
+      try {
+        for (const item of cartItems) {
+          await updateInventory(item.id, {
+            currentStock: Math.max(0, (item.inventory?.currentStock || 0) - item.quantity),
+            lastUpdated: new Date().toISOString()
+          });
+        }
+      } catch (inventoryError) {
+        console.error('Error updating inventory:', inventoryError);
+        setInventoryUpdateStatus('warning');
       }
       
-      // Clear cart and navigate to confirmation
+      // Clear cart
       clearCart();
       setIsSubmitting(false);
-      navigate('/checkout/confirmation', { state: { order: orderData } });
+      
+      // Navigate to confirmation page
+      navigate('/checkout/confirmation');
     } catch (error) {
       console.error('Error processing order:', error);
       setIsSubmitting(false);
@@ -274,13 +315,6 @@ const Checkout = () => {
             </div>
             
             <div className="form-actions">
-              <button 
-                type="button" 
-                onClick={() => navigate('/shop')}
-                className="back-to-shop"
-              >
-                Back to Shop
-              </button>
               <button 
                 type="submit" 
                 className="place-order-btn"
