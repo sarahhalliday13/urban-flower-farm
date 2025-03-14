@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   updateInventory,
   subscribeToInventory,
@@ -27,6 +27,7 @@ const InventoryManager = () => {
   const [saveStatus, setSaveStatus] = useState({});
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   const [syncStatus, setSyncStatus] = useState({
     syncing: false,
     lastSync: null,
@@ -55,7 +56,13 @@ const InventoryManager = () => {
     attributes: '',
     hardinessZone: '',
     spacing: '',
-    featured: false
+    featured: false,
+    inventory: {
+      currentStock: 0,
+      status: 'In Stock',
+      restockDate: '',
+      notes: ''
+    }
   });
   const [plantSaveStatus, setPlantSaveStatus] = useState('');
   const [plantSearchTerm, setPlantSearchTerm] = useState('');
@@ -219,20 +226,13 @@ const InventoryManager = () => {
 
   // Handle edit button click
   const handleEdit = useCallback((plantId) => {
-    setEditMode(prev => ({
-      ...prev,
-      [plantId]: true
-    }));
-  }, []);
-
-  // Handle cancel button click
-  const handleCancel = useCallback((plantId) => {
-    // Reset edit values to current plant values
+    // Initialize edit values with current plant values
     const plant = plants.find(p => p.id === plantId);
     if (plant) {
       setEditValues(prev => ({
         ...prev,
         [plantId]: {
+          price: plant.price || 0,
           currentStock: plant.inventory?.currentStock || 0,
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
@@ -241,6 +241,14 @@ const InventoryManager = () => {
       }));
     }
     
+    setEditMode(prev => ({
+      ...prev,
+      [plantId]: true
+    }));
+  }, [plants]);
+
+  // Handle cancel button click
+  const handleCancel = useCallback((plantId) => {
     // Exit edit mode
     setEditMode(prev => {
       const newState = { ...prev };
@@ -254,7 +262,7 @@ const InventoryManager = () => {
       delete newState[plantId];
       return newState;
     });
-  }, [plants]);
+  }, []);
 
   // Handle form field changes
   const handleChange = useCallback((plantId, field, value) => {
@@ -278,6 +286,7 @@ const InventoryManager = () => {
     try {
       // Get the edited values
       const inventoryData = editValues[plantId];
+      const priceValue = inventoryData.price;
       
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
@@ -285,6 +294,7 @@ const InventoryManager = () => {
       // Update plant data in context
       const updatedPlant = {
         ...plants.find(p => p.id === plantId),
+        price: priceValue,
         inventory: {
           ...plants.find(p => p.id === plantId)?.inventory,
           currentStock: inventoryData.currentStock,
@@ -293,6 +303,8 @@ const InventoryManager = () => {
           notes: inventoryData.notes
         }
       };
+      
+      // Update plants state using the context's updatePlantData function
       updatePlantData(updatedPlant);
       
       // Set success status
@@ -301,38 +313,7 @@ const InventoryManager = () => {
         [plantId]: 'success'
       }));
       
-      // Exit edit mode after a delay
-      setTimeout(() => {
-        setEditMode(prev => {
-          const newState = { ...prev };
-          delete newState[plantId];
-          return newState;
-        });
-        
-        setSaveStatus(prev => {
-          const newState = { ...prev };
-          delete newState[plantId];
-          return newState;
-        });
-      }, 1500);
-      
-      // Check sync queue in case it was updated
-      checkSyncQueue();
-      
-      // Show warning if there was one
-      if (result.warning) {
-        console.warn(result.warning);
-      }
-    } catch (error) {
-      console.error('Error saving inventory:', error);
-      
-      // Set error status
-      setSaveStatus(prev => ({
-        ...prev,
-        [plantId]: 'error'
-      }));
-      
-      // Clear error status after a delay
+      // Clear success message after a delay
       setTimeout(() => {
         setSaveStatus(prev => {
           const newState = { ...prev };
@@ -340,8 +321,69 @@ const InventoryManager = () => {
           return newState;
         });
       }, 3000);
+      
+      // Exit edit mode
+      setEditMode(prev => {
+        const newState = { ...prev };
+        delete newState[plantId];
+        return newState;
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error updating inventory:', error);
+      
+      // Set error status
+      setSaveStatus(prev => ({
+        ...prev,
+        [plantId]: 'error'
+      }));
+      
+      // Clear error message after a delay
+      setTimeout(() => {
+        setSaveStatus(prev => {
+          const newState = { ...prev };
+          delete newState[plantId];
+          return newState;
+        });
+      }, 3000);
+      
+      throw error;
     }
-  }, [editValues, checkSyncQueue, plants, updatePlantData]);
+  }, [plants, editValues, updatePlantData]);
+
+  // Handle sorting of columns
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Function to count plants by status
+  const getStatusCounts = useCallback(() => {
+    const counts = {
+      'all': plants.length,
+      'In Stock': 0,
+      'Out of Stock': 0,
+      'Coming Soon': 0,
+      'Pre-order': 0
+    };
+    
+    // Count plants for each status
+    plants.forEach(plant => {
+      const status = plant.inventory?.status;
+      if (status && counts[status] !== undefined) {
+        counts[status]++;
+      }
+    });
+    
+    return counts;
+  }, [plants]);
+  
+  // Get the counts for each status
+  const statusCounts = useMemo(() => getStatusCounts(), [getStatusCounts]);
 
   const getFilteredPlants = useCallback(() => {
     let filtered = [...plants];
@@ -366,8 +408,24 @@ const InventoryManager = () => {
       );
     }
     
+    // Apply sorting
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key] || '';
+        const bValue = b[sortConfig.key] || '';
+        
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    
     return filtered;
-  }, [plants, filter, searchTerm]);
+  }, [plants, filter, searchTerm, sortConfig]);
 
   // Memoize the filtered plants to prevent unnecessary recalculations
   const filteredPlants = React.useMemo(() => getFilteredPlants(), [getFilteredPlants]);
@@ -387,11 +445,34 @@ const InventoryManager = () => {
 
   // New function for handling plant form input changes
   const handlePlantFormChange = (e) => {
-    const { name, value } = e.target;
-    setPlantFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type, checked } = e.target;
+    
+    // Handle checkbox inputs
+    if (type === 'checkbox') {
+      setPlantFormData(prev => ({
+        ...prev,
+        [name]: checked
+      }));
+      return;
+    }
+    
+    // Handle nested inventory fields
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setPlantFormData(prev => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent],
+          [child]: value
+        }
+      }));
+    } else {
+      // Handle regular fields
+      setPlantFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   // Handle image file selection
@@ -528,7 +609,13 @@ const InventoryManager = () => {
       attributes: '',
       hardinessZone: '',
       spacing: '',
-      featured: false
+      featured: false,
+      inventory: {
+        currentStock: 0,
+        status: 'In Stock',
+        restockDate: '',
+        notes: ''
+      }
     });
     setPlantEditMode(false);
     setCurrentPlant(null);
@@ -556,7 +643,13 @@ const InventoryManager = () => {
       attributes: plant.attributes || '',
       hardinessZone: plant.hardinessZone || '',
       spacing: plant.spacing || '',
-      featured: plant.featured === true || plant.featured === 'true'
+      featured: plant.featured === true || plant.featured === 'true',
+      inventory: {
+        currentStock: plant.inventory?.currentStock || 0,
+        status: plant.inventory?.status || 'In Stock',
+        restockDate: plant.inventory?.restockDate || '',
+        notes: plant.inventory?.notes || ''
+      }
     });
     setPlantEditMode(true);
     setActiveTab('addPlant'); // Switch to the add/edit plant tab
@@ -994,43 +1087,91 @@ const InventoryManager = () => {
 
   return (
     <div className="inventory-manager">
-      <h1>Inventory</h1>
-      
-      {/* Tab Navigation */}
-      <div className="inventory-tabs">
-        <button 
-          className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
-          onClick={() => setActiveTab('inventory')}
-        >
-          Inventory
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'addPlant' ? 'active' : ''}`}
-          onClick={() => setActiveTab('addPlant')}
-        >
-          Add New Flower
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
-          onClick={() => setActiveTab('csvMigration')}
-        >
-          Import Data
-        </button>
-      </div>
+      {/* Hide tabs when editing a flower */}
+      {!plantEditMode && (
+        <div className="inventory-tabs">
+          <button 
+            className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('inventory')}
+          >
+            Inventory
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
+            onClick={() => setActiveTab('csvMigration')}
+          >
+            Import Data
+          </button>
+        </div>
+      )}
+
+      {/* When in edit mode, show a page header with the plant name */}
+      {plantEditMode && (
+        <div className="page-header">
+          <h1>Update {plantFormData.name}</h1>
+          <button 
+            className="save-btn"
+            onClick={async (e) => {
+              e.preventDefault();
+              setPlantSaveStatus('saving');
+              
+              try {
+                // Upload main image if selected
+                let mainImageUrl = plantFormData.mainImage;
+                
+                if (imageFile) {
+                  const uploadedUrl = await uploadImageFile(imageFile);
+                  if (uploadedUrl) {
+                    mainImageUrl = uploadedUrl;
+                  }
+                }
+                
+                // Upload additional images if selected
+                let additionalImagesUrls = [...plantFormData.additionalImages];
+                
+                if (additionalImageFiles.length > 0) {
+                  const newUrls = await uploadAdditionalImages();
+                  additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                }
+                
+                // Prepare plant data
+                const plantData = {
+                  ...plantFormData,
+                  mainImage: mainImageUrl,
+                  additionalImages: additionalImagesUrls,
+                  id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
+                };
+                
+                // Update existing plant
+                await updatePlant(currentPlant.id, plantData);
+                setPlantSaveStatus('success');
+                
+                // Update plant in context if needed
+                if (typeof updatePlantData === 'function') {
+                  updatePlantData(plantData);
+                }
+                
+                // Show success message briefly then go back to inventory
+                setTimeout(() => {
+                  resetPlantForm();
+                  setActiveTab('inventory');
+                }, 1000);
+              } catch (error) {
+                console.error('Error saving plant:', error);
+                setPlantSaveStatus('error');
+              }
+            }}
+            disabled={plantSaveStatus === 'saving'}
+          >
+            {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      )}
       
       {/* Inventory Tab Content */}
-      {activeTab === 'inventory' && (
+      {activeTab === 'inventory' && !plantEditMode && (
         <div className="tab-content">
           <div className="inventory-controls">
-            <div className="search-box">
-              <input
-                type="text"
-                placeholder="Search plants..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
             <div className="filter-controls">
               <label htmlFor="statusFilter">Status:</label>
               <select
@@ -1038,29 +1179,23 @@ const InventoryManager = () => {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >
-                <option value="all">All</option>
-                <option value="in-stock">In Stock</option>
-                <option value="out-of-stock">Out of Stock</option>
-                <option value="coming-soon">Coming Soon</option>
-                <option value="pre-order">Pre-order</option>
+                <option value="all">All ({statusCounts.all})</option>
+                <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
+                <option value="Out of Stock">Out of Stock ({statusCounts['Out of Stock']})</option>
+                <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
+                <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
               </select>
             </div>
-            
-            <div className="admin-buttons">
+            {/* Add New button in the top right */}
+            <div className="add-new-button-container">
               <button 
-                className="refresh-btn"
-                onClick={() => handleLoadPlants(true)}
-                disabled={loading}
+                className="add-new-button"
+                onClick={() => {
+                  resetPlantForm();
+                  setActiveTab('addPlant');
+                }}
               >
-                {loading ? 'Loading...' : 'Refresh Data'}
-              </button>
-              
-              <button 
-                className="sync-btn"
-                onClick={processPendingUpdates}
-                disabled={syncStatus.syncing || syncStatus.pendingUpdates === 0}
-              >
-                {syncStatus.syncing ? 'Syncing...' : `Sync Updates (${syncStatus.pendingUpdates})`}
+                Add New
               </button>
             </div>
           </div>
@@ -1084,16 +1219,13 @@ const InventoryManager = () => {
             </div>
           )}
           
-          <div className="inventory-stats">
-            <p>Total plants: {plants.length}</p>
-            <p>Filtered plants: {filteredPlants.length}</p>
-          </div>
-          
           <div className="inventory-table-container">
             <table className="inventory-table">
               <thead>
                 <tr>
-                  <th>Plant</th>
+                  <th className="sortable-header" onClick={() => handleSort('name')}>
+                    Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
                   <th>Stock</th>
                   <th>Status</th>
                   <th>Restock Date</th>
@@ -1114,57 +1246,52 @@ const InventoryManager = () => {
                     
                     return (
                       <tr key={plant.id} className={isEditing ? 'editing' : ''}>
-                        <td data-label="Plant" className="plant-info">
-                          <div className="plant-image">
-                            {plant.mainImage ? (
-                              <img 
-                                src={plant.mainImage} 
-                                alt={plant.name}
-                                onError={(e) => {
-                                  e.target.src = '/images/placeholder.jpg';
-                                }}
-                              />
-                            ) : (
-                              <div className="no-image">No Image</div>
-                            )}
-                          </div>
-                          <div className="plant-details">
-                            <span className="plant-name">{plant.name}</span>
-                            <span className="plant-scientific-name">{plant.scientificName}</span>
-                            <span className="plant-price">${plant.price}</span>
-                          </div>
+                        <td data-label="Flower Name">
+                          <span className="plant-name">{plant.name}</span>
                         </td>
-                        
-                        {isEditing ? (
-                          <>
-                            <td data-label="Stock">
-                              <input
-                                type="number"
-                                min="0"
-                                value={editValues[plant.id]?.currentStock || 0}
-                                onChange={(e) => handleChange(plant.id, 'currentStock', e.target.value)}
-                              />
-                            </td>
-                            <td data-label="Status">
-                              <select
-                                value={editValues[plant.id]?.status || 'Unknown'}
-                                onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
-                              >
-                                <option value="In Stock">In Stock</option>
-                                <option value="Out of Stock">Out of Stock</option>
-                                <option value="Coming Soon">Coming Soon</option>
-                                <option value="Pre-order">Pre-order</option>
-                                <option value="Discontinued">Discontinued</option>
-                              </select>
-                            </td>
-                            <td data-label="Restock Date">
-                              <input
-                                type="date"
-                                value={editValues[plant.id]?.restockDate || ''}
-                                onChange={(e) => handleChange(plant.id, 'restockDate', e.target.value)}
-                              />
-                            </td>
-                            <td data-label="Actions" className="action-buttons">
+                        <td data-label="Stock">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              min="0"
+                              value={editValues[plant.id]?.currentStock || 0}
+                              onChange={(e) => handleChange(plant.id, 'currentStock', e.target.value)}
+                            />
+                          ) : (
+                            <span>{plant.inventory?.currentStock || 0}</span>
+                          )}
+                        </td>
+                        <td data-label="Status">
+                          {isEditing ? (
+                            <select
+                              value={editValues[plant.id]?.status || 'Unknown'}
+                              onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
+                            >
+                              <option value="In Stock">In Stock</option>
+                              <option value="Out of Stock">Out of Stock</option>
+                              <option value="Coming Soon">Coming Soon</option>
+                              <option value="Pre-order">Pre-order</option>
+                            </select>
+                          ) : (
+                            <span className={`status-badge ${statusClass}`}>
+                              {plant.inventory?.status || 'Unknown'}
+                            </span>
+                          )}
+                        </td>
+                        <td data-label="Restock Date">
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              value={editValues[plant.id]?.restockDate || ''}
+                              onChange={(e) => handleChange(plant.id, 'restockDate', e.target.value)}
+                            />
+                          ) : (
+                            <span>{plant.inventory?.restockDate || 'N/A'}</span>
+                          )}
+                        </td>
+                        <td data-label="Actions" className="action-buttons">
+                          {isEditing ? (
+                            <>
                               <button 
                                 className="save-btn"
                                 onClick={() => handleSave(plant.id)}
@@ -1185,33 +1312,18 @@ const InventoryManager = () => {
                               {saveStatus[plant.id] === 'error' && (
                                 <div className="save-error">Error saving</div>
                               )}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td data-label="Stock">{plant.inventory?.currentStock || 0}</td>
-                            <td data-label="Status">
-                              <span className={`status-badge ${statusClass}`}>
-                                {plant.inventory?.status || 'Unknown'}
-                              </span>
-                            </td>
-                            <td data-label="Restock Date">{plant.inventory?.restockDate || 'N/A'}</td>
-                            <td data-label="Actions" className="action-buttons">
+                            </>
+                          ) : (
+                            <>
                               <button 
                                 className="edit-plant-btn"
                                 onClick={() => handleEditPlant(plant)}
                               >
                                 Update
                               </button>
-                              <button 
-                                className="edit-btn"
-                                onClick={() => handleEdit(plant.id)}
-                              >
-                                Edit
-                              </button>
-                            </td>
-                          </>
-                        )}
+                            </>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
@@ -1222,10 +1334,10 @@ const InventoryManager = () => {
         </div>
       )}
       
-      {/* Add/Edit Plant Tab Content - renamed to Add New Flower */}
-      {activeTab === 'addPlant' && (
+      {/* Add/Edit Plant Tab Content */}
+      {(activeTab === 'addPlant' || plantEditMode) && (
         <div className="tab-content">
-          <h2>{plantEditMode ? 'Edit Flower' : 'Add New Flower'}</h2>
+          {!plantEditMode && <h2>Add New Flower</h2>}
           
           <form className="plant-form" onSubmit={handlePlantSubmit}>
             <div className="form-row">
@@ -1275,6 +1387,46 @@ const InventoryManager = () => {
                   value={plantFormData.price}
                   onChange={handlePlantFormChange}
                   required
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="inventory.currentStock">Stock</label>
+                <input
+                  type="number"
+                  id="inventory.currentStock"
+                  name="inventory.currentStock"
+                  value={plantFormData.inventory.currentStock}
+                  onChange={handlePlantFormChange}
+                  min="0"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="inventory.status">Status</label>
+                <select
+                  id="inventory.status"
+                  name="inventory.status"
+                  value={plantFormData.inventory.status}
+                  onChange={handlePlantFormChange}
+                >
+                  <option value="In Stock">In Stock</option>
+                  <option value="Out of Stock">Out of Stock</option>
+                  <option value="Coming Soon">Coming Soon</option>
+                  <option value="Pre-order">Pre-order</option>
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="inventory.restockDate">Restock Date</label>
+                <input
+                  type="date"
+                  id="inventory.restockDate"
+                  name="inventory.restockDate"
+                  value={plantFormData.inventory.restockDate}
+                  onChange={handlePlantFormChange}
                 />
               </div>
             </div>
@@ -1546,7 +1698,7 @@ const InventoryManager = () => {
                 className={`save-btn ${plantSaveStatus}`}
                 disabled={plantSaveStatus === 'saving'}
               >
-                {plantSaveStatus === 'saving' ? 'Saving...' : plantEditMode ? 'Update Flower' : 'Save'}
+                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
               </button>
               
               {plantSaveStatus === 'success' && (
