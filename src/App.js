@@ -214,6 +214,7 @@ function App() {
                 <Route path="/plant/:id" element={<PlantDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/checkout" element={<Checkout />} />
+                <Route path="/checkout/confirmation" element={<Checkout />} />
                 <Route path="/orders" element={<Orders />} />
                 <Route path="/firebase-test" element={<FirebaseTest />} />
                 <Route 
