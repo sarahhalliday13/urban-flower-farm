@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { updateInventory } from '../services/firebase';
+import { updateInventory, getOrders, updateOrderStatus as updateFirebaseOrderStatus } from '../services/firebase';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
 
@@ -18,25 +18,46 @@ const AdminOrders = () => {
     loadOrders();
   }, []);
 
-  const loadOrders = () => {
+  const loadOrders = async () => {
     setLoading(true);
     try {
-      // In a real app, this would be an API call
-      const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      // First try to load from Firebase
+      const firebaseOrders = await getOrders();
       
-      // Sort by date (newest first)
-      allOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
-      
-      setOrders(allOrders);
+      if (firebaseOrders && firebaseOrders.length > 0) {
+        setOrders(firebaseOrders);
+      } else {
+        // Fallback to localStorage if no orders in Firebase
+        console.log('No orders found in Firebase, falling back to localStorage');
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        
+        // Sort by date (newest first)
+        localOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        setOrders(localOrders);
+      }
     } catch (error) {
       console.error('Error loading orders:', error);
+      
+      // Fallback to localStorage if Firebase fails
+      try {
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        localOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setOrders(localOrders);
+      } catch (localError) {
+        console.error('Error loading orders from localStorage:', localError);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      // Update in Firebase first
+      await updateFirebaseOrderStatus(orderId, newStatus);
+      
+      // Then update local state and localStorage
       const updatedOrders = orders.map(order => {
         if (order.id === orderId) {
           return { ...order, status: newStatus };
@@ -45,10 +66,18 @@ const AdminOrders = () => {
       });
       
       setOrders(updatedOrders);
-      localStorage.setItem('orders', JSON.stringify(updatedOrders));
+      
+      // Also update localStorage for fallback
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const updatedLocalOrders = localOrders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, status: newStatus };
+        }
+        return order;
+      });
+      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
     } catch (error) {
       console.error('Error updating order status:', error);
-      alert('Failed to update order status. Please try again.');
     }
   };
 
@@ -370,81 +399,76 @@ const AdminOrders = () => {
                                 <p>{order.notes}</p>
                               </div>
                             )}
-                          </div>
-                          
-                          <div className="order-actions">
-                            <h4>Order Actions</h4>
-                            <div className="action-buttons">
-                              <div className="status-section">
-                                <h5>Update Order Status</h5>
-                                <div className="status-buttons">
-                                  <button 
-                                    className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
-                                    onClick={() => updateOrderStatus(order.id, 'Pending')}
-                                  >
-                                    Pending
-                                  </button>
-                                  <button 
-                                    className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
-                                    onClick={() => updateOrderStatus(order.id, 'Processing')}
-                                  >
-                                    Processing
-                                  </button>
-                                  <button 
-                                    className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
-                                    onClick={() => updateOrderStatus(order.id, 'Shipped')}
-                                  >
-                                    Shipped
-                                  </button>
-                                  <button 
-                                    className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
-                                    onClick={() => updateOrderStatus(order.id, 'Completed')}
-                                  >
-                                    Completed
-                                  </button>
-                                  <button 
-                                    className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
-                                    onClick={() => updateOrderStatus(order.id, 'Cancelled')}
-                                  >
-                                    Cancelled
-                                  </button>
-                                </div>
-                              </div>
-                              
-                              <div className="inventory-section">
-                                <h5>Inventory Management</h5>
+                            
+                            <div className="status-management">
+                              <h4>Status Management</h4>
+                              <div className="status-buttons">
                                 <button 
-                                  className={`inventory-update-btn ${inventoryUpdateStatus[order.id] || ''}`}
-                                  onClick={() => updateInventoryForOrder(order.id)}
-                                  disabled={inventoryUpdateStatus[order.id] === 'updating'}
+                                  className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
+                                  onClick={() => updateOrderStatus(order.id, 'Pending')}
                                 >
-                                  {inventoryUpdateStatus[order.id] === 'updating' ? 'Updating...' : 
-                                   inventoryUpdateStatus[order.id] === 'success' ? 'Updated!' : 
-                                   inventoryUpdateStatus[order.id] === 'error' ? 'Failed - Try Again' : 
-                                   'Update Inventory'}
+                                  Pending
                                 </button>
-                                <p className="inventory-note">
-                                  This will reduce stock levels for all items in this order.
-                                </p>
+                                <button 
+                                  className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
+                                  onClick={() => updateOrderStatus(order.id, 'Processing')}
+                                >
+                                  Processing
+                                </button>
+                                <button 
+                                  className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
+                                  onClick={() => updateOrderStatus(order.id, 'Shipped')}
+                                >
+                                  Shipped
+                                </button>
+                                <button 
+                                  className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
+                                  onClick={() => updateOrderStatus(order.id, 'Completed')}
+                                >
+                                  Completed
+                                </button>
+                                <button 
+                                  className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
+                                  onClick={() => updateOrderStatus(order.id, 'Cancelled')}
+                                >
+                                  Cancelled
+                                </button>
                               </div>
+                            </div>
+                            
+                            <div className="inventory-section">
+                              <h5>Inventory Management</h5>
+                              <button 
+                                className={`inventory-update-btn ${inventoryUpdateStatus[order.id] || ''}`}
+                                onClick={() => updateInventoryForOrder(order.id)}
+                                disabled={inventoryUpdateStatus[order.id] === 'updating'}
+                              >
+                                {inventoryUpdateStatus[order.id] === 'updating' ? 'Updating...' : 
+                                 inventoryUpdateStatus[order.id] === 'success' ? 'Updated!' : 
+                                 inventoryUpdateStatus[order.id] === 'error' ? 'Failed - Try Again' : 
+                                 'Update Inventory'}
+                              </button>
+                              <p className="inventory-note">
+                                This will reduce stock levels for all items in this order.
+                              </p>
+                            </div>
 
-                              <div className="invoice-section">
-                                <h5>Invoice Options</h5>
-                                <div className="invoice-buttons">
-                                  <button 
-                                    className="view-invoice-btn"
-                                    onClick={() => viewInvoice(order.id)}
-                                  >
-                                    View & Print Invoice
-                                  </button>
-                                  <button 
-                                    className="email-invoice-btn"
-                                    onClick={() => sendInvoiceEmail(order)}
-                                    disabled={!order.customer.email || order.customer.email === 'Not provided'}
-                                  >
-                                    Email Invoice
-                                  </button>
-                                </div>
+                            <div className="invoice-section">
+                              <h5>Invoice Options</h5>
+                              <div className="invoice-buttons">
+                                <button 
+                                  className="view-invoice-btn"
+                                  onClick={() => viewInvoice(order.id)}
+                                >
+                                  View & Print Invoice
+                                </button>
+                                <button 
+                                  className="email-invoice-btn"
+                                  onClick={() => sendInvoiceEmail(order)}
+                                  disabled={!order.customer.email || order.customer.email === 'Not provided'}
+                                >
+                                  Email Invoice
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -486,4 +510,4 @@ const AdminOrders = () => {
   );
 };
 
-export default AdminOrders; 
+export default AdminOrders;
