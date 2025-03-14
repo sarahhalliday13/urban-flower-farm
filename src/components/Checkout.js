@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { updateInventory } from '../services/firebase';
+import { updateInventory, saveOrder } from '../services/firebase';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -144,10 +144,21 @@ const Checkout = () => {
         status: 'Processing'
       };
       
-      // Save the order to localStorage
-      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
-      localStorage.setItem('userEmail', formData.email.toLowerCase());
+      // Save the order to Firebase and localStorage
+      try {
+        await saveOrder(newOrderData);
+        
+        // Also save to localStorage for client-side access
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
+        localStorage.setItem('userEmail', formData.email.toLowerCase());
+      } catch (firebaseError) {
+        console.error('Error saving order to Firebase:', firebaseError);
+        // If Firebase fails, still save to localStorage as fallback
+        const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
+        localStorage.setItem('userEmail', formData.email.toLowerCase());
+      }
       
       // Save the latest order ID for the confirmation page
       localStorage.setItem('latestOrderId', newOrderId);

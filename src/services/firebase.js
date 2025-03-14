@@ -1,7 +1,7 @@
 // Firebase configuration and utility functions
 import { initializeApp } from "firebase/app";
 // eslint-disable-next-line no-unused-vars
-import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
+import { getDatabase, ref, set, get, onValue, update, remove, push, child, query, orderByChild } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Your web app's Firebase configuration
@@ -582,6 +582,49 @@ export const loadSamplePlants = async () => {
   }
 };
 
+// Order related functions
+export const saveOrder = async (orderData) => {
+  try {
+    // Store order by ID for direct lookup
+    const orderRef = ref(database, `orders/${orderData.id}`);
+    await set(orderRef, orderData);
+    return true;
+  } catch (error) {
+    console.error('Error saving order to Firebase:', error);
+    return false;
+  }
+};
+
+export const getOrders = async () => {
+  try {
+    const ordersRef = ref(database, 'orders');
+    const snapshot = await get(ordersRef);
+    
+    if (snapshot.exists()) {
+      const ordersData = snapshot.val();
+      // Convert object to array and sort by date (newest first)
+      return Object.values(ordersData).sort((a, b) => 
+        new Date(b.date) - new Date(a.date)
+      );
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching orders from Firebase:', error);
+    return [];
+  }
+};
+
+export const updateOrderStatus = async (orderId, newStatus) => {
+  try {
+    const orderRef = ref(database, `orders/${orderId}`);
+    await update(orderRef, { status: newStatus });
+    return true;
+  } catch (error) {
+    console.error('Error updating order status in Firebase:', error);
+    return false;
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -592,7 +635,10 @@ const firebaseService = {
   initializeDefaultInventory,
   addPlant,
   updatePlant,
-  loadSamplePlants
+  loadSamplePlants,
+  saveOrder,
+  getOrders,
+  updateOrderStatus
 };
 
 export default firebaseService; 
