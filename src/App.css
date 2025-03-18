@@ -1034,7 +1034,7 @@ footer {
   color: #856404;
 }
 
-.status-badge.out-of-stock {
+.status-badge.sold-out {
   background-color: #f8d7da;
   color: #721c24;
 }
