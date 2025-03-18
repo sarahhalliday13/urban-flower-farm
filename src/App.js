@@ -10,6 +10,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Checkout from './components/Checkout';
 import Orders from './components/Orders';
+import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
 import ApiDebugger from './components/ApiDebugger';
 import FirebaseMigration from './components/FirebaseMigration';
@@ -54,20 +55,40 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
   // Calculate cart count using getItemCount function
   const cartCount = getItemCount();
 
-  // Check if user has orders
-  useEffect(() => {
+  // Function to check if user has orders
+  const checkForUserOrders = () => {
     const userEmail = localStorage.getItem('userEmail');
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
     
     if (userEmail && orders.length > 0) {
       // Check if any orders belong to this user
       const userOrders = orders.filter(
-        order => order.customer.email.toLowerCase() === userEmail.toLowerCase()
+        order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
       );
       setHasOrders(userOrders.length > 0);
     } else {
       setHasOrders(false);
     }
+  };
+
+  // Check for orders when component mounts and when auth state changes
+  useEffect(() => {
+    checkForUserOrders();
+  }, [isAuthenticated]);
+  
+  // Listen for the 'orderCreated' event to update the orders display
+  useEffect(() => {
+    const handleOrderCreated = () => {
+      checkForUserOrders();
+    };
+    
+    // Add event listener for custom orderCreated event
+    window.addEventListener('orderCreated', handleOrderCreated);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('orderCreated', handleOrderCreated);
+    };
   }, []);
 
   // Force re-render when cart count changes
@@ -136,7 +157,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
                 currentPath={currentPath}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Orders
+                Order Management
               </AdminNavLink>
               <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
             </div>
@@ -210,7 +231,7 @@ function App() {
                 <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/shop" element={<Shop />} />
-                <Route path="/contact" element={<div>Contact Page Coming Soon</div>} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/plant/:id" element={<PlantDetails />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/checkout" element={<Checkout />} />

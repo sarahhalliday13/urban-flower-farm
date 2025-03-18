@@ -1,5 +1,5 @@
 .about-section {
-  padding: 2rem 0;
+  padding: 3rem 0;
 }
 
 .about-hero {
@@ -124,10 +124,14 @@
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .visit-button:hover {
   background-color: #1f3d22;
+  color: white;
+  text-decoration: none;
 }
 
 @media (max-width: 768px) {
