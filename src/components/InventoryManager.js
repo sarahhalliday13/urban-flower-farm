@@ -13,14 +13,11 @@ import {
 } from '../services/firebase';
 import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
 import { useAdmin, updatePlantData } from '../context/AdminContext';
-import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
 
 const InventoryManager = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Loading inventory data...');
@@ -105,11 +102,6 @@ const InventoryManager = () => {
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
   const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
   const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
-
-  // Get URL parameters
-  const queryParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const plantIdParam = queryParams.get('plantId');
-  const filterParam = queryParams.get('filter');
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
@@ -450,56 +442,6 @@ const InventoryManager = () => {
     
     return () => clearTimeout(refreshTimer);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // When component loads, scroll to the specific plant if plantId is in URL
-  useEffect(() => {
-    if (plantIdParam && !plantsLoading) {
-      // Find the plant in the list
-      const targetPlant = plants.find(plant => plant.id === plantIdParam);
-      
-      if (targetPlant) {
-        // Set the filter term to show this plant
-        setFilter({
-          ...filter,
-          searchTerm: targetPlant.name
-        });
-        
-        // Scroll to the plant row after a slight delay to allow rendering
-        setTimeout(() => {
-          const plantRow = document.getElementById(`plant-row-${plantIdParam}`);
-          if (plantRow) {
-            plantRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            plantRow.classList.add('highlight-plant-row');
-            
-            // Remove highlight after animation completes
-            setTimeout(() => {
-              plantRow.classList.remove('highlight-plant-row');
-            }, 2000);
-          }
-        }, 300);
-      }
-      
-      // Clear the plantId from URL after handling to avoid re-scrolling on page refresh
-      if (plantIdParam) {
-        const newParams = new URLSearchParams(location.search);
-        newParams.delete('plantId');
-        navigate({ search: newParams.toString() }, { replace: true });
-      }
-    }
-    
-    // Apply low stock filter if requested
-    if (filterParam === 'lowStock') {
-      setFilter({
-        ...filter,
-        lowStock: true
-      });
-      
-      // Clear the filter from URL after handling
-      const newParams = new URLSearchParams(location.search);
-      newParams.delete('filter');
-      navigate({ search: newParams.toString() }, { replace: true });
-    }
-  }, [plantIdParam, filterParam, plants, plantsLoading, navigate, location.search]);
 
   // New function for handling plant form input changes
   const handlePlantFormChange = (e) => {
@@ -1303,11 +1245,7 @@ const InventoryManager = () => {
                       : 'unknown';
                     
                     return (
-                      <tr 
-                        key={plant.id} 
-                        className={isEditing ? 'editing' : ''}
-                        id={`plant-row-${plant.id}`}
-                      >
+                      <tr key={plant.id} className={isEditing ? 'editing' : ''}>
                         <td data-label="Flower Name">
                           <span className="plant-name">{plant.name}</span>
                         </td>
