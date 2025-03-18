@@ -1481,15 +1481,31 @@ const InventoryManager = () => {
                 {/* Main Image Section */}
                 <div className="main-image-section">
                   <h4>Main Image</h4>
-                  <input
-                    type="text"
-                    id="mainImage"
-                    name="mainImage"
-                    value={plantFormData.mainImage}
-                    onChange={handlePlantFormChange}
-                    placeholder="Enter image URL or use upload below"
-                    className="main-image-input"
-                  />
+                  <div className="main-image-url-container">
+                    <input
+                      type="text"
+                      id="mainImage"
+                      name="mainImage"
+                      value={plantFormData.mainImage}
+                      onChange={handlePlantFormChange}
+                      placeholder="Enter image URL or use upload below"
+                      className="main-image-input"
+                    />
+                    {plantFormData.mainImage && (
+                      <div className="url-thumbnail-container">
+                        <img 
+                          src={plantFormData.mainImage} 
+                          alt="Main" 
+                          className="url-thumbnail"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/images/placeholder.jpg';
+                            e.target.className = "url-thumbnail error";
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="image-upload-container">
                     <div className="file-upload-wrapper">
@@ -1534,7 +1550,18 @@ const InventoryManager = () => {
                         {plantFormData.additionalImages.map((imageUrl, index) => (
                           <div key={`existing-${index}`} className="additional-image-item">
                             <div className="image-preview">
-                              <img src={imageUrl} alt={`Additional ${index + 1}`} />
+                              <img 
+                                src={imageUrl} 
+                                alt={`Additional ${index + 1}`} 
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/images/placeholder.jpg';
+                                  e.target.className = "error";
+                                }}
+                              />
+                            </div>
+                            <div className="url-display">
+                              <div className="image-url">{imageUrl.substring(0, 30)}...</div>
                             </div>
                             <div className="image-actions">
                               <button 
