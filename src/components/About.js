@@ -13,6 +13,17 @@ function About() {
             
             <h2>Our Mission</h2>
             <p>We're dedicated to providing high-quality, sustainably grown plants while promoting urban agriculture and environmental stewardship. Every plant we grow is nurtured with care and attention to detail, ensuring you receive the healthiest specimens for your home or garden.</p>
+            
+            <div className="cta-section">
+              <h2>Come Visit Our Farm</h2>
+              <p>Experience the beauty of our farm in person and see how we grow our flowers!</p>
+              <Link 
+                to="/contact?subject=Schedule%20a%20Visit" 
+                className="visit-button"
+              >
+                Schedule a Visit
+              </Link>
+            </div>
           </div>
 
           <div className="about-features">
@@ -32,17 +43,6 @@ function About() {
               <p>Professional guidance for your plants</p>
             </div>
           </div>
-        </div>
-
-        <div className="cta-section">
-          <h2>Come Visit Our Farm</h2>
-          <p>Experience the beauty of our farm in person and see how we grow our flowers!</p>
-          <Link 
-            to="/contact?subject=Schedule%20a%20Visit" 
-            className="visit-button"
-          >
-            Schedule a Visit
-          </Link>
         </div>
       </div>
     </div>
