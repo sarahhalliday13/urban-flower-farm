@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
 import { useAdmin } from '../context/AdminContext';
+import DevModeToggle from './DevModeToggle';
 
 const AdminDashboard = () => {
   const { plants, loading } = useAdmin();
@@ -142,6 +143,21 @@ const AdminDashboard = () => {
   return (
     <div className="admin-dashboard">
       <p className="welcome-message">Welcome Cunt! Have a great day!</p>
+      
+      {/* Development Mode Toggle */}
+      <div className="dev-mode-container" style={{ 
+        backgroundColor: '#f8f8f8', 
+        padding: '15px', 
+        borderRadius: '8px', 
+        marginBottom: '20px',
+        border: '1px dashed #ccc'
+      }}>
+        <h3 style={{ marginTop: '0', marginBottom: '10px' }}>Developer Tools</h3>
+        <DevModeToggle />
+        <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '10px' }}>
+          Note: This toggle enables/disables login bypass for testing. <strong>Remember to disable before production!</strong>
+        </div>
+      </div>
       
       <div className="sales-summary">
         <div className="sales-header">
