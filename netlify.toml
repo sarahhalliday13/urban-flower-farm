@@ -4,6 +4,4 @@
 
 # This ensures all deployments go to your specific site
 [site]
-  # You need to replace this with your actual Netlify site ID
-  # Find this in Site settings → General → Site details → Site ID  
-  id = "YOUR_ACTUAL_SITE_ID_HERE" 
+  id = "154b08a8-604f-4470-abe2-9044f1dc21fe" 
