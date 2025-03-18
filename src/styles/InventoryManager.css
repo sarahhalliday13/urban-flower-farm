@@ -1615,21 +1615,4 @@
 
 .add-new-button:hover {
   background-color: #45a049;
-}
-
-/* Highlight animation for rows when navigated to via URL */
-@keyframes highlightRow {
-  0% {
-    background-color: rgba(76, 175, 80, 0.1);
-  }
-  50% {
-    background-color: rgba(76, 175, 80, 0.3);
-  }
-  100% {
-    background-color: transparent;
-  }
-}
-
-.highlight-plant-row {
-  animation: highlightRow 2s ease-out;
 } 
