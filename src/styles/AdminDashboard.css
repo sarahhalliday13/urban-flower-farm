@@ -177,7 +177,7 @@
 
 .admin-card p {
   color: #666;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   line-height: 1.4;
   flex-grow: 1;
   font-size: 0.95rem;
