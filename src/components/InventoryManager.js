@@ -1182,7 +1182,7 @@ const InventoryManager = () => {
                 <option value="all">All ({statusCounts.all})</option>
                 <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
                 <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
-                <option value="Out of Stock">Out of Stock ({statusCounts['Out of Stock']})</option>
+                <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
                 <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
                 <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
               </select>
@@ -1270,7 +1270,7 @@ const InventoryManager = () => {
                             >
                               <option value="In Stock">In Stock</option>
                               <option value="Low Stock">Low Stock</option>
-                              <option value="Out of Stock">Out of Stock</option>
+                              <option value="Sold Out">Sold Out</option>
                               <option value="Coming Soon">Coming Soon</option>
                               <option value="Pre-order">Pre-order</option>
                             </select>
@@ -1416,7 +1416,7 @@ const InventoryManager = () => {
                 >
                   <option value="In Stock">In Stock</option>
                   <option value="Low Stock">Low Stock</option>
-                  <option value="Out of Stock">Out of Stock</option>
+                  <option value="Sold Out">Sold Out</option>
                   <option value="Coming Soon">Coming Soon</option>
                   <option value="Pre-order">Pre-order</option>
                 </select>
