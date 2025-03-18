@@ -9,7 +9,8 @@ import {
   set,
   processSyncQueue,
   initializeDefaultInventory,
-  importPlantsFromSheets
+  importPlantsFromSheets,
+  repairInventoryData
 } from '../services/firebase';
 import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
 import { useAdmin, updatePlantData } from '../context/AdminContext';
@@ -102,6 +103,14 @@ const InventoryManager = () => {
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
   const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
   const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
+
+  // Add new state for repair function
+  const [repairStatus, setRepairStatus] = useState({
+    loading: false,
+    success: false,
+    error: null,
+    message: '',
+  });
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
@@ -1036,6 +1045,53 @@ const InventoryManager = () => {
     });
   };
 
+  // Add new repair function
+  const handleRepairInventory = async () => {
+    if (repairStatus.loading) return;
+    
+    setRepairStatus({
+      loading: true,
+      success: false,
+      error: null,
+      message: 'Repairing inventory data...'
+    });
+    
+    try {
+      const result = await repairInventoryData();
+      
+      if (result.success) {
+        setRepairStatus({
+          loading: false,
+          success: true,
+          error: null,
+          message: result.message
+        });
+        
+        // Refresh the plants data to show the fixed inventory
+        handleLoadPlants(true);
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setRepairStatus(prev => ({
+            ...prev,
+            success: false,
+            message: ''
+          }));
+        }, 5000);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Error repairing inventory:', error);
+      setRepairStatus({
+        loading: false,
+        success: false,
+        error: error.message,
+        message: `Error: ${error.message}`
+      });
+    }
+  };
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -1191,6 +1247,24 @@ const InventoryManager = () => {
                 <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
               </select>
             </div>
+            
+            {/* Add Repair button next to Add New button */}
+            <div className="repair-inventory-container">
+              <button 
+                className="repair-inventory-button"
+                onClick={handleRepairInventory}
+                disabled={repairStatus.loading}
+              >
+                {repairStatus.loading ? 'Repairing...' : 'Repair Inventory'}
+              </button>
+              
+              {repairStatus.message && (
+                <div className={`repair-status ${repairStatus.success ? 'success' : repairStatus.error ? 'error' : 'info'}`}>
+                  {repairStatus.message}
+                </div>
+              )}
+            </div>
+            
             {/* Add New button in the top right */}
             <div className="add-new-button-container">
               <button 
