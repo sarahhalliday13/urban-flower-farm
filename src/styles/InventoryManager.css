@@ -373,13 +373,18 @@
 }
 
 .status-badge.in-stock {
-  background-color: #e8f5e9;
-  color: #2e7d32;
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.status-badge.low-stock {
+  background-color: #fff3cd;
+  color: #856404;
 }
 
 .status-badge.out-of-stock {
-  background-color: #ffebee;
-  color: #c62828;
+  background-color: #f8d7da;
+  color: #721c24;
 }
 
 .status-badge.coming-soon {
