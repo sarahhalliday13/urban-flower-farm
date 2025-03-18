@@ -152,12 +152,18 @@ const Checkout = () => {
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
+        
+        // Dispatch the orderCreated event to update the navigation
+        window.dispatchEvent(new Event('orderCreated'));
       } catch (firebaseError) {
         console.error('Error saving order to Firebase:', firebaseError);
         // If Firebase fails, still save to localStorage as fallback
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
+        
+        // Still dispatch the event even if Firebase fails, since we saved to localStorage
+        window.dispatchEvent(new Event('orderCreated'));
       }
       
       // Save the latest order ID for the confirmation page
@@ -197,7 +203,45 @@ const Checkout = () => {
       <div className="checkout-container">
         <div className="order-confirmation">
           <h2>Thank You for Your Order!</h2>
-          <p className="order-id">Order ID: <span>{orderId}</span></p>
+          <p className="order-id">Order ID: <span>{orderId}</span>
+            <button 
+              className="copy-email-btn" 
+              onClick={(e) => {
+                e.preventDefault();
+                const btn = e.currentTarget;
+                const svgElement = btn.querySelector('svg');
+                const textElement = btn.querySelector('.copy-text');
+                
+                // Hide SVG, show "Copied" text
+                if (svgElement) svgElement.style.display = 'none';
+                if (textElement) textElement.style.display = 'inline';
+                
+                navigator.clipboard.writeText(orderId)
+                  .then(() => {
+                    // Show tooltip
+                    btn.classList.add('copied');
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                      btn.classList.remove('copied');
+                      if (svgElement) svgElement.style.display = 'inline';
+                      if (textElement) textElement.style.display = 'none';
+                    }, 2000);
+                  })
+                  .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                  });
+              }}
+              title="Copy order number"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span className="copy-text">Copied</span>
+              <span className="copy-tooltip">Copied!</span>
+            </button>
+          </p>
           <p>We've received your order and will be in touch soon.</p>
           <p>A confirmation has been sent to <strong>{formData.email}</strong>.</p>
           
@@ -213,7 +257,46 @@ const Checkout = () => {
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to colleenhutton@gmail.com</li>
+              <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
+                colleenhutton@gmail.com
+                <button 
+                  className="copy-email-btn" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const btn = e.currentTarget;
+                    const svgElement = btn.querySelector('svg');
+                    const textElement = btn.querySelector('.copy-text');
+                    
+                    // Hide SVG, show "Copied" text
+                    if (svgElement) svgElement.style.display = 'none';
+                    if (textElement) textElement.style.display = 'inline';
+                    
+                    navigator.clipboard.writeText('colleenhutton@gmail.com')
+                      .then(() => {
+                        // Show tooltip
+                        btn.classList.add('copied');
+                        
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                          btn.classList.remove('copied');
+                          if (svgElement) svgElement.style.display = 'inline';
+                          if (textElement) textElement.style.display = 'none';
+                        }, 2000);
+                      })
+                      .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                      });
+                  }}
+                  title="Copy email address"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span className="copy-text">Copied</span>
+                  <span className="copy-tooltip">Copied!</span>
+                </button>
+              </span></li>
             </ul>
             <p>Please include your order number ({orderId}) in the payment notes.</p>
           </div>
@@ -250,7 +333,9 @@ const Checkout = () => {
 
   return (
     <div className="checkout-container">
-      <h1>Checkout</h1>
+      <div className="featured-plants-header">
+        <h2>Checkout</h2>
+      </div>
       
       <div className="checkout-content">
         <div className="checkout-form-container">
@@ -286,7 +371,7 @@ const Checkout = () => {
             
             <div className="form-row">
               <div className="form-group">
-                <label htmlFor="email">Email * (for your invoice)</label>
+                <label htmlFor="email">Email *</label>
                 <input
                   type="email"
                   id="email"
@@ -299,7 +384,7 @@ const Checkout = () => {
               </div>
               
               <div className="form-group">
-                <label htmlFor="phone">Phone (for texting) *</label>
+                <label htmlFor="phone">Phone *</label>
                 <input
                   type="tel"
                   id="phone"
@@ -357,7 +442,47 @@ const Checkout = () => {
           </div>
           
           <div className="order-note">
-            <p>* This is a request for order only. We accept cash at pick-up or please send an etransfer to colleenhutton@gmail.com.</p>
+            <p>We accept cash at pick-up,</p>
+            <p>or etransfer to <span className="email-with-copy">
+              colleenhutton@gmail.com
+              <button 
+                className="copy-email-btn" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  const btn = e.currentTarget;
+                  const svgElement = btn.querySelector('svg');
+                  const textElement = btn.querySelector('.copy-text');
+                  
+                  // Hide SVG, show "Copied" text
+                  if (svgElement) svgElement.style.display = 'none';
+                  if (textElement) textElement.style.display = 'inline';
+                  
+                  navigator.clipboard.writeText('colleenhutton@gmail.com')
+                    .then(() => {
+                      // Show tooltip
+                      btn.classList.add('copied');
+                      
+                      // Reset button after 2 seconds
+                      setTimeout(() => {
+                        btn.classList.remove('copied');
+                        if (svgElement) svgElement.style.display = 'inline';
+                        if (textElement) textElement.style.display = 'none';
+                      }, 2000);
+                    })
+                    .catch(err => {
+                      console.error('Failed to copy text: ', err);
+                    });
+                }}
+                title="Copy email address"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span className="copy-text">Copied</span>
+                <span className="copy-tooltip">Copied!</span>
+              </button>
+            </span>.</p>
           </div>
         </div>
       </div>
