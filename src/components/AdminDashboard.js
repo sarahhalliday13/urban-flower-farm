@@ -19,7 +19,8 @@ const AdminDashboard = () => {
     if (plants.length > 0) {
       const lowStock = plants.filter(plant => 
         plant.inventory?.currentStock && 
-        plant.inventory?.currentStock < 5
+        plant.inventory?.currentStock < 5 &&
+        plant.inventory?.status !== 'Discontinued'
       );
       setLowStockItems(lowStock);
     }
@@ -206,6 +207,27 @@ const AdminDashboard = () => {
         <div className="admin-card">
           <h2>Inventory</h2>
           <p>Add, edit, and manage plants and inventory levels in one place.</p>
+          
+          {/* Integrated Low Stock Alert */}
+          {lowStockItems.length > 0 && (
+            <div className="inline-low-stock-alert">
+              <h4>Low Stock Alert: {lowStockItems.length} {lowStockItems.length === 1 ? 'item' : 'items'}</h4>
+              <div className="low-stock-items-mini">
+                {lowStockItems.slice(0, 3).map(item => (
+                  <div key={item.id} className="low-stock-item-mini">
+                    <span className="item-name">{item.name}</span>
+                    <span className="stock-count">({item.inventory?.currentStock})</span>
+                  </div>
+                ))}
+                {lowStockItems.length > 3 && (
+                  <div className="low-stock-more">
+                    +{lowStockItems.length - 3} more...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          
           <Link to="/inventory" className="admin-button">
             Manage Inventory
           </Link>
@@ -219,23 +241,6 @@ const AdminDashboard = () => {
           </Link>
         </div>
       </div>
-      
-      {lowStockItems.length > 0 && (
-        <div className="low-stock-alert">
-          <h3>Low Stock Alert</h3>
-          <div className="low-stock-items">
-            {lowStockItems.map(item => (
-              <div key={item.id} className="low-stock-item">
-                <span className="item-name">{item.name}</span>
-                <span className="stock-count">Only {item.inventory?.currentStock} left</span>
-              </div>
-            ))}
-            <Link to="/inventory" className="view-inventory-link">
-              Manage Inventory →
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

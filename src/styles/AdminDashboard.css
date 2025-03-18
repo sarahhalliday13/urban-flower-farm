@@ -336,6 +336,66 @@
   background-color: #2980b9;
 }
 
+/* Inline Low Stock Alert styles */
+.inline-low-stock-alert {
+  background-color: #fff3e0;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  border-left: 3px solid #e65100;
+}
+
+.inline-low-stock-alert h4 {
+  color: #e65100;
+  margin: 0 0 0.5rem 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+}
+
+.inline-low-stock-alert h4::before {
+  content: "⚠️";
+  margin-right: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.low-stock-items-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.low-stock-item-mini {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px dotted #ffd8a8;
+}
+
+.low-stock-item-mini:last-child {
+  border-bottom: none;
+}
+
+.low-stock-item-mini .item-name {
+  font-weight: 500;
+  color: #333;
+  margin-right: 0.5rem;
+}
+
+.low-stock-item-mini .stock-count {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.low-stock-more {
+  font-style: italic;
+  color: #777;
+  text-align: right;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .admin-dashboard {
