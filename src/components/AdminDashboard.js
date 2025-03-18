@@ -199,13 +199,17 @@ const AdminDashboard = () => {
               <div className="low-stock-items-mini">
                 {lowStockItems.slice(0, 3).map(item => (
                   <div key={item.id} className="low-stock-item-mini">
-                    <span className="item-name">{item.name}</span>
-                    <span className="stock-count">({item.inventory?.currentStock})</span>
+                    <Link to={`/inventory?plantId=${item.id}`} className="low-stock-item-link">
+                      <span className="item-name">{item.name}</span>
+                      <span className="stock-count">({item.inventory?.currentStock})</span>
+                    </Link>
                   </div>
                 ))}
                 {lowStockItems.length > 3 && (
                   <div className="low-stock-more">
-                    +{lowStockItems.length - 3} more...
+                    <Link to="/inventory?filter=lowStock">
+                      +{lowStockItems.length - 3} more...
+                    </Link>
                   </div>
                 )}
               </div>
