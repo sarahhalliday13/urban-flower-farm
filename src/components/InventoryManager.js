@@ -236,7 +236,8 @@ const InventoryManager = () => {
           currentStock: plant.inventory?.currentStock || 0,
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
+          notes: plant.inventory?.notes || '',
+          featured: plant.featured === true || plant.featured === 'true'
         }
       }));
     }
@@ -287,6 +288,7 @@ const InventoryManager = () => {
       // Get the edited values
       const inventoryData = editValues[plantId];
       const priceValue = inventoryData.price;
+      const featuredValue = inventoryData.featured;
       
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
@@ -295,6 +297,7 @@ const InventoryManager = () => {
       const updatedPlant = {
         ...plants.find(p => p.id === plantId),
         price: priceValue,
+        featured: featuredValue,
         inventory: {
           ...plants.find(p => p.id === plantId)?.inventory,
           currentStock: inventoryData.currentStock,
@@ -950,7 +953,8 @@ const InventoryManager = () => {
           currentStock: plant.inventory?.currentStock || 0,
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
+          notes: plant.inventory?.notes || '',
+          featured: plant.featured === true || plant.featured === 'true'
         };
       });
       setEditValues(initialValues);
@@ -1230,6 +1234,7 @@ const InventoryManager = () => {
                   <th>Stock</th>
                   <th>Status</th>
                   <th>Restock Date</th>
+                  <th>Featured</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1289,6 +1294,23 @@ const InventoryManager = () => {
                             />
                           ) : (
                             <span>{plant.inventory?.restockDate || 'N/A'}</span>
+                          )}
+                        </td>
+                        <td data-label="Featured">
+                          {isEditing ? (
+                            <div className="checkbox-container centered">
+                              <input
+                                type="checkbox"
+                                id={`featured-${plant.id}`}
+                                checked={editValues[plant.id]?.featured || false}
+                                onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
+                              />
+                              <label htmlFor={`featured-${plant.id}`} className="sr-only">Featured</label>
+                            </div>
+                          ) : (
+                            <span className="feature-indicator">
+                              {plant.featured ? '✓' : '–'}
+                            </span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
