@@ -565,6 +565,16 @@ td[data-label="Total"] {
 }
 
 @media (max-width: 768px) {
+  /* Hide "Actions" label in mobile view */
+  .orders-table td[data-label="Actions"]:before {
+    display: none;
+  }
+  
+  /* Center the action buttons without the label */
+  .orders-table td[data-label="Actions"] {
+    justify-content: center;
+  }
+  
   .order-info-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;

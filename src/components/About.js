@@ -1,15 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './About.css';
-import pinkPic from '../images/pinkpic.jpg';
 
 function About() {
   return (
     <div className="about-section">
-      <div className="about-hero" style={{ backgroundImage: `url(${pinkPic})` }}>
-        <h1>About Us</h1>
-        <p>Growing beauty in the heart of the city</p>
-      </div>
-
       <div className="about-content">
         <div className="about-grid">
           <div className="about-text">
@@ -39,10 +34,15 @@ function About() {
           </div>
         </div>
 
-        <div className="about-cta">
-          <h2>Visit Our Farm</h2>
-          <p>Come see our growing operation and meet our team</p>
-          <button className="visit-button">Schedule a Visit</button>
+        <div className="cta-section">
+          <h2>Come Visit Our Farm</h2>
+          <p>Experience the beauty of our farm in person and see how we grow our flowers!</p>
+          <Link 
+            to="/contact?subject=Schedule%20a%20Visit" 
+            className="visit-button"
+          >
+            Schedule a Visit
+          </Link>
         </div>
       </div>
     </div>
