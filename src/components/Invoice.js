@@ -31,7 +31,7 @@ const Invoice = ({ order, type = 'print' }) => {
           <p>Buttons Urban Flower Farm</p>
           <p>Colleen Hutton</p>
           <p>Winnipeg, Manitoba</p>
-          <p>Email: colleenhutton@gmail.com</p>
+          <p>Email: buttonsflowerfarm@gmail.com</p>
         </div>
         <div className="invoice-to">
           <h3>To</h3>
@@ -84,7 +84,7 @@ const Invoice = ({ order, type = 'print' }) => {
         <p>Please complete your payment using one of the following methods:</p>
         <ul>
           <li><strong>Cash:</strong> Available for in-person pickup</li>
-          <li><strong>E-Transfer:</strong> Send to colleenhutton@gmail.com</li>
+          <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
         </ul>
         <p>Please include your order number ({order.id}) in the payment notes.</p>
       </div>

@@ -258,7 +258,7 @@ const Checkout = () => {
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
               <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
-                colleenhutton@gmail.com
+                buttonsflowerfarm@gmail.com
                 <button 
                   className="copy-email-btn" 
                   onClick={(e) => {
@@ -271,7 +271,7 @@ const Checkout = () => {
                     if (svgElement) svgElement.style.display = 'none';
                     if (textElement) textElement.style.display = 'inline';
                     
-                    navigator.clipboard.writeText('colleenhutton@gmail.com')
+                    navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
                       .then(() => {
                         // Show tooltip
                         btn.classList.add('copied');
@@ -443,8 +443,8 @@ const Checkout = () => {
           
           <div className="order-note">
             <p>We accept cash at pick-up,</p>
-            <p>or etransfer to <span className="email-with-copy">
-              colleenhutton@gmail.com
+            <p>or etransfer to&nbsp;<span className="email-with-copy">
+              buttonsflowerfarm@gmail.com
               <button 
                 className="copy-email-btn" 
                 onClick={(e) => {
@@ -457,7 +457,7 @@ const Checkout = () => {
                   if (svgElement) svgElement.style.display = 'none';
                   if (textElement) textElement.style.display = 'inline';
                   
-                  navigator.clipboard.writeText('colleenhutton@gmail.com')
+                  navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
                     .then(() => {
                       // Show tooltip
                       btn.classList.add('copied');
@@ -482,7 +482,7 @@ const Checkout = () => {
                 <span className="copy-text">Copied</span>
                 <span className="copy-tooltip">Copied!</span>
               </button>
-            </span>.</p>
+            </span></p>
           </div>
         </div>
       </div>

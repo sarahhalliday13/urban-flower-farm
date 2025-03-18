@@ -3,6 +3,11 @@ import { initializeApp } from "firebase/app";
 // eslint-disable-next-line no-unused-vars
 import { getDatabase, ref, set, get, onValue, update, remove, push, child, query, orderByChild } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  signOut as firebaseSignOut 
+} from 'firebase/auth';
 
 // Your web app's Firebase configuration
 // Replace these values with your actual Firebase project configuration
@@ -226,6 +231,8 @@ export const updateInventory = async (plantId, inventoryData) => {
   try {
     console.log(`Updating inventory for plant ${plantId}:`, inventoryData);
     
+    const { featured, ...inventoryProps } = inventoryData;
+    
     // First, update localStorage as a cache
     try {
       const existingData = localStorage.getItem('plantInventory');
@@ -237,29 +244,51 @@ export const updateInventory = async (plantId, inventoryData) => {
       
       // Update the inventory for this plant
       storedInventory[plantId] = {
-        ...inventoryData,
+        ...inventoryProps,
         lastUpdated: new Date().toISOString()
       };
       
       // Save back to localStorage
       localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      
+      // If there's a featured flag, update the plant in localStorage
+      if (featured !== undefined) {
+        try {
+          const plantsData = JSON.parse(localStorage.getItem('plants') || '[]');
+          const updatedPlants = plantsData.map(plant => {
+            if (plant.id === plantId) {
+              return { ...plant, featured };
+            }
+            return plant;
+          });
+          localStorage.setItem('plants', JSON.stringify(updatedPlants));
+        } catch (e) {
+          console.error('Error updating plant featured status in localStorage:', e);
+        }
+      }
     } catch (e) {
       console.error('Error updating localStorage:', e);
     }
     
-    // Update Firebase
+    // Update Firebase inventory
     const inventoryRef = ref(database, `inventory/${plantId}`);
     await set(inventoryRef, {
-      ...inventoryData,
+      ...inventoryProps,
       lastUpdated: new Date().toISOString()
     });
+    
+    // Update featured status if provided
+    if (featured !== undefined) {
+      const plantRef = ref(database, `plants/${plantId}`);
+      await update(plantRef, { featured });
+    }
     
     return {
       success: true,
       message: `Inventory updated for plant ${plantId}`,
       data: {
-        plantId,
-        ...inventoryData
+        ...inventoryData,
+        lastUpdated: new Date().toISOString()
       }
     };
   } catch (error) {

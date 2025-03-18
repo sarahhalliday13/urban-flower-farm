@@ -236,7 +236,8 @@ const InventoryManager = () => {
           currentStock: plant.inventory?.currentStock || 0,
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
+          notes: plant.inventory?.notes || '',
+          featured: plant.featured === true || plant.featured === 'true'
         }
       }));
     }
@@ -287,6 +288,7 @@ const InventoryManager = () => {
       // Get the edited values
       const inventoryData = editValues[plantId];
       const priceValue = inventoryData.price;
+      const featuredValue = inventoryData.featured;
       
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
@@ -295,6 +297,7 @@ const InventoryManager = () => {
       const updatedPlant = {
         ...plants.find(p => p.id === plantId),
         price: priceValue,
+        featured: featuredValue,
         inventory: {
           ...plants.find(p => p.id === plantId)?.inventory,
           currentStock: inventoryData.currentStock,
@@ -950,7 +953,8 @@ const InventoryManager = () => {
           currentStock: plant.inventory?.currentStock || 0,
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || ''
+          notes: plant.inventory?.notes || '',
+          featured: plant.featured === true || plant.featured === 'true'
         };
       });
       setEditValues(initialValues);
@@ -1181,7 +1185,8 @@ const InventoryManager = () => {
               >
                 <option value="all">All ({statusCounts.all})</option>
                 <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
-                <option value="Out of Stock">Out of Stock ({statusCounts['Out of Stock']})</option>
+                <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
+                <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
                 <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
                 <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
               </select>
@@ -1229,6 +1234,7 @@ const InventoryManager = () => {
                   <th>Stock</th>
                   <th>Status</th>
                   <th>Restock Date</th>
+                  <th>Featured</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -1268,7 +1274,8 @@ const InventoryManager = () => {
                               onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
                             >
                               <option value="In Stock">In Stock</option>
-                              <option value="Out of Stock">Out of Stock</option>
+                              <option value="Low Stock">Low Stock</option>
+                              <option value="Sold Out">Sold Out</option>
                               <option value="Coming Soon">Coming Soon</option>
                               <option value="Pre-order">Pre-order</option>
                             </select>
@@ -1287,6 +1294,23 @@ const InventoryManager = () => {
                             />
                           ) : (
                             <span>{plant.inventory?.restockDate || 'N/A'}</span>
+                          )}
+                        </td>
+                        <td data-label="Featured">
+                          {isEditing ? (
+                            <div className="checkbox-container centered">
+                              <input
+                                type="checkbox"
+                                id={`featured-${plant.id}`}
+                                checked={editValues[plant.id]?.featured || false}
+                                onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
+                              />
+                              <label htmlFor={`featured-${plant.id}`} className="sr-only">Featured</label>
+                            </div>
+                          ) : (
+                            <span className="feature-indicator">
+                              {plant.featured ? '✓' : '–'}
+                            </span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
@@ -1413,7 +1437,8 @@ const InventoryManager = () => {
                   onChange={handlePlantFormChange}
                 >
                   <option value="In Stock">In Stock</option>
-                  <option value="Out of Stock">Out of Stock</option>
+                  <option value="Low Stock">Low Stock</option>
+                  <option value="Sold Out">Sold Out</option>
                   <option value="Coming Soon">Coming Soon</option>
                   <option value="Pre-order">Pre-order</option>
                 </select>
@@ -1456,15 +1481,31 @@ const InventoryManager = () => {
                 {/* Main Image Section */}
                 <div className="main-image-section">
                   <h4>Main Image</h4>
-                  <input
-                    type="text"
-                    id="mainImage"
-                    name="mainImage"
-                    value={plantFormData.mainImage}
-                    onChange={handlePlantFormChange}
-                    placeholder="Enter image URL or use upload below"
-                    className="main-image-input"
-                  />
+                  <div className="main-image-url-container">
+                    <input
+                      type="text"
+                      id="mainImage"
+                      name="mainImage"
+                      value={plantFormData.mainImage}
+                      onChange={handlePlantFormChange}
+                      placeholder="Enter image URL or use upload below"
+                      className="main-image-input"
+                    />
+                    {plantFormData.mainImage && (
+                      <div className="url-thumbnail-container">
+                        <img 
+                          src={plantFormData.mainImage} 
+                          alt="Main" 
+                          className="url-thumbnail"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/images/placeholder.jpg';
+                            e.target.className = "url-thumbnail error";
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="image-upload-container">
                     <div className="file-upload-wrapper">
@@ -1509,7 +1550,18 @@ const InventoryManager = () => {
                         {plantFormData.additionalImages.map((imageUrl, index) => (
                           <div key={`existing-${index}`} className="additional-image-item">
                             <div className="image-preview">
-                              <img src={imageUrl} alt={`Additional ${index + 1}`} />
+                              <img 
+                                src={imageUrl} 
+                                alt={`Additional ${index + 1}`} 
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/images/placeholder.jpg';
+                                  e.target.className = "error";
+                                }}
+                              />
+                            </div>
+                            <div className="url-display">
+                              <div className="image-url">{imageUrl.substring(0, 30)}...</div>
                             </div>
                             <div className="image-actions">
                               <button 

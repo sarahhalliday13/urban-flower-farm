@@ -3,6 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Login.css';
 
+// Development mode flag - should match the one in AuthContext
+const DEV_MODE = true;
+
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +20,14 @@ function Login() {
     if (usernameInputRef.current) {
       usernameInputRef.current.focus();
     }
-  }, []);
+    
+    // Check for dev mode activation via URL parameter
+    if (DEV_MODE && location.search.includes('devMode=true')) {
+      localStorage.setItem('devMode', 'true');
+      // Navigate to admin dashboard
+      navigate('/admin');
+    }
+  }, [location, navigate]);
   
   // Get the page the user was trying to access
   const from = location.state?.from?.pathname || '/';
@@ -39,6 +49,13 @@ function Login() {
     } else {
       setError('Invalid username or password');
     }
+  };
+  
+  // Function to enable dev mode
+  const enableDevMode = (e) => {
+    e.preventDefault();
+    localStorage.setItem('devMode', 'true');
+    navigate('/admin');
   };
   
   return (
@@ -74,6 +91,29 @@ function Login() {
           </div>
           
           <button type="submit" className="login-button">Login</button>
+          
+          {/* Hidden dev mode link - only visible in development */}
+          {DEV_MODE && (
+            <div className="dev-mode-section" style={{ marginTop: '20px', textAlign: 'center' }}>
+              <hr style={{ margin: '20px 0', borderTop: '1px dashed #ddd' }} />
+              <button 
+                onClick={enableDevMode} 
+                style={{ 
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  color: '#999',
+                  textDecoration: 'underline',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Enable Development Mode
+              </button>
+              <div style={{ fontSize: '0.7rem', color: '#999', marginTop: '5px' }}>
+                For development & testing only
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

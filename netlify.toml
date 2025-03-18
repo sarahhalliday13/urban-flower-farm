@@ -1,3 +1,7 @@
 [build]
   command = "CI=false npm install && CI=false npm run build"
-  publish = "build" 
+  publish = "build"
+
+# This ensures all deployments go to your specific site
+[site]
+  id = "154b08a8-604f-4470-abe2-9044f1dc21fe" 
