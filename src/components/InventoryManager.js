@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
-  updateInventory,
+  fetchPlants, 
+  updateInventory, 
+  processSyncQueue, 
   subscribeToInventory,
-  getFirebaseStorageURL,
+  repairInventoryData,
   uploadImageToFirebase,
-  getDatabaseRef,
-  onValue,
-  set,
-  processSyncQueue,
-  initializeDefaultInventory,
-  importPlantsFromSheets
+  importPlantsFromSheets,
+  initializeDefaultInventory
 } from '../services/firebase';
 import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
 import { useAdmin, updatePlantData } from '../context/AdminContext';
@@ -102,6 +100,14 @@ const InventoryManager = () => {
   const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
   const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
   const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
+
+  // Add repairStatus state near other state declarations (around line 50-70)
+  const [repairStatus, setRepairStatus] = useState({
+    loading: false,
+    success: false,
+    error: false,
+    message: ''
+  });
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
@@ -1036,6 +1042,58 @@ const InventoryManager = () => {
     });
   };
 
+  /**
+   * Handle the repair of inventory data
+   */
+  const handleRepairInventory = async () => {
+    setRepairStatus({
+      loading: true,
+      success: false,
+      error: false,
+      message: 'Checking inventory data...'
+    });
+    
+    try {
+      const result = await repairInventoryData();
+      
+      if (result.success) {
+        setRepairStatus({
+          loading: false,
+          success: true,
+          error: false,
+          message: result.message
+        });
+        
+        // Refresh the plant data
+        handleLoadPlants(true);
+        
+        // Auto hide success message after 5 seconds
+        setTimeout(() => {
+          setRepairStatus(prev => ({
+            ...prev,
+            success: false,
+            message: ''
+          }));
+        }, 5000);
+      } else {
+        setRepairStatus({
+          loading: false,
+          success: false,
+          error: true,
+          message: result.message || 'Failed to repair inventory data'
+        });
+      }
+    } catch (error) {
+      console.error('Error repairing inventory:', error);
+      setRepairStatus({
+        loading: false,
+        success: false,
+        error: true,
+        message: `Error: ${error.message}`
+      });
+    }
+  };
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -1232,7 +1290,41 @@ const InventoryManager = () => {
                     Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th>Stock</th>
-                  <th>Status</th>
+                  <th>
+                    Status
+                    <span 
+                      className="check-link" 
+                      onClick={handleRepairInventory}
+                      style={{ 
+                        marginLeft: '8px', 
+                        cursor: repairStatus.loading ? 'default' : 'pointer', 
+                        color: repairStatus.loading ? '#999' : '#4a90e2',
+                        fontSize: '0.8rem',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {repairStatus.loading ? 'Checking...' : 'Check'}
+                    </span>
+                    {(repairStatus.success || repairStatus.error) && (
+                      <div 
+                        className={`status-tooltip ${repairStatus.success ? 'success' : 'error'}`}
+                        style={{
+                          position: 'absolute',
+                          backgroundColor: repairStatus.success ? '#d4edda' : '#f8d7da',
+                          color: repairStatus.success ? '#155724' : '#721c24',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          marginTop: '4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          zIndex: 100,
+                          maxWidth: '250px'
+                        }}
+                      >
+                        {repairStatus.message}
+                      </div>
+                    )}
+                  </th>
                   <th>Restock Date</th>
                   <th>Featured</th>
                   <th>Actions</th>
@@ -1285,32 +1377,16 @@ const InventoryManager = () => {
                             </span>
                           )}
                         </td>
-                        <td data-label="Restock Date">
-                          {isEditing ? (
-                            <input
-                              type="date"
-                              value={editValues[plant.id]?.restockDate || ''}
-                              onChange={(e) => handleChange(plant.id, 'restockDate', e.target.value)}
-                            />
-                          ) : (
-                            <span>{plant.inventory?.restockDate || 'N/A'}</span>
-                          )}
-                        </td>
+                        <td data-label="Restock Date">{plant.inventory?.restockDate || 'N/A'}</td>
                         <td data-label="Featured">
                           {isEditing ? (
-                            <div className="checkbox-container centered">
-                              <input
-                                type="checkbox"
-                                id={`featured-${plant.id}`}
-                                checked={editValues[plant.id]?.featured || false}
-                                onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
-                              />
-                              <label htmlFor={`featured-${plant.id}`} className="sr-only">Featured</label>
-                            </div>
+                            <input
+                              type="checkbox"
+                              checked={editValues[plant.id]?.featured || false}
+                              onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
+                            />
                           ) : (
-                            <span className="feature-indicator">
-                              {plant.featured ? '✓' : '–'}
-                            </span>
+                            <span>{plant.featured ? 'Yes' : 'No'}</span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
@@ -1499,7 +1575,7 @@ const InventoryManager = () => {
                           className="url-thumbnail"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = '/images/placeholder.jpg';
+                            e.target.src = '/placeholder-image.png';
                             e.target.className = "url-thumbnail error";
                           }}
                         />
@@ -1555,7 +1631,7 @@ const InventoryManager = () => {
                                 alt={`Additional ${index + 1}`} 
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  e.target.src = '/images/placeholder.jpg';
+                                  e.target.src = '/placeholder-image.png';
                                   e.target.className = "error";
                                 }}
                               />
@@ -1574,7 +1650,7 @@ const InventoryManager = () => {
                               <button 
                                 type="button"
                                 className="remove-button"
-                                onClick={() => handleRemoveAdditionalImage(additionalImagePreviews.length + index)}
+                                onClick={() => handleRemoveAdditionalImage(index)}
                               >
                                 Remove
                               </button>

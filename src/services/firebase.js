@@ -3,11 +3,6 @@ import { initializeApp } from "firebase/app";
 // eslint-disable-next-line no-unused-vars
 import { getDatabase, ref, set, get, onValue, update, remove, push, child, query, orderByChild } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { 
-  getAuth, 
-  signInWithEmailAndPassword, 
-  signOut as firebaseSignOut 
-} from 'firebase/auth';
 
 // Your web app's Firebase configuration
 // Replace these values with your actual Firebase project configuration
@@ -654,6 +649,109 @@ export const updateOrderStatus = async (orderId, newStatus) => {
   }
 };
 
+/**
+ * Get the default status for a plant based on current stock
+ * @param {number} currentStock - The current stock level
+ * @returns {string} The appropriate status
+ */
+const getDefaultStatusFromStock = (currentStock) => {
+  if (currentStock === undefined || currentStock === null) return "Out of Stock";
+  if (currentStock <= 0) return "Out of Stock";
+  if (currentStock < 5) return "Low Stock";
+  return "In Stock";
+};
+
+/**
+ * Create a default inventory object with sensible defaults
+ * @param {number} stockLevel - Optional stock level (defaults to 0)
+ * @returns {Object} Default inventory object
+ */
+const createDefaultInventory = (stockLevel = 0) => {
+  return {
+    currentStock: stockLevel,
+    status: getDefaultStatusFromStock(stockLevel),
+    restockDate: "",
+    notes: "",
+    lastUpdated: new Date().toISOString()
+  };
+};
+
+/**
+ * Repair and validate all inventory data, creating missing entries and fixing invalid status
+ * @returns {Promise<Object>} Result of the repair operation
+ */
+export const repairInventoryData = async () => {
+  try {
+    console.log('Repairing inventory data...');
+    
+    // Fetch all plants and inventory data
+    const plantsSnapshot = await get(ref(database, 'plants'));
+    const inventorySnapshot = await get(ref(database, 'inventory'));
+    
+    if (!plantsSnapshot.exists()) {
+      return { success: false, message: 'No plants found to repair' };
+    }
+    
+    const plantsData = plantsSnapshot.val();
+    const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+    
+    // Track repairs for reporting
+    let repairCount = 0;
+    let createCount = 0;
+    
+    // Process each plant
+    const repairPromises = Object.keys(plantsData).map(async (key) => {
+      const plant = plantsData[key];
+      const plantId = plant.id || key;
+      
+      // Check if inventory exists
+      if (!inventoryData[plantId]) {
+        // Create a new inventory record
+        const inventoryRef = ref(database, `inventory/${plantId}`);
+        await set(inventoryRef, createDefaultInventory(0));
+        createCount++;
+        return;
+      }
+      
+      // Check if status needs repair
+      const inventory = inventoryData[plantId];
+      const expectedStatus = getDefaultStatusFromStock(inventory.currentStock);
+      
+      // Check if status is missing, unknown, or doesn't match expected status based on current stock
+      if (!inventory.status || inventory.status === "Unknown" || inventory.status !== expectedStatus) {
+        // Fix the status based on stock level
+        const inventoryRef = ref(database, `inventory/${plantId}`);
+        
+        await update(inventoryRef, { 
+          status: expectedStatus,
+          lastUpdated: new Date().toISOString()
+        });
+        
+        repairCount++;
+      }
+    });
+    
+    // Wait for all repairs to complete
+    await Promise.all(repairPromises);
+    
+    console.log(`Inventory repair complete: Created ${createCount} new records, repaired ${repairCount} statuses`);
+    
+    return {
+      success: true,
+      message: `Inventory repair complete: Created ${createCount} new records, repaired ${repairCount} statuses`,
+      createCount,
+      repairCount
+    };
+  } catch (error) {
+    console.error('Error repairing inventory data:', error);
+    return {
+      success: false,
+      message: `Error repairing inventory: ${error.message}`,
+      error
+    };
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -667,7 +765,8 @@ const firebaseService = {
   loadSamplePlants,
   saveOrder,
   getOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  repairInventoryData
 };
 
 export default firebaseService; 
