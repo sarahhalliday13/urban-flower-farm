@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
-  updateInventory,
+  fetchPlants, 
+  updateInventory, 
+  processSyncQueue, 
   subscribeToInventory,
-  getFirebaseStorageURL,
+  repairInventoryData,
   uploadImageToFirebase,
-  getDatabaseRef,
-  onValue,
-  set,
-  processSyncQueue,
-  initializeDefaultInventory,
   importPlantsFromSheets,
-  repairInventoryData
+  initializeDefaultInventory
 } from '../services/firebase';
 import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
 import { useAdmin, updatePlantData } from '../context/AdminContext';
@@ -104,12 +101,12 @@ const InventoryManager = () => {
   const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
   const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
 
-  // Add new state for repair function
+  // Add repairStatus state near other state declarations (around line 50-70)
   const [repairStatus, setRepairStatus] = useState({
     loading: false,
     success: false,
-    error: null,
-    message: '',
+    error: false,
+    message: ''
   });
 
   // Check sync queue status - moved before useEffect that uses it
@@ -1045,15 +1042,15 @@ const InventoryManager = () => {
     });
   };
 
-  // Add new repair function
+  /**
+   * Handle the repair of inventory data
+   */
   const handleRepairInventory = async () => {
-    if (repairStatus.loading) return;
-    
     setRepairStatus({
       loading: true,
       success: false,
-      error: null,
-      message: 'Repairing inventory data...'
+      error: false,
+      message: 'Checking inventory data...'
     });
     
     try {
@@ -1063,14 +1060,14 @@ const InventoryManager = () => {
         setRepairStatus({
           loading: false,
           success: true,
-          error: null,
+          error: false,
           message: result.message
         });
         
-        // Refresh the plants data to show the fixed inventory
+        // Refresh the plant data
         handleLoadPlants(true);
         
-        // Clear success message after 5 seconds
+        // Auto hide success message after 5 seconds
         setTimeout(() => {
           setRepairStatus(prev => ({
             ...prev,
@@ -1079,14 +1076,19 @@ const InventoryManager = () => {
           }));
         }, 5000);
       } else {
-        throw new Error(result.message);
+        setRepairStatus({
+          loading: false,
+          success: false,
+          error: true,
+          message: result.message || 'Failed to repair inventory data'
+        });
       }
     } catch (error) {
       console.error('Error repairing inventory:', error);
       setRepairStatus({
         loading: false,
         success: false,
-        error: error.message,
+        error: true,
         message: `Error: ${error.message}`
       });
     }
@@ -1247,24 +1249,6 @@ const InventoryManager = () => {
                 <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
               </select>
             </div>
-            
-            {/* Add Repair button next to Add New button */}
-            <div className="repair-inventory-container">
-              <button 
-                className="repair-inventory-button"
-                onClick={handleRepairInventory}
-                disabled={repairStatus.loading}
-              >
-                {repairStatus.loading ? 'Repairing...' : 'Repair Inventory'}
-              </button>
-              
-              {repairStatus.message && (
-                <div className={`repair-status ${repairStatus.success ? 'success' : repairStatus.error ? 'error' : 'info'}`}>
-                  {repairStatus.message}
-                </div>
-              )}
-            </div>
-            
             {/* Add New button in the top right */}
             <div className="add-new-button-container">
               <button 
@@ -1306,7 +1290,41 @@ const InventoryManager = () => {
                     Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th>Stock</th>
-                  <th>Status</th>
+                  <th>
+                    Status
+                    <span 
+                      className="check-link" 
+                      onClick={handleRepairInventory}
+                      style={{ 
+                        marginLeft: '8px', 
+                        cursor: repairStatus.loading ? 'default' : 'pointer', 
+                        color: repairStatus.loading ? '#999' : '#4a90e2',
+                        fontSize: '0.8rem',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {repairStatus.loading ? 'Checking...' : 'Check'}
+                    </span>
+                    {(repairStatus.success || repairStatus.error) && (
+                      <div 
+                        className={`status-tooltip ${repairStatus.success ? 'success' : 'error'}`}
+                        style={{
+                          position: 'absolute',
+                          backgroundColor: repairStatus.success ? '#d4edda' : '#f8d7da',
+                          color: repairStatus.success ? '#155724' : '#721c24',
+                          padding: '8px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.75rem',
+                          marginTop: '4px',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                          zIndex: 100,
+                          maxWidth: '250px'
+                        }}
+                      >
+                        {repairStatus.message}
+                      </div>
+                    )}
+                  </th>
                   <th>Restock Date</th>
                   <th>Featured</th>
                   <th>Actions</th>
@@ -1359,32 +1377,16 @@ const InventoryManager = () => {
                             </span>
                           )}
                         </td>
-                        <td data-label="Restock Date">
-                          {isEditing ? (
-                            <input
-                              type="date"
-                              value={editValues[plant.id]?.restockDate || ''}
-                              onChange={(e) => handleChange(plant.id, 'restockDate', e.target.value)}
-                            />
-                          ) : (
-                            <span>{plant.inventory?.restockDate || 'N/A'}</span>
-                          )}
-                        </td>
+                        <td data-label="Restock Date">{plant.inventory?.restockDate || 'N/A'}</td>
                         <td data-label="Featured">
                           {isEditing ? (
-                            <div className="checkbox-container centered">
-                              <input
-                                type="checkbox"
-                                id={`featured-${plant.id}`}
-                                checked={editValues[plant.id]?.featured || false}
-                                onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
-                              />
-                              <label htmlFor={`featured-${plant.id}`} className="sr-only">Featured</label>
-                            </div>
+                            <input
+                              type="checkbox"
+                              checked={editValues[plant.id]?.featured || false}
+                              onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
+                            />
                           ) : (
-                            <span className="feature-indicator">
-                              {plant.featured ? '✓' : '–'}
-                            </span>
+                            <span>{plant.featured ? 'Yes' : 'No'}</span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
@@ -1573,7 +1575,7 @@ const InventoryManager = () => {
                           className="url-thumbnail"
                           onError={(e) => {
                             e.target.onerror = null;
-                            e.target.src = '/images/placeholder.jpg';
+                            e.target.src = '/placeholder-image.png';
                             e.target.className = "url-thumbnail error";
                           }}
                         />
@@ -1629,7 +1631,7 @@ const InventoryManager = () => {
                                 alt={`Additional ${index + 1}`} 
                                 onError={(e) => {
                                   e.target.onerror = null;
-                                  e.target.src = '/images/placeholder.jpg';
+                                  e.target.src = '/placeholder-image.png';
                                   e.target.className = "error";
                                 }}
                               />
@@ -1648,7 +1650,7 @@ const InventoryManager = () => {
                               <button 
                                 type="button"
                                 className="remove-button"
-                                onClick={() => handleRemoveAdditionalImage(additionalImagePreviews.length + index)}
+                                onClick={() => handleRemoveAdditionalImage(index)}
                               >
                                 Remove
                               </button>
