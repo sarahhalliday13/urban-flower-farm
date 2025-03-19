@@ -202,6 +202,7 @@ function PlantDetails() {
   if (error) return <div className="error">{error}</div>;
   if (!plant) return <div className="error">Plant not found</div>;
 
+  // eslint-disable-next-line no-unused-vars
   const handleSubmitComment = (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;

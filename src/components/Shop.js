@@ -14,6 +14,7 @@ function Shop() {
   const [error, setError] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -70,6 +71,10 @@ function Shop() {
     setShowToast(true);
   };
 
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+  };
+
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -79,8 +84,17 @@ function Shop() {
       <section className="featured-plants">
         <div className="featured-plants-header">
           <h2>All the Flowers</h2>
+          <div className="view-toggle">
+            <button 
+              className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
+              onClick={toggleViewMode}
+              title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+            >
+              {viewMode === 'grid' ? 'List View' : 'Grid View'}
+            </button>
+          </div>
         </div>
-        <div className="plant-grid">
+        <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {plants.map(plant => {
             console.log('Rendering plant:', plant);
             return (
@@ -92,18 +106,20 @@ function Shop() {
                       e.target.src = '/images/placeholder.jpg';
                     }} />
                   </div>
-                  <h3>{plant.name}</h3>
-                  <p>${plant.price}</p>
-                  <div className="plant-status">
-                    <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                      {plant.inventory?.status || 'Status Unknown'}
-                    </span>
+                  <div className="plant-details">
+                    <h3>{plant.name}</h3>
+                    <p>${plant.price}</p>
+                    <div className="plant-status">
+                      <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                        {plant.inventory?.status || 'Status Unknown'}
+                      </span>
+                    </div>
                   </div>
                 </Link>
                 <div className="plant-actions">
                   <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                   <button 
-                    className="plant-buy" 
+                    className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
                     onClick={() => handleAddToCart(plant)}
                     disabled={!plant.inventory?.currentStock}
                   >
