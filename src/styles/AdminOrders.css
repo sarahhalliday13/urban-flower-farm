@@ -11,8 +11,8 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 1rem;
-  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .admin-header h1 {
@@ -34,11 +34,11 @@
 }
 
 .search-box input {
-  padding: 0.75rem 1rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.9rem;
-  width: 250px;
+  width: 230px;
 }
 
 .status-filter {
@@ -53,12 +53,12 @@
 }
 
 .status-filter select {
-  padding: 0.75rem 2rem 0.75rem 1rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.9rem;
   background-color: white;
-  min-width: 150px;
+  min-width: 145px;
   appearance: menulist;
 }
 
