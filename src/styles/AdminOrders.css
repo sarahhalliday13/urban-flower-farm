@@ -667,10 +667,10 @@
   
   td[data-label="Customer"] .customer-name,
   td[data-label="Customer"] .customer-email {
-    margin-left: 0;
-    padding-left: 1rem;
-    width: 100%;
-    text-align: left;
+    margin-left: auto;
+    width: auto;
+    text-align: right;
+    padding-left: 0;
   }
   
   /* Make Order ID stand out */
