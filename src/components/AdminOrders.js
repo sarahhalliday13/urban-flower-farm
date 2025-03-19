@@ -322,8 +322,8 @@ const AdminOrders = () => {
   return (
     <div className="admin-orders-container">
       <div className="admin-header">
-        <h2 className="admin-page-title">Order Management</h2>
-        <div className="admin-controls">
+        <h1>Order Management</h1>
+        <div className="header-controls">
           <div className="search-box">
             <input
               type="text"
@@ -332,10 +332,9 @@ const AdminOrders = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="filter-controls">
-            <label htmlFor="status-filter">Status:</label>
+          <div className="status-filter">
+            <span>Status:</span>
             <select 
-              id="status-filter" 
               value={filter} 
               onChange={(e) => setFilter(e.target.value)}
             >
