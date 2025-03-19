@@ -1016,4 +1016,42 @@ td[data-label="Total"] {
   .admin-header h1 {
     font-size: 20px;
   }
+}
+
+/* Status Management section - make it more prominent */
+.status-management {
+  grid-column: 1 / -1;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.status-management h4 {
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Invoice section - make it more prominent */
+.invoice-section {
+  grid-column: 1 / -1;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.invoice-section h4 {
+  text-align: center;
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Remove inventory section styles that are no longer needed */
+.inventory-section,
+.inventory-update-btn,
+.inventory-note {
+  display: none;
 } 
