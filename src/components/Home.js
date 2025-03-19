@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
-import Toast from './Toast';
 
 function Home({ isFirstVisit }) {
   const [showHero, setShowHero] = useState(false);
@@ -10,8 +9,6 @@ function Home({ isFirstVisit }) {
   const [featuredPlants, setFeaturedPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const { addToCart } = useCart();
 
   useEffect(() => {
@@ -106,8 +103,15 @@ function Home({ isFirstVisit }) {
   // eslint-disable-next-line no-unused-vars
   const handleAddToCart = (plant) => {
     addToCart(plant);
-    setToastMessage(`${plant.name} has been added to your cart`);
-    setShowToast(true);
+    // Instead of using state for the toast, dispatch a custom event
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: `${plant.name} has been added to your cart`,
+        type: 'success',
+        duration: 3000
+      }
+    });
+    window.dispatchEvent(event);
   };
   
   return (
@@ -167,7 +171,6 @@ function Home({ isFirstVisit }) {
           </div>
         )}
       </section>
-      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
     </main>
   );
 }

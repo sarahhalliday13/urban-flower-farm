@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import Toast from './Toast';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 
 function PlantDetails() {
@@ -10,8 +9,6 @@ function PlantDetails() {
   const { addToCart } = useCart();
   const [newComment, setNewComment] = useState('');
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const [quantity, setQuantity] = useState(() => {
     const savedQuantity = localStorage.getItem(`plant-${id}-quantity`);
     return savedQuantity ? parseInt(savedQuantity, 10) : 1;
@@ -220,18 +217,51 @@ function PlantDetails() {
 
   const handleQuantityChange = (delta) => {
     setQuantity(prev => {
-      const newQuantity = Math.max(1, prev + delta);
+      // Get the available stock
+      const availableStock = parseInt(plant.inventory?.currentStock, 10) || 0;
+      
+      // Calculate new quantity with bounds
+      const newQuantity = Math.max(1, Math.min(prev + delta, availableStock));
+      
+      // If trying to increase beyond stock, show a message
+      if (delta > 0 && prev + delta > availableStock) {
+        const event = new CustomEvent('show-toast', {
+          detail: {
+            message: `Only ${availableStock} in stock`,
+            type: 'warning',
+            duration: 2000
+          }
+        });
+        window.dispatchEvent(event);
+      }
+      
       localStorage.setItem(`plant-${id}-quantity`, newQuantity.toString());
       return newQuantity;
     });
   };
 
   const handleAddToCart = () => {
-    addToCart(plant, quantity);
-    setToastMessage(`${quantity} ${quantity === 1 ? 'item has' : 'items have'} been added to your cart`);
-    setShowToast(true);
-    setQuantity(1);
-    localStorage.setItem(`plant-${id}-quantity`, '1');
+    if (plant) {
+      // Use the quantity parameter instead of a loop
+      const added = addToCart(plant, quantity);
+      
+      // Only show success message if items were actually added
+      if (added) {
+        // Dispatch the toast event for success
+        const event = new CustomEvent('show-toast', {
+          detail: {
+            message: `${quantity} ${quantity === 1 ? 'item has' : 'items have'} been added to your cart`,
+            type: 'success',
+            duration: 3000
+          }
+        });
+        window.dispatchEvent(event);
+        
+        // Reset quantity to 1 after adding to cart
+        setQuantity(1);
+        localStorage.setItem(`plant-${id}-quantity`, '1');
+      }
+    }
   };
 
   // Log the images for debugging
@@ -298,7 +328,8 @@ function PlantDetails() {
                   <span>{quantity}</span>
                   <button 
                     onClick={() => handleQuantityChange(1)}
-                    disabled={plant.inventory?.maxOrderQuantity && quantity >= plant.inventory.maxOrderQuantity}
+                    disabled={quantity >= (plant.inventory?.currentStock || 0)}
+                    title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
                   >+</button>
                 </div>
                 <button 
@@ -316,7 +347,7 @@ function PlantDetails() {
               {plant.inventory?.currentStock > 0 && (
                 <div className="inventory-status-row">
                   <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                    In Stock
+                    {plant.inventory?.status || 'Unknown'}
                   </span>
                   
                   <span className="stock-quantity">
@@ -378,12 +409,6 @@ function PlantDetails() {
         */}
       </div>
       <NavigationButtons className="bottom" />
-      {showToast && (
-        <Toast 
-          message={toastMessage} 
-          onClose={() => setShowToast(false)} 
-        />
-      )}
     </main>
   );
 }

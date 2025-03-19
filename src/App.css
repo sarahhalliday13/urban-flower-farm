@@ -196,6 +196,8 @@ main {
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
   border-bottom: none;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .featured-plants-footer {
@@ -206,9 +208,9 @@ main {
 }
 
 .featured-plants-header h2 {
-  font-size: inherit;
+  font-size: 1.5rem;
   margin: 0;
-  font-weight: 500;
+  font-weight: 600;
   color: #333;
 }
 
@@ -244,9 +246,11 @@ main {
   transform: translateY(-5px);
 }
 
+/* Plant image styling - consistent across all device sizes */
 .plant-image {
   width: 100%;
-  height: 200px;
+  height: 200px;  /* Fixed height for all device sizes */
+  object-fit: cover;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -254,6 +258,7 @@ main {
   border-radius: 8px;
   margin-bottom: 1rem;
   overflow: hidden;
+  transition: transform 0.3s ease;
 }
 
 .plant-image img {
@@ -262,10 +267,31 @@ main {
   object-fit: cover;
 }
 
+/* Plant image container for shop page */
+.plant-image-container {
+  height: 200px;  /* Fixed height for all device sizes */
+  overflow: hidden;
+}
+
+.plant-card:hover .plant-image {
+  transform: scale(1.05);
+}
+
 .plant-card h3 {
   color: #333;
   margin-bottom: 0.75rem;
   font-size: 1.3rem;
+  /* Completely new approach to prevent text cutoff */
+  line-height: 1.5;
+  min-height: unset;
+  height: auto;
+  padding-bottom: 0.4em; /* Generous padding to ensure no cutoff */
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .plant-card .plant-description {
@@ -284,9 +310,12 @@ main {
 }
 
 footer {
-  background-color: #f5f5f5;
-  padding: 1rem;
-  margin-top: auto;
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
 }
 
 .lavender-mist {
@@ -1013,7 +1042,11 @@ footer {
 }
 
 .plant-status {
-  margin: 0.5rem 1rem;
+  margin: 0.5rem 0;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .status-badge {
@@ -1176,22 +1209,6 @@ footer {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-.plant-image-container {
-  height: 200px;
-  overflow: hidden;
-}
-
-.plant-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.plant-card:hover .plant-image {
-  transform: scale(1.05);
-}
-
 .plant-info {
   padding: 1rem;
 }
@@ -1200,6 +1217,17 @@ footer {
   margin: 0 0 0.5rem;
   font-size: 1.2rem;
   color: #2c3e50;
+  /* Completely new approach to prevent text cutoff */
+  line-height: 1.5;
+  min-height: unset;
+  height: auto;
+  padding-bottom: 0.4em; /* Generous padding to ensure no cutoff */
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scientific-name {
@@ -1255,10 +1283,6 @@ footer {
     gap: 1.5rem;
   }
   
-  .plant-image-container {
-    height: 150px;
-  }
-  
   .plant-info h3 {
     font-size: 1.1rem;
   }
@@ -1268,10 +1292,6 @@ footer {
   .plant-grid {
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     gap: 1rem;
-  }
-  
-  .plant-image-container {
-    height: 120px;
   }
   
   .plant-info {
@@ -1329,7 +1349,7 @@ footer {
   display: none;
 }
 
-/* Admin link styles */
+/* Admin link styles for navigation */
 .admin-link {
   color: #4caf50 !important;
   font-weight: 500;
@@ -1342,6 +1362,23 @@ footer {
   font-weight: 600;
   padding: 3px 8px;
   border-radius: 4px;
+}
+
+/* Admin link specifically for footer */
+.admin-link.footer-link {
+  margin-left: 10px;
+  color: #777 !important;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: normal;
+  transition: color 0.3s ease;
+  padding-bottom: 0;
+  position: static;
+}
+
+.admin-link.footer-link:hover {
+  color: #444 !important;
+  text-decoration: underline;
 }
 
 .admin-links {
@@ -1458,4 +1495,330 @@ footer {
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* Footer styles */
+footer {
+  margin-top: 40px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Admin link in footer */
+.admin-link.footer-link {
+  margin-left: 10px;
+  color: #777 !important;
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.3s ease;
+}
+
+.admin-link.footer-link:hover {
+  color: #444 !important;
+  text-decoration: underline;
+}
+
+.admin-link:hover {
+  color: #444;
+  text-decoration: underline;
+}
+
+.plant-details h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.2rem;
+  color: #2c3e50;
+  /* Completely new approach to prevent text cutoff */
+  line-height: 1.5;
+  min-height: unset;
+  height: auto;
+  padding-bottom: 0.4em; /* Generous padding to ensure no cutoff */
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Shop controls for filtering and sorting - improved */
+.shop-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.sort-control {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+}
+
+.sort-control label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sort-select {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.sort-select:hover {
+  border-color: #aaa;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #2c5530;
+}
+
+@media (max-width: 768px) {
+  .featured-plants-header {
+    padding: 0 1rem 0.75rem 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+    gap: 1rem;
+  }
+  
+  .featured-plants-header h2 {
+    font-size: 1.4rem;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .shop-controls {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  
+  .sort-control {
+    flex: 0 1 auto;
+    width: auto;
+  }
+  
+  .sort-control label {
+    font-size: 0.85rem;
+  }
+  
+  .sort-select {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    width: auto;
+    min-width: 130px;
+  }
+  
+  .view-button {
+    padding: 0.35rem 0.5rem;
+    font-size: 0.85rem;
+    min-height: unset;
+    width: auto;
+  }
+  
+  .view-toggle {
+    width: auto;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+/* View toggle button styles - updated for compact layout */
+.view-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.view-button {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 0.85rem;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.view-button:hover {
+  border-color: #2c5530;
+  background-color: #f5f5f5;
+}
+
+.view-button.active {
+  background-color: #f5f5f5;
+  border-color: #aaa;
+}
+
+/* Make the Grid View button green and prominent when in list view */
+.list-view-mode .view-button {
+  background-color: #2c5530;
+  color: white;
+  border-color: #2c5530;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.list-view-mode .view-button:hover {
+  background-color: #234426;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Add specific styles for larger viewports */
+@media (min-width: 1200px) {
+  .plant-card h3,
+  .plant-info h3,
+  .plant-details h3 {
+    padding-bottom: 0.5em; /* Even more padding on larger screens */
+    line-height: 1.6; /* Slightly increased line height for better spacing */
+  }
+}
+
+/* List view styling for better horizontal layout */
+.plant-grid.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.list-view .plant-card {
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: auto;
+  gap: 1.5rem;
+  padding: 1.25rem;
+  align-items: center;
+}
+
+.list-view .plant-card .plant-image {
+  width: 100%;
+  height: 200px;
+  grid-row: span 5;
+  margin-bottom: 0;
+  margin-right: 1rem;
+}
+
+.list-view .plant-card h3 {
+  text-align: left;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.list-view .plant-card .plant-description {
+  text-align: left;
+  margin-bottom: 0.75rem;
+}
+
+.list-view .plant-card p:not(.plant-description) {
+  text-align: left;
+  margin-bottom: 0.75rem;
+  font-size: 1.3rem;
+}
+
+.list-view .plant-card .plant-status {
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.list-view .plant-card .plant-actions {
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
+/* Responsive adjustments for list view */
+@media (max-width: 768px) {
+  .list-view .plant-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+  }
+  
+  .list-view .plant-card .plant-image {
+    grid-row: span 1;
+    margin-right: 0;
+  }
+}
+
+/* Make the status badge clearer in list view */
+.list-view .status-badge {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.7rem;
+}
+
+/* Additional mobile optimizations */
+@media (max-width: 768px) {
+  /* Mobile list view improvements */
+  .list-view .plant-card {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .list-view .plant-card .plant-image {
+    height: 160px;
+    width: 100%;
+  }
+  
+  .list-view .plant-card h3 {
+    font-size: 1.2rem;
+    margin-top: 0.5rem;
+  }
+  
+  .list-view .plant-card .plant-description {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .list-view .plant-card p:not(.plant-description) {
+    font-size: 1.1rem;
+  }
+  
+  /* Mobile shop header - additional fix */
+  .shop-main {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Improve tap targets for mobile */
+  .sort-select {
+    min-height: 36px; /* Better touch target */
+  }
+  
+  /* Make sure padding is consistent */
+  .plant-grid {
+    padding: 0 1rem;
+  }
+}
+
+/* Quantity stock note */
+.quantity-stock-note {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 1rem;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .quantity-stock-note {
+    margin-left: 0;
+    margin-top: 0.25rem;
+    display: block;
+  }
 }

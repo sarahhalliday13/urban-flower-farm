@@ -223,4 +223,15 @@
   .cart-item h3 {
     font-size: 0.9rem;
   }
+}
+
+.stock-limit-message {
+  color: #856404;
+  background-color: #fff3cd;
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  display: inline-block;
+  font-weight: 500;
 } 

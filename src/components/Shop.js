@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
-import Toast from './Toast';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
@@ -12,9 +11,8 @@ function Shop() {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [sortOption, setSortOption] = useState('default'); // 'default', 'price-low-high', 'price-high-low'
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -65,14 +63,44 @@ function Shop() {
     loadPlants();
   }, []);
 
+  // Sort plants based on selected option
+  const sortedPlants = useMemo(() => {
+    if (!plants.length) return [];
+    
+    switch (sortOption) {
+      case 'price-low-high':
+        return [...plants].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      case 'price-high-low':
+        return [...plants].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      default:
+        return plants;
+    }
+  }, [plants, sortOption]);
+
   const handleAddToCart = (plant) => {
-    addToCart(plant);
-    setToastMessage(`${plant.name} has been added to your cart`);
-    setShowToast(true);
+    // Try to add to cart and get result
+    const added = addToCart(plant, 1);
+    
+    // Only show success message if item was actually added
+    if (added) {
+      // Dispatch the toast event for success
+      const event = new CustomEvent('show-toast', {
+        detail: {
+          message: `${plant.name} has been added to your cart`,
+          type: 'success',
+          duration: 3000
+        }
+      });
+      window.dispatchEvent(event);
+    }
   };
 
   const toggleViewMode = () => {
     setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+  };
+
+  const handleSortChange = (e) => {
+    setSortOption(e.target.value);
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
@@ -80,42 +108,92 @@ function Shop() {
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
 
   return (
-    <div className="shop-main">
+    <div className={`shop-main ${viewMode === 'list' ? 'list-view-mode' : ''}`}>
       <section className="featured-plants">
         <div className="featured-plants-header">
           <h2>All the Flowers</h2>
-          <div className="view-toggle">
-            <button 
-              className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
-              onClick={toggleViewMode}
-              title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-            >
-              {viewMode === 'grid' ? 'List View' : 'Grid View'}
-            </button>
+          <div className="shop-controls">
+            <div className="sort-control">
+              <label htmlFor="sort-select">Sort by:</label>
+              <select 
+                id="sort-select" 
+                value={sortOption} 
+                onChange={handleSortChange}
+                className="sort-select"
+                aria-label="Sort plants by selected option"
+              >
+                <option value="default">Default</option>
+                <option value="price-low-high">Price: Low to High</option>
+                <option value="price-high-low">Price: High to Low</option>
+              </select>
+            </div>
+            <div className="view-toggle">
+              <button 
+                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
+                onClick={toggleViewMode}
+                title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+              >
+                {viewMode === 'grid' ? 'List View' : 'Grid View'}
+              </button>
+            </div>
           </div>
         </div>
         <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
-          {plants.map(plant => {
+          {sortedPlants.map(plant => {
             console.log('Rendering plant:', plant);
             return (
               <div key={plant.id} className="plant-card">
-                <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <div className="plant-image">
-                    <img src={plant.mainImage} alt={plant.name} onError={(e) => {
-                      console.error('Image failed to load:', plant.mainImage);
-                      e.target.src = '/images/placeholder.jpg';
-                    }} />
-                  </div>
-                  <div className="plant-details">
-                    <h3>{plant.name}</h3>
-                    <p>${plant.price}</p>
-                    <div className="plant-status">
-                      <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                        {plant.inventory?.status || 'Status Unknown'}
-                      </span>
+                {viewMode === 'grid' ? (
+                  // Grid view - link wraps the entire content except actions
+                  <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                    <div className="plant-image">
+                      <img src={plant.mainImage} alt={plant.name} onError={(e) => {
+                        console.error('Image failed to load:', plant.mainImage);
+                        e.target.src = '/images/placeholder.jpg';
+                      }} />
                     </div>
-                  </div>
-                </Link>
+                    <h3>{plant.name}</h3>
+                    <p className="plant-description">
+                      {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
+                    </p>
+                    <p>${plant.price}</p>
+                    {plant.inventory?.status && (
+                      <div className="plant-status">
+                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                          {plant.inventory.status}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+                ) : (
+                  // List view - separate elements with links only on title and image
+                  <>
+                    <Link to={`/plant/${plant.id}`} className="plant-image" style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <img src={plant.mainImage} alt={plant.name} onError={(e) => {
+                        console.error('Image failed to load:', plant.mainImage);
+                        e.target.src = '/images/placeholder.jpg';
+                      }} />
+                    </Link>
+                    <div className="plant-content">
+                      <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <h3>{plant.name}</h3>
+                      </Link>
+                      <p className="plant-description">
+                        {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
+                      </p>
+                      <p>${plant.price}</p>
+                      {plant.inventory?.status && (
+                        <div className="plant-status">
+                          <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                            {plant.inventory.status}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+                
                 <div className="plant-actions">
                   <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                   <button 
@@ -131,7 +209,6 @@ function Shop() {
           })}
         </div>
       </section>
-      {showToast && <Toast message={toastMessage} onClose={() => setShowToast(false)} />}
     </div>
   );
 }
