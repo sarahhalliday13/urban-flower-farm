@@ -15,6 +15,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ApiDebugger from './components/ApiDebugger';
 import FirebaseMigration from './components/FirebaseMigration';
 import FirebaseTest from './components/FirebaseTest';
+import ToastManager from './components/ToastManager';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
@@ -282,10 +283,16 @@ function App() {
                 <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
               </footer>
 
-              <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
+              {/* Show newsletter modal if enabled */}
+              {showModal && (
+                <NewsletterModal onClose={() => setShowModal(false)} />
+              )}
               
-              {/* API Debugger component */}
+              {/* API debugger for development */}
               {showDebugger && <ApiDebugger />}
+
+              {/* Toast notifications */}
+              <ToastManager />
             </div>
           </Router>
         </AdminProvider>
