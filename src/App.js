@@ -186,13 +186,16 @@ const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
   return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
 };
 
-// Loading component for Suspense fallback
-const Loading = () => (
-  <div className="admin-loading">
-    <div className="admin-loading-spinner"></div>
-    <p>Loading admin interface...</p>
-  </div>
-);
+// Create a wrapper for admin content that doesn't show a loading state
+const AdminContentWrapper = ({ children }) => {
+  return (
+    <div className="admin-content-area">
+      <Suspense fallback={<div style={{ display: 'none' }}></div>}>
+        {children}
+      </Suspense>
+    </div>
+  );
+};
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -243,9 +246,9 @@ function App() {
                   path="/admin" 
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<Loading />}>
+                      <AdminContentWrapper>
                         <AdminDashboard />
-                      </Suspense>
+                      </AdminContentWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -253,9 +256,9 @@ function App() {
                   path="/inventory" 
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<Loading />}>
+                      <AdminContentWrapper>
                         <InventoryManager />
-                      </Suspense>
+                      </AdminContentWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -263,9 +266,9 @@ function App() {
                   path="/admin/orders" 
                   element={
                     <ProtectedRoute>
-                      <Suspense fallback={<Loading />}>
+                      <AdminContentWrapper>
                         <AdminOrders />
-                      </Suspense>
+                      </AdminContentWrapper>
                     </ProtectedRoute>
                   } 
                 />
@@ -283,14 +286,11 @@ function App() {
                 <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
               </footer>
 
-              {/* Show newsletter modal if enabled */}
-              {showModal && (
-                <NewsletterModal onClose={() => setShowModal(false)} />
-              )}
+              <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
               
-              {/* API debugger for development */}
+              {/* API Debugger component */}
               {showDebugger && <ApiDebugger />}
-
+              
               {/* Toast notifications */}
               <ToastManager />
             </div>
