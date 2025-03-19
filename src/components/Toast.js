@@ -1,20 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import './Toast.css';
 
-function Toast({ message, onClose }) {
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsExiting(true);
-      setTimeout(onClose, 300); // Wait for exit animation to complete
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [onClose]);
+function Toast({ message, type = 'info', onClose, closing }) {
+  const toastClass = `toast ${type} ${closing ? 'toast-exit' : 'toast-enter'}`;
 
   return (
-    <div className={`toast ${isExiting ? 'toast-exit' : 'toast-enter'}`}>
+    <div className={toastClass}>
       {message}
     </div>
   );

@@ -70,8 +70,8 @@ const InventoryManager = () => {
     commonName: '',
     price: '',
     description: '',
-    mainImage: '',
-    additionalImages: [],
+    images: [], // Use a single array for all images
+    mainImageIndex: 0, // Store the index of the main image
     colour: '',
     light: '',
     height: '',
@@ -521,19 +521,38 @@ const InventoryManager = () => {
     }
   };
 
-  // Handle image file selection
+  // Handle image selection for single image uploads
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     
-    setImageFile(file);
+    setPlantFormData(prev => {
+      // Make sure images is always an array
+      const currentImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      const newImages = [...currentImages, file];
+      
+      // If this is the first image, make it the main image
+      const newMainImageIndex = currentImages.length === 0 ? 0 : prev.mainImageIndex;
+      
+      return {
+        ...prev,
+        images: newImages,
+        mainImageIndex: newMainImageIndex
+      };
+    });
     
-    // Create a preview URL
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setImagePreview(e.target.result);
-    };
-    reader.readAsDataURL(file);
+    // Reset the file input
+    e.target.value = '';
+    
+    // Show toast notification
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: "Image added successfully",
+        type: 'success',
+        duration: 2000
+      }
+    });
+    window.dispatchEvent(event);
   };
 
   // Updated uploadImageFile to detect Firebase permission issues
@@ -631,70 +650,114 @@ const InventoryManager = () => {
   const handlePlantSubmit = async (e) => {
     e.preventDefault();
     console.log('Starting form submission...');
-    console.log('Image file present:', !!imageFile);
+    console.log('Image files present:', additionalImageFiles.length);
     
     setPlantSaveStatus('saving');
-    
+
     try {
-      // Upload main image if selected
-      let mainImageUrl = plantFormData.mainImage;
+      // Validate required fields
+      if (!plantFormData.name.trim()) {
+        throw new Error("Plant name is required");
+      }
+
+      console.log("Preparing to save plant:", { ...plantFormData });
       
+      // Upload all images if any
+      let allImagesUrls = [];
+      console.log("Processing images for upload:", plantFormData.images);
+      
+      // Process existing images
+      if (plantFormData.images && Array.isArray(plantFormData.images)) {
+        // Classify images that are already URLs vs Files that need uploading
+        for (let i = 0; i < plantFormData.images.length; i++) {
+          const image = plantFormData.images[i];
+          console.log(`Processing image ${i}:`, typeof image, image instanceof File ? 'File object' : 'URL/string');
+          
+          if (image instanceof File) {
+            try {
+              console.log(`Uploading file: ${image.name}`);
+              const uploadedUrl = await uploadImageFile(image);
+              if (uploadedUrl) {
+                console.log(`Successfully uploaded to: ${uploadedUrl}`);
+                allImagesUrls.push(uploadedUrl);
+              } else {
+                console.error(`Failed to upload image ${i}`);
+              }
+            } catch (error) {
+              console.error(`Error uploading image ${i}:`, error);
+            }
+          } else if (typeof image === 'string') {
+            // This is already a URL, keep it
+            console.log(`Keeping existing image URL: ${image.substring(0, 30)}...`);
+            allImagesUrls.push(image);
+          } else {
+            console.warn(`Skipping invalid image type at index ${i}:`, image);
+          }
+        }
+      }
+      
+      // Add the main image if we have one that's not in the array yet
       if (imageFile) {
         try {
-          console.log('Starting main image upload...');
+          console.log('Uploading main image file:', imageFile.name);
           const uploadedUrl = await uploadImageFile(imageFile);
           if (uploadedUrl) {
             console.log('Main image uploaded successfully:', uploadedUrl);
-            mainImageUrl = uploadedUrl;
+            allImagesUrls.push(uploadedUrl);
           } else {
             console.error('Main image upload failed');
           }
         } catch (error) {
           console.error('Error during main image upload:', error);
-          console.error('Stack trace:', error.stack);
-          // We'll continue with the existing image URL if there is one
         }
       }
       
       // Upload additional images if any
-      let additionalImagesUrls = [];
-      if (plantFormData.additionalImages) {
-        additionalImagesUrls = [...plantFormData.additionalImages];
-        console.log(`Using ${additionalImagesUrls.length} existing additional images`);
-      }
-      
       if (additionalImageFiles.length > 0) {
         console.log(`Uploading ${additionalImageFiles.length} additional images...`);
         const newUrls = await uploadAdditionalImages();
         if (newUrls && newUrls.length > 0) {
-          additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
-          console.log(`Additional images uploaded successfully. Total: ${additionalImagesUrls.length}`);
+          allImagesUrls = [...allImagesUrls, ...newUrls];
+          console.log(`Additional images uploaded successfully. Total: ${allImagesUrls.length}`);
         }
       }
       
-      // Filter out any empty or null values from additionalImagesUrls
-      additionalImagesUrls = additionalImagesUrls.filter(url => url && url.trim() !== '');
-      console.log('Filtered additionalImagesUrls:', additionalImagesUrls);
+      // Filter out any empty or null values from allImagesUrls
+      allImagesUrls = allImagesUrls.filter(url => {
+        // Check if url is a string before trying to call trim()
+        if (typeof url === 'string') {
+          return url.trim() !== '';
+        } else if (url instanceof File) {
+          // Keep File objects
+          return true;
+        }
+        // Filter out null, undefined, etc.
+        return false;
+      });
+      console.log('Filtered allImagesUrls:', allImagesUrls);
 
-      // Log all additional images for debugging
-      if (additionalImagesUrls.length > 0) {
-        console.log('Additional images being saved:');
-        additionalImagesUrls.forEach((url, idx) => {
-          console.log(`  Image ${idx + 1}: ${url.substring(0, 50)}...`);
-        });
-      } else {
-        console.log('No additional images to save');
+      // Make sure we have a valid mainImageIndex
+      let mainImageIndex = plantFormData.mainImageIndex || 0;
+      if (mainImageIndex >= allImagesUrls.length) {
+        mainImageIndex = allImagesUrls.length > 0 ? 0 : -1;
       }
       
       // Prepare the plant data for update
       const plantData = {
         ...plantFormData,
-        mainImage: mainImageUrl,
-        additionalImages: additionalImagesUrls,
+        // Set the mainImage for backward compatibility
+        mainImage: allImagesUrls.length > 0 && mainImageIndex >= 0 ? allImagesUrls[mainImageIndex] : '',
+        // Store all images in a single array
+        images: allImagesUrls,
+        // Keep track of which image is the main one
+        mainImageIndex: mainImageIndex,
+        // Remove the old additionalImages field
+        additionalImages: undefined
       };
       
       console.log('Prepared plant data for saving:', plantData);
-      console.log('Plant data additionalImages length:', plantData.additionalImages?.length || 0);
+      console.log('Plant data images length:', plantData.images?.length || 0);
+      console.log('Main image index:', plantData.mainImageIndex);
       
       // Ensure we have a valid ID for the plant in edit mode
       if (plantEditMode && !plantFormData.id && currentPlant && currentPlant.id) {
@@ -707,7 +770,7 @@ const InventoryManager = () => {
           id: currentPlant.id
         }));
       }
-      
+
       // Save or update the plant in Firebase
       let result;
       if (plantEditMode) {
@@ -731,16 +794,27 @@ const InventoryManager = () => {
       if (result && result.success) {
         console.log('Plant saved successfully:', result);
         setPlantSaveStatus('success');
-        
+      
         // Force a refresh of the plants data to get the updated images
         console.log('Refreshing plants data after successful save...');
         handleLoadPlants(true);
+        
+        // Show a toast notification
+        const message = plantEditMode ? 'Plant updated successfully!' : 'New plant added successfully!';
+        const event = new CustomEvent('show-toast', { 
+          detail: { 
+            message,
+            type: 'success',
+            duration: 3000
+          }
+        });
+        window.dispatchEvent(event);
         
         // Reset the form after a successful save
         setTimeout(() => {
           resetPlantForm();
           
-          // Clear object URLs for the additional image previews to avoid memory leaks
+          // Clear object URLs for the image previews to avoid memory leaks
           additionalImagePreviews.forEach(preview => {
             if (preview.url && !preview.url.startsWith('http') && !preview.url.startsWith('local:')) {
               try {
@@ -751,37 +825,43 @@ const InventoryManager = () => {
             }
           });
           
-          // Clear image states
+          // Reset image state
           setImageFile(null);
           setImagePreview(null);
           setAdditionalImageFiles([]);
           setAdditionalImagePreviews([]);
-          
-          // Switch to inventory tab
+        
+          // ALWAYS switch to the Inventory tab after saving
           setActiveTab('inventory');
-        }, 1500);
+          
+        }, 1000);
       } else {
-        console.error('Error saving plant:', result);
-        
-        // Extract specific error message if available
-        let errorMessage = 'Error saving flower. Please try again.';
-        if (result && result.message) {
-          errorMessage = result.message;
-        } else if (result && result.error) {
-          errorMessage = result.error.message || 'Unknown error occurred';
-        }
-        
-        // Set error status and show alert with specific message
+        console.error('Error saving plant:', result?.error || 'Unknown error');
         setPlantSaveStatus('error');
-        alert(`Save failed: ${errorMessage}`);
+        
+        // Show an error toast
+        const event = new CustomEvent('show-toast', { 
+          detail: { 
+            message: `Error: ${result?.error || 'Failed to save plant'}`,
+            type: 'error',
+            duration: 5000
+          }
+        });
+        window.dispatchEvent(event);
       }
     } catch (error) {
-      console.error('Error in plant submission:', error);
-      console.error('Error details:', error.message);
-      console.error('Stack trace:', error.stack);
-      
+      console.error('Error in handlePlantSubmit:', error);
       setPlantSaveStatus('error');
-      alert(`Error saving flower: ${error.message || 'Unknown error'}`);
+      
+      // Show an error toast
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: `Error: ${error.message || 'Unknown error occurred'}`,
+          type: 'error',
+          duration: 5000
+        }
+      });
+      window.dispatchEvent(event);
     }
   };
 
@@ -793,8 +873,8 @@ const InventoryManager = () => {
       commonName: '',
       price: '',
       description: '',
-      mainImage: '',
-      additionalImages: [],
+      images: [],
+      mainImageIndex: 0,
       colour: '',
       light: '',
       height: '',
@@ -812,6 +892,7 @@ const InventoryManager = () => {
     });
     setPlantEditMode(false);
     setCurrentPlant(null);
+    setPlantSaveStatus('');
     setImageFile(null);
     setImagePreview(null);
     setAdditionalImageFiles([]);
@@ -820,24 +901,48 @@ const InventoryManager = () => {
 
   // New function to handle edit plant button click
   const handleEditPlant = (plant) => {
-    if (!plant || !plant.id) {
-      console.error('Attempted to edit plant with missing or invalid ID:', plant);
-      return;
-    }
-    
     console.log('Editing plant:', plant);
     setCurrentPlant(plant);
     
-    // Create form data with all plant properties and ensure ID is included
+    // Prepare the images array and determine the main image index
+    let images = [];
+    let mainImageIndex = 0;
+    
+    // Add the main image if it exists
+    if (plant.mainImage) {
+      images.push(plant.mainImage);
+    }
+    
+    // Add additional images if they exist
+    if (plant.additionalImages && Array.isArray(plant.additionalImages)) {
+      images = [...images, ...plant.additionalImages];
+    }
+    
+    // If plant already has the new images array, use that instead
+    if (plant.images && Array.isArray(plant.images)) {
+      images = [...plant.images];
+      // If plant has a mainImageIndex field, use that
+      if (typeof plant.mainImageIndex === 'number') {
+        mainImageIndex = plant.mainImageIndex;
+      }
+      // Otherwise try to find the main image in the array
+      else if (plant.mainImage && images.length > 0) {
+        const index = images.findIndex(img => img === plant.mainImage);
+        if (index !== -1) {
+          mainImageIndex = index;
+        }
+      }
+    }
+    
     setPlantFormData({
-      id: plant.id, // Explicitly set the ID
+      id: plant.id,
       name: plant.name || '',
       scientificName: plant.scientificName || '',
       commonName: plant.commonName || '',
       price: plant.price || '',
       description: plant.description || '',
-      mainImage: plant.mainImage || '',
-      additionalImages: plant.additionalImages || [],
+      images: images,
+      mainImageIndex: mainImageIndex,
       colour: plant.colour || '',
       light: plant.light || '',
       height: plant.height || '',
@@ -1163,21 +1268,37 @@ const InventoryManager = () => {
 
   // Handle additional images selection
   const handleAdditionalImagesSelect = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      setAdditionalImageFiles([...additionalImageFiles, ...newFiles]);
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    setPlantFormData(prev => {
+      // Clone the images array to avoid mutation issues
+      const newImages = Array.isArray(prev.images) ? [...prev.images] : [];
+      // Add all new files
+      newImages.push(...files);
       
-      // Create previews for the new files with status
-      const newPreviews = newFiles.map(file => ({
-        url: URL.createObjectURL(file),
-        name: file.name,
-        size: (file.size / 1024).toFixed(1), // Size in KB
-        status: 'pending', // pending, uploading, success, error
-        progress: 0
-      }));
+      // If there were no previous images, make the first new one the main image
+      const newMainImageIndex = newImages.length === 0 ? 0 : prev.mainImageIndex;
       
-      setAdditionalImagePreviews([...additionalImagePreviews, ...newPreviews]);
-    }
+      return {
+        ...prev,
+        images: newImages,
+        mainImageIndex: newMainImageIndex
+      };
+    });
+    
+    // Reset the file input
+    e.target.value = '';
+    
+    // Show toast notification
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: `${files.length} images added successfully`,
+        type: 'success',
+        duration: 2000
+      }
+    });
+    window.dispatchEvent(event);
   };
   
   // Upload multiple images with improved feedback
@@ -1318,112 +1439,65 @@ const InventoryManager = () => {
     return urls;
   };
   
-  // Remove an additional image
-  const handleRemoveAdditionalImage = (index) => {
-    console.log(`Attempting to remove image at index ${index}`);
-    console.log(`Current additionalImagePreviews length: ${additionalImagePreviews.length}`);
-    console.log(`Current plantFormData:`, plantFormData);
+  // Remove an image
+  const handleRemoveImage = (index) => {
+    console.log(`Removing image at index ${index}`);
     
-    try {
-      // Determine if this is a new file or an existing image
-      const isNewFile = index < additionalImagePreviews.length;
+    setPlantFormData(prev => {
+      // Make a copy of the current images array
+      const newImages = [...prev.images];
       
-      if (isNewFile) {
-        // It's a new file that hasn't been uploaded to Firebase yet
-        console.log(`Removing new image file at index ${index}`);
-        
-        // Make copies of the arrays to avoid direct state mutation
-        const newFiles = [...additionalImageFiles];
-        const newPreviews = [...additionalImagePreviews];
-        
-        // Get the preview before removing it
-        const previewToRemove = newPreviews[index];
-        
-        // Revoke the object URL to prevent memory leaks
-        if (previewToRemove && previewToRemove.url && typeof previewToRemove.url === 'string' && 
-            !previewToRemove.url.startsWith('http') && !previewToRemove.url.startsWith('local:')) {
-          try {
-            URL.revokeObjectURL(previewToRemove.url);
-            console.log(`Revoked object URL for preview at index ${index}`);
-          } catch (e) {
-            console.error(`Error revoking object URL for preview at index ${index}:`, e);
-          }
-        }
-        
-        // Remove the items from the arrays
-        newFiles.splice(index, 1);
-        newPreviews.splice(index, 1);
-        
-        // Update state
-        setAdditionalImageFiles(newFiles);
-        setAdditionalImagePreviews(newPreviews);
-        
-        console.log(`Successfully removed new image at index ${index}`);
-      } else {
-        // It's an existing image in the plant data
-        // Adjust index since we need to account for the offset from additionalImagePreviews
-        const existingImagesStartIndex = 0; // All existing images are now in plantFormData.additionalImages
-        const imageIndex = index - additionalImagePreviews.length + existingImagesStartIndex;
-        
-        console.log(`Removing existing image at adjusted index ${imageIndex} from plantFormData.additionalImages`);
-        
-        // Make sure plantFormData.additionalImages exists and is an array
-        if (!plantFormData.additionalImages || !Array.isArray(plantFormData.additionalImages)) {
-          console.error('plantFormData.additionalImages is not an array:', plantFormData.additionalImages);
-          return;
-        }
-        
-        // Create a copy of the additionalImages array
-        const newImages = [...plantFormData.additionalImages];
-        console.log('Current images:', newImages);
-        
-        // Make sure the index is valid
-        if (imageIndex < 0 || imageIndex >= newImages.length) {
-          console.error(`Invalid index ${imageIndex} for additionalImages with length ${newImages.length}`);
-          return;
-        }
-        
-        // Get the URL of the image being removed for logging
-        const imageUrlToRemove = newImages[imageIndex];
-        console.log('Removing image URL:', imageUrlToRemove);
-        
-        // Remove the image at the calculated index
-        newImages.splice(imageIndex, 1);
-        console.log('Images after removal:', newImages);
-        
-        // Ensure we preserve the plant ID when updating the form data
-        const updatedFormData = {
-          ...plantFormData,
-          additionalImages: newImages
-        };
-        
-        // Double-check that the ID is preserved
-        if (currentPlant && currentPlant.id && !updatedFormData.id) {
-          console.log('Preserving plant ID in form data:', currentPlant.id);
-          updatedFormData.id = currentPlant.id;
-        }
-        
-        // Log the updated form data to verify the image was removed
-        console.log('Updated form data:', updatedFormData);
-        console.log('New additionalImages length:', updatedFormData.additionalImages.length);
-        
-        // Update plantFormData with the new additionalImages array
-        setPlantFormData(updatedFormData);
-        
-        console.log(`Successfully removed existing image at index ${imageIndex}`);
+      // Remove the image at the specified index
+      newImages.splice(index, 1);
+      
+      // Update the main image index if needed
+      let newMainImageIndex = prev.mainImageIndex;
+      
+      // If we removed the main image, set the first image as main (if any exist)
+      if (index === prev.mainImageIndex) {
+        newMainImageIndex = newImages.length > 0 ? 0 : -1;
+      } 
+      // If we removed an image before the main image, decrement the mainImageIndex
+      else if (index < prev.mainImageIndex) {
+        newMainImageIndex = prev.mainImageIndex - 1;
       }
-    } catch (error) {
-      console.error('Error removing additional image:', error);
-      alert(`Failed to remove image: ${error.message || 'Unknown error'}`);
-    }
+      
+      return {
+        ...prev,
+        images: newImages,
+        mainImageIndex: newMainImageIndex
+      };
+    });
+    
+    // Show toast notification
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: "Image removed",
+        type: 'info',
+        duration: 2000
+      }
+    });
+    window.dispatchEvent(event);
   };
   
-  // Set an image as the main image
-  const handleSetAsMainImage = (imageUrl) => {
-    setPlantFormData({
-      ...plantFormData,
-      mainImage: imageUrl
+  // Handle setting an image as the main image
+  const handleSetAsMainImage = (index) => {
+    console.log(`Setting image at index ${index} as main image`);
+    
+    setPlantFormData(prev => ({
+      ...prev,
+      mainImageIndex: index
+    }));
+    
+    // Show toast notification
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: "Main image updated",
+        type: 'info',
+        duration: 2000
+      }
     });
+    window.dispatchEvent(event);
   };
 
   /**
@@ -1590,7 +1664,7 @@ const InventoryManager = () => {
                 }
                 
                 // Upload additional images if selected
-                let additionalImagesUrls = [...plantFormData.additionalImages];
+                let additionalImagesUrls = [...plantFormData.images];
                 
                 if (additionalImageFiles.length > 0) {
                   const newUrls = await uploadAdditionalImages();
@@ -1603,7 +1677,7 @@ const InventoryManager = () => {
                 const plantData = {
                   ...plantFormData,
                   mainImage: mainImageUrl,
-                  additionalImages: additionalImagesUrls,
+                  images: additionalImagesUrls,
                   id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
                 };
                 
@@ -1974,214 +2048,98 @@ const InventoryManager = () => {
               </div>
             </div>
             
-            {/* Consolidated Images Area */}
-            <div className="form-group full-width">
-              <label>Images</label>
-              <div className="images-container">
-                {/* Main Image Section */}
-                <div className="main-image-section">
-                  <h4>Main Image</h4>
-                  <div className="main-image-url-container">
-                    <input
-                      type="text"
-                      id="mainImage"
-                      name="mainImage"
-                      value={plantFormData.mainImage}
-                      onChange={handlePlantFormChange}
-                      placeholder="Enter image URL or use upload below"
-                      className="main-image-input"
-                    />
-                    {plantFormData.mainImage && (
-                      <div className="url-thumbnail-container">
-                        <div className="url-thumbnail">
-                          {renderImage(plantFormData.mainImage, "Current main image")}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="image-upload-container">
-                    <div className="file-upload-wrapper">
-                      <input
-                        type="file"
-                        id="imageFile"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                        className="image-file-input"
-                      />
-                      <label htmlFor="imageFile" className="image-upload-label green-button">
-                        Select Image File
-                      </label>
-                    </div>
-                    
-                    {imagePreview && (
-                      <div className="image-preview main-preview">
-                        <img src={getImageSrc(imagePreview)} alt="Plant preview" />
-                      </div>
-                    )}
-                    
-                    {isUploading && (
-                      <div className="upload-progress">
+            {/* Unified Images Section */}
+            <div className="form-section">
+              <h3>Plant Images</h3>
+              <p className="section-description">
+                Upload and manage images for this plant. The main image will be displayed prominently in the shop.
+              </p>
+              
+              <div className="unified-images-gallery">
+                {/* Current Images Grid */}
+                {plantFormData.images && plantFormData.images.length > 0 && (
+                  <div className="images-grid">
+                    {plantFormData.images.map((image, index) => {
+                      const isMainImage = index === plantFormData.mainImageIndex;
+                      const imageUrl = image instanceof File 
+                        ? URL.createObjectURL(image) 
+                        : image;
+                      
+                      return (
                         <div 
-                          className="progress-bar" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
-                        <span>{Math.round(uploadProgress)}%</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                {/* Additional Images Section */}
-                <div className="additional-images-section">
-                  <h4>Additional Images</h4>
-                  
-                  {/* Display existing additional images */}
-                  {plantFormData.additionalImages && plantFormData.additionalImages.length > 0 && (
-                    <div className="existing-additional-images">
-                      <div className="additional-images-grid">
-                        {plantFormData.additionalImages.map((imageUrl, index) => (
-                          <div key={`existing-${index}`} className="additional-image-item">
-                            <div className="image-preview">
-                              <img 
-                                src={imageUrl} 
-                                alt={`Additional ${index + 1}`} 
-                                onError={(e) => {
-                                  e.target.onerror = null;
-                                  e.target.src = '/placeholder-image.png';
-                                  e.target.className = "error";
-                                }}
-                              />
-                            </div>
-                            <div className="url-display">
-                              <div className="image-url">{imageUrl.substring(0, 30)}...</div>
-                            </div>
-                            <div className="image-actions">
+                          key={index} 
+                          className={`image-item ${isMainImage ? 'main-image' : ''}`}
+                        >
+                          <div className="image-container">
+                            <img src={imageUrl} alt={`Plant image ${index+1}`} />
+                            {isMainImage && (
+                              <div className="main-image-badge">Main</div>
+                            )}
+                          </div>
+                          <div className="image-actions">
+                            {!isMainImage && (
                               <button 
-                                type="button"
+                                type="button" 
                                 className="set-main-button"
-                                onClick={() => handleSetAsMainImage(imageUrl)}
+                                onClick={() => handleSetAsMainImage(index)}
                               >
                                 Set as Main
                               </button>
-                              <button 
-                                type="button"
-                                className="remove-button"
-                                onClick={() => handleRemoveAdditionalImage(index)}
-                              >
-                                Remove
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Display previews for new additional images */}
-                  {additionalImagePreviews.length > 0 && (
-                    <div className="new-additional-images">
-                      <h5>Additional Images</h5>
-                      <div className="additional-images-grid">
-                        {additionalImagePreviews.map((preview, index) => (
-                          <div key={`new-${index}`} className={`additional-image-item ${preview.status}`}>
-                            <div className="image-preview">
-                              <img src={getImageSrc(preview.url)} alt={`Additional ${index + 1}`} />
-                              
-                              {/* Status indicator */}
-                              {preview.status === 'pending' && (
-                                <div className="status-indicator pending">Ready to upload</div>
-                              )}
-                              {preview.status === 'uploading' && (
-                                <div className="status-indicator uploading">
-                                  <div className="upload-spinner"></div>
-                                  <span>Uploading...</span>
-                                </div>
-                              )}
-                              {preview.status === 'success' && (
-                                <div className="status-indicator success">Upload Complete</div>
-                              )}
-                              {preview.status === 'error' && (
-                                <div className="status-indicator error">
-                                  Upload Failed
-                                  {preview.errorMessage && (
-                                    <div className="error-details">{preview.errorMessage}</div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* File info */}
-                            <div className="file-info">
-                              <span className="file-name" title={preview.name}>{preview.name}</span>
-                              <span className="file-size">{preview.size} KB</span>
-                            </div>
-                            
-                            {/* Individual progress bar */}
-                            {preview.status === 'uploading' && (
-                              <div className="upload-progress individual">
-                                <div 
-                                  className="progress-bar" 
-                                  style={{ width: `${preview.progress}%` }}
-                                ></div>
-                                <span>{Math.round(preview.progress)}%</span>
-                              </div>
                             )}
-                            
-                            <div className="image-actions">
-                              <button 
-                                type="button"
-                                className="remove-button"
-                                onClick={() => handleRemoveAdditionalImage(index)}
-                              >
-                                Remove
-                              </button>
-                              
-                              {/* Show view button for successfully uploaded images */}
-                              {preview.status === 'success' && preview.uploadedUrl && (
-                                <a 
-                                  href={preview.uploadedUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="view-image-button"
-                                >
-                                  View Uploaded
-                                </a>
-                              )}
-                            </div>
+                            <button 
+                              type="button" 
+                              className="remove-button"
+                              onClick={() => handleRemoveImage(index)}
+                            >
+                              Remove
+                            </button>
                           </div>
-                        ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                
+                {/* Upload New Image */}
+                <div className="image-upload-section">
+                  <label className="image-upload-label" htmlFor="image-upload">
+                    <span className="upload-icon">+</span>
+                    <span>Add Image</span>
+                    <input 
+                      id="image-upload"
+                      type="file" 
+                      className="image-upload"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                    />
+                  </label>
+                  
+                  {/* Progress Bar (show when uploading) */}
+                  {isUploading && (
+                    <div className="upload-progress">
+                      <div className="progress-bar">
+                        <div 
+                          className="progress-bar-fill" 
+                          style={{ width: `${uploadProgress}%` }}
+                        ></div>
                       </div>
+                      <span className="progress-text">{uploadProgress}% uploaded</span>
                     </div>
                   )}
                   
-                  <div className="upload-additional-images">
-                    <div className="file-upload-wrapper">
-                      <input
-                        type="file"
-                        id="additionalImageFiles"
+                  {/* Multiple Image Upload */}
+                  <div className="additional-images-section">
+                    <label className="additional-images-label" htmlFor="additional-images">
+                      Upload Multiple Images
+                      <input 
+                        id="additional-images"
+                        type="file" 
+                        className="additional-images-input"
                         accept="image/*"
                         multiple
                         onChange={handleAdditionalImagesSelect}
-                        className="image-file-input"
                       />
-                      <label htmlFor="additionalImageFiles" className="image-upload-label green-button">
-                        Select Additional Images
-                      </label>
-                    </div>
-                    
-                    {isUploadingAdditional && (
-                      <div className="upload-progress global">
-                        <p className="upload-status">Uploading {additionalImageFiles.length} images...</p>
-                        <div className="progress-container">
-                          <div 
-                            className="progress-bar" 
-                            style={{ width: `${additionalUploadProgress}%` }}
-                          ></div>
-                          <span>{Math.round(additionalUploadProgress)}% Complete</span>
-                        </div>
-                      </div>
-                    )}
+                    </label>
                   </div>
                 </div>
               </div>
