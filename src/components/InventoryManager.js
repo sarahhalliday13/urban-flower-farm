@@ -15,6 +15,29 @@ import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
 
+// Helper function to verify Firebase configuration
+const checkFirebaseConfig = () => {
+  const requiredEnvVars = [
+    'REACT_APP_FIREBASE_API_KEY',
+    'REACT_APP_FIREBASE_AUTH_DOMAIN',
+    'REACT_APP_FIREBASE_DATABASE_URL',
+    'REACT_APP_FIREBASE_PROJECT_ID',
+    'REACT_APP_FIREBASE_STORAGE_BUCKET',
+    'REACT_APP_FIREBASE_MESSAGING_SENDER_ID',
+    'REACT_APP_FIREBASE_APP_ID'
+  ];
+  
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+  
+  if (missingVars.length > 0) {
+    console.error('Missing Firebase configuration variables:', missingVars);
+    return false;
+  }
+  
+  console.log('Firebase configuration is complete');
+  return true;
+};
+
 const InventoryManager = () => {
   const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
   const [loading, setLoading] = useState(false);
@@ -108,6 +131,9 @@ const InventoryManager = () => {
     error: false,
     message: ''
   });
+
+  const [useLocalStorage, setUseLocalStorage] = useState(false);
+  const [showFirebasePermissionWarning, setShowFirebasePermissionWarning] = useState(false);
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
@@ -441,6 +467,13 @@ const InventoryManager = () => {
 
   // Force a refresh of data when the component mounts
   useEffect(() => {
+    // Check Firebase configuration
+    const configStatus = checkFirebaseConfig();
+    if (!configStatus) {
+      setError('Firebase configuration is incomplete. Check your .env file and console logs.');
+      return;
+    }
+    
     // Clear any cached data to ensure we get fresh data from the API
     localStorage.removeItem('cachedPlantsWithTimestamp');
     
@@ -499,18 +532,35 @@ const InventoryManager = () => {
     reader.readAsDataURL(file);
   };
 
-  // Upload image to Firebase Storage
+  // Updated uploadImageFile to detect Firebase permission issues
   const uploadImageFile = async (file) => {
     if (!file) return null;
     
     try {
+      console.log('Starting image upload process for file:', file.name);
       setIsUploading(true);
       setUploadProgress(0);
       
+      // Validate file type and size
+      const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        console.error('Invalid file type:', file.type);
+        throw new Error(`Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.`);
+      }
+      
+      // 10MB limit
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        console.error('File too large:', file.size);
+        throw new Error(`File too large. Maximum size is 10MB.`);
+      }
+      
       // Create a unique path for the image based on the current time and file name
       const timestamp = new Date().getTime();
-      const fileExtension = file.name.split('.').pop();
+      const fileExtension = file.name.split('.').pop().toLowerCase();
       const path = `plant_images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
+      
+      console.log('Prepared upload path:', path);
       
       // Simulate progress (Firebase Storage doesn't provide progress updates easily)
       const progressInterval = setInterval(() => {
@@ -520,84 +570,214 @@ const InventoryManager = () => {
         });
       }, 500);
       
-      // Upload the file to Firebase Storage
-      const downloadUrl = await uploadImageToFirebase(file, path);
-      
-      // Clear the interval and set progress to 100%
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-      setIsUploading(false);
-      
-      console.log('Image uploaded successfully:', downloadUrl);
-      return downloadUrl;
+      try {
+        // Upload the file to Firebase Storage
+        console.log('Calling uploadImageToFirebase...');
+        const downloadUrl = await uploadImageToFirebase(file, path);
+        
+        // If we got back a local URL, set the flag to show the warning
+        if (downloadUrl && downloadUrl.startsWith('local:')) {
+          setUseLocalStorage(true);
+          setShowFirebasePermissionWarning(true);
+        }
+        
+        // Clear the interval and set progress to 100%
+        clearInterval(progressInterval);
+        setUploadProgress(100);
+        setIsUploading(false);
+        
+        console.log('Image uploaded successfully:', downloadUrl);
+        return downloadUrl;
+      } catch (firebaseError) {
+        clearInterval(progressInterval);
+        console.error('Firebase upload error:', firebaseError);
+        
+        // Check if it's a permission error
+        if (firebaseError.code === 'storage/unauthorized') {
+          setShowFirebasePermissionWarning(true);
+        }
+        
+        // Handle specific Firebase errors
+        let errorMessage = 'Error uploading image. Please try again.';
+        if (firebaseError.code === 'storage/unauthorized') {
+          errorMessage = 'You do not have permission to upload images.';
+        } else if (firebaseError.code === 'storage/canceled') {
+          errorMessage = 'Upload was canceled.';
+        } else if (firebaseError.code === 'storage/unknown') {
+          errorMessage = 'Unknown error occurred during upload.';
+        } else if (firebaseError.code === 'storage/quota-exceeded') {
+          errorMessage = 'Storage quota exceeded. Please contact admin.';
+        }
+        
+        throw new Error(errorMessage);
+      }
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('Error in uploadImageFile:', error);
+      setUploadProgress(0);
       setIsUploading(false);
+      
+      // Display error to user using alert or notification system
+      alert(`Upload failed: ${error.message}`);
+      
       return null;
     }
   };
 
-  // Modified handlePlantSubmit to include image upload
+  // Modified handlePlantSubmit to handle local image URLs
   const handlePlantSubmit = async (e) => {
     e.preventDefault();
+    console.log('Starting form submission...');
+    console.log('Image file present:', !!imageFile);
+    
     setPlantSaveStatus('saving');
-
+    
     try {
       // Upload main image if selected
       let mainImageUrl = plantFormData.mainImage;
       
       if (imageFile) {
-        const uploadedUrl = await uploadImageFile(imageFile);
-        if (uploadedUrl) {
-          mainImageUrl = uploadedUrl;
+        try {
+          console.log('Starting main image upload...');
+          const uploadedUrl = await uploadImageFile(imageFile);
+          if (uploadedUrl) {
+            console.log('Main image uploaded successfully:', uploadedUrl);
+            mainImageUrl = uploadedUrl;
+          } else {
+            console.error('Main image upload failed');
+          }
+        } catch (error) {
+          console.error('Error during main image upload:', error);
+          console.error('Stack trace:', error.stack);
+          // We'll continue with the existing image URL if there is one
         }
       }
       
-      // Upload additional images if selected
-      let additionalImagesUrls = [...plantFormData.additionalImages];
+      // Upload additional images if any
+      let additionalImagesUrls = [];
+      if (plantFormData.additionalImages) {
+        additionalImagesUrls = [...plantFormData.additionalImages];
+        console.log(`Using ${additionalImagesUrls.length} existing additional images`);
+      }
       
       if (additionalImageFiles.length > 0) {
+        console.log(`Uploading ${additionalImageFiles.length} additional images...`);
         const newUrls = await uploadAdditionalImages();
-        additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+        if (newUrls && newUrls.length > 0) {
+          additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+          console.log(`Additional images uploaded successfully. Total: ${additionalImagesUrls.length}`);
+        }
       }
       
-      // Prepare plant data
+      // Filter out any empty or null values from additionalImagesUrls
+      additionalImagesUrls = additionalImagesUrls.filter(url => url && url.trim() !== '');
+      console.log('Filtered additionalImagesUrls:', additionalImagesUrls);
+
+      // Log all additional images for debugging
+      if (additionalImagesUrls.length > 0) {
+        console.log('Additional images being saved:');
+        additionalImagesUrls.forEach((url, idx) => {
+          console.log(`  Image ${idx + 1}: ${url.substring(0, 50)}...`);
+        });
+      } else {
+        console.log('No additional images to save');
+      }
+      
+      // Prepare the plant data for update
       const plantData = {
         ...plantFormData,
-        mainImage: mainImageUrl, // Use uploaded URL or existing URL
+        mainImage: mainImageUrl,
         additionalImages: additionalImagesUrls,
-        // If editing, keep the existing ID, otherwise generate a new one
-        id: plantEditMode && currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
       };
-
-      if (plantEditMode && currentPlant) {
-        // Update existing plant
-        await updatePlant(currentPlant.id, plantData);
-        setPlantSaveStatus('success');
+      
+      console.log('Prepared plant data for saving:', plantData);
+      console.log('Plant data additionalImages length:', plantData.additionalImages?.length || 0);
+      
+      // Ensure we have a valid ID for the plant in edit mode
+      if (plantEditMode && !plantFormData.id && currentPlant && currentPlant.id) {
+        console.log('Plant ID missing in form data, using currentPlant.id:', currentPlant.id);
+        plantData.id = currentPlant.id;
         
-        // Update plant in context
-        updatePlantData(plantData);
-      } else {
-        // Add new plant
-        const result = await addPlant(plantData);
-        setPlantSaveStatus('success');
-        
-        // Add to plants in context
-        updatePlantData({...plantData, id: result.plantId});
+        // Also update plantFormData to include the ID for future operations
+        setPlantFormData(prev => ({
+          ...prev,
+          id: currentPlant.id
+        }));
       }
-
-      // Reset form after successful save
-      setTimeout(() => {
-        resetPlantForm();
-        setPlantSaveStatus('');
-        setImageFile(null);
-        setImagePreview(null);
-        setAdditionalImageFiles([]);
-        setAdditionalImagePreviews([]);
-      }, 2000);
+      
+      // Save or update the plant in Firebase
+      let result;
+      if (plantEditMode) {
+        // Double-check we have a valid ID before proceeding
+        if (!plantData.id && !plantFormData.id) {
+          console.error('No valid plant ID found for update');
+          setPlantSaveStatus('error');
+          alert('Error: Cannot update plant without an ID. Please try again or refresh the page.');
+          return;
+        }
+        
+        // Use plantData.id if available, otherwise fall back to plantFormData.id
+        const idToUse = plantData.id || plantFormData.id;
+        console.log('Updating plant with ID:', idToUse);
+        result = await updatePlant(idToUse, plantData);
+      } else {
+        result = await addPlant(plantData);
+      }
+      
+      // Process the result
+      if (result && result.success) {
+        console.log('Plant saved successfully:', result);
+        setPlantSaveStatus('success');
+        
+        // Force a refresh of the plants data to get the updated images
+        console.log('Refreshing plants data after successful save...');
+        handleLoadPlants(true);
+        
+        // Reset the form after a successful save
+        setTimeout(() => {
+          resetPlantForm();
+          
+          // Clear object URLs for the additional image previews to avoid memory leaks
+          additionalImagePreviews.forEach(preview => {
+            if (preview.url && !preview.url.startsWith('http') && !preview.url.startsWith('local:')) {
+              try {
+                URL.revokeObjectURL(preview.url);
+              } catch (e) {
+                console.error('Error revoking object URL:', e);
+              }
+            }
+          });
+          
+          // Clear image states
+          setImageFile(null);
+          setImagePreview(null);
+          setAdditionalImageFiles([]);
+          setAdditionalImagePreviews([]);
+          
+          // Switch to inventory tab
+          setActiveTab('inventory');
+        }, 1500);
+      } else {
+        console.error('Error saving plant:', result);
+        
+        // Extract specific error message if available
+        let errorMessage = 'Error saving flower. Please try again.';
+        if (result && result.message) {
+          errorMessage = result.message;
+        } else if (result && result.error) {
+          errorMessage = result.error.message || 'Unknown error occurred';
+        }
+        
+        // Set error status and show alert with specific message
+        setPlantSaveStatus('error');
+        alert(`Save failed: ${errorMessage}`);
+      }
     } catch (error) {
-      console.error('Error saving plant:', error);
+      console.error('Error in plant submission:', error);
+      console.error('Error details:', error.message);
+      console.error('Stack trace:', error.stack);
+      
       setPlantSaveStatus('error');
+      alert(`Error saving flower: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -636,8 +816,17 @@ const InventoryManager = () => {
 
   // New function to handle edit plant button click
   const handleEditPlant = (plant) => {
+    if (!plant || !plant.id) {
+      console.error('Attempted to edit plant with missing or invalid ID:', plant);
+      return;
+    }
+    
+    console.log('Editing plant:', plant);
     setCurrentPlant(plant);
+    
+    // Create form data with all plant properties and ensure ID is included
     setPlantFormData({
+      id: plant.id, // Explicitly set the ID
       name: plant.name || '',
       scientificName: plant.scientificName || '',
       commonName: plant.commonName || '',
@@ -660,6 +849,7 @@ const InventoryManager = () => {
         notes: plant.inventory?.notes || ''
       }
     });
+    
     setPlantEditMode(true);
     setActiveTab('addPlant'); // Switch to the add/edit plant tab
   };
@@ -973,35 +1163,152 @@ const InventoryManager = () => {
       const newFiles = Array.from(e.target.files);
       setAdditionalImageFiles([...additionalImageFiles, ...newFiles]);
       
-      // Create previews for the new files
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      // Create previews for the new files with status
+      const newPreviews = newFiles.map(file => ({
+        url: URL.createObjectURL(file),
+        name: file.name,
+        size: (file.size / 1024).toFixed(1), // Size in KB
+        status: 'pending', // pending, uploading, success, error
+        progress: 0
+      }));
+      
       setAdditionalImagePreviews([...additionalImagePreviews, ...newPreviews]);
     }
   };
   
-  // Upload multiple images
+  // Upload multiple images with improved feedback
   const uploadAdditionalImages = async () => {
-    if (additionalImageFiles.length === 0) return [];
+    if (additionalImageFiles.length === 0) {
+      console.log('No additional images to upload');
+      return [];
+    }
     
+    console.log(`Starting upload of ${additionalImageFiles.length} additional images`);
     setIsUploadingAdditional(true);
     setAdditionalUploadProgress(0);
     
     const urls = [];
+    const failedUploads = [];
+    
     try {
       for (let i = 0; i < additionalImageFiles.length; i++) {
         const file = additionalImageFiles[i];
-        const url = await uploadImageFile(file);
-        urls.push(url);
+        console.log(`Processing file ${i+1}/${additionalImageFiles.length}: ${file.name}`);
         
-        // Update progress
-        setAdditionalUploadProgress(Math.round(((i + 1) / additionalImageFiles.length) * 100));
+        // Update status to uploading
+        setAdditionalImagePreviews(prev => {
+          const updated = [...prev];
+          if (updated[i]) {
+            updated[i] = {
+              ...updated[i],
+              status: 'uploading',
+              progress: 0
+            };
+          }
+          return updated;
+        });
+        
+        // Progress simulation for individual file
+        const progressInterval = setInterval(() => {
+          setAdditionalImagePreviews(prev => {
+            const updated = [...prev];
+            if (updated[i] && updated[i].status === 'uploading' && updated[i].progress < 90) {
+              updated[i] = {
+                ...updated[i],
+                progress: updated[i].progress + Math.random() * 10
+              };
+            }
+            return updated;
+          });
+        }, 300);
+        
+        try {
+          // Validate file
+          const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+          if (!validTypes.includes(file.type)) {
+            throw new Error(`Invalid file type for ${file.name}. Please upload JPEG, PNG, GIF, or WebP images.`);
+          }
+          
+          // 10MB limit
+          const maxSize = 10 * 1024 * 1024;
+          if (file.size > maxSize) {
+            throw new Error(`File ${file.name} is too large. Maximum size is 10MB.`);
+          }
+          
+          console.log(`Uploading file ${i+1}: ${file.name}`);
+          const url = await uploadImageFile(file);
+          
+          if (url) {
+            urls.push(url);
+            
+            // Update status to success
+            setAdditionalImagePreviews(prev => {
+              const updated = [...prev];
+              if (updated[i]) {
+                updated[i] = {
+                  ...updated[i],
+                  status: 'success',
+                  progress: 100,
+                  uploadedUrl: url,
+                  errorMessage: null
+                };
+              }
+              return updated;
+            });
+            console.log(`File ${i+1} uploaded successfully: ${url}`);
+          } else {
+            // Update status to error
+            failedUploads.push(file.name);
+            setAdditionalImagePreviews(prev => {
+              const updated = [...prev];
+              if (updated[i]) {
+                updated[i] = {
+                  ...updated[i],
+                  status: 'error',
+                  progress: 0,
+                  errorMessage: 'Upload failed. Please try again.'
+                };
+              }
+              return updated;
+            });
+            console.error(`Failed to upload file ${i+1}: ${file.name}`);
+          }
+        } catch (error) {
+          console.error(`Error uploading file ${i+1} (${file.name}):`, error);
+          failedUploads.push(file.name);
+          
+          // Update status to error with specific message
+          setAdditionalImagePreviews(prev => {
+            const updated = [...prev];
+            if (updated[i]) {
+              updated[i] = {
+                ...updated[i],
+                status: 'error',
+                progress: 0,
+                errorMessage: error.message || 'Unknown error during upload'
+              };
+            }
+            return updated;
+          });
+        } finally {
+          clearInterval(progressInterval);
+        }
+        
+        // Update overall progress
+        const progress = Math.round(((i + 1) / additionalImageFiles.length) * 100);
+        setAdditionalUploadProgress(progress);
+        console.log(`Overall additional images progress: ${progress}%`);
       }
     } catch (error) {
-      console.error('Error uploading additional images:', error);
+      console.error('Error in additional images upload process:', error);
     } finally {
       setIsUploadingAdditional(false);
-      setAdditionalImageFiles([]);
-      setAdditionalImagePreviews([]);
+      console.log(`Completed additional images upload. Success: ${urls.length}, Failed: ${failedUploads.length}`);
+      
+      // If we have failed uploads, show an alert
+      if (failedUploads.length > 0) {
+        alert(`Failed to upload ${failedUploads.length} images: ${failedUploads.join(', ')}`);
+      }
     }
     
     return urls;
@@ -1009,28 +1316,101 @@ const InventoryManager = () => {
   
   // Remove an additional image
   const handleRemoveAdditionalImage = (index) => {
-    // If it's a new file (not yet uploaded)
-    if (index < additionalImagePreviews.length) {
-      const newFiles = [...additionalImageFiles];
-      const newPreviews = [...additionalImagePreviews];
+    console.log(`Attempting to remove image at index ${index}`);
+    console.log(`Current additionalImagePreviews length: ${additionalImagePreviews.length}`);
+    console.log(`Current plantFormData:`, plantFormData);
+    
+    try {
+      // Determine if this is a new file or an existing image
+      const isNewFile = index < additionalImagePreviews.length;
       
-      URL.revokeObjectURL(newPreviews[index]); // Free up memory
-      
-      newFiles.splice(index, 1);
-      newPreviews.splice(index, 1);
-      
-      setAdditionalImageFiles(newFiles);
-      setAdditionalImagePreviews(newPreviews);
-    } else {
-      // If it's an existing image in the plant data
-      const imageIndex = index - additionalImagePreviews.length;
-      const newImages = [...plantFormData.additionalImages];
-      newImages.splice(imageIndex, 1);
-      
-      setPlantFormData({
-        ...plantFormData,
-        additionalImages: newImages
-      });
+      if (isNewFile) {
+        // It's a new file that hasn't been uploaded to Firebase yet
+        console.log(`Removing new image file at index ${index}`);
+        
+        // Make copies of the arrays to avoid direct state mutation
+        const newFiles = [...additionalImageFiles];
+        const newPreviews = [...additionalImagePreviews];
+        
+        // Get the preview before removing it
+        const previewToRemove = newPreviews[index];
+        
+        // Revoke the object URL to prevent memory leaks
+        if (previewToRemove && previewToRemove.url && typeof previewToRemove.url === 'string' && 
+            !previewToRemove.url.startsWith('http') && !previewToRemove.url.startsWith('local:')) {
+          try {
+            URL.revokeObjectURL(previewToRemove.url);
+            console.log(`Revoked object URL for preview at index ${index}`);
+          } catch (e) {
+            console.error(`Error revoking object URL for preview at index ${index}:`, e);
+          }
+        }
+        
+        // Remove the items from the arrays
+        newFiles.splice(index, 1);
+        newPreviews.splice(index, 1);
+        
+        // Update state
+        setAdditionalImageFiles(newFiles);
+        setAdditionalImagePreviews(newPreviews);
+        
+        console.log(`Successfully removed new image at index ${index}`);
+      } else {
+        // It's an existing image in the plant data
+        // Adjust index since we need to account for the offset from additionalImagePreviews
+        const existingImagesStartIndex = 0; // All existing images are now in plantFormData.additionalImages
+        const imageIndex = index - additionalImagePreviews.length + existingImagesStartIndex;
+        
+        console.log(`Removing existing image at adjusted index ${imageIndex} from plantFormData.additionalImages`);
+        
+        // Make sure plantFormData.additionalImages exists and is an array
+        if (!plantFormData.additionalImages || !Array.isArray(plantFormData.additionalImages)) {
+          console.error('plantFormData.additionalImages is not an array:', plantFormData.additionalImages);
+          return;
+        }
+        
+        // Create a copy of the additionalImages array
+        const newImages = [...plantFormData.additionalImages];
+        console.log('Current images:', newImages);
+        
+        // Make sure the index is valid
+        if (imageIndex < 0 || imageIndex >= newImages.length) {
+          console.error(`Invalid index ${imageIndex} for additionalImages with length ${newImages.length}`);
+          return;
+        }
+        
+        // Get the URL of the image being removed for logging
+        const imageUrlToRemove = newImages[imageIndex];
+        console.log('Removing image URL:', imageUrlToRemove);
+        
+        // Remove the image at the calculated index
+        newImages.splice(imageIndex, 1);
+        console.log('Images after removal:', newImages);
+        
+        // Ensure we preserve the plant ID when updating the form data
+        const updatedFormData = {
+          ...plantFormData,
+          additionalImages: newImages
+        };
+        
+        // Double-check that the ID is preserved
+        if (currentPlant && currentPlant.id && !updatedFormData.id) {
+          console.log('Preserving plant ID in form data:', currentPlant.id);
+          updatedFormData.id = currentPlant.id;
+        }
+        
+        // Log the updated form data to verify the image was removed
+        console.log('Updated form data:', updatedFormData);
+        console.log('New additionalImages length:', updatedFormData.additionalImages.length);
+        
+        // Update plantFormData with the new additionalImages array
+        setPlantFormData(updatedFormData);
+        
+        console.log(`Successfully removed existing image at index ${imageIndex}`);
+      }
+    } catch (error) {
+      console.error('Error removing additional image:', error);
+      alert(`Failed to remove image: ${error.message || 'Unknown error'}`);
     }
   };
   
@@ -1092,6 +1472,23 @@ const InventoryManager = () => {
         message: `Error: ${error.message}`
       });
     }
+  };
+
+  // Helper function to detect and handle local image URLs
+  const getImageSrc = (url) => {
+    if (!url) return '';
+    if (url.startsWith('local:')) {
+      return url.substring(6); // Remove the "local:" prefix
+    }
+    return url;
+  };
+
+  // Modified to handle image rendering for both remote and local images
+  const renderImage = (src, alt, className = '') => {
+    if (!src) return null;
+    
+    const imageSrc = getImageSrc(src);
+    return <img src={imageSrc} alt={alt} className={className} />;
   };
 
   if (loading) return (
@@ -1193,7 +1590,9 @@ const InventoryManager = () => {
                 
                 if (additionalImageFiles.length > 0) {
                   const newUrls = await uploadAdditionalImages();
-                  additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                  if (newUrls && newUrls.length > 0) {
+                    additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                  }
                 }
                 
                 // Prepare plant data
@@ -1439,6 +1838,27 @@ const InventoryManager = () => {
         <div className="tab-content">
           {!plantEditMode && <h2>Add New Flower</h2>}
           
+          {/* Firebase Storage Permission Warning */}
+          {showFirebasePermissionWarning && (
+            <div className="firebase-permission-warning">
+              <h3>⚠️ Firebase Storage Permission Issue</h3>
+              <p>There's a problem with Firebase Storage permissions. Your images are being saved locally in your browser instead.</p>
+              <p>These local images will work for now, but:</p>
+              <ul>
+                <li>They won't be visible to other users</li>
+                <li>They'll be lost if you clear your browser data</li>
+                <li>They won't persist if you view the site on another device</li>
+              </ul>
+              <p>To fix this permanently, update your Firebase Storage security rules to allow uploads.</p>
+              <button 
+                className="dismiss-warning-btn"
+                onClick={() => setShowFirebasePermissionWarning(false)}
+              >
+                Dismiss Warning
+              </button>
+            </div>
+          )}
+          
           <form className="plant-form" onSubmit={handlePlantSubmit}>
             <div className="form-row">
               <div className="form-group">
@@ -1569,16 +1989,9 @@ const InventoryManager = () => {
                     />
                     {plantFormData.mainImage && (
                       <div className="url-thumbnail-container">
-                        <img 
-                          src={plantFormData.mainImage} 
-                          alt="Main" 
-                          className="url-thumbnail"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/placeholder-image.png';
-                            e.target.className = "url-thumbnail error";
-                          }}
-                        />
+                        <div className="url-thumbnail">
+                          {renderImage(plantFormData.mainImage, "Current main image")}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1599,7 +2012,7 @@ const InventoryManager = () => {
                     
                     {imagePreview && (
                       <div className="image-preview main-preview">
-                        <img src={imagePreview} alt="Preview" />
+                        <img src={getImageSrc(imagePreview)} alt="Plant preview" />
                       </div>
                     )}
                     
@@ -1664,13 +2077,53 @@ const InventoryManager = () => {
                   {/* Display previews for new additional images */}
                   {additionalImagePreviews.length > 0 && (
                     <div className="new-additional-images">
-                      <h5>New Additional Images</h5>
+                      <h5>Additional Images</h5>
                       <div className="additional-images-grid">
                         {additionalImagePreviews.map((preview, index) => (
-                          <div key={`new-${index}`} className="additional-image-item">
+                          <div key={`new-${index}`} className={`additional-image-item ${preview.status}`}>
                             <div className="image-preview">
-                              <img src={preview} alt={`Additional ${index + 1}`} />
+                              <img src={getImageSrc(preview.url)} alt={`Additional ${index + 1}`} />
+                              
+                              {/* Status indicator */}
+                              {preview.status === 'pending' && (
+                                <div className="status-indicator pending">Ready to upload</div>
+                              )}
+                              {preview.status === 'uploading' && (
+                                <div className="status-indicator uploading">
+                                  <div className="upload-spinner"></div>
+                                  <span>Uploading...</span>
+                                </div>
+                              )}
+                              {preview.status === 'success' && (
+                                <div className="status-indicator success">Upload Complete</div>
+                              )}
+                              {preview.status === 'error' && (
+                                <div className="status-indicator error">
+                                  Upload Failed
+                                  {preview.errorMessage && (
+                                    <div className="error-details">{preview.errorMessage}</div>
+                                  )}
+                                </div>
+                              )}
                             </div>
+                            
+                            {/* File info */}
+                            <div className="file-info">
+                              <span className="file-name" title={preview.name}>{preview.name}</span>
+                              <span className="file-size">{preview.size} KB</span>
+                            </div>
+                            
+                            {/* Individual progress bar */}
+                            {preview.status === 'uploading' && (
+                              <div className="upload-progress individual">
+                                <div 
+                                  className="progress-bar" 
+                                  style={{ width: `${preview.progress}%` }}
+                                ></div>
+                                <span>{Math.round(preview.progress)}%</span>
+                              </div>
+                            )}
+                            
                             <div className="image-actions">
                               <button 
                                 type="button"
@@ -1679,6 +2132,18 @@ const InventoryManager = () => {
                               >
                                 Remove
                               </button>
+                              
+                              {/* Show view button for successfully uploaded images */}
+                              {preview.status === 'success' && preview.uploadedUrl && (
+                                <a 
+                                  href={preview.uploadedUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="view-image-button"
+                                >
+                                  View Uploaded
+                                </a>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1702,12 +2167,15 @@ const InventoryManager = () => {
                     </div>
                     
                     {isUploadingAdditional && (
-                      <div className="upload-progress">
-                        <div 
-                          className="progress-bar" 
-                          style={{ width: `${additionalUploadProgress}%` }}
-                        ></div>
-                        <span>{Math.round(additionalUploadProgress)}%</span>
+                      <div className="upload-progress global">
+                        <p className="upload-status">Uploading {additionalImageFiles.length} images...</p>
+                        <div className="progress-container">
+                          <div 
+                            className="progress-bar" 
+                            style={{ width: `${additionalUploadProgress}%` }}
+                          ></div>
+                          <span>{Math.round(additionalUploadProgress)}% Complete</span>
+                        </div>
                       </div>
                     )}
                   </div>
