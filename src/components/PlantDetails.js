@@ -311,12 +311,19 @@ function PlantDetails() {
             )}
           </div>
           <div className="plant-details-info">
-            <h1>{plant.name}</h1>
-            {plant.commonName && plant.scientificName && (
-              <p className="plant-names">
-                {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
-              </p>
-            )}
+            <div className="plant-info">
+              <h1 className="plant-common-name">{plant.name}</h1>
+              {plant.scientificName && (
+                <h2 className="scientific-name">{plant.scientificName}</h2>
+              )}
+              <div className="plant-meta">
+                {plant.commonName && plant.scientificName && (
+                  <p className="plant-names">
+                    {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
+                  </p>
+                )}
+              </div>
+            </div>
             <div className="price-action-container">
               <p className="price">${plant.price}</p>
               <div className="price-controls">

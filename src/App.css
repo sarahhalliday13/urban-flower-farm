@@ -1231,10 +1231,10 @@ footer {
 }
 
 .scientific-name {
-  font-style: italic;
-  color: #7f8c8d;
-  margin: 0 0 0.5rem;
   font-size: 0.9rem;
+  color: #666;
+  margin: -0.5rem 0 0.5rem;
+  font-style: italic;
 }
 
 .price {
@@ -1820,5 +1820,48 @@ footer {
     margin-left: 0;
     margin-top: 0.25rem;
     display: block;
+  }
+}
+
+.plant-common-name {
+  margin: 0.5rem 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+}
+
+.scientific-name {
+  font-style: italic;
+  color: #666;
+  margin: 0.25rem 0 1rem;
+  font-size: 1.1rem;
+}
+
+/* Specific styles for PlantDetails */
+.plant-info .plant-common-name {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.plant-info .scientific-name {
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .plant-common-name {
+    font-size: 1.3rem;
+  }
+  
+  .scientific-name {
+    font-size: 1rem;
+  }
+  
+  .plant-info .plant-common-name {
+    font-size: 1.8rem;
+  }
+  
+  .plant-info .scientific-name {
+    font-size: 1.2rem;
   }
 }
