@@ -321,7 +321,7 @@ const AdminOrders = () => {
 
   return (
     <div className="admin-orders-container">
-      <h1>Order Management</h1>
+      <h2 className="admin-page-title">Order Management</h2>
       
       <div className="admin-controls">
         <div className="search-box">
