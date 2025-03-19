@@ -400,7 +400,7 @@ const AdminOrders = () => {
                           toggleOrderDetails(order.id);
                         }}
                       >
-                        {activeOrder === order.id ? 'Hide Details' : 'View Details'}
+                        View Details
                       </button>
                     </td>
                   </tr>
