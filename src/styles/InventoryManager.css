@@ -35,13 +35,25 @@
 /* Form actions with save/cancel buttons */
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-top: 2rem;
   gap: 1rem;
+  align-items: center;
+}
+
+.button-group-left {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.button-group-right {
+  margin-left: auto;
 }
 
 .form-actions .save-btn,
-.form-actions .cancel-btn {
+.form-actions .cancel-btn,
+.form-actions .delete-btn {
   width: 180px;
   min-width: 180px;
 }
@@ -369,7 +381,7 @@
 }
 
 .inventory-table th:last-child {
-  text-align: right; /* Align with action buttons which are right-aligned */
+  text-align: left; /* Change to left alignment to align with Update button */
 }
 
 .inventory-table tr:last-child td {
@@ -448,7 +460,7 @@
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start; /* Change to flex-start for left alignment */
 }
 
 /* 
@@ -494,7 +506,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.save-btn, .cancel-btn {
+.save-btn, .cancel-btn, .delete-btn {
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
@@ -524,6 +536,23 @@
   background-color: #d1d5db;
   cursor: not-allowed;
   color: #9ca3af;
+}
+
+.delete-btn {
+  background-color: #ef4444; /* Red background for destructive actions */
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #dc2626; /* Darker red on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.delete-btn:disabled {
+  background-color: #fca5a5; /* Lighter red when disabled */
+  cursor: not-allowed;
+  color: white;
 }
 
 .cancel-btn {
@@ -1024,7 +1053,8 @@
   }
   
   .save-btn, 
-  .cancel-btn {
+  .cancel-btn,
+  .delete-btn {
     width: 100%;
     margin-bottom: 10px;
   }
@@ -1048,6 +1078,24 @@
   .plant-form .form-actions {
     flex-direction: column-reverse;
     gap: 10px;
+    width: 100%;
+  }
+
+  .plant-form .button-group-left,
+  .plant-form .button-group-right {
+    width: 100%;
+  }
+  
+  .plant-form .button-group-left {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .plant-form .form-actions .save-btn,
+  .plant-form .form-actions .cancel-btn, 
+  .plant-form .form-actions .delete-btn {
+    width: 100%;
+    margin-bottom: 10px;
   }
 }
 
@@ -1915,4 +1963,101 @@
     max-width: 100%;
     margin-bottom: 0.75rem;
   }
+}
+
+/* Add New button - primary button styling */
+.add-new-button {
+  background-color: #10b981; /* Primary button: Green for primary actions */
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 180px;
+  width: 180px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: inline-block;
+}
+
+.add-new-button:hover {
+  background-color: #059669; /* Darker green on hover */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Add new button container alignment */
+.add-new-button-container {
+  padding-top: 10px; /* Match the padding-top of filter-controls to align vertically */
+}
+
+/* Inventory header container */
+.inventory-header-container {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Styling for sales-header, copied from AdminDashboard.css for consistency */
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.sales-header h2 {
+  color: #2c5530;
+  margin: 0;
+  font-size: 1.3rem;
+  white-space: nowrap;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  margin: 0 1rem;
+  flex-grow: 1;
+}
+
+.sales-header .add-new-button, 
+.sales-header .save-btn {
+  white-space: nowrap;
+}
+
+.sales-header .filter-controls {
+  padding-top: 0;
+  margin: 0;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+  .sales-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-controls {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+  
+  .sales-header .add-new-button {
+    align-self: flex-start;
+  }
+}
+
+/* Inventory header styling - keeping for backwards compatibility */
+.inventory-header {
+  font-size: 1.6rem;
+  color: #2c3e50;
+  margin: 0.5rem 0 1rem 0;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
 } 
