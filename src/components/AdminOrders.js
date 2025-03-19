@@ -321,40 +321,39 @@ const AdminOrders = () => {
 
   return (
     <div className="admin-orders-container">
-      <h2 className="admin-page-title">Order Management</h2>
-      
-      <div className="admin-controls">
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Search by name, email, or order ID"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        
-        <div className="filter-controls">
-          <label>Filter by status:</label>
-          <select 
-            value={filter} 
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">All Orders</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="shipped">Shipped</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+      <div className="admin-header">
+        <h2 className="admin-page-title">Order Management</h2>
+        <div className="admin-controls">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search by name, email, or order ID"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <div className="filter-controls">
+            <label htmlFor="status-filter">Status:</label>
+            <select 
+              id="status-filter" 
+              value={filter} 
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">All Orders</option>
+              <option value="pending">Pending</option>
+              <option value="processing">Processing</option>
+              <option value="shipped">Shipped</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
         </div>
       </div>
       
       {loading ? (
         <div className="loading">Loading orders...</div>
       ) : filteredOrders.length === 0 ? (
-        <div className="no-orders">
-          <p>No orders found matching your criteria.</p>
-        </div>
+        <div className="no-orders">No orders found</div>
       ) : (
         <div className="orders-list">
           <table className="orders-table">
