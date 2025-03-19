@@ -25,6 +25,7 @@ import './cart-styles.css';
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const AdminOrders = lazy(() => import('./components/AdminOrders'));
+const AdminUtilities = lazy(() => import('./components/AdminUtilities'));
 
 // Custom NavigationLink component for admin links
 function AdminNavLink({ to, children, currentPath, onClick }) {
@@ -160,6 +161,13 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               >
                 Order Management
               </AdminNavLink>
+              <AdminNavLink 
+                to="/admin/utilities" 
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Utilities
+              </AdminNavLink>
               <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
             </div>
           </>
@@ -279,6 +287,16 @@ function App() {
                       <FirebaseMigration />
                     </ProtectedRoute>
                   } 
+                />
+                <Route
+                  path="/admin/utilities"
+                  element={
+                    <ProtectedRoute>
+                      <AdminContentWrapper>
+                        <AdminUtilities />
+                      </AdminContentWrapper>
+                    </ProtectedRoute>
+                  }
                 />
               </Routes>
 

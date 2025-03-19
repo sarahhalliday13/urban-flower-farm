@@ -1642,6 +1642,64 @@ const InventoryManager = () => {
     }
   }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Handle deleting a plant
+  const handleDeletePlant = async (plantId) => {
+    if (!plantId) return;
+    
+    setPlantSaveStatus('saving');
+    
+    try {
+      // Call the deletePlant function from Firebase service
+      const result = await deletePlant(plantId);
+      
+      if (result.success) {
+        setPlantSaveStatus('success');
+        
+        // Show success notification
+        const event = new CustomEvent('show-toast', { 
+          detail: { 
+            message: 'Flower deleted successfully!',
+            type: 'success',
+            duration: 3000
+          }
+        });
+        window.dispatchEvent(event);
+        
+        // Force refresh the plants list from the database
+        handleLoadPlants(true);
+        
+        // Reset form and navigate back to inventory tab
+        resetPlantForm();
+        setPlantEditMode(false);
+        setActiveTab('inventory');
+      } else {
+        setPlantSaveStatus('error');
+        
+        // Show error notification
+        const event = new CustomEvent('show-toast', { 
+          detail: { 
+            message: `Error deleting flower: ${result.message}`,
+            type: 'error',
+            duration: 5000
+          }
+        });
+        window.dispatchEvent(event);
+      }
+    } catch (error) {
+      setPlantSaveStatus('error');
+      
+      // Show error notification
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: `Error deleting flower: ${error.message}`,
+          type: 'error',
+          duration: 5000
+        }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -1734,20 +1792,28 @@ const InventoryManager = () => {
                 Add New
               </button>
             ) : activeTab === 'addPlant' ? (
-              <button 
-                className="save-btn"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // Submit the form using the form id
-                  document.getElementById('plantForm').dispatchEvent(new Event('submit', {
-                    cancelable: true,
-                    bubbles: true
-                  }));
-                }}
-                disabled={plantSaveStatus === 'saving'}
-              >
-                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-              </button>
+              <div className="button-group">
+                <button 
+                  className="back-button"
+                  onClick={() => handleTabChange('inventory')}
+                >
+                  Back to Inventory
+                </button>
+                <button 
+                  className="save-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Submit the form using the form id
+                    document.getElementById('plantForm').dispatchEvent(new Event('submit', {
+                      cancelable: true,
+                      bubbles: true
+                    }));
+                  }}
+                  disabled={plantSaveStatus === 'saving'}
+                >
+                  {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             ) : null}
           </div>
           {/* Hide the Import Data tab but keep all functionality */}
@@ -1765,84 +1831,102 @@ const InventoryManager = () => {
       {/* When in edit mode, show a page header with the plant name */}
       {plantEditMode && (
         <div className="page-header">
-          <h1>Update {plantFormData.name}</h1>
-          <button 
-            className="save-btn"
-            onClick={async (e) => {
-              e.preventDefault();
-              setPlantSaveStatus('saving');
-              
-              try {
-                // Upload main image if selected
-                let mainImageUrl = plantFormData.mainImage;
-                
-                if (imageFile) {
-                  const uploadedUrl = await uploadImageFile(imageFile);
-                  if (uploadedUrl) {
-                    mainImageUrl = uploadedUrl;
+          <h1>Update {plantFormData.name || 'Flower'}</h1>
+          <div className="button-group">
+            <button 
+              className="back-button"
+              onClick={() => {
+                if (hasUnsavedChanges) {
+                  const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                  if (!confirmLeave) {
+                    return;
                   }
+                  setHasUnsavedChanges(false);
                 }
+                resetPlantForm();
+                setPlantEditMode(false);
+              }}
+            >
+              Back to Inventory
+            </button>
+            <button 
+              className="save-btn"
+              onClick={async (e) => {
+                e.preventDefault();
+                setPlantSaveStatus('saving');
                 
-                // Upload additional images if selected
-                let additionalImagesUrls = [...plantFormData.images];
-                
-                if (additionalImageFiles.length > 0) {
-                  const newUrls = await uploadAdditionalImages();
-                  if (newUrls && newUrls.length > 0) {
-                    additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                try {
+                  // Upload main image if selected
+                  let mainImageUrl = plantFormData.mainImage;
+                  
+                  if (imageFile) {
+                    const uploadedUrl = await uploadImageFile(imageFile);
+                    if (uploadedUrl) {
+                      mainImageUrl = uploadedUrl;
+                    }
                   }
+                  
+                  // Upload additional images if selected
+                  let additionalImagesUrls = [...plantFormData.images];
+                  
+                  if (additionalImageFiles.length > 0) {
+                    const newUrls = await uploadAdditionalImages();
+                    if (newUrls && newUrls.length > 0) {
+                      additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                    }
+                  }
+                  
+                  // Prepare plant data
+                  const plantData = {
+                    ...plantFormData,
+                    mainImage: mainImageUrl,
+                    images: additionalImagesUrls,
+                    id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
+                  };
+                  
+                  // Update existing plant
+                  await updatePlant(currentPlant.id, plantData);
+                  setPlantSaveStatus('success');
+                  
+                  // Update plant in context if needed
+                  if (typeof updatePlantData === 'function') {
+                    updatePlantData(plantData);
+                  }
+                  
+                  // Show a toast notification
+                  const event = new CustomEvent('show-toast', { 
+                    detail: { 
+                      message: 'Plant updated successfully!',
+                      type: 'success',
+                      duration: 3000
+                    }
+                  });
+                  window.dispatchEvent(event);
+                  
+                  // Use the improved resetPlantForm function after a delay
+                  setTimeout(() => {
+                    resetPlantForm();
+                  }, 1000);
+                } catch (error) {
+                  console.error('Error saving plant:', error);
+                  setPlantSaveStatus('error');
+                  
+                  // Show an error toast
+                  const event = new CustomEvent('show-toast', { 
+                    detail: { 
+                      message: `Error: ${error.message || 'Unknown error occurred'}`,
+                      type: 'error',
+                      duration: 5000
+                    }
+                  });
+                  window.dispatchEvent(event);
                 }
-                
-                // Prepare plant data
-                const plantData = {
-                  ...plantFormData,
-                  mainImage: mainImageUrl,
-                  images: additionalImagesUrls,
-                  id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
-                };
-                
-                // Update existing plant
-                await updatePlant(currentPlant.id, plantData);
-                setPlantSaveStatus('success');
-                
-                // Update plant in context if needed
-                if (typeof updatePlantData === 'function') {
-                  updatePlantData(plantData);
-                }
-                
-                // Show a toast notification
-                const event = new CustomEvent('show-toast', { 
-                  detail: { 
-                    message: 'Plant updated successfully!',
-                    type: 'success',
-                    duration: 3000
-                  }
-                });
-                window.dispatchEvent(event);
-                
-                // Use the improved resetPlantForm function after a delay
-                setTimeout(() => {
-                  resetPlantForm();
-                }, 1000);
-              } catch (error) {
-                console.error('Error saving plant:', error);
-                setPlantSaveStatus('error');
-                
-                // Show an error toast
-                const event = new CustomEvent('show-toast', { 
-                  detail: { 
-                    message: `Error: ${error.message || 'Unknown error occurred'}`,
-                    type: 'error',
-                    duration: 5000
-                  }
-                });
-                window.dispatchEvent(event);
-              }
-            }}
-            disabled={plantSaveStatus === 'saving'}
-          >
-            {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-          </button>
+              }}
+              disabled={plantSaveStatus === 'saving'}
+            >
+              {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+            </button>
+          </div>
         </div>
       )}
       
@@ -2348,80 +2432,47 @@ const InventoryManager = () => {
             </div>
             
             <div className="form-actions">
-              {/* Left group: Delete and Cancel buttons */}
               <div className="button-group-left">
-                {/* Delete button - aligned left, disabled in Add New mode */}
-                <button 
-                  type="button" 
-                  className="delete-btn"
-                  onClick={() => {
-                    if (plantEditMode && currentPlant) {
-                      if (window.confirm(`Are you sure you want to delete ${currentPlant.name}?`)) {
-                        // Call the deletePlant function
-                        setPlantSaveStatus('saving');
-                        deletePlant(currentPlant.id)
-                          .then(result => {
-                            if (result.success) {
-                              setPlantSaveStatus('success');
-                              
-                              // Show success message
-                              alert(`${currentPlant.name} has been deleted successfully.`);
-                              
-                              // Force refresh the plants list from the database
-                              // This will update the context with fresh data
-                              handleLoadPlants(true);
-                              
-                              // Reset form and navigate back to inventory tab
-                              resetPlantForm();
-                              
-                              // Set active tab to inventory (not inventoryList)
-                              setActiveTab('inventory');
-                            } else {
-                              setPlantSaveStatus('error');
-                              alert(`Error deleting plant: ${result.message}`);
-                            }
-                          })
-                          .catch(error => {
-                            setPlantSaveStatus('error');
-                            alert(`Error deleting plant: ${error.message}`);
-                          });
+                {plantEditMode && (
+                  <button
+                    className="delete-btn"
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this plant? This action cannot be undone.')) {
+                        handleDeletePlant(currentPlant.id);
                       }
-                    }
-                  }}
-                  disabled={!plantEditMode || !currentPlant}
-                >
-                  Delete Flower
-                </button>
-                
-                {/* Cancel button - secondary button next to Delete */}
-                <button 
-                  type="button" 
-                  className="cancel-btn"
-                  onClick={resetPlantForm}
-                >
-                  Cancel
-                </button>
+                    }}
+                  >
+                    Delete Flower
+                  </button>
+                )}
               </div>
-              
-              {/* Right group: Save button */}
               <div className="button-group-right">
-                {/* Save button - aligned right */}
-                <button 
-                  type="submit" 
-                  className={`save-btn ${plantSaveStatus}`}
+                <button
+                  className="back-button"
+                  type="button"
+                  onClick={() => {
+                    if (hasUnsavedChanges) {
+                      const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                      if (!confirmLeave) {
+                        return;
+                      }
+                      setHasUnsavedChanges(false);
+                    }
+                    resetPlantForm();
+                    plantEditMode ? setPlantEditMode(false) : handleTabChange('inventory');
+                  }}
+                >
+                  Back to Inventory
+                </button>
+                <button
+                  className="save-btn"
+                  type="submit"
                   disabled={plantSaveStatus === 'saving'}
                 >
                   {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
                 </button>
               </div>
-              
-              {plantSaveStatus === 'success' && (
-                <span className="success-message">Flower saved successfully!</span>
-              )}
-              
-              {plantSaveStatus === 'error' && (
-                <span className="error-message">Error saving flower. Please try again.</span>
-              )}
             </div>
           </form>
           
