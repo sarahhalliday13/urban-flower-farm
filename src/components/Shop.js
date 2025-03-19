@@ -106,18 +106,20 @@ function Shop() {
                       e.target.src = '/images/placeholder.jpg';
                     }} />
                   </div>
-                  <h3>{plant.name}</h3>
-                  <p>${plant.price}</p>
-                  <div className="plant-status">
-                    <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                      {plant.inventory?.status || 'Status Unknown'}
-                    </span>
+                  <div className="plant-details">
+                    <h3>{plant.name}</h3>
+                    <p>${plant.price}</p>
+                    <div className="plant-status">
+                      <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                        {plant.inventory?.status || 'Status Unknown'}
+                      </span>
+                    </div>
                   </div>
                 </Link>
                 <div className="plant-actions">
                   <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                   <button 
-                    className="plant-buy" 
+                    className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
                     onClick={() => handleAddToCart(plant)}
                     disabled={!plant.inventory?.currentStock}
                   >

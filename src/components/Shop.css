@@ -204,9 +204,14 @@
   background-color: #1e3c21;
 }
 
-.plant-buy:disabled {
+.plant-buy:disabled,
+.plant-buy.sold-out {
   background-color: #ccc;
   cursor: not-allowed;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-filters {
@@ -411,11 +416,11 @@
 
 .plant-grid.list-view .plant-card {
   display: grid;
-  grid-template-columns: 180px 1fr auto;
+  grid-template-columns: 120px 1fr auto;
   grid-template-areas: 
     "image details actions";
   gap: 1rem;
-  padding: 1rem;
+  padding: 0.8rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   margin-bottom: 1rem;
   transition: transform 0.3s, box-shadow 0.3s;
@@ -428,20 +433,27 @@
 }
 
 .plant-grid.list-view .plant-image {
-  width: 180px;
-  height: 180px;
+  width: 120px;
+  height: 120px;
   grid-area: image;
+  margin: 0;
 }
 
-.plant-grid.list-view .plant-card a {
+.plant-grid.list-view .plant-card > a {
   display: contents;
 }
 
-.plant-grid.list-view .plant-card h3,
-.plant-grid.list-view .plant-card p,
-.plant-grid.list-view .plant-status {
-  margin: 0.5rem 0;
+.plant-grid.list-view .plant-details {
   grid-area: details;
+  margin: 0;
+}
+
+.plant-grid.list-view .plant-card h3 {
+  margin: 0 0 0.5rem 0;
+}
+
+.plant-grid.list-view .plant-card p {
+  margin: 0 0 0.5rem 0;
 }
 
 .plant-grid.list-view .plant-actions {
@@ -452,51 +464,60 @@
   flex-direction: column;
   gap: 0.5rem;
   justify-self: end;
+  align-self: center;
+  width: 90px;
 }
 
 .plant-grid.list-view .plant-view,
 .plant-grid.list-view .plant-buy {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.plant-grid.list-view .plant-card a > div:not(.plant-image) {
+  grid-area: details;
 }
 
 /* Responsive adjustments for list view */
 @media screen and (max-width: 768px) {
   .plant-grid.list-view .plant-card {
-    grid-template-columns: 120px 1fr;
+    grid-template-columns: 100px 1fr;
     grid-template-areas: 
       "image details"
       "image actions";
     gap: 0.75rem;
+    max-height: none;
   }
   
   .plant-grid.list-view .plant-image {
-    width: 120px;
-    height: 120px;
+    width: 100px;
+    height: 100px;
   }
   
   .plant-grid.list-view .plant-actions {
     flex-direction: row;
     grid-area: actions;
     justify-self: start;
+    width: auto;
+  }
+  
+  .plant-grid.list-view .plant-view,
+  .plant-grid.list-view .plant-buy {
+    width: 80px;
+    height: 36px;
   }
 }
 
-@media screen and (max-width: 600px) {
-  .plant-grid.list-view .plant-card {
-    grid-template-columns: 1fr;
-    grid-template-areas: 
-      "image"
-      "details"
-      "actions";
-    gap: 0.5rem;
-  }
-  
-  .plant-grid.list-view .plant-image {
-    width: 100%;
-    height: 200px;
-  }
-  
-  .plant-grid.list-view .plant-actions {
-    width: 100%;
-  }
+/* Add styles for the plant-details container */
+.plant-details {
+  display: flex;
+  flex-direction: column;
+  margin: 0 1rem;
 } 
