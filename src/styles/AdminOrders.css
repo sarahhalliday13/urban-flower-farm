@@ -661,6 +661,8 @@
   
   td[data-label="Customer"]:before {
     margin-bottom: 8px;
+    text-align: left;
+    width: 100%;
   }
   
   td[data-label="Customer"] .customer-name,
