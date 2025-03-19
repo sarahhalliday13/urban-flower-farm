@@ -283,7 +283,7 @@ function App() {
               </Routes>
 
               <footer>
-                <p>© 2024 Buttons Urban Flower Farm. All rights reserved.</p>
+                <p>© 2024 Buttons Urban Flower Farm. All rights reserved. <Link to="/inventory" className="admin-link footer-link">Inventory</Link></p>
               </footer>
 
               <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />

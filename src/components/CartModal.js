@@ -33,57 +33,72 @@ function CartModal({ isOpen, onClose }) {
         ) : (
           <>
             <div className="cart-items">
-              {cartItems.map(item => (
-                <div key={item.id} className="cart-item">
-                  <div className="cart-item-image">
-                    {item.mainImage ? (
-                      <img 
-                        src={item.mainImage} 
-                        alt={item.name}
-                        onError={(e) => {
-                          console.error('Cart image failed to load:', item.mainImage);
-                          e.target.src = '/images/placeholder.jpg';
-                        }}
-                      />
-                    ) : (
-                      <div className="emoji-image">🌱</div>
-                    )}
-                  </div>
-                  <div className="cart-item-content">
-                    <div className="cart-item-top-row">
-                      <div className="cart-item-name">
-                        <h3>{item.name}</h3>
-                      </div>
-                      <div className="cart-item-price">
-                        ${item.price}
-                      </div>
+              {cartItems.map(item => {
+                // Check if we can add more of this item
+                const availableStock = parseInt(item.inventory?.currentStock, 10) || 0;
+                const currentQuantity = parseInt(item.quantity, 10) || 0;
+                const canIncreaseQuantity = currentQuantity < availableStock;
+                
+                return (
+                  <div key={item.id} className="cart-item">
+                    <div className="cart-item-image">
+                      {item.mainImage ? (
+                        <img 
+                          src={item.mainImage} 
+                          alt={item.name}
+                          onError={(e) => {
+                            console.error('Cart image failed to load:', item.mainImage);
+                            e.target.src = '/images/placeholder.jpg';
+                          }}
+                        />
+                      ) : (
+                        <div className="emoji-image">🌱</div>
+                      )}
                     </div>
-                    <div className="cart-item-bottom-row">
-                      <button 
-                        className="remove-item"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        Remove
-                      </button>
-                      <div className="cart-item-quantity">
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="quantity-btn"
-                        >
-                          -
-                        </button>
-                        <span>{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="quantity-btn"
-                        >
-                          +
-                        </button>
+                    <div className="cart-item-content">
+                      <div className="cart-item-top-row">
+                        <div className="cart-item-name">
+                          <h3>{item.name}</h3>
+                        </div>
+                        <div className="cart-item-price">
+                          ${item.price}
+                        </div>
                       </div>
+                      <div className="cart-item-bottom-row">
+                        <button 
+                          className="remove-item"
+                          onClick={() => removeFromCart(item.id)}
+                        >
+                          Remove
+                        </button>
+                        <div className="cart-item-quantity">
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="quantity-btn"
+                            disabled={currentQuantity <= 1}
+                          >
+                            -
+                          </button>
+                          <span>{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="quantity-btn"
+                            disabled={!canIncreaseQuantity}
+                            title={!canIncreaseQuantity ? "Maximum stock reached" : ""}
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                      {!canIncreaseQuantity && (
+                        <div className="stock-limit-message">
+                          Max stock reached
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             
             <div className="cart-summary">
