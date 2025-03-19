@@ -12,18 +12,113 @@
   color: #2c3e50;
 }
 
-/* Page header for plant update */
+/* Inventory header styles */
+.inventory-header-container {
+  margin-bottom: 1.5rem;
+}
+
+.sales-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.sales-header h2 {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  margin: 0 1rem;
+  flex-grow: 1;
+}
+
+.sales-header .add-new-button, 
+.sales-header .save-btn {
+  white-space: nowrap;
+}
+
+.sales-header .filter-controls {
+  padding-top: 0;
+  margin: 0;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 768px) {
+  .sales-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header-controls {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+  
+  .sales-header .add-new-button {
+    align-self: flex-start;
+  }
+  
+  .button-group {
+    width: 100%;
+    margin-top: 10px;
+    gap: 8px;
+  }
+  
+  .back-button {
+    width: auto;
+    margin-bottom: 0.5rem;
+  }
+  
+  .header-left {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .page-header .header-controls {
+    width: 100%;
+    margin: 0.5rem 0;
+  }
+  
+  .page-header .save-btn {
+    margin-left: 0;
+  }
+}
+
+/* Page header for plant update - matches the sales-header */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #eee;
 }
 
 .page-header h1 {
   text-align: left;
   font-size: 1.5rem;
   margin-bottom: 0;
+  color: #2c3e50;
+  font-weight: 600;
+  font-family: inherit;
 }
 
 .page-header .save-btn {
@@ -37,22 +132,24 @@
   display: flex;
   justify-content: space-between;
   margin-top: 2rem;
-  gap: 1rem;
   align-items: center;
 }
 
 .button-group-left {
   display: flex;
-  gap: 1rem;
+  gap: 12px;
   align-items: center;
 }
 
 .button-group-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   margin-left: auto;
 }
 
 .form-actions .save-btn,
-.form-actions .cancel-btn,
+.form-actions .back-button,
 .form-actions .delete-btn {
   width: 180px;
   min-width: 180px;
@@ -539,20 +636,19 @@
 }
 
 .delete-btn {
-  background-color: #ef4444; /* Red background for destructive actions */
+  background-color: #f44336;
   color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  margin-right: 12px;
 }
 
 .delete-btn:hover {
-  background-color: #dc2626; /* Darker red on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.delete-btn:disabled {
-  background-color: #fca5a5; /* Lighter red when disabled */
-  cursor: not-allowed;
-  color: white;
+  background-color: #d32f2f;
 }
 
 .cancel-btn {
@@ -1042,6 +1138,22 @@
   /* Ensure form content is visible without excessive scrolling */
   .tab-content {
     padding-bottom: 30px;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .header-left .back-button {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .header-left h1,
+  .header-left h2 {
+    font-size: 1.3rem;
   }
 }
 
@@ -1994,64 +2106,6 @@
   padding-top: 10px; /* Match the padding-top of filter-controls to align vertically */
 }
 
-/* Inventory header container */
-.inventory-header-container {
-  width: 100%;
-  margin-bottom: 1rem;
-}
-
-/* Styling for sales-header, copied from AdminDashboard.css for consistency */
-.sales-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #eee;
-}
-
-.sales-header h2 {
-  color: #2c5530;
-  margin: 0;
-  font-size: 1.3rem;
-  white-space: nowrap;
-}
-
-.header-controls {
-  display: flex;
-  align-items: center;
-  margin: 0 1rem;
-  flex-grow: 1;
-}
-
-.sales-header .add-new-button, 
-.sales-header .save-btn {
-  white-space: nowrap;
-}
-
-.sales-header .filter-controls {
-  padding-top: 0;
-  margin: 0;
-}
-
-/* For mobile responsiveness */
-@media (max-width: 768px) {
-  .sales-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .header-controls {
-    width: 100%;
-    margin: 0.5rem 0;
-  }
-  
-  .sales-header .add-new-button {
-    align-self: flex-start;
-  }
-}
-
 /* Inventory header styling - keeping for backwards compatibility */
 .inventory-header {
   font-size: 1.6rem;
@@ -2060,4 +2114,90 @@
   font-weight: 600;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e5e7eb;
+}
+
+/* Back button styling */
+.back-button {
+  background-color: #ffffff;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  display: inline-block;
+}
+
+.back-button:hover {
+  background-color: #f3f4f6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Make sure header controls work properly in both headers */
+.page-header .header-controls {
+  display: flex;
+  align-items: center;
+  margin: 0 1rem;
+  flex-grow: 1;
+}
+
+/* Header layout styling for back button placement */
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-left .back-button {
+  margin-right: 0;
+}
+
+.header-left h1,
+.header-left h2 {
+  margin: 0;
+}
+
+/* Button group for action buttons */
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.button-group .back-button,
+.button-group .save-btn {
+  margin: 0;
+}
+
+@media (max-width: 576px) {
+  .button-group {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .button-group .back-button,
+  .button-group .save-btn {
+    width: 100%;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .header-left .back-button {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+  }
+  
+  .header-left h1,
+  .header-left h2 {
+    font-size: 1.3rem;
+  }
 } 
