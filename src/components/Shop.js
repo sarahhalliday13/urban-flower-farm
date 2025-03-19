@@ -153,7 +153,10 @@ function Shop() {
                         e.target.src = '/images/placeholder.jpg';
                       }} />
                     </div>
-                    <h3>{plant.name}</h3>
+                    <h3 className="plant-common-name">{plant.name}</h3>
+                    {plant.scientificName && (
+                      <p className="scientific-name">{plant.scientificName}</p>
+                    )}
                     <p className="plant-description">
                       {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
                     </p>
@@ -177,8 +180,11 @@ function Shop() {
                     </Link>
                     <div className="plant-content">
                       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <h3>{plant.name}</h3>
+                        <h3 className="plant-common-name">{plant.name}</h3>
                       </Link>
+                      {plant.scientificName && (
+                        <p className="scientific-name">{plant.scientificName}</p>
+                      )}
                       <p className="plant-description">
                         {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
                       </p>

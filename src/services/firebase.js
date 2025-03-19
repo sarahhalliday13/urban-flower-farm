@@ -690,11 +690,37 @@ export const loadSamplePlants = async () => {
     console.log(`DEBUG: loadSamplePlants - Successfully loaded ${data.length} sample plants`);
     console.log('DEBUG: loadSamplePlants - First sample plant:', data[0]?.name || 'No name available');
     
+    // Map the image URLs to local images
+    const localImageMappings = {
+      "Lavender": "/images/LavenderMist.jpg",
+      "Lavender Mist": "/images/LavenderMist.jpg",
+      "Palmer's Beardtongue": "/images/penstemonpalmeri.jpg",
+      "Gaillardia Pulchella Mix": "/images/gaillardiapulchella.jpg",
+      "Korean Mint": "/images/koreanmint.jpg",
+      "Golden Jubilee Anise Hyssop": "/images/koreanmint.jpg", // Using Korean mint image as fallback
+    };
+
+    // Update each plant's mainImage to use local files
+    const updatedData = data.map(plant => {
+      // Check if we have a mapping for this plant name
+      if (localImageMappings[plant.name]) {
+        return {
+          ...plant,
+          mainImage: localImageMappings[plant.name]
+        };
+      }
+      // For any other plants without specific mappings, use a placeholder
+      return {
+        ...plant,
+        mainImage: "/images/placeholder.jpg"
+      };
+    });
+    
     // Cache the sample data
     try {
       localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
         timestamp: new Date().toISOString(),
-        data: data,
+        data: updatedData,
         source: 'sample'
       }));
       console.log('DEBUG: loadSamplePlants - Sample data cached to localStorage');
@@ -702,7 +728,7 @@ export const loadSamplePlants = async () => {
       console.error('DEBUG: loadSamplePlants - Error caching sample data:', e);
     }
     
-    return data;
+    return updatedData;
   } catch (error) {
     console.error('Error loading sample plant data:', error);
     console.error('DEBUG: loadSamplePlants - Detailed error:', error.stack || error.message || error);
