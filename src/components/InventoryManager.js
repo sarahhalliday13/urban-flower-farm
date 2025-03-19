@@ -140,6 +140,9 @@ const InventoryManager = () => {
   const [useLocalStorage, setUseLocalStorage] = useState(false);
   const [showFirebasePermissionWarning, setShowFirebasePermissionWarning] = useState(false);
 
+  // Add a new state variable to track unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {
     try {
@@ -493,6 +496,10 @@ const InventoryManager = () => {
   const handlePlantFormChange = (e) => {
     const { name, value, type, checked } = e.target;
     
+    // Set the flag that we have unsaved changes
+    setHasUnsavedChanges(true);
+    console.log(`Form changed (${name}). Setting hasUnsavedChanges to true.`);
+    
     // Handle checkbox inputs
     if (type === 'checkbox') {
       setPlantFormData(prev => ({
@@ -525,6 +532,9 @@ const InventoryManager = () => {
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Set the flag that we have unsaved changes
+    setHasUnsavedChanges(true);
     
     setPlantFormData(prev => {
       // Make sure images is always an array
@@ -794,6 +804,8 @@ const InventoryManager = () => {
       if (result && result.success) {
         console.log('Plant saved successfully:', result);
         setPlantSaveStatus('success');
+        // Clear the unsaved changes flag after successful save
+        setHasUnsavedChanges(false);
       
         // Force a refresh of the plants data to get the updated images
         console.log('Refreshing plants data after successful save...');
@@ -810,30 +822,10 @@ const InventoryManager = () => {
         });
         window.dispatchEvent(event);
         
-        // Reset the form after a successful save
+        // Use the improved resetPlantForm function after a delay
+        // This will change the tab first, then reset the form state
         setTimeout(() => {
           resetPlantForm();
-          
-          // Clear object URLs for the image previews to avoid memory leaks
-          additionalImagePreviews.forEach(preview => {
-            if (preview.url && !preview.url.startsWith('http') && !preview.url.startsWith('local:')) {
-              try {
-                URL.revokeObjectURL(preview.url);
-              } catch (e) {
-                console.error('Error revoking object URL:', e);
-              }
-            }
-          });
-          
-          // Reset image state
-          setImageFile(null);
-          setImagePreview(null);
-          setAdditionalImageFiles([]);
-          setAdditionalImagePreviews([]);
-        
-          // ALWAYS switch to the Inventory tab after saving
-          setActiveTab('inventory');
-          
         }, 1000);
       } else {
         console.error('Error saving plant:', result?.error || 'Unknown error');
@@ -867,41 +859,54 @@ const InventoryManager = () => {
 
   // Modify resetPlantForm to also reset image state
   const resetPlantForm = () => {
-    setPlantFormData({
-      name: '',
-      scientificName: '',
-      commonName: '',
-      price: '',
-      description: '',
-      images: [],
-      mainImageIndex: 0,
-      colour: '',
-      light: '',
-      height: '',
-      bloomSeason: '',
-      attributes: '',
-      hardinessZone: '',
-      spacing: '',
-      featured: false,
-      inventory: {
-        currentStock: 0,
-        status: 'In Stock',
-        restockDate: '',
-        notes: ''
-      }
-    });
-    setPlantEditMode(false);
-    setCurrentPlant(null);
-    setPlantSaveStatus('');
-    setImageFile(null);
-    setImagePreview(null);
-    setAdditionalImageFiles([]);
-    setAdditionalImagePreviews([]);
+    // First, change the tab to prevent flashing
+    setActiveTab('inventory');
+    
+    // Then reset all the form state after a short delay
+    setTimeout(() => {
+      setPlantFormData({
+        name: '',
+        scientificName: '',
+        commonName: '',
+        price: '',
+        description: '',
+        images: [],
+        mainImageIndex: 0,
+        colour: '',
+        light: '',
+        height: '',
+        bloomSeason: '',
+        attributes: '',
+        hardinessZone: '',
+        spacing: '',
+        featured: false,
+        inventory: {
+          currentStock: 0,
+          status: 'In Stock',
+          restockDate: '',
+          notes: ''
+        }
+      });
+      setPlantEditMode(false);
+      setCurrentPlant(null);
+      setPlantSaveStatus('');
+      setImageFile(null);
+      setImagePreview(null);
+      setAdditionalImageFiles([]);
+      setAdditionalImagePreviews([]);
+      // Clear the unsaved changes flag
+      setHasUnsavedChanges(false);
+    }, 50); // A short delay to ensure the view has changed first
   };
 
   // New function to handle edit plant button click
   const handleEditPlant = (plant) => {
     console.log('Editing plant:', plant);
+    
+    // First set the plant edit mode to true and clear any existing view state
+    setPlantEditMode(true);
+    
+    // Only after setting the edit mode, update the current plant
     setCurrentPlant(plant);
     
     // Prepare the images array and determine the main image index
@@ -934,6 +939,7 @@ const InventoryManager = () => {
       }
     }
     
+    // Update form data
     setPlantFormData({
       id: plant.id,
       name: plant.name || '',
@@ -959,8 +965,8 @@ const InventoryManager = () => {
       }
     });
     
-    setPlantEditMode(true);
-    setActiveTab('addPlant'); // Switch to the add/edit plant tab
+    // Finally, switch the tab after form data is set
+    setActiveTab('addPlant');
   };
 
   // eslint-disable-next-line no-unused-vars
@@ -1271,6 +1277,9 @@ const InventoryManager = () => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     
+    // Set the flag that we have unsaved changes
+    setHasUnsavedChanges(true);
+    
     setPlantFormData(prev => {
       // Clone the images array to avoid mutation issues
       const newImages = Array.isArray(prev.images) ? [...prev.images] : [];
@@ -1439,27 +1448,52 @@ const InventoryManager = () => {
     return urls;
   };
   
-  // Remove an image
+  // Handle setting an image as the main image
+  const handleSetAsMainImage = (index) => {
+    console.log(`Setting image ${index} as main image`);
+    
+    // Set the flag that we have unsaved changes
+    setHasUnsavedChanges(true);
+    
+    setPlantFormData(prev => ({
+      ...prev,
+      mainImageIndex: index
+    }));
+    
+    // Show toast notification
+    const event = new CustomEvent('show-toast', {
+      detail: {
+        message: "Main image updated",
+        type: 'success',
+        duration: 2000
+      }
+    });
+    window.dispatchEvent(event);
+  };
+
+  // Handle removing an image
   const handleRemoveImage = (index) => {
     console.log(`Removing image at index ${index}`);
     
+    // Set the flag that we have unsaved changes
+    setHasUnsavedChanges(true);
+    
     setPlantFormData(prev => {
-      // Make a copy of the current images array
+      // Create a copy of the images array without the removed image
       const newImages = [...prev.images];
-      
-      // Remove the image at the specified index
       newImages.splice(index, 1);
       
-      // Update the main image index if needed
+      // Adjust mainImageIndex if needed
       let newMainImageIndex = prev.mainImageIndex;
-      
-      // If we removed the main image, set the first image as main (if any exist)
-      if (index === prev.mainImageIndex) {
-        newMainImageIndex = newImages.length > 0 ? 0 : -1;
-      } 
-      // If we removed an image before the main image, decrement the mainImageIndex
-      else if (index < prev.mainImageIndex) {
-        newMainImageIndex = prev.mainImageIndex - 1;
+      if (newImages.length === 0) {
+        // No images left, reset to 0
+        newMainImageIndex = 0;
+      } else if (index === prev.mainImageIndex) {
+        // We removed the main image, set to first image
+        newMainImageIndex = 0;
+      } else if (index < prev.mainImageIndex) {
+        // We removed an image before the main image, decrement the index
+        newMainImageIndex--;
       }
       
       return {
@@ -1473,27 +1507,7 @@ const InventoryManager = () => {
     const event = new CustomEvent('show-toast', {
       detail: {
         message: "Image removed",
-        type: 'info',
-        duration: 2000
-      }
-    });
-    window.dispatchEvent(event);
-  };
-  
-  // Handle setting an image as the main image
-  const handleSetAsMainImage = (index) => {
-    console.log(`Setting image at index ${index} as main image`);
-    
-    setPlantFormData(prev => ({
-      ...prev,
-      mainImageIndex: index
-    }));
-    
-    // Show toast notification
-    const event = new CustomEvent('show-toast', {
-      detail: {
-        message: "Main image updated",
-        type: 'info',
+        type: 'success',
         duration: 2000
       }
     });
@@ -1569,6 +1583,51 @@ const InventoryManager = () => {
     return <img src={imageSrc} alt={alt} className={className} />;
   };
 
+  // Add useEffect to set up beforeunload event listener
+  useEffect(() => {
+    console.log("hasUnsavedChanges state updated:", hasUnsavedChanges);
+    
+    // Function to warn before closing window/navigating away
+    const handleBeforeUnload = (e) => {
+      console.log("beforeunload event triggered, hasUnsavedChanges:", hasUnsavedChanges);
+      if (hasUnsavedChanges) {
+        // Standard way of showing a confirmation dialog on page close
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    console.log("beforeunload event listener added");
+
+    // Clean up
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      console.log("beforeunload event listener removed");
+    };
+  }, [hasUnsavedChanges]);
+
+  // Add a navigation warning when user tries to switch tabs with unsaved changes
+  const handleTabChange = (newTabName) => {
+    if (hasUnsavedChanges && 
+        ((plantEditMode && newTabName !== 'addPlant') || 
+         (!plantEditMode && activeTab === 'addPlant'))) {
+      const confirmLeave = window.confirm(
+        'You have unsaved changes. Are you sure you want to leave this page?'
+      );
+      if (!confirmLeave) {
+        return; // Stay on current tab
+      }
+      // If they confirm, reset the unsaved changes flag
+      setHasUnsavedChanges(false);
+    }
+    
+    // Proceed with changing the tab
+    setActiveTab(newTabName);
+  };
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -1629,13 +1688,13 @@ const InventoryManager = () => {
         <div className="inventory-tabs">
           <button 
             className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => setActiveTab('inventory')}
+            onClick={() => handleTabChange('inventory')}
           >
             Inventory
           </button>
           <button 
             className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
-            onClick={() => setActiveTab('csvMigration')}
+            onClick={() => handleTabChange('csvMigration')}
           >
             Import Data
           </button>
@@ -1690,14 +1749,33 @@ const InventoryManager = () => {
                   updatePlantData(plantData);
                 }
                 
-                // Show success message briefly then go back to inventory
+                // Show a toast notification
+                const event = new CustomEvent('show-toast', { 
+                  detail: { 
+                    message: 'Plant updated successfully!',
+                    type: 'success',
+                    duration: 3000
+                  }
+                });
+                window.dispatchEvent(event);
+                
+                // Use the improved resetPlantForm function after a delay
                 setTimeout(() => {
                   resetPlantForm();
-                  setActiveTab('inventory');
                 }, 1000);
               } catch (error) {
                 console.error('Error saving plant:', error);
                 setPlantSaveStatus('error');
+                
+                // Show an error toast
+                const event = new CustomEvent('show-toast', { 
+                  detail: { 
+                    message: `Error: ${error.message || 'Unknown error occurred'}`,
+                    type: 'error',
+                    duration: 5000
+                  }
+                });
+                window.dispatchEvent(event);
               }
             }}
             disabled={plantSaveStatus === 'saving'}
@@ -1732,7 +1810,7 @@ const InventoryManager = () => {
                 className="add-new-button"
                 onClick={() => {
                   resetPlantForm();
-                  setActiveTab('addPlant');
+                  handleTabChange('addPlant');
                 }}
               >
                 Add New
@@ -2102,17 +2180,30 @@ const InventoryManager = () => {
                 
                 {/* Upload New Image */}
                 <div className="image-upload-section">
-                  <label className="image-upload-label" htmlFor="image-upload">
-                    <span className="upload-icon">+</span>
-                    <span>Add Image</span>
-                    <input 
-                      id="image-upload"
-                      type="file" 
-                      className="image-upload"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                    />
-                  </label>
+                  <div className="image-upload-buttons">
+                    <label className="edit-btn image-upload-button" htmlFor="image-upload">
+                      Add Image
+                      <input 
+                        id="image-upload"
+                        type="file" 
+                        className="image-upload"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                      />
+                    </label>
+                    
+                    <label className="edit-btn image-upload-button" htmlFor="additional-images">
+                      Add Multiple Images
+                      <input 
+                        id="additional-images"
+                        type="file" 
+                        className="additional-images-input"
+                        accept="image/*"
+                        multiple
+                        onChange={handleAdditionalImagesSelect}
+                      />
+                    </label>
+                  </div>
                   
                   {/* Progress Bar (show when uploading) */}
                   {isUploading && (
@@ -2126,21 +2217,6 @@ const InventoryManager = () => {
                       <span className="progress-text">{uploadProgress}% uploaded</span>
                     </div>
                   )}
-                  
-                  {/* Multiple Image Upload */}
-                  <div className="additional-images-section">
-                    <label className="additional-images-label" htmlFor="additional-images">
-                      Upload Multiple Images
-                      <input 
-                        id="additional-images"
-                        type="file" 
-                        className="additional-images-input"
-                        accept="image/*"
-                        multiple
-                        onChange={handleAdditionalImagesSelect}
-                      />
-                    </label>
-                  </div>
                 </div>
               </div>
             </div>
