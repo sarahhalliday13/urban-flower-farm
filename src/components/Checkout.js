@@ -20,7 +20,6 @@ const Checkout = () => {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
-  const [orderData, setOrderData] = useState(null);
 
   // Check if we're on the confirmation page
   useEffect(() => {

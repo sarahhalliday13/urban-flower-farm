@@ -4,7 +4,7 @@ import '../styles/AdminDashboard.css';
 import { useAdmin } from '../context/AdminContext';
 
 const AdminDashboard = () => {
-  const { plants, loading } = useAdmin();
+  const { plants } = useAdmin();
   const [lowStockItems, setLowStockItems] = useState([]);
   const [salesData, setSalesData] = useState({
     pending: 0,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
+  // eslint-disable-next-line no-unused-vars
   fetchPlants, 
   updateInventory, 
   processSyncQueue, 
@@ -47,6 +48,7 @@ const InventoryManager = () => {
   const [editValues, setEditValues] = useState({});
   const [saveStatus, setSaveStatus] = useState({});
   const [filter, setFilter] = useState('all');
+  // eslint-disable-next-line no-unused-vars
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
   const [syncStatus, setSyncStatus] = useState({
@@ -86,6 +88,7 @@ const InventoryManager = () => {
     }
   });
   const [plantSaveStatus, setPlantSaveStatus] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [plantSearchTerm, setPlantSearchTerm] = useState('');
   
   // Use refs for timers to prevent memory leaks
@@ -94,6 +97,7 @@ const InventoryManager = () => {
   const loadingTimerRef = useRef(null);
   const fetchTimeoutRef = useRef(null);
   
+  // eslint-disable-next-line no-unused-vars
   const [apiRetryCount, setApiRetryCount] = useState(0);
 
   // Add migration state
@@ -132,6 +136,7 @@ const InventoryManager = () => {
     message: ''
   });
 
+  // eslint-disable-next-line no-unused-vars
   const [useLocalStorage, setUseLocalStorage] = useState(false);
   const [showFirebasePermissionWarning, setShowFirebasePermissionWarning] = useState(false);
 
@@ -205,23 +210,22 @@ const InventoryManager = () => {
     // Store references to timers for cleanup
     refreshTimerRef.current = refreshTimer;
     
+    // Cleanup function for unmount
     return () => {
-      // Clean up on unmount
-      unsubscribe();
-      // Clear timers using the current value at cleanup time
-      const refresh = refreshTimerRef.current;
-      const sync = syncTimerRef.current;
-      const loading = loadingTimerRef.current;
-      const fetchTimeout = fetchTimeoutRef.current;
+      // Unsubscribe from Firebase listener if it exists
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
       
-      if (refresh) clearInterval(refresh);
-      if (sync) clearInterval(sync);
-      if (loading) clearTimeout(loading);
-      if (fetchTimeout) clearTimeout(fetchTimeout);
+      // Clean up all timers
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+      if (syncTimerRef.current) clearInterval(syncTimerRef.current);
+      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
     };
   }, [handleLoadPlants, checkSyncQueue]);
 
-  // Process pending updates
+  // eslint-disable-next-line no-unused-vars
   const processPendingUpdates = useCallback(async () => {
     if (syncStatus.syncing) return;
     
@@ -256,7 +260,7 @@ const InventoryManager = () => {
     }
   }, [syncStatus.syncing, handleLoadPlants]);
 
-  // Handle edit button click
+  // eslint-disable-next-line no-unused-vars
   const handleEdit = useCallback((plantId) => {
     // Initialize edit values with current plant values
     const plant = plants.find(p => p.id === plantId);
@@ -854,7 +858,7 @@ const InventoryManager = () => {
     setActiveTab('addPlant'); // Switch to the add/edit plant tab
   };
 
-  // Filter plants based on search term for plant management
+  // eslint-disable-next-line no-unused-vars
   const filteredPlantsForManagement = plants.filter(plant => 
     plant.name?.toLowerCase().includes(plantSearchTerm.toLowerCase()) || 
     plant.scientificName?.toLowerCase().includes(plantSearchTerm.toLowerCase()) ||
