@@ -856,6 +856,47 @@ export const repairInventoryData = async () => {
   }
 };
 
+/**
+ * Delete a plant from Firebase
+ * @param {string|number} plantId - The ID of the plant to delete
+ * @returns {Promise<Object>} Result of the delete operation
+ */
+export const deletePlant = async (plantId) => {
+  try {
+    console.log(`Deleting plant ${plantId} from Firebase`);
+    
+    // Validate input data
+    if (!plantId) {
+      console.error('Invalid plant ID:', plantId);
+      return {
+        success: false,
+        message: 'Invalid plant ID',
+        error: 'No plant ID provided'
+      };
+    }
+    
+    // Delete plant from Firebase
+    const plantRef = ref(database, `plants/${plantId}`);
+    await remove(plantRef);
+    
+    // Delete inventory data for this plant
+    const inventoryRef = ref(database, `inventory/${plantId}`);
+    await remove(inventoryRef);
+    
+    return {
+      success: true,
+      message: `Plant ${plantId} deleted successfully`
+    };
+  } catch (error) {
+    console.error('Error deleting plant from Firebase:', error);
+    return {
+      success: false,
+      message: 'Error deleting plant',
+      error: error.message
+    };
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -870,7 +911,8 @@ const firebaseService = {
   saveOrder,
   getOrders,
   updateOrderStatus,
-  repairInventoryData
+  repairInventoryData,
+  deletePlant
 };
 
 export default firebaseService; 

@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { 
   // eslint-disable-next-line no-unused-vars
-  fetchPlants, 
-  updateInventory, 
-  processSyncQueue, 
-  subscribeToInventory,
-  repairInventoryData,
+  fetchPlants,
   uploadImageToFirebase,
   importPlantsFromSheets,
-  initializeDefaultInventory
+  initializeDefaultInventory,
+  deletePlant,
+  addPlant, 
+  updatePlant, 
+  loadSamplePlants,
+  subscribeToInventory,
+  processSyncQueue,
+  repairInventoryData,
+  updateInventory
 } from '../services/firebase';
-import { addPlant, updatePlant, loadSamplePlants } from '../services/firebase';
 import { useAdmin, updatePlantData } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
@@ -408,7 +412,8 @@ const InventoryManager = () => {
     const counts = {
       'all': plants.length,
       'In Stock': 0,
-      'Out of Stock': 0,
+      'Low Stock': 0,
+      'Sold Out': 0,
       'Coming Soon': 0,
       'Pre-order': 0
     };
@@ -761,8 +766,8 @@ const InventoryManager = () => {
         images: allImagesUrls,
         // Keep track of which image is the main one
         mainImageIndex: mainImageIndex,
-        // Remove the old additionalImages field
-        additionalImages: undefined
+        // Remove any legacy additionalImages field to prevent Firebase errors
+        additionalImages: null
       };
       
       console.log('Prepared plant data for saving:', plantData);
@@ -1628,6 +1633,15 @@ const InventoryManager = () => {
     setActiveTab(newTabName);
   };
 
+  // Add this useEffect near your other useEffect hooks
+  useEffect(() => {
+    // Check for URL parameter to enable import tab
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'import') {
+      handleTabChange('csvMigration');
+    }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -1685,19 +1699,66 @@ const InventoryManager = () => {
     <div className="inventory-manager">
       {/* Hide tabs when editing a flower */}
       {!plantEditMode && (
-        <div className="inventory-tabs">
-          <button 
-            className={`tab-button ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => handleTabChange('inventory')}
-          >
-            Inventory
-          </button>
-          <button 
-            className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
-            onClick={() => handleTabChange('csvMigration')}
-          >
-            Import Data
-          </button>
+        <div className="inventory-header-container">
+          <div className="sales-header">
+            <h2>{activeTab === 'addPlant' ? 'Add New Flower' : 'Inventory'}</h2>
+            
+            <div className="header-controls">
+              {activeTab === 'inventory' && (
+                <div className="filter-controls">
+                  <label htmlFor="statusFilter">Status:</label>
+                  <select
+                    id="statusFilter"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                  >
+                    <option value="all">All ({statusCounts.all})</option>
+                    <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
+                    <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
+                    <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
+                    <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
+                    <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            
+            {activeTab === 'inventory' ? (
+              <button 
+                className="add-new-button"
+                onClick={() => {
+                  resetPlantForm();
+                  handleTabChange('addPlant');
+                }}
+              >
+                Add New
+              </button>
+            ) : activeTab === 'addPlant' ? (
+              <button 
+                className="save-btn"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Submit the form using the form id
+                  document.getElementById('plantForm').dispatchEvent(new Event('submit', {
+                    cancelable: true,
+                    bubbles: true
+                  }));
+                }}
+                disabled={plantSaveStatus === 'saving'}
+              >
+                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+              </button>
+            ) : null}
+          </div>
+          {/* Hide the Import Data tab but keep all functionality */}
+          {false && (
+            <button 
+              className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
+              onClick={() => handleTabChange('csvMigration')}
+            >
+              Import Data
+            </button>
+          )}
         </div>
       )}
 
@@ -1788,36 +1849,6 @@ const InventoryManager = () => {
       {/* Inventory Tab Content */}
       {activeTab === 'inventory' && !plantEditMode && (
         <div className="tab-content">
-          <div className="inventory-controls">
-            <div className="filter-controls">
-              <label htmlFor="statusFilter">Status:</label>
-              <select
-                id="statusFilter"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="all">All ({statusCounts.all})</option>
-                <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
-                <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
-                <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
-                <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
-                <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
-              </select>
-            </div>
-            {/* Add New button in the top right */}
-            <div className="add-new-button-container">
-              <button 
-                className="add-new-button"
-                onClick={() => {
-                  resetPlantForm();
-                  handleTabChange('addPlant');
-                }}
-              >
-                Add New
-              </button>
-            </div>
-          </div>
-          
           {syncStatus.pendingUpdates > 0 && (
             <div className="sync-status">
               <div className="sync-message">
@@ -1992,7 +2023,7 @@ const InventoryManager = () => {
       {/* Add/Edit Plant Tab Content */}
       {(activeTab === 'addPlant' || plantEditMode) && (
         <div className="tab-content">
-          {!plantEditMode && <h2>Add New Flower</h2>}
+          {!plantEditMode && activeTab !== 'addPlant' && <h2>Add New Flower</h2>}
           
           {/* Firebase Storage Permission Warning */}
           {showFirebasePermissionWarning && (
@@ -2015,7 +2046,7 @@ const InventoryManager = () => {
             </div>
           )}
           
-          <form className="plant-form" onSubmit={handlePlantSubmit}>
+          <form id="plantForm" className="plant-form" onSubmit={handlePlantSubmit}>
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="name">Plant Name</label>
@@ -2128,8 +2159,8 @@ const InventoryManager = () => {
             
             {/* Unified Images Section */}
             <div className="form-section">
-              <h3>Plant Images</h3>
-              <p className="section-description">
+              <h3 style={{ textAlign: 'left' }}>Plant Images</h3>
+              <p className="section-description" style={{ textAlign: 'left' }}>
                 Upload and manage images for this plant. The main image will be displayed prominently in the shop.
               </p>
               
@@ -2317,7 +2348,52 @@ const InventoryManager = () => {
             </div>
             
             <div className="form-actions">
-              {plantEditMode && (
+              {/* Left group: Delete and Cancel buttons */}
+              <div className="button-group-left">
+                {/* Delete button - aligned left, disabled in Add New mode */}
+                <button 
+                  type="button" 
+                  className="delete-btn"
+                  onClick={() => {
+                    if (plantEditMode && currentPlant) {
+                      if (window.confirm(`Are you sure you want to delete ${currentPlant.name}?`)) {
+                        // Call the deletePlant function
+                        setPlantSaveStatus('saving');
+                        deletePlant(currentPlant.id)
+                          .then(result => {
+                            if (result.success) {
+                              setPlantSaveStatus('success');
+                              
+                              // Show success message
+                              alert(`${currentPlant.name} has been deleted successfully.`);
+                              
+                              // Force refresh the plants list from the database
+                              // This will update the context with fresh data
+                              handleLoadPlants(true);
+                              
+                              // Reset form and navigate back to inventory tab
+                              resetPlantForm();
+                              
+                              // Set active tab to inventory (not inventoryList)
+                              setActiveTab('inventory');
+                            } else {
+                              setPlantSaveStatus('error');
+                              alert(`Error deleting plant: ${result.message}`);
+                            }
+                          })
+                          .catch(error => {
+                            setPlantSaveStatus('error');
+                            alert(`Error deleting plant: ${error.message}`);
+                          });
+                      }
+                    }
+                  }}
+                  disabled={!plantEditMode || !currentPlant}
+                >
+                  Delete Flower
+                </button>
+                
+                {/* Cancel button - secondary button next to Delete */}
                 <button 
                   type="button" 
                   className="cancel-btn"
@@ -2325,15 +2401,19 @@ const InventoryManager = () => {
                 >
                   Cancel
                 </button>
-              )}
+              </div>
               
-              <button 
-                type="submit" 
-                className={`save-btn ${plantSaveStatus}`}
-                disabled={plantSaveStatus === 'saving'}
-              >
-                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-              </button>
+              {/* Right group: Save button */}
+              <div className="button-group-right">
+                {/* Save button - aligned right */}
+                <button 
+                  type="submit" 
+                  className={`save-btn ${plantSaveStatus}`}
+                  disabled={plantSaveStatus === 'saving'}
+                >
+                  {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+                </button>
+              </div>
               
               {plantSaveStatus === 'success' && (
                 <span className="success-message">Flower saved successfully!</span>
