@@ -14,6 +14,7 @@ function Shop() {
   const [error, setError] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -70,6 +71,10 @@ function Shop() {
     setShowToast(true);
   };
 
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+  };
+
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -79,8 +84,17 @@ function Shop() {
       <section className="featured-plants">
         <div className="featured-plants-header">
           <h2>All the Flowers</h2>
+          <div className="view-toggle">
+            <button 
+              className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
+              onClick={toggleViewMode}
+              title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+            >
+              {viewMode === 'grid' ? 'List View' : 'Grid View'}
+            </button>
+          </div>
         </div>
-        <div className="plant-grid">
+        <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {plants.map(plant => {
             console.log('Rendering plant:', plant);
             return (

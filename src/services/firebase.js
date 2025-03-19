@@ -42,12 +42,73 @@ export const getFirebaseStorageURL = async (path) => {
 // Utility to upload an image to Firebase storage
 export const uploadImageToFirebase = async (file, path) => {
   try {
+    console.log('Starting image upload to Firebase:', { fileName: file.name, fileSize: file.size, path });
+    
+    // Check if storage is properly initialized
+    if (!storage) {
+      console.error('Firebase storage is not initialized!');
+      throw new Error('Firebase storage not initialized');
+    }
+    
     const fileRef = storageRef(storage, path);
+    console.log('Created storage reference:', path);
+    
+    console.log('Uploading bytes to Firebase...');
     await uploadBytes(fileRef, file);
-    return await getDownloadURL(fileRef);
+    console.log('Upload successful, getting download URL...');
+    
+    const downloadURL = await getDownloadURL(fileRef);
+    console.log('Download URL obtained:', downloadURL);
+    
+    return downloadURL;
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Error uploading file to Firebase:', error);
+    console.error('Error details:', error.code, error.message);
+    
+    // If the error is a permission error, use local fallback
+    if (error.code === 'storage/unauthorized') {
+      console.log('Firebase storage permission denied. Using local storage fallback...');
+      return createLocalImageUrl(file);
+    }
+    
+    // Add additional context for specific Firebase errors
+    if (error.code === 'storage/unauthorized') {
+      console.error('User does not have permission to access the storage bucket');
+    } else if (error.code === 'storage/canceled') {
+      console.error('User canceled the upload');
+    } else if (error.code === 'storage/unknown') {
+      console.error('Unknown error occurred, check Firebase console');
+    }
+    
+    // Rethrow to handle in the calling function
     throw error;
+  }
+};
+
+// Local fallback for when Firebase storage is unavailable
+const createLocalImageUrl = (file) => {
+  try {
+    // Create a persistent object URL
+    const objectUrl = URL.createObjectURL(file);
+    
+    // Store in localStorage to keep track
+    const localImages = JSON.parse(localStorage.getItem('localImageUrls') || '[]');
+    localImages.push({
+      url: objectUrl,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      created: new Date().toISOString()
+    });
+    localStorage.setItem('localImageUrls', JSON.stringify(localImages));
+    
+    console.log('Created local fallback URL for image:', objectUrl);
+    
+    // Return the URL with a prefix to indicate it's local
+    return `local:${objectUrl}`;
+  } catch (error) {
+    console.error('Error creating local image fallback:', error);
+    throw new Error('Could not create local fallback for image');
   }
 };
 
@@ -186,8 +247,43 @@ export const updatePlant = async (plantId, plantData) => {
   try {
     console.log(`Updating plant ${plantId} in Firebase:`, plantData);
     
+    // Validate input data
+    if (!plantId) {
+      console.error('Invalid plant ID:', plantId);
+      return {
+        success: false,
+        message: 'Invalid plant ID',
+        error: 'No plant ID provided'
+      };
+    }
+
+    if (!plantData) {
+      console.error('Invalid plant data:', plantData);
+      return {
+        success: false,
+        message: 'Invalid plant data',
+        error: 'No plant data provided'
+      };
+    }
+    
+    // Make a copy of the data to avoid mutation issues
+    const plantDataToSave = JSON.parse(JSON.stringify(plantData));
+    
+    // Check if additionalImages is defined and log it
+    console.log('additionalImages before processing:', plantDataToSave.additionalImages);
+    
+    // Ensure additionalImages is at least an empty array if undefined
+    if (plantDataToSave.additionalImages === undefined) {
+      plantDataToSave.additionalImages = [];
+      console.log('Set additionalImages to empty array because it was undefined');
+    }
+    
     // Separate inventory data if present
-    const { inventory, ...plantWithoutInventory } = plantData;
+    const { inventory, ...plantWithoutInventory } = plantDataToSave;
+    
+    // Log the exact data we're sending to Firebase
+    console.log('Saving plant data to Firebase:', plantWithoutInventory);
+    console.log('Plant additionalImages length:', plantWithoutInventory.additionalImages?.length || 0);
     
     // Update plant in Firebase
     const plantRef = ref(database, `plants/${plantId}`);
@@ -205,6 +301,7 @@ export const updatePlant = async (plantId, plantData) => {
       });
     }
     
+    console.log(`Plant ${plantId} updated successfully`);
     return {
       success: true,
       message: `Plant ${plantId} updated successfully`,
@@ -212,7 +309,14 @@ export const updatePlant = async (plantId, plantData) => {
     };
   } catch (error) {
     console.error(`Error updating plant ${plantId} in Firebase:`, error);
-    throw error;
+    console.error('Error details:', error.message);
+    console.error('Stack trace:', error.stack);
+    
+    return {
+      success: false,
+      message: `Error updating plant: ${error.message}`,
+      error: error
+    };
   }
 };
 
