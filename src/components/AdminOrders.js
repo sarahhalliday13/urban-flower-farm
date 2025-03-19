@@ -493,25 +493,8 @@ const AdminOrders = () => {
                               </div>
                             </div>
                             
-                            <div className="inventory-section">
-                              <h5>Inventory Management</h5>
-                              <button 
-                                className={`inventory-update-btn ${inventoryUpdateStatus[order.id] || ''}`}
-                                onClick={() => updateInventoryForOrder(order.id)}
-                                disabled={inventoryUpdateStatus[order.id] === 'updating'}
-                              >
-                                {inventoryUpdateStatus[order.id] === 'updating' ? 'Updating...' : 
-                                 inventoryUpdateStatus[order.id] === 'success' ? 'Updated!' : 
-                                 inventoryUpdateStatus[order.id] === 'error' ? 'Failed - Try Again' : 
-                                 'Update Inventory'}
-                              </button>
-                              <p className="inventory-note">
-                                This will reduce stock levels for all items in this order.
-                              </p>
-                            </div>
-
                             <div className="invoice-section">
-                              <h5>Invoice Options</h5>
+                              <h4>Invoice Options</h4>
                               <div className="invoice-buttons">
                                 <button 
                                   className="view-invoice-btn"
