@@ -267,6 +267,13 @@ function PlantDetails() {
   // Log the images for debugging
   console.log('Plant images:', images);
   
+  // Helper function to check if an image URL is from Firebase Storage
+  const isFirebaseStorageUrl = (url) => {
+    return url && typeof url === 'string' && 
+      (url.includes('firebasestorage.googleapis.com') || 
+       url.includes('storage.googleapis.com'));
+  };
+  
   return (
     <main>
       <NavigationButtons className="top" />
@@ -280,7 +287,25 @@ function PlantDetails() {
                 alt={plant.name}
                 onError={(e) => {
                   console.error('Image failed to load:', images[selectedImageIndex]);
-                  e.target.src = placeholderImage;
+                  
+                  // Special handling for Firebase Storage URLs
+                  if (isFirebaseStorageUrl(images[selectedImageIndex])) {
+                    console.log('Attempting to retry Firebase image with cache-busting...');
+                    // Try with a cache-busting parameter
+                    const cacheBuster = `?alt=media&t=${Date.now()}`;
+                    const urlBase = images[selectedImageIndex].split('?')[0];
+                    e.target.src = `${urlBase}${cacheBuster}`;
+                    
+                    // If that fails too, use placeholder
+                    e.target.onerror = () => {
+                      console.error('Retry failed, using placeholder');
+                      e.target.src = placeholderImage;
+                      e.target.onerror = null; // Prevent infinite loop
+                    };
+                  } else {
+                    // For non-Firebase URLs, just use the placeholder
+                    e.target.src = placeholderImage;
+                  }
                 }}
                 style={{ opacity: imagesLoaded ? 1 : 0.6 }}
               />
