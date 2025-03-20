@@ -87,18 +87,18 @@ function CartModal({ isOpen, onClose }) {
                 return (
                   <div key={item.id} className="cart-item">
                     <div className="cart-item-image">
-                      {item.mainImage ? (
-                        <img 
-                          src={item.mainImage} 
-                          alt={item.name}
-                          onError={(e) => {
-                            console.error('Cart image failed to load:', item.mainImage);
-                            e.target.src = '/images/placeholder.jpg';
-                          }}
-                        />
-                      ) : (
-                        <div className="emoji-image">🌱</div>
-                      )}
+                      <img 
+                        src={item.mainImage || 
+                             (Array.isArray(item.images) && item.images.length > 0 ? item.images[0] : null) || 
+                             '/images/placeholder.jpg'} 
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          console.log(`Image failed to load for ${item.name}:`, e.target.src);
+                          e.target.onerror = null; // Prevent infinite error loop
+                          e.target.src = '/images/placeholder.jpg';
+                        }}
+                      />
                     </div>
                     <div className="cart-item-content">
                       <div className="cart-item-top-row">

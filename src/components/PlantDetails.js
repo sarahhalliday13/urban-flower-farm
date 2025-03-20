@@ -176,7 +176,7 @@ function PlantDetails() {
     <div className={`plant-navigation ${className}`}>
       <div className="navigation-container">
         <div className="nav-view-all">
-          <a href="/shop" className="view-all-link">View All</a>
+          <a href="/shop" className="view-all-link">Back to Shop</a>
         </div>
         <div className="nav-group">
           <button
