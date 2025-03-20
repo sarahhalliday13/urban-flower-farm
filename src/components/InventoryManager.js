@@ -1263,29 +1263,34 @@ const InventoryManager = () => {
       });
       
       // Transform plant data to match Firebase expected structure
-      const transformedPlantsData = validPlants.map(plant => ({
-        id: parseInt(plant.plant_id) || 0,
-        name: plant.name || '',
-        scientificName: plant.latinname || '',
-        commonName: plant.commonname || '',
-        price: plant.price || 0,
-        featured: plant.featured === 'true' || plant.featured === true,
-        plantType: plant['type(annual/perennial)'] || '',
-        description: plant.description || '',
-        bloomSeason: plant['bloom season'] || '',
-        colour: plant.colour || '',
-        light: plant['sun light'] || '',
-        spacing: plant['spread (inches)'] || '',
-        height: plant['height (inches)'] || '',
-        hardinessZone: plant['hardiness zones'] || '',
-        specialFeatures: plant['special features'] || '',
-        uses: plant.uses || '',
-        aroma: plant.aroma || '',
-        gardeningTips: plant['gardening tips'] || '',
-        careTips: plant['care tips'] || '',
-        mainImage: plant['main image'] || '',
-        additionalImages: plant['additional image'] || ''
-      }));
+      const transformedPlantsData = validPlants.map(plant => {
+        // Log the original plant data to help identify header issues
+        console.log('Original plant data headers:', Object.keys(plant));
+        
+        return {
+          id: parseInt(plant.plant_id) || 0,
+          name: plant.name || '',
+          scientificName: plant.latinname || '',
+          commonName: plant.commonname || '',
+          price: plant.price || plant.Price || 0,
+          featured: plant.featured === 'true' || plant.featured === true || plant.Featured === 'true' || plant.Featured === true,
+          plantType: plant['type(annual/perennial)'] || plant['Type(Annual/Perennial)'] || '',
+          description: plant.description || '',
+          bloomSeason: plant['bloom season'] || plant['Bloom Season'] || plant['bloom Season'] || plant['Bloom season'] || '',
+          colour: plant.colour || plant.Colour || plant.color || plant.Color || '',
+          light: plant['sun light'] || plant['Sun Light'] || plant['sunlight'] || plant['Sunlight'] || plant['sun_light'] || plant['Sun_Light'] || '',
+          spacing: plant['spread (inches)'] || plant['Spread (inches)'] || plant['spread(inches)'] || plant['Spread(inches)'] || '',
+          height: plant['height (inches)'] || plant['Height (inches)'] || plant['height(inches)'] || plant['Height(inches)'] || '',
+          hardinessZone: plant['hardiness zones'] || plant['Hardiness Zones'] || plant['hardiness zone'] || plant['Hardiness Zone'] || '',
+          specialFeatures: plant['special features'] || plant['Special Features'] || '',
+          uses: plant.uses || plant.Uses || '',
+          aroma: plant.aroma || plant.Aroma || '',
+          gardeningTips: plant['gardening tips'] || plant['Gardening Tips'] || '',
+          careTips: plant['care tips'] || plant['Care Tips'] || '',
+          mainImage: plant['main image'] || plant['Main Image'] || plant['mainimage'] || plant['MainImage'] || '',
+          additionalImages: plant['additional image'] || plant['Additional Image'] || plant['additionalimage'] || plant['AdditionalImage'] || ''
+        };
+      });
       
       // Get inventory data (if available)
       let inventoryData = [];
@@ -2852,26 +2857,32 @@ const InventoryManager = () => {
                     <p>Your Plants CSV should have the following columns:</p>
                     <div className="columns-container">
                       <ul className="format-columns">
-                        <li><strong>id</strong> - Unique identifier (number)</li>
+                        <li><strong>plant_id</strong> - Unique identifier (number)</li>
                         <li><strong>name</strong> - Plant name</li>
-                        <li><strong>latinName</strong> - Latin/scientific name</li>
-                        <li><strong>commonName</strong> - Common name</li>
+                        <li><strong>latinname</strong> - Latin/scientific name</li>
+                        <li><strong>commonname</strong> - Common name</li>
                         <li><strong>price</strong> - Price</li>
                         <li><strong>featured</strong> - Featured (true/false)</li>
+                        <li><strong>type(annual/perennial)</strong> - Plant type</li>
                         <li><strong>description</strong> - Description</li>
-                        <li><strong>bloomSeason</strong> - Bloom season</li>
+                        <li><strong>bloom season</strong> - Bloom season</li>
                       </ul>
                       <ul className="format-columns">
-                        <li><strong>colour</strong> - Color/colour</li>
-                        <li><strong>light</strong> - Light requirements</li>
-                        <li><strong>spacing</strong> - Spacing requirements</li>
-                        <li><strong>attributes</strong> - Attributes</li>
-                        <li><strong>hardinessZone</strong> - Hardiness zone</li>
-                        <li><strong>height</strong> - Height</li>
-                        <li><strong>mainImage</strong> - URL to main image</li>
-                        <li><strong>additionalImages</strong> - Additional image URLs</li>
+                        <li><strong>colour</strong> or <strong>color</strong> - Color</li>
+                        <li><strong>sun light</strong> - Light requirements</li>
+                        <li><strong>spread (inches)</strong> - Spacing requirements</li>
+                        <li><strong>height (inches)</strong> - Height</li>
+                        <li><strong>hardiness zones</strong> - Hardiness zone</li>
+                        <li><strong>special features</strong> - Special features</li>
+                        <li><strong>uses</strong> - Uses</li>
+                        <li><strong>aroma</strong> - Aroma</li>
+                        <li><strong>gardening tips</strong> - Gardening tips</li>
+                        <li><strong>care tips</strong> - Care tips</li>
+                        <li><strong>main image</strong> - URL to main image</li>
+                        <li><strong>additional image</strong> - Additional image URLs</li>
                       </ul>
                     </div>
+                    <p>Note: Headers are case-sensitive. The system will also look for variations including capitalized versions (e.g., "Bloom Season" or "Sun Light").</p>
                   </div>
                   
                   <div className="format-section">
