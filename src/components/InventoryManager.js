@@ -1246,8 +1246,8 @@ const InventoryManager = () => {
       
       // Filter out empty or invalid plant records
       const validPlants = plantsData.filter(plant => {
-        // Check for required fields - at minimum we need id and name
-        if (!plant.id || !plant.name) {
+        // Check for required fields - at minimum we need plant_id and name
+        if (!plant.plant_id || !plant.name) {
           return false;
         }
         

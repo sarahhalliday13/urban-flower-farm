@@ -578,15 +578,17 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
     
     // Process plant data
     plantsData.forEach(plant => {
-      // Ensure the plant has an ID
-      if (!plant.id) {
+      // Ensure the plant has an ID (either id or plant_id)
+      const plantId = plant.id || plant.plant_id;
+      if (!plantId) {
         console.warn('Plant missing ID, skipping:', plant);
         return;
       }
       
-      // Store plant in plantsObject
-      plantsObject[plant.id] = {
-        ...plant
+      // Store plant in plantsObject with the correct ID
+      plantsObject[plantId] = {
+        ...plant,
+        id: plantId // Make sure id is set consistently
       };
     });
     
