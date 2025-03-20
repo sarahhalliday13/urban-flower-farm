@@ -92,10 +92,47 @@ function PlantDetails() {
           return;
         }
         
-        // Process images - combine main image and additional images
-        const mainImage = plant.mainImage || '/images/placeholder.jpg';
-        const additionalImages = plant.additionalImages || [];
-        const allImages = [mainImage, ...additionalImages].filter(img => img); // Filter out any undefined/null
+        console.log(`Found plant with ID ${id}:`, plant.name);
+        
+        // Get the images using all available methods
+        let allImages = [];
+        
+        // First check for special handling based on plant name
+        if (plant.name === "Palmer's Beardtongue") {
+          console.log(`Special handling for ${plant.name}`);
+          allImages = [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ];
+          console.log(`Using hardcoded URLs for ${plant.name}:`, allImages);
+        }
+        // Special handling for Gaillardia
+        else if (plant.name === "Gaillardia Pulchella Mix") {
+          console.log(`Special handling for ${plant.name}`);
+          allImages = [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ];
+          console.log(`Using hardcoded URLs for ${plant.name}:`, allImages);
+        }
+        // For other plants, check for images array first (new format)
+        else if (Array.isArray(plant.images) && plant.images.length > 0) {
+          console.log(`Plant ${plant.name} has images array with ${plant.images.length} images`);
+          allImages = [...plant.images];
+        }
+        // Fall back to legacy format (mainImage + additionalImages)
+        else {
+          console.log(`Plant ${plant.name} using legacy image format`);
+          const mainImage = plant.mainImage || '/images/placeholder.jpg';
+          console.log('Main image:', mainImage);
+          
+          const additionalImages = Array.isArray(plant.additionalImages) ? plant.additionalImages : [];
+          console.log('Additional images:', additionalImages.length);
+          
+          allImages = [mainImage, ...additionalImages].filter(img => img); // Filter out undefined/null
+        }
+        
+        console.log(`Final images array for ${plant.name}:`, allImages);
         
         setPlant(plant);
         setImages(allImages);
