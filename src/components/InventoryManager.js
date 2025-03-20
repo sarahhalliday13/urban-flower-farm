@@ -579,10 +579,13 @@ const InventoryManager = () => {
 
   // Updated uploadImageFile to detect Firebase permission issues
   const uploadImageFile = async (file) => {
-    if (!file) return null;
+    if (!file) {
+      console.error('uploadImageFile called with no file');
+      return null;
+    }
     
     try {
-      console.log('Starting image upload process for file:', file.name);
+      console.log('Starting image upload process for file:', file.name, 'type:', file.type, 'size:', file.size);
       setIsUploading(true);
       setUploadProgress(0);
       
@@ -590,27 +593,38 @@ const InventoryManager = () => {
       const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       if (!validTypes.includes(file.type)) {
         console.error('Invalid file type:', file.type);
-        throw new Error(`Invalid file type. Please upload a JPEG, PNG, GIF, or WebP image.`);
+        throw new Error(`Invalid file type "${file.type}". Please upload a JPEG, PNG, GIF, or WebP image.`);
       }
       
       // 10MB limit
       const maxSize = 10 * 1024 * 1024;
       if (file.size > maxSize) {
         console.error('File too large:', file.size);
-        throw new Error(`File too large. Maximum size is 10MB.`);
+        throw new Error(`File too large (${Math.round(file.size/1024/1024)}MB). Maximum size is 10MB.`);
       }
       
       // Create a unique path for the image based on the current time and file name
       const timestamp = new Date().getTime();
-      const fileExtension = file.name.split('.').pop().toLowerCase();
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const fileExtension = sanitizedFileName.split('.').pop().toLowerCase();
       const path = `plant_images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
       
       console.log('Prepared upload path:', path);
       
+      // Show diagnostic information in UI
+      const diagnosticEvent = new CustomEvent('show-toast', {
+        detail: {
+          message: `Processing ${file.name} (${Math.round(file.size/1024)}KB)...`,
+          type: 'info',
+          duration: 2000
+        }
+      });
+      window.dispatchEvent(diagnosticEvent);
+      
       // Simulate progress (Firebase Storage doesn't provide progress updates easily)
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
-          const newProgress = prev + Math.random() * 20;
+          const newProgress = prev + Math.random() * 15;
           return newProgress > 90 ? 90 : newProgress;
         });
       }, 500);
@@ -652,17 +666,36 @@ const InventoryManager = () => {
           errorMessage = 'Unknown error occurred during upload.';
         } else if (firebaseError.code === 'storage/quota-exceeded') {
           errorMessage = 'Storage quota exceeded. Please contact admin.';
+        } else if (firebaseError.code === 'storage/invalid-format') {
+          errorMessage = 'Invalid image format. Please try a different image.';
+        } else if (firebaseError.code === 'storage/object-not-found') {
+          errorMessage = 'The upload location could not be found.';
+        } else if (firebaseError.code === 'storage/retry-limit-exceeded') {
+          errorMessage = 'Network unstable. Upload retry limit exceeded.';
         }
         
-        throw new Error(errorMessage);
+        // Show diagnostic info
+        console.error(errorMessage, 'Original error:', firebaseError.message);
+        
+        throw new Error(`${errorMessage} (${firebaseError.code || 'unknown error'})`);
       }
     } catch (error) {
       console.error('Error in uploadImageFile:', error);
       setUploadProgress(0);
       setIsUploading(false);
       
-      // Display error to user using alert or notification system
-      alert(`Upload failed: ${error.message}`);
+      // Use toast notification first
+      const errorEvent = new CustomEvent('show-toast', {
+        detail: {
+          message: `Upload failed: ${error.message}`,
+          type: 'error',
+          duration: 4000
+        }
+      });
+      window.dispatchEvent(errorEvent);
+      
+      // Don't alert if we already showed a toast
+      // alert(`Upload failed: ${error.message}`);
       
       return null;
     }
@@ -1337,13 +1370,29 @@ const InventoryManager = () => {
     const failedUploads = [];
     
     try {
+      // Create a more explicit progress notification
+      const event = new CustomEvent('show-toast', {
+        detail: {
+          message: `Starting upload of ${additionalImageFiles.length} image(s)...`,
+          type: 'info',
+          duration: 3000
+        }
+      });
+      window.dispatchEvent(event);
+      
       for (let i = 0; i < additionalImageFiles.length; i++) {
         const file = additionalImageFiles[i];
         console.log(`Processing file ${i+1}/${additionalImageFiles.length}: ${file.name}`);
         
-        // We don't need to update the UI previews anymore since we removed those variables
-        // Just log the progress instead
-        console.log(`Starting upload for file ${i+1}/${additionalImageFiles.length}`);
+        // Create a progress notification for each file
+        const fileStartEvent = new CustomEvent('show-toast', {
+          detail: {
+            message: `Uploading image ${i+1}/${additionalImageFiles.length}: ${file.name}`,
+            type: 'info',
+            duration: 2000
+          }
+        });
+        window.dispatchEvent(fileStartEvent);
         
         try {
           // Validate file
@@ -1364,14 +1413,44 @@ const InventoryManager = () => {
           if (url) {
             urls.push(url);
             console.log(`File ${i+1} uploaded successfully: ${url}`);
+            
+            // Show success toast for individual file
+            const fileSuccessEvent = new CustomEvent('show-toast', {
+              detail: {
+                message: `Successfully uploaded image ${i+1}: ${file.name}`,
+                type: 'success',
+                duration: 2000
+              }
+            });
+            window.dispatchEvent(fileSuccessEvent);
           } else {
             // Update status to error
             failedUploads.push(file.name);
             console.error(`Failed to upload file ${i+1}: ${file.name}`);
+            
+            // Show error toast for individual file
+            const fileErrorEvent = new CustomEvent('show-toast', {
+              detail: {
+                message: `Failed to upload image ${i+1}: ${file.name}`,
+                type: 'error',
+                duration: 3000
+              }
+            });
+            window.dispatchEvent(fileErrorEvent);
           }
         } catch (error) {
           console.error(`Error uploading file ${i+1} (${file.name}):`, error);
           failedUploads.push(file.name);
+          
+          // Show error toast for exception
+          const errorEvent = new CustomEvent('show-toast', {
+            detail: {
+              message: `Error uploading ${file.name}: ${error.message}`,
+              type: 'error',
+              duration: 4000
+            }
+          });
+          window.dispatchEvent(errorEvent);
         }
         
         // Update overall progress
@@ -1381,17 +1460,39 @@ const InventoryManager = () => {
       }
     } catch (error) {
       console.error('Error in additional images upload process:', error);
+      
+      // Show general error toast
+      const generalErrorEvent = new CustomEvent('show-toast', {
+        detail: {
+          message: `Upload process error: ${error.message}`,
+          type: 'error',
+          duration: 4000
+        }
+      });
+      window.dispatchEvent(generalErrorEvent);
     } finally {
       setIsUploading(false);
       console.log(`Completed additional images upload. Success: ${urls.length}, Failed: ${failedUploads.length}`);
       
-      // If we have failed uploads, show an alert
+      // Final status toast
+      const completionEvent = new CustomEvent('show-toast', {
+        detail: {
+          message: `Upload complete: ${urls.length} successful, ${failedUploads.length} failed`,
+          type: failedUploads.length > 0 ? 'warning' : 'success',
+          duration: 4000
+        }
+      });
+      window.dispatchEvent(completionEvent);
+      
+      // If we have failed uploads, show an alert with detailed info
       if (failedUploads.length > 0) {
-        alert(`Failed to upload ${failedUploads.length} images: ${failedUploads.join(', ')}`);
+        setTimeout(() => {
+          alert(`Failed to upload ${failedUploads.length} images: ${failedUploads.join(', ')}\n\nPlease try again with different images or contact support.`);
+        }, 500);
       }
     }
     
-    return urls;
+    return urls.filter(url => url != null && url !== '');
   };
   
   // Handle setting an image as the main image
