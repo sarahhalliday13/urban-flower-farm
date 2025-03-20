@@ -10,19 +10,9 @@ import ImageWithFallback from './ImageWithFallback';
 // Images should use Firebase Storage with format:
 // https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
 const PlantCard = ({ plant }) => {
-  // Use Firebase Storage URLs with tokens
+  // Simple image handling - just use the main image with a fallback
   let imageSrc = plant.mainImage || '/images/placeholder.jpg';
   
-  // Special handling for known plants
-  if (plant.name === "Palmer's Beardtongue") {
-    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-  } else if (plant.name === "Gaillardia Pulchella Mix") {
-    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-  } else if (plant.name === "Lavender Mist" || plant.name === "Golden Jubilee Anise Hyssop") {
-    // Use the mainImage from plant data, which should already have the Firebase URL
-    imageSrc = plant.mainImage;
-  }
-
   return (
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
