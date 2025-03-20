@@ -94,48 +94,59 @@ function PlantDetails() {
         
         console.log(`Found plant with ID ${id}:`, plant.name);
         
-        // Get the images using all available methods
-        let allImages = [];
+        // Special handling for plants with known good image URLs
+        const KNOWN_PLANTS = {
+          "Palmer's Beardtongue": [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ],
+          "Gaillardia Pulchella Mix": [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ]
+        };
         
-        // First check for special handling based on plant name
-        if (plant.name === "Palmer's Beardtongue") {
-          console.log(`Special handling for ${plant.name}`);
-          allImages = [
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-          ];
-          console.log(`Using hardcoded URLs for ${plant.name}:`, allImages);
+        // Handle images with a simpler approach
+        let plantImages = [];
+        
+        // First try special handling for known plants
+        if (KNOWN_PLANTS[plant.name]) {
+          console.log(`Using known good images for ${plant.name}`);
+          plantImages = [...KNOWN_PLANTS[plant.name]];
         }
-        // Special handling for Gaillardia
-        else if (plant.name === "Gaillardia Pulchella Mix") {
-          console.log(`Special handling for ${plant.name}`);
-          allImages = [
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-          ];
-          console.log(`Using hardcoded URLs for ${plant.name}:`, allImages);
-        }
-        // For other plants, check for images array first (new format)
-        else if (Array.isArray(plant.images) && plant.images.length > 0) {
-          console.log(`Plant ${plant.name} has images array with ${plant.images.length} images`);
-          allImages = [...plant.images];
-        }
-        // Fall back to legacy format (mainImage + additionalImages)
+        // If no special handling, use whatever images we have in the database
         else {
-          console.log(`Plant ${plant.name} using legacy image format`);
-          const mainImage = plant.mainImage || '/images/placeholder.jpg';
-          console.log('Main image:', mainImage);
-          
-          const additionalImages = Array.isArray(plant.additionalImages) ? plant.additionalImages : [];
-          console.log('Additional images:', additionalImages.length);
-          
-          allImages = [mainImage, ...additionalImages].filter(img => img); // Filter out undefined/null
+          // Try the images array first (newer format)
+          if (Array.isArray(plant.images) && plant.images.length > 0) {
+            console.log(`Using images array with ${plant.images.length} images`);
+            plantImages = [...plant.images];
+          } 
+          // Fall back to mainImage + additionalImages (legacy format)
+          else {
+            const mainImage = plant.mainImage;
+            if (mainImage) {
+              plantImages.push(mainImage);
+              console.log(`Added main image: ${mainImage.substring(0, 100)}...`);
+            }
+            
+            if (Array.isArray(plant.additionalImages)) {
+              plantImages = [...plantImages, ...plant.additionalImages];
+              console.log(`Added ${plant.additionalImages.length} additional images`);
+            }
+          }
         }
         
-        console.log(`Final images array for ${plant.name}:`, allImages);
+        // Filter out any empty or null values
+        plantImages = plantImages.filter(img => img);
+        
+        // If we still have no images, use a placeholder
+        if (plantImages.length === 0) {
+          plantImages = ['/images/placeholder.jpg'];
+          console.log('No images found, using placeholder');
+        }
+        
+        console.log(`Final images for ${plant.name}:`, plantImages.length);
         
         setPlant(plant);
-        setImages(allImages);
+        setImages(plantImages);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching plant:', err);
