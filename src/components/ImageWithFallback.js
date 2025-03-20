@@ -14,15 +14,36 @@ const ImageWithFallback = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageSrc, setImageSrc] = useState(src || '');
   
-  // Add debugging for Firebase URLs
+  // Add debugging for Firebase URLs and fix missing tokens
   useEffect(() => {
     if (src) {
+      let finalSrc = src;
+      
       // Debug output for Firebase URLs
       if (src.includes('firebasestorage.googleapis.com')) {
         console.log(`Firebase URL detected for ${alt || 'image'}:`, src.substring(0, 100) + '...');
+        
+        // Check if URL is missing token and fix it
+        if (!src.includes('token=')) {
+          console.log('Firebase URL is missing token parameter, adding default token');
+          // Add default token parameter if missing
+          const defaultToken = '655fba6f-d45e-44eb-8e01-eee626300739';
+          finalSrc = src.includes('?') 
+            ? `${src}&token=${defaultToken}` 
+            : `${src}?alt=media&token=${defaultToken}`;
+          console.log('Fixed URL:', finalSrc.substring(0, 100) + '...');
+        }
+      } else if (src.startsWith('plant_images/') || src.startsWith('/plant_images/')) {
+        // Convert relative Firebase path to absolute URL
+        console.log('Converting relative Firebase path to absolute URL');
+        const defaultToken = '655fba6f-d45e-44eb-8e01-eee626300739';
+        const bucket = 'buttonsflowerfarm-8a54d.firebasestorage.app';
+        const path = src.startsWith('/') ? src.substring(1) : src;
+        finalSrc = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media&token=${defaultToken}`;
+        console.log('Converted URL:', finalSrc.substring(0, 100) + '...');
       }
       
-      setImageSrc(src);
+      setImageSrc(finalSrc);
     } else {
       setImageSrc('/images/placeholder.jpg');
     }
@@ -83,9 +104,21 @@ const ImageWithFallback = ({
         onError={(e) => {
           console.error(`Image load error for ${alt || 'Unknown'}: ${imageSrc.substring(0, 100)}...`);
           
-          // For Firebase URLs, log the error details
+          // Special handling for Firebase Storage URLs
           if (imageSrc && imageSrc.includes('firebasestorage.googleapis.com')) {
-            console.error('Firebase storage URL failed. Using placeholder.');
+            console.error('Firebase storage URL failed. Trying with placeholder token...');
+            
+            // Try to fix the URL with a placeholder token if it's missing
+            if (!imageSrc.includes('token=')) {
+              const defaultToken = '655fba6f-d45e-44eb-8e01-eee626300739';
+              const fixedUrl = imageSrc.includes('?') 
+                ? `${imageSrc}&token=${defaultToken}` 
+                : `${imageSrc}?alt=media&token=${defaultToken}`;
+                
+              console.log('Attempting with fixed URL:', fixedUrl);
+              e.target.src = fixedUrl;
+              return; // Don't set the placeholder yet, try the fixed URL first
+            }
             
             // Attempt to fetch the image with fetch API to see detailed error
             fetch(imageSrc)
@@ -98,6 +131,7 @@ const ImageWithFallback = ({
               });
           }
           
+          // If we reach here, use the placeholder
           e.target.src = '/images/placeholder.jpg';
           setIsLoaded(true);
           return true;
