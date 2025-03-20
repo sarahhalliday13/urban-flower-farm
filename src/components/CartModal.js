@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import './CartModal.css';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
@@ -6,8 +6,53 @@ import { useNavigate } from 'react-router-dom';
 function CartModal({ isOpen, onClose }) {
   const { cartItems, removeFromCart, updateQuantity, getTotal } = useCart();
   const navigate = useNavigate();
-
-  if (!isOpen) return null;
+  const modalRef = useRef(null);
+  const [animationState, setAnimationState] = useState('exited');
+  
+  // Handle animation states
+  useEffect(() => {
+    let timeoutId;
+    
+    if (isOpen) {
+      setAnimationState('entering');
+      timeoutId = setTimeout(() => {
+        setAnimationState('entered');
+      }, 10); // Small delay to trigger CSS transition
+    } else {
+      if (animationState === 'entered' || animationState === 'entering') {
+        setAnimationState('exiting');
+        timeoutId = setTimeout(() => {
+          setAnimationState('exited');
+        }, 300); // Match CSS transition duration
+      }
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isOpen, animationState]);
+  
+  // Handle click outside to close modal
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    
+    // Add event listener when modal is open
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    // Cleanup event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen, onClose]);
+  
+  // Don't render anything if fully exited
+  if (animationState === 'exited' && !isOpen) return null;
 
   const handleCheckout = () => {
     onClose();
@@ -20,8 +65,8 @@ function CartModal({ isOpen, onClose }) {
   };
 
   return (
-    <div className="cart-modal-overlay">
-      <div className="cart-modal">
+    <div className={`cart-modal-overlay ${animationState}`}>
+      <div className="cart-modal" ref={modalRef}>
         <button className="cart-close" onClick={onClose}>×</button>
         <h2>Shopping Cart</h2>
         

@@ -9,6 +9,18 @@
   justify-content: flex-end;
   align-items: flex-start;
   z-index: 1000;
+  transition: opacity 0.3s ease;
+}
+
+.cart-modal-overlay.entering,
+.cart-modal-overlay.entered {
+  opacity: 1;
+}
+
+.cart-modal-overlay.exiting,
+.cart-modal-overlay.exited {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .cart-modal {
@@ -19,6 +31,18 @@
   padding: 2rem;
   position: relative;
   overflow-y: auto;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+}
+
+.cart-modal-overlay.entering .cart-modal,
+.cart-modal-overlay.entered .cart-modal {
+  transform: translateX(0);
+}
+
+.cart-modal-overlay.exiting .cart-modal,
+.cart-modal-overlay.exited .cart-modal {
+  transform: translateX(100%);
 }
 
 .cart-close {
