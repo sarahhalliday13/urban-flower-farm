@@ -206,6 +206,13 @@
   margin-top: 0;
 }
 
+/* Increase top padding for wider viewports */
+@media screen and (min-width: 769px) {
+  .plant-actions {
+    padding-top: 0.9rem;
+  }
+}
+
 .plant-view,
 .plant-buy {
   flex: 1;
