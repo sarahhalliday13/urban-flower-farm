@@ -14,14 +14,19 @@ const ImageWithFallback = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [imageSrc, setImageSrc] = useState(src || '');
   
-  // Update image source when src prop changes
+  // Add debugging for Firebase URLs
   useEffect(() => {
     if (src) {
+      // Debug output for Firebase URLs
+      if (src.includes('firebasestorage.googleapis.com')) {
+        console.log(`Firebase URL detected for ${alt || 'image'}:`, src.substring(0, 100) + '...');
+      }
+      
       setImageSrc(src);
     } else {
       setImageSrc('/images/placeholder.jpg');
     }
-  }, [src]);
+  }, [src, alt]);
   
   const containerStyle = {
     position: 'relative',
@@ -70,10 +75,29 @@ const ImageWithFallback = ({
         className={className}
         style={imgStyle}
         loading="lazy"
+        crossOrigin="anonymous" // Try with cross-origin attribute
         onLoad={() => {
+          console.log(`Image loaded successfully: ${alt || 'Unknown'} - ${imageSrc.substring(0, 50)}...`);
           setIsLoaded(true);
         }}
         onError={(e) => {
+          console.error(`Image load error for ${alt || 'Unknown'}: ${imageSrc.substring(0, 100)}...`);
+          
+          // For Firebase URLs, log the error details
+          if (imageSrc && imageSrc.includes('firebasestorage.googleapis.com')) {
+            console.error('Firebase storage URL failed. Using placeholder.');
+            
+            // Attempt to fetch the image with fetch API to see detailed error
+            fetch(imageSrc)
+              .then(response => {
+                console.log('Fetch response:', response.status, response.statusText);
+                return response.blob();
+              })
+              .catch(fetchError => {
+                console.error('Fetch error details:', fetchError);
+              });
+          }
+          
           e.target.src = '/images/placeholder.jpg';
           setIsLoaded(true);
           return true;
