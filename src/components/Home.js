@@ -2,7 +2,7 @@ import React, { useState, useEffect, Component } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants, testFirebaseStorage } from '../services/firebase';
 import { useCart } from '../context/CartContext';
-import ImageWithFallback from './ImageWithFallback';
+import PlantImage from './PlantImage';
 
 // Plant Card component with simplified image handling
 // 
@@ -10,18 +10,11 @@ import ImageWithFallback from './ImageWithFallback';
 // Images should use Firebase Storage with format:
 // https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
 const PlantCard = ({ plant }) => {
-  // Simple image handling - just use the main image with a fallback
-  let imageSrc = plant.mainImage || '/images/placeholder.jpg';
-  
   return (
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="plant-image">
-          <ImageWithFallback 
-            src={imageSrc}
-            alt={plant.name}
-            height={200}
-          />
+          <PlantImage plant={plant} height={200} width="100%" />
         </div>
         <h3>{plant.name}</h3>
         <p className="plant-description">
