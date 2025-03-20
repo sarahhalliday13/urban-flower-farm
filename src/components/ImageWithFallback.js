@@ -5,20 +5,31 @@ import React, { useState } from 'react';
  */
 const ImageWithFallback = ({ 
   src, 
-  alt, 
+  alt = '',
   className = '', 
   style = {}, 
   height = 200,
   width = 'auto'
 }) => {
-  const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-
-  // Use placeholder if image fails to load
-  const imgSrc = hasError ? '/images/placeholder.jpg' : src;
+  const [hasError, setHasError] = useState(false);
   
-  // Special handling for specific plants
-  const isSpecialPlant = alt === "Palmer's Beardtongue" || alt === "Lavender Mist";
+  // Special direct Firebase URLs for problematic plants
+  let imgSrc = src;
+  
+  // For known plants with Firebase issues, hardcode the correct URLs
+  if (alt && alt.includes("Palmer's Beardtongue") && src && !src.includes('token=')) {
+    imgSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+  } else if (alt && alt.includes("Gaillardia Pulchella Mix") && src && !src.includes('token=')) {
+    imgSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+  } else if (hasError) {
+    imgSrc = '/images/placeholder.jpg';
+  }
+  
+  // Add fallback for missing src
+  if (!imgSrc) {
+    imgSrc = '/images/placeholder.jpg';
+  }
   
   return (
     <div style={{ 
@@ -46,17 +57,20 @@ const ImageWithFallback = ({
       }
       <img 
         src={imgSrc}
-        alt={alt}
+        alt={alt || 'Image'}
         className={className}
         style={{ 
           ...style,
           width: '100%',
           height: '100%',
-          objectFit: isSpecialPlant ? 'cover' : 'cover',
+          objectFit: 'cover',
           display: 'block'
         }}
-        onLoad={() => setIsLoaded(true)}
+        onLoad={() => {
+          setIsLoaded(true);
+        }}
         onError={() => {
+          console.log(`Image load error: ${alt || 'Unknown image'}`);
           setHasError(true);
           setIsLoaded(true);
         }}
