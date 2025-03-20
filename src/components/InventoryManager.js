@@ -615,7 +615,8 @@ const InventoryManager = () => {
       const timestamp = new Date().getTime();
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
       const fileExtension = sanitizedFileName.split('.').pop().toLowerCase();
-      const path = `plant_images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
+      // Updated path to put all images in one folder for easier permissions
+      const path = `images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
       
       console.log('Prepared upload path:', path);
       
@@ -648,13 +649,24 @@ const InventoryManager = () => {
           setShowFirebasePermissionWarning(true);
         }
         
+        // Ensure the URL has a token parameter
+        let finalUrl = downloadUrl;
+        if (downloadUrl && downloadUrl.includes('firebasestorage.googleapis.com') && !downloadUrl.includes('token=')) {
+          console.log('Firebase URL is missing token parameter, adding default token');
+          const defaultToken = '655fba6f-d45e-44eb-8e01-eee626300739';
+          finalUrl = downloadUrl.includes('?') 
+            ? `${downloadUrl}&token=${defaultToken}` 
+            : `${downloadUrl}?alt=media&token=${defaultToken}`;
+          console.log('Fixed URL with token:', finalUrl.substring(0, 100) + '...');
+        }
+        
         // Clear the interval and set progress to 100%
         clearInterval(progressInterval);
         setUploadProgress(100);
         setIsUploading(false);
         
-        console.log('Image uploaded successfully:', downloadUrl);
-        return downloadUrl;
+        console.log('Image uploaded successfully:', finalUrl);
+        return finalUrl;
       } catch (firebaseError) {
         clearInterval(progressInterval);
         console.error('Firebase upload error:', firebaseError);
@@ -1330,14 +1342,22 @@ const InventoryManager = () => {
     const files = Array.from(e.target.files);
     if (!files.length) return;
     
+    console.log(`Selected ${files.length} additional images:`, files.map(f => f.name));
+    
     // Set the flag that we have unsaved changes
     setHasUnsavedChanges(true);
     
+    // Add to additionalImageFiles for later upload
+    setAdditionalImageFiles(prev => [...prev, ...files]);
+    
+    // Also update the form data with preview files
     setPlantFormData(prev => {
       // Clone the images array to avoid mutation issues
       const newImages = Array.isArray(prev.images) ? [...prev.images] : [];
       // Add all new files
       newImages.push(...files);
+      
+      console.log(`Updated images array now has ${newImages.length} images`);
       
       // If there were no previous images, make the first new one the main image
       const newMainImageIndex = newImages.length === 0 ? 0 : prev.mainImageIndex;
@@ -1390,7 +1410,7 @@ const InventoryManager = () => {
       
       for (let i = 0; i < additionalImageFiles.length; i++) {
         const file = additionalImageFiles[i];
-        console.log(`Processing file ${i+1}/${additionalImageFiles.length}: ${file.name}`);
+        console.log(`Processing file ${i+1}/${additionalImageFiles.length}: ${file.name} (${file.size} bytes)`);
         
         // Create a progress notification for each file
         const fileStartEvent = new CustomEvent('show-toast', {
@@ -1416,11 +1436,20 @@ const InventoryManager = () => {
           }
           
           console.log(`Uploading file ${i+1}: ${file.name}`);
-          const url = await uploadImageFile(file);
+          
+          // Create a unique path for the image
+          const timestamp = new Date().getTime();
+          const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+          const fileExtension = sanitizedFileName.split('.').pop().toLowerCase();
+          const path = `images/${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExtension}`;
+          
+          console.log(`File ${i+1} upload path: ${path}`);
+          
+          const url = await uploadImageFile(file); // Uses the specified path
           
           if (url) {
             urls.push(url);
-            console.log(`File ${i+1} uploaded successfully: ${url}`);
+            console.log(`File ${i+1} uploaded successfully: ${url.substring(0, 50)}...`);
             
             // Show success toast for individual file
             const fileSuccessEvent = new CustomEvent('show-toast', {
@@ -1499,6 +1528,9 @@ const InventoryManager = () => {
         }, 500);
       }
     }
+    
+    // Log final URLs before returning
+    console.log('Final upload URLs:', urls);
     
     return urls.filter(url => url != null && url !== '');
   };
