@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Component } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchPlants, loadSamplePlants, testFirebaseStorage } from '../services/firebase';
+import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
 import PlantImage from './PlantImage';
 
@@ -178,39 +178,6 @@ function Home({ isFirstVisit }) {
     });
     window.dispatchEvent(event);
   };
-
-  const handleTestFirebaseStorage = async () => {
-    console.log('Testing Firebase Storage access...');
-    try {
-      const result = await testFirebaseStorage();
-      console.log('Firebase Storage test result:', result);
-      
-      // Create a user-friendly message
-      let message = `✅ Images are working correctly!\n\n`;
-      message += `The app is successfully displaying images, even though Firebase tests may show warnings.\n\n`;
-      
-      if (result.message) {
-        message += `${result.message}\n\n`;
-      }
-      
-      if (result.bucketName) {
-        message += `Storage Bucket: ${result.bucketName}\n`;
-      }
-      
-      // Configuration status
-      if (result.config) {
-        message += "\nConfiguration Status:\n";
-        for (const [key, value] of Object.entries(result.config)) {
-          message += `${key}: ${value}\n`;
-        }
-      }
-      
-      alert(message);
-    } catch (error) {
-      console.warn('Error testing Firebase Storage:', error);
-      alert(`✅ The application is working correctly with images. This error is expected and doesn't affect functionality.`);
-    }
-  };
   
   return (
     <ErrorBoundary>
@@ -243,21 +210,6 @@ function Home({ isFirstVisit }) {
             </div>
           )}
         </section>
-
-        {/* Add Firebase test button - visible only in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{ marginTop: '20px', padding: '10px', backgroundColor: '#f0f0f0', borderRadius: '5px' }}>
-            <button 
-              onClick={handleTestFirebaseStorage}
-              style={{ padding: '8px 12px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-            >
-              Test Firebase Storage
-            </button>
-            <p style={{ fontSize: '12px', marginTop: '5px' }}>
-              This button will test Firebase Storage access and show results in the console.
-            </p>
-          </div>
-        )}
       </main>
     </ErrorBoundary>
   );
