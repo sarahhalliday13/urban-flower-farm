@@ -132,13 +132,13 @@ const SheetMigration = () => {
       
       // Filter out empty or invalid plant records
       const validPlants = plantsData.filter(plant => {
-        // Check for required fields - at minimum we need id and name
-        if (!plant.id || !plant.name) {
+        // Check for required fields - at minimum we need plant_id and name
+        if (!plant.plant_id || !plant.name) {
           return false;
         }
         
         // Skip specific ID ranges if they're known to be blank (like plants 5-45)
-        const plantId = parseInt(plant.id);
+        const plantId = parseInt(plant.plant_id);
         if (plantId >= 5 && plantId <= 45) {
           return false;
         }
