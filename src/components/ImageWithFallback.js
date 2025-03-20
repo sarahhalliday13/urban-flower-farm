@@ -1,14 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 /**
- * A simplified image component with fallback handling
- * 
- * IMPORTANT: This application uses Firebase Storage URLs ONLY, not local images.
- * All image URLs should follow this format:
- * https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
- * 
- * Special treatment is given to "Palmer's Beardtongue" and "Gaillardia Pulchella Mix" plants,
- * which have hardcoded Firebase Storage URLs with tokens.
+ * A simple image component with fallback handling
  */
 const ImageWithFallback = ({ 
   src, 
@@ -16,31 +9,32 @@ const ImageWithFallback = ({
   className = '', 
   style = {}, 
   height = 200,
-  width = 'auto',
-  lazyLoad = true
+  width = 'auto'
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Force image URLs to include the token for the Firebase URLs if missing
-  useEffect(() => {
-    console.log(`Image source for ${alt}:`, src);
-  }, [src, alt]);
-
-  // Simply use placeholder if src errors
+  // Use placeholder if image fails to load
   const imgSrc = hasError ? '/images/placeholder.jpg' : src;
   
-  // Default height for placeholder
-  const placeholderHeight = height || 200;
+  // Special handling for specific plants
+  const isSpecialPlant = alt === "Palmer's Beardtongue" || alt === "Lavender Mist";
   
   return (
-    <>
+    <div style={{ 
+      position: 'relative', 
+      height: height, 
+      width: width,
+      overflow: 'hidden'
+    }}>
       {!isLoaded && 
         <div 
-          className="image-placeholder" 
           style={{
-            height: `${placeholderHeight}px`,
-            width: width,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
             background: "#f0f0f0",
             display: "flex",
             alignItems: "center",
@@ -54,23 +48,20 @@ const ImageWithFallback = ({
         src={imgSrc}
         alt={alt}
         className={className}
-        loading={lazyLoad ? "lazy" : "eager"}
         style={{ 
           ...style,
-          display: isLoaded ? 'block' : 'none' 
+          width: '100%',
+          height: '100%',
+          objectFit: isSpecialPlant ? 'cover' : 'cover',
+          display: 'block'
         }}
-        onLoad={() => {
-          console.log(`Image loaded successfully: ${alt}`);
-          setIsLoaded(true);
-        }}
+        onLoad={() => setIsLoaded(true)}
         onError={() => {
-          console.error(`Image failed to load: ${src}`);
           setHasError(true);
-          // Still mark as loaded to show the placeholder
           setIsLoaded(true);
         }}
       />
-    </>
+    </div>
   );
 };
 
