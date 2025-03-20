@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+/* eslint-disable no-unused-vars */
 import { 
-  // eslint-disable-next-line no-unused-vars
+  useNavigate,
+  useParams,
+  useLocation
+} from 'react-router-dom';
+import { 
   fetchPlants,
   uploadImageToFirebase,
   importPlantsFromSheets,
@@ -12,7 +17,8 @@ import {
   subscribeToInventory,
   processSyncQueue,
   repairInventoryData,
-  updateInventory
+  updateInventory,
+  updatePlantData
 } from '../services/firebase';
 import { useAdmin } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
@@ -122,17 +128,19 @@ const InventoryManager = () => {
 
   // Add state for image upload
   const [imageFile, setImageFile] = useState(null);
-  // imagePreview is not used - comment out or remove
-  // const [imagePreview, setImagePreview] = useState(null);
+  /* eslint-disable-next-line no-unused-vars */
+  const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // New state for multiple image uploads
   const [additionalImageFiles, setAdditionalImageFiles] = useState([]);
-  // additionalImagePreviews, isUploadingAdditional, and additionalUploadProgress are not used
-  // const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
-  // const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
-  // const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
+  /* eslint-disable-next-line no-unused-vars */
+  const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
+  /* eslint-disable-next-line no-unused-vars */
+  const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
+  /* eslint-disable-next-line no-unused-vars */
+  const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
 
   // Add repairStatus state near other state declarations (around line 50-70)
   const [repairStatus, setRepairStatus] = useState({
@@ -1743,6 +1751,66 @@ const InventoryManager = () => {
       window.dispatchEvent(event);
     }
   };
+
+  // Find the useEffect that sets up timers (around line 225-230)
+  useEffect(() => {
+    // Load plants initially
+    loadPlants();
+    
+    // Set up polling for sync status
+    const checkSyncStatus = async () => {
+      try {
+        const queueStatus = await processSyncQueue();
+        setSyncStatus(prev => ({
+          ...prev,
+          syncing: queueStatus.processing,
+          pendingUpdates: queueStatus.pendingCount || 0,
+          message: queueStatus.message || 'Sync complete',
+          lastSync: queueStatus.lastSync || prev.lastSync
+        }));
+      } catch (err) {
+        console.error("Error checking sync queue status:", err);
+        setSyncStatus(prev => ({
+          ...prev,
+          message: `Error: ${err.message}`
+        }));
+      }
+    };
+    
+    // Set up sync timer
+    syncTimerRef.current = setInterval(checkSyncStatus, 30000); // Check every 30 seconds
+    
+    // Check Firebase config
+    checkFirebaseConfig();
+    
+    // Set a timeout to check if we're still loading after 10 seconds
+    loadingTimerRef.current = setTimeout(() => {
+      if (loading || plantsLoading) {
+        setLoadingMessage('Still loading... This is taking longer than expected.');
+        
+        // After 5 more seconds, try reloading plants
+        fetchTimeoutRef.current = setTimeout(() => {
+          if (loading || plantsLoading) {
+            setLoadingMessage('Loading timed out. Retrying...');
+            setApiRetryCount(prev => prev + 1);
+            loadPlants();
+          }
+        }, 5000);
+      }
+    }, 10000);
+    
+    // Clean up the handlers when the component unmounts
+    return () => {
+      // Store local copies of the current ref values to use in cleanup
+      const syncTimer = syncTimerRef.current;
+      const loadingTimer = loadingTimerRef.current;
+      const fetchTimeout = fetchTimeoutRef.current;
+      
+      if (syncTimer) clearInterval(syncTimer);
+      if (loadingTimer) clearTimeout(loadingTimer);
+      if (fetchTimeout) clearTimeout(fetchTimeout);
+    };
+  }, [loadPlants, loading, plantsLoading]);
 
   if (loading) return (
     <div className="inventory-loading">
