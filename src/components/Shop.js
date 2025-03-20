@@ -4,6 +4,73 @@ import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 
+// Added ShopImage component for better image handling
+const ShopImage = ({ plant }) => {
+  const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  // Set correct image URL on component mount
+  useEffect(() => {
+    let src = plant.mainImage || '/images/placeholder.jpg';
+    
+    // Use hard-coded URLs for specific plants
+    if (plant.name === "Palmer's Beardtongue") {
+      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+      console.log('Setting hard-coded Palmer URL in Shop:', src);
+    } 
+    else if (plant.name === "Gaillardia Pulchella Mix") {
+      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+      console.log('Setting hard-coded Gaillardia URL in Shop:', src);
+    }
+    
+    setImageSrc(src);
+  }, [plant.name, plant.mainImage]);
+  
+  return (
+    <>
+      {!imageLoaded && 
+        <div style={{
+          height: "200px",
+          background: "#f0f0f0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <span>Loading...</span>
+        </div>
+      }
+      <img 
+        src={imageSrc}
+        alt={plant.name}
+        style={{ display: imageLoaded ? 'block' : 'none' }}
+        onLoad={() => {
+          console.log(`Image loaded successfully in Shop: ${plant.name}`);
+          setImageLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('Image failed to load:', imageSrc);
+          
+          // Try cache-busting for Firebase URLs
+          if (!imageSrc.includes('&t=') && imageSrc.includes('firebasestorage')) {
+            console.log('Adding cache buster to Firebase URL:', plant.name);
+            const timestamp = Date.now();
+            const newSrc = imageSrc.includes('?') 
+              ? `${imageSrc}&t=${timestamp}` 
+              : `${imageSrc}?alt=media&t=${timestamp}`;
+              
+            console.log('New src with cache buster:', newSrc);
+            setImageSrc(newSrc);
+          } else {
+            // We've already tried or it's not a Firebase URL, use placeholder
+            console.log('Using placeholder for', plant.name);
+            setImageSrc('/images/placeholder.jpg');
+          }
+        }}
+      />
+    </>
+  );
+};
+
 function Shop() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
@@ -148,15 +215,9 @@ function Shop() {
                   // Grid view - link wraps the entire content except actions
                   <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div className="plant-image">
-                      <img src={plant.mainImage} alt={plant.name} onError={(e) => {
-                        console.error('Image failed to load:', plant.mainImage);
-                        e.target.src = '/images/placeholder.jpg';
-                      }} />
+                      <ShopImage plant={plant} />
                     </div>
                     <h3 className="plant-common-name">{plant.name}</h3>
-                    {plant.scientificName && (
-                      <p className="scientific-name">{plant.scientificName}</p>
-                    )}
                     <p className="plant-description">
                       {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
                     </p>
@@ -173,18 +234,12 @@ function Shop() {
                   // List view - separate elements with links only on title and image
                   <>
                     <Link to={`/plant/${plant.id}`} className="plant-image" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <img src={plant.mainImage} alt={plant.name} onError={(e) => {
-                        console.error('Image failed to load:', plant.mainImage);
-                        e.target.src = '/images/placeholder.jpg';
-                      }} />
+                      <ShopImage plant={plant} />
                     </Link>
                     <div className="plant-content">
                       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                         <h3 className="plant-common-name">{plant.name}</h3>
                       </Link>
-                      {plant.scientificName && (
-                        <p className="scientific-name">{plant.scientificName}</p>
-                      )}
                       <p className="plant-description">
                         {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
                       </p>
