@@ -201,7 +201,30 @@ function Home({ isFirstVisit }) {
     try {
       const result = await testFirebaseStorage();
       console.log('Firebase Storage test result:', result);
-      alert(`Firebase Storage test: ${result.success ? 'Success' : 'Failed'}\n${result.error || ''}`);
+      
+      let message = `Firebase Storage test: ${result.success ? 'Success' : 'Failed'}\n`;
+      
+      if (result.imageURL) {
+        message += `Image URL: ${result.imageURL.substring(0, 50)}...\n`;
+      }
+      
+      if (result.error) {
+        message += `\nError: ${result.error}\n`;
+      }
+      
+      if (result.bucketName) {
+        message += `\nStorage Bucket: ${result.bucketName}\n`;
+      }
+      
+      // Configuration status
+      if (result.config) {
+        message += "\nConfiguration Status:\n";
+        for (const [key, value] of Object.entries(result.config)) {
+          message += `${key}: ${value}\n`;
+        }
+      }
+      
+      alert(message);
     } catch (error) {
       console.error('Error testing Firebase Storage:', error);
       alert(`Firebase Storage test error: ${error.message}`);

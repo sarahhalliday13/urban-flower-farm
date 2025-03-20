@@ -979,7 +979,7 @@ export const testFirebaseStorage = async () => {
     }
     
     // Log Firebase config
-    console.log('Firebase config:', {
+    const config = {
       apiKey: process.env.REACT_APP_FIREBASE_API_KEY ? 'Set' : 'Not set',
       authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ? 'Set' : 'Not set',
       databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL ? 'Set' : 'Not set',
@@ -987,34 +987,73 @@ export const testFirebaseStorage = async () => {
       storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ? 'Set' : 'Not set',
       messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Not set',
       appId: process.env.REACT_APP_FIREBASE_APP_ID ? 'Set' : 'Not set'
-    });
+    };
+    console.log('Firebase config:', config);
+    
+    // Try to access basic storage information
+    console.log('Firebase storage bucket:', storage.app.options.storageBucket);
     
     // Try to list some files from storage
     const testRef = storageRef(storage, 'images');
     console.log('Created test storage reference:', testRef);
     
-    // Try to get a download URL for a known image
+    // First test - try to access a test image
+    let testError = null;
     const testImageURL = await getDownloadURL(storageRef(storage, 'images/test.jpg')).catch(e => {
-      console.log('Expected error for test.jpg, trying default image');
+      console.log('Error getting test.jpg:', e.code, e.message);
+      testError = e;
       return null;
     });
     
-    // If the first attempt failed, try a different path
+    // Second test - try to access a default image
+    let defaultError = null;
     const defaultImageURL = testImageURL || await getDownloadURL(storageRef(storage, 'images/placeholder.jpg')).catch(e => {
-      console.error('Error getting default image:', e);
+      console.error('Error getting default image:', e.code, e.message);
+      defaultError = e;
       return null;
     });
     
-    console.log('Default image URL:', defaultImageURL || 'Failed to retrieve');
+    // Third test - try an image we know exists
+    let knownError = null;
+    const knownImageURL = await getDownloadURL(storageRef(storage, 'images/penstemonpalmeri.jpg')).catch(e => {
+      console.error('Error getting known image:', e.code, e.message);
+      knownError = e;
+      return null;
+    });
+    
+    console.log('Test results:');
+    console.log('- Test image URL:', testImageURL || 'Failed');
+    console.log('- Default image URL:', defaultImageURL || 'Failed');
+    console.log('- Known image URL:', knownImageURL || 'Failed');
+    
+    // Composite result
+    const success = !!(testImageURL || defaultImageURL || knownImageURL);
+    
+    // Create detailed error information
+    let errorInfo = '';
+    if (testError) errorInfo += `Test image error: ${testError.code} - ${testError.message}\n`;
+    if (defaultError) errorInfo += `Default image error: ${defaultError.code} - ${defaultError.message}\n`;
+    if (knownError) errorInfo += `Known image error: ${knownError.code} - ${knownError.message}\n`;
+    
+    // If we have no specific errors but still failed, add general info
+    if (!success && !errorInfo) {
+      errorInfo = 'Unknown error accessing Firebase Storage. Check console for details.';
+    }
     
     return { 
-      success: !!defaultImageURL, 
-      imageURL: defaultImageURL,
-      bucketName: storage.app.options.storageBucket
+      success, 
+      imageURL: testImageURL || defaultImageURL || knownImageURL,
+      bucketName: storage.app.options.storageBucket,
+      error: errorInfo || undefined,
+      config
     };
   } catch (error) {
     console.error('Error testing Firebase Storage:', error);
-    return { success: false, error: error.message };
+    return { 
+      success: false, 
+      error: `${error.code || ''} ${error.message}`,
+      stack: error.stack
+    };
   }
 };
 
