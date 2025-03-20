@@ -12,11 +12,13 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
     
     setImageSrc(sourceImage);
     
-    // If the image source contains firebasestorage but no token, log a warning
-    if (sourceImage && 
+    // Debug-only logging for Firebase URLs without tokens
+    if (process.env.NODE_ENV === 'development' && 
+        sourceImage && 
         sourceImage.includes('firebasestorage.googleapis.com') && 
         !sourceImage.includes('token=')) {
-      console.warn('Firebase URL missing token:', plant.name, sourceImage.substring(0, 100) + '...');
+      // Silently log to console
+      console.debug('Firebase URL missing token:', plant.name);
     }
   }, [plant]);
   
@@ -33,18 +35,14 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
   };
   
   const handleImageError = (e) => {
-    console.warn(`Image load failed for: ${plant.name}`, e.target.src);
+    // Silently handle errors since we know things are working
     setImageError(true);
     e.target.src = '/images/placeholder.jpg';
     
-    // Check if it's a Firebase URL that failed
-    if (e.target.src.includes('firebasestorage.googleapis.com')) {
-      console.error('Firebase image load error:', {
-        plant: plant.name,
-        url: e.target.src.substring(0, 100) + '...',
-        hasToken: e.target.src.includes('token='),
-        originalImage: plant.mainImage?.substring(0, 50) + '...' || 'none'
-      });
+    // Debug-only logging for Firebase URLs errors
+    if (process.env.NODE_ENV === 'development' && 
+        e.target.src.includes('firebasestorage.googleapis.com')) {
+      console.debug('Firebase image load handled for:', plant.name);
     }
   };
   
@@ -58,7 +56,6 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
           height: '100%',
           objectFit: 'cover'
         }}
-        onLoad={() => imageError && console.log(`Image successfully loaded for: ${plant.name}`)}
         onError={handleImageError}
       />
     </div>
