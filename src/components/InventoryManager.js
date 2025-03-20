@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { 
   // eslint-disable-next-line no-unused-vars
   fetchPlants,
@@ -15,7 +14,7 @@ import {
   repairInventoryData,
   updateInventory
 } from '../services/firebase';
-import { useAdmin, updatePlantData } from '../context/AdminContext';
+import { useAdmin } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
@@ -123,15 +122,17 @@ const InventoryManager = () => {
 
   // Add state for image upload
   const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  // imagePreview is not used - comment out or remove
+  // const [imagePreview, setImagePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // New state for multiple image uploads
   const [additionalImageFiles, setAdditionalImageFiles] = useState([]);
-  const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
-  const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
-  const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
+  // additionalImagePreviews, isUploadingAdditional, and additionalUploadProgress are not used
+  // const [additionalImagePreviews, setAdditionalImagePreviews] = useState([]);
+  // const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
+  // const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
 
   // Add repairStatus state near other state declarations (around line 50-70)
   const [repairStatus, setRepairStatus] = useState({
@@ -218,6 +219,11 @@ const InventoryManager = () => {
     // Store references to timers for cleanup
     refreshTimerRef.current = refreshTimer;
     
+    // Copy refs to local variables for cleanup
+    const syncTimerRefCopy = syncTimerRef.current;
+    const loadingTimerRefCopy = loadingTimerRef.current;
+    const fetchTimeoutRefCopy = fetchTimeoutRef.current;
+    
     // Cleanup function for unmount
     return () => {
       // Unsubscribe from Firebase listener if it exists
@@ -225,11 +231,11 @@ const InventoryManager = () => {
         unsubscribe();
       }
       
-      // Clean up all timers
+      // Clean up all timers using the copied refs
       if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
-      if (syncTimerRef.current) clearInterval(syncTimerRef.current);
-      if (loadingTimerRef.current) clearTimeout(loadingTimerRef.current);
-      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+      if (syncTimerRefCopy) clearInterval(syncTimerRefCopy);
+      if (loadingTimerRefCopy) clearTimeout(loadingTimerRefCopy);
+      if (fetchTimeoutRefCopy) clearTimeout(fetchTimeoutRefCopy);
     };
   }, [handleLoadPlants, checkSyncQueue]);
 
@@ -897,9 +903,9 @@ const InventoryManager = () => {
       setCurrentPlant(null);
       setPlantSaveStatus('');
       setImageFile(null);
-      setImagePreview(null);
+      // Removed setImagePreview(null);
       setAdditionalImageFiles([]);
-      setAdditionalImagePreviews([]);
+      // Removed setAdditionalImagePreviews([]);
       // Clear the unsaved changes flag
       setHasUnsavedChanges(false);
     }, 50); // A short delay to ensure the view has changed first
@@ -1324,8 +1330,8 @@ const InventoryManager = () => {
     }
     
     console.log(`Starting upload of ${additionalImageFiles.length} additional images`);
-    setIsUploadingAdditional(true);
-    setAdditionalUploadProgress(0);
+    setIsUploading(true);
+    setUploadProgress(0);
     
     const urls = [];
     const failedUploads = [];
@@ -1335,32 +1341,9 @@ const InventoryManager = () => {
         const file = additionalImageFiles[i];
         console.log(`Processing file ${i+1}/${additionalImageFiles.length}: ${file.name}`);
         
-        // Update status to uploading
-        setAdditionalImagePreviews(prev => {
-          const updated = [...prev];
-          if (updated[i]) {
-            updated[i] = {
-              ...updated[i],
-              status: 'uploading',
-              progress: 0
-            };
-          }
-          return updated;
-        });
-        
-        // Progress simulation for individual file
-        const progressInterval = setInterval(() => {
-          setAdditionalImagePreviews(prev => {
-            const updated = [...prev];
-            if (updated[i] && updated[i].status === 'uploading' && updated[i].progress < 90) {
-              updated[i] = {
-                ...updated[i],
-                progress: updated[i].progress + Math.random() * 10
-              };
-            }
-            return updated;
-          });
-        }, 300);
+        // We don't need to update the UI previews anymore since we removed those variables
+        // Just log the progress instead
+        console.log(`Starting upload for file ${i+1}/${additionalImageFiles.length}`);
         
         try {
           // Validate file
@@ -1380,69 +1363,26 @@ const InventoryManager = () => {
           
           if (url) {
             urls.push(url);
-            
-            // Update status to success
-            setAdditionalImagePreviews(prev => {
-              const updated = [...prev];
-              if (updated[i]) {
-                updated[i] = {
-                  ...updated[i],
-                  status: 'success',
-                  progress: 100,
-                  uploadedUrl: url,
-                  errorMessage: null
-                };
-              }
-              return updated;
-            });
             console.log(`File ${i+1} uploaded successfully: ${url}`);
           } else {
             // Update status to error
             failedUploads.push(file.name);
-            setAdditionalImagePreviews(prev => {
-              const updated = [...prev];
-              if (updated[i]) {
-                updated[i] = {
-                  ...updated[i],
-                  status: 'error',
-                  progress: 0,
-                  errorMessage: 'Upload failed. Please try again.'
-                };
-              }
-              return updated;
-            });
             console.error(`Failed to upload file ${i+1}: ${file.name}`);
           }
         } catch (error) {
           console.error(`Error uploading file ${i+1} (${file.name}):`, error);
           failedUploads.push(file.name);
-          
-          // Update status to error with specific message
-          setAdditionalImagePreviews(prev => {
-            const updated = [...prev];
-            if (updated[i]) {
-              updated[i] = {
-                ...updated[i],
-                status: 'error',
-                progress: 0,
-                errorMessage: error.message || 'Unknown error during upload'
-              };
-            }
-            return updated;
-          });
-        } finally {
-          clearInterval(progressInterval);
         }
         
         // Update overall progress
         const progress = Math.round(((i + 1) / additionalImageFiles.length) * 100);
-        setAdditionalUploadProgress(progress);
+        setUploadProgress(progress);
         console.log(`Overall additional images progress: ${progress}%`);
       }
     } catch (error) {
       console.error('Error in additional images upload process:', error);
     } finally {
-      setIsUploadingAdditional(false);
+      setIsUploading(false);
       console.log(`Completed additional images upload. Success: ${urls.length}, Failed: ${failedUploads.length}`);
       
       // If we have failed uploads, show an alert
@@ -1572,7 +1512,8 @@ const InventoryManager = () => {
     }
   };
 
-  // Helper function to detect and handle local image URLs
+  // Helper function to detect and handle local image URLs - not being used so comment out or remove
+  /*
   const getImageSrc = (url) => {
     if (!url) return '';
     if (url.startsWith('local:')) {
@@ -1580,12 +1521,15 @@ const InventoryManager = () => {
     }
     return url;
   };
+  */
 
-  // Modified to handle image rendering for both remote and local images
+  // Modified to handle image rendering for both remote and local images - not being used so comment out or remove
+  /*
   const renderImage = (imageSrc, alt, className) => {
     if (!imageSrc) return null;
     return <ImageWithFallback src={imageSrc} alt={alt} className={className} />;
   };
+  */
 
   // Add useEffect to set up beforeunload event listener
   useEffect(() => {
