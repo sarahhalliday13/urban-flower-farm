@@ -27,8 +27,7 @@ function PlantDetails() {
 
   // Add image loading state
   const [imagesLoaded, setImagesLoaded] = useState(false);
-  const placeholderImage = '/images/placeholder.jpg';
-
+  
   // Fetch plants from Firebase with fallbacks
   useEffect(() => {
     const loadPlants = async () => {
@@ -98,16 +97,6 @@ function PlantDetails() {
         const additionalImages = plant.additionalImages || [];
         const allImages = [mainImage, ...additionalImages].filter(img => img); // Filter out any undefined/null
         
-        // Debug for specific plants
-        if (plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") {
-          console.log('PLANT DETAILS IMAGES:', {
-            name: plant.name,
-            mainImage: mainImage,
-            additionalImages: additionalImages,
-            allImages: allImages
-          });
-        }
-        
         setPlant(plant);
         setImages(allImages);
         setLoading(false);
@@ -127,66 +116,29 @@ function PlantDetails() {
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < plantIds.length - 1;
 
-  // Handle different image field names from spreadsheet and filter out any empty/null images
-  // Create a complete array of valid images
-  const getValidImages = () => {
-    if (!plant) return [placeholderImage];
-    
-    // Start with the main image if it exists
-    let allImages = [];
-    
-    // Add main image if it exists and isn't empty
-    if (plant.mainImage && typeof plant.mainImage === 'string' && plant.mainImage.trim() !== '') {
-      allImages.push(plant.mainImage);
-    }
-    
-    // Add additional images if they exist
-    if (plant.additionalImages && Array.isArray(plant.additionalImages)) {
-      // Filter out empty strings and null values
-      const validAdditionalImages = plant.additionalImages.filter(
-        img => img && typeof img === 'string' && img.trim() !== ''
-      );
-      allImages = [...allImages, ...validAdditionalImages];
-    } else if (plant.images && Array.isArray(plant.images)) {
-      // Use images array if it exists (alternative format)
-      const validImages = plant.images.filter(
-        img => img && typeof img === 'string' && img.trim() !== ''
-      );
-      allImages = validImages;
-    }
-    
-    // If no valid images were found, use placeholder
-    return allImages.length > 0 ? allImages : [placeholderImage];
-  };
-  
-  const imagesFromDb = getValidImages();
-
   // Preload images
   useEffect(() => {
     if (!plant) return;
     
-    const imageObjects = imagesFromDb.map(src => {
+    const imageObjects = images.map(src => {
       const img = new Image();
       img.src = src;
-      img.onerror = () => console.log('Image failed to load:', src);
       return img;
     });
     
-    // Mark images as loaded after a short delay, regardless of actual load status
-    // This ensures we don't wait forever for broken images
+    // Mark images as loaded after a short delay
     const timer = setTimeout(() => {
       setImagesLoaded(true);
     }, 1000);
     
     return () => {
       clearTimeout(timer);
-      // Clean up image objects
       imageObjects.forEach(img => {
         img.onload = null;
         img.onerror = null;
       });
     };
-  }, [plant, imagesFromDb]);
+  }, [plant, images]);
 
   const handleNavigation = (direction) => {
     // Reset image loaded state when navigating
@@ -304,9 +256,6 @@ function PlantDetails() {
       }
     }
   };
-
-  // Log the images for debugging
-  console.log('Plant images:', imagesFromDb);
   
   // Use ImageWithFallback for thumbnail images
   const ThumbnailImage = ({ image, name, index, isActive, onClick }) => {
@@ -334,7 +283,7 @@ function PlantDetails() {
           <div className="plant-details-gallery">
             <div className="plant-details-image">
               <ImageWithFallback 
-                src={imagesLoaded ? imagesFromDb[selectedImageIndex] : plant.mainImage} 
+                src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage} 
                 alt={plant.name} 
                 height={500} 
                 width="100%"
@@ -345,9 +294,9 @@ function PlantDetails() {
                 </div>
               )}
             </div>
-            {imagesFromDb.length > 1 && (
+            {images.length > 1 && (
               <div className="image-thumbnails">
-                {imagesFromDb.map((image, index) => (
+                {images.map((image, index) => (
                   <ThumbnailImage
                     key={index}
                     image={image}
@@ -441,33 +390,6 @@ function PlantDetails() {
             </div>
           </div>
         </div>
-
-        {/* Customer comments section hidden temporarily
-        <div className="comments-section">
-          <h2>Customer Comments</h2>
-          <form className="comment-form" onSubmit={handleSubmitComment}>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your comment..."
-              required
-            />
-            <button type="submit">Post Comment</button>
-          </form>
-
-          <div className="comments-list">
-            {comments.map(comment => (
-              <div key={comment.id} className="comment">
-                <div className="comment-header">
-                  <span>{comment.author}</span>
-                  <span>{comment.date}</span>
-                </div>
-                <p>{comment.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        */}
       </div>
       <NavigationButtons className="bottom" />
     </main>
