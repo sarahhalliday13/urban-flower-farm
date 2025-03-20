@@ -147,18 +147,19 @@ function Shop() {
             
             // Special handling for specific plants
             if (plant.name === "Palmer's Beardtongue") {
-              imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-              console.log("Palmer's Beardtongue image:", imageSrc);
+              // Use placeholder image instead of Firebase URL
+              imageSrc = "/images/placeholder.jpg";
+              console.log("Palmer's Beardtongue image set to placeholder");
             } else if (plant.name === "Gaillardia Pulchella Mix") {
-              imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+              // Use placeholder image instead of Firebase URL
+              imageSrc = "/images/placeholder.jpg";
+              console.log("Gaillardia Pulchella image set to placeholder");
             } else if (plant.name === "Lavender Mist") {
-              // Ensure Lavender image has proper URL
-              if (!imageSrc.includes("?alt=media")) {
-                imageSrc = imageSrc.includes("?") 
-                  ? `${imageSrc}&alt=media` 
-                  : `${imageSrc}?alt=media`;
+              // Ensure Lavender image has proper URL or use placeholder
+              if (!imageSrc || imageSrc.includes("firebasestorage")) {
+                imageSrc = "/images/placeholder.jpg";
+                console.log("Lavender Mist image set to placeholder");
               }
-              console.log("Lavender Mist image:", imageSrc);
             }
             
             return (
