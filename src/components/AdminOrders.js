@@ -209,6 +209,7 @@ const AdminOrders = () => {
               placeholder="Search by name, email, or order ID"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
             />
           </div>
           <div className="status-filter">
@@ -216,6 +217,7 @@ const AdminOrders = () => {
             <select 
               value={filter} 
               onChange={(e) => setFilter(e.target.value)}
+              className="status-select"
             >
               <option value="all">All Orders</option>
               <option value="pending">Pending</option>
@@ -414,21 +416,6 @@ const AdminOrders = () => {
           </div>
         </div>
       )}
-      
-      <div className="admin-actions">
-        <button 
-          onClick={() => navigate('/admin')} 
-          className="back-to-admin"
-        >
-          Back to Admin Dashboard
-        </button>
-        <button 
-          onClick={() => navigate('/inventory')} 
-          className="back-to-inventory"
-        >
-          Go to Inventory
-        </button>
-      </div>
     </div>
   );
 };
