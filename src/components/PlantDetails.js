@@ -94,56 +94,29 @@ function PlantDetails() {
         
         console.log(`Found plant with ID ${id}:`, plant.name);
         
-        // Special handling for plants with known good image URLs
-        const KNOWN_PLANTS = {
-          "Palmer's Beardtongue": [
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-          ],
-          "Gaillardia Pulchella Mix": [
-            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-          ]
-        };
+        // Simplify image handling - just use the mainImage with a fallback
+        const plantImages = [];
         
-        // Handle images with a simpler approach
-        let plantImages = [];
-        
-        // First try special handling for known plants
-        if (KNOWN_PLANTS[plant.name]) {
-          console.log(`Using known good images for ${plant.name}`);
-          plantImages = [...KNOWN_PLANTS[plant.name]];
-        }
-        // If no special handling, use whatever images we have in the database
-        else {
-          // Try the images array first (newer format)
-          if (Array.isArray(plant.images) && plant.images.length > 0) {
-            console.log(`Using images array with ${plant.images.length} images`);
-            plantImages = [...plant.images];
-          } 
-          // Fall back to mainImage + additionalImages (legacy format)
-          else {
-            const mainImage = plant.mainImage;
-            if (mainImage) {
-              plantImages.push(mainImage);
-              console.log(`Added main image: ${mainImage.substring(0, 100)}...`);
-            }
-            
-            if (Array.isArray(plant.additionalImages)) {
-              plantImages = [...plantImages, ...plant.additionalImages];
-              console.log(`Added ${plant.additionalImages.length} additional images`);
-            }
-          }
+        // Add the main image if available
+        if (plant.mainImage) {
+          plantImages.push(plant.mainImage);
         }
         
-        // Filter out any empty or null values
-        plantImages = plantImages.filter(img => img);
+        // Try to add additional images (only if they exist)
+        if (Array.isArray(plant.images) && plant.images.length > 0) {
+          // Skip the first image if it's the same as mainImage
+          const additionalImages = plant.images.filter(img => img !== plant.mainImage);
+          plantImages.push(...additionalImages);
+        } else if (Array.isArray(plant.additionalImages)) {
+          plantImages.push(...plant.additionalImages);
+        }
         
-        // If we still have no images, use a placeholder
+        // Ensure we have at least a placeholder
         if (plantImages.length === 0) {
-          plantImages = ['/images/placeholder.jpg'];
-          console.log('No images found, using placeholder');
+          plantImages.push('/images/placeholder.jpg');
         }
         
-        console.log(`Final images for ${plant.name}:`, plantImages.length);
+        console.log(`Plant ${plant.name} has ${plantImages.length} images`);
         
         setPlant(plant);
         setImages(plantImages);
@@ -305,19 +278,22 @@ function PlantDetails() {
     }
   };
   
-  // Use ImageWithFallback for thumbnail images
+  // Use simple img tag for thumbnail images
   const ThumbnailImage = ({ image, name, index, isActive, onClick }) => {
     return (
       <div 
         className={`thumbnail-image ${isActive ? 'active' : ''}`} 
         onClick={() => onClick(index)}
       >
-        <ImageWithFallback 
+        <img 
           src={image} 
           alt={`${name} - Image ${index + 1}`} 
           height={80} 
           width={80} 
           style={{objectFit: 'cover'}}
+          onError={(e) => {
+            e.target.src = '/images/placeholder.jpg';
+          }}
         />
       </div>
     );
@@ -330,11 +306,17 @@ function PlantDetails() {
         <div className="plant-details-container">
           <div className="plant-details-gallery">
             <div className="plant-details-image">
-              <ImageWithFallback 
-                src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage} 
+              <img 
+                src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage || '/images/placeholder.jpg'} 
                 alt={plant.name} 
-                height={500} 
-                width="100%"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+                onError={(e) => {
+                  e.target.src = '/images/placeholder.jpg';
+                }}
               />
               {!imagesLoaded && (
                 <div className="image-loading-overlay">

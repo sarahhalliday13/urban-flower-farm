@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
-import ImageWithFallback from './ImageWithFallback';
+import PlantImage from './PlantImage';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
@@ -142,9 +142,6 @@ function Shop() {
         </div>
         <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {sortedPlants.map(plant => {
-            // Get image URL with fallback
-            const imageSrc = plant.mainImage || '/images/placeholder.jpg';
-            
             return (
               <div key={plant.id} className="plant-card" data-plant={plant.name}>
                 {viewMode === 'grid' ? (
@@ -152,12 +149,7 @@ function Shop() {
                   <>
                     <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                       <div className="plant-image">
-                        <ImageWithFallback 
-                          src={imageSrc} 
-                          alt={plant.name} 
-                          height={250}
-                          width="100%"
-                        />
+                        <PlantImage plant={plant} height={250} width="100%" />
                       </div>
                       <h3 className="plant-common-name">{plant.name}</h3>
                       <p className="plant-description">
@@ -190,12 +182,7 @@ function Shop() {
                   <>
                     <div className="plant-image">
                       <Link to={`/plant/${plant.id}`} style={{ display: 'block', height: '100%' }}>
-                        <ImageWithFallback 
-                          src={imageSrc} 
-                          alt={plant.name} 
-                          height="100%"
-                          width="100%"
-                        />
+                        <PlantImage plant={plant} height="100%" width="100%" />
                       </Link>
                     </div>
                     <div className="plant-content">
