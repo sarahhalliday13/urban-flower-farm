@@ -27,6 +27,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-right: 1rem;
 }
 
 .search-box {
@@ -39,6 +40,8 @@
   border-radius: 4px;
   font-size: 0.9rem;
   width: 230px;
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .status-filter {
@@ -60,6 +63,8 @@
   background-color: white;
   min-width: 145px;
   appearance: menulist;
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .admin-page-title {
@@ -397,11 +402,9 @@
 }
 
 .status-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
 }
 
 .status-btn {
@@ -689,17 +692,6 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
-  }
-  
-  .admin-actions {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-  }
-  
-  .admin-actions button {
-    width: 100%;
-    max-width: 300px;
   }
   
   .order-details-header {

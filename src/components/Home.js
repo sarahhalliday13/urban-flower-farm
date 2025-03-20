@@ -29,7 +29,7 @@ const PlantCard = ({ plant }) => {
         )}
       </Link>
       <div className="plant-actions">
-        <Link to={`/plant/${plant.id}`} className="plant-view">View Details</Link>
+        <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
       </div>
     </div>
   );
@@ -195,7 +195,7 @@ function Home({ isFirstVisit }) {
         <section className="featured-plants">
           <div className="featured-plants-header">
             {!isMobile && <h2>Featured</h2>}
-            <Link to="/shop" className="view-all-link">View All</Link>
+            <Link to="/shop" className="view-all-button">View All</Link>
           </div>
           
           {loading ? (
@@ -207,6 +207,12 @@ function Home({ isFirstVisit }) {
               {featuredPlants.map(plant => (
                 <PlantCard key={plant.id} plant={plant} />
               ))}
+            </div>
+          )}
+          
+          {!loading && !error && (
+            <div className="featured-plants-footer" style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <Link to="/shop" className="view-all-button">View All</Link>
             </div>
           )}
         </section>
