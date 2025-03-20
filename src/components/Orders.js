@@ -308,16 +308,18 @@ const Orders = () => {
         <div className="orders-header">
           <div className="user-info">
             <p>Showing orders for: <span className="email-display">{userEmail}</span></p>
-            <button 
-              onClick={() => {
-                setUserEmail('');
-                setEmailInput('');
-                localStorage.removeItem('userEmail');
-              }}
-              className="change-email-btn"
-            >
-              Change Email
-            </button>
+            <div>
+              <button 
+                onClick={() => {
+                  setUserEmail('');
+                  setEmailInput('');
+                  localStorage.removeItem('userEmail');
+                }}
+                className="change-email-btn"
+              >
+                Change Email
+              </button>
+            </div>
           </div>
         </div>
       ) : (
@@ -450,15 +452,6 @@ const Orders = () => {
           </table>
         </div>
       ) : null}
-      
-      <div className="orders-actions">
-        <button 
-          onClick={() => navigate('/shop')} 
-          className="back-to-shop"
-        >
-          Back to Shop
-        </button>
-      </div>
     </div>
   );
 };
