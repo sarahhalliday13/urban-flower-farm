@@ -176,7 +176,7 @@ function PlantDetails() {
     <div className={`plant-navigation ${className}`}>
       <div className="navigation-container">
         <div className="nav-view-all">
-          <a href="/shop" className="view-all-link">View All</a>
+          <a href="/shop" className="view-all-link">Back to Shop</a>
         </div>
         <div className="nav-group">
           <button
@@ -342,7 +342,11 @@ function PlantDetails() {
           </div>
           <div className="plant-details-info">
             <div className="plant-info">
-              <h1 className="plant-common-name">{plant.name}</h1>
+              <h1 className="plant-name">{plant.name}</h1>
+              <div className="plant-breadcrumb">
+                <a href="/">Home</a> / 
+                <a href="/shop" className="view-all-link">Back to Shop</a>
+              </div>
               {plant.scientificName && (
                 <h2 className="scientific-name">{plant.scientificName}</h2>
               )}
