@@ -10,7 +10,6 @@ const AdminOrders = () => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState({});
   const [showInvoice, setShowInvoice] = useState(null);
   const navigate = useNavigate();
 
@@ -122,126 +121,6 @@ const AdminOrders = () => {
       localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
     } catch (error) {
       console.error('Error updating order status:', error);
-    }
-  };
-
-  const updateInventoryForOrder = async (orderId) => {
-    // Set status to updating
-    setInventoryUpdateStatus(prev => ({
-      ...prev,
-      [orderId]: 'updating'
-    }));
-    
-    try {
-      // Find the order
-      const order = orders.find(o => o.id === orderId);
-      if (!order) {
-        throw new Error(`Order with ID ${orderId} not found`);
-      }
-      
-      console.log(`AdminOrders - Updating inventory for order ${orderId} with items:`, order.items);
-      
-      // Check localStorage before updating
-      try {
-        const storedInventory = localStorage.getItem('plantInventory');
-        console.log("AdminOrders - Current localStorage inventory before update:", 
-          storedInventory ? JSON.parse(storedInventory) : "None");
-      } catch (e) {
-        console.error("AdminOrders - Error reading localStorage before update:", e);
-      }
-      
-      // Update inventory for each item in the order
-      const updateResults = [];
-      for (const item of order.items) {
-        const plantId = item.id;
-        // Get current inventory to calculate new stock level
-        const inventoryData = JSON.parse(localStorage.getItem('plantInventory') || '{}');
-        const currentInventory = inventoryData[plantId] || { currentStock: 0 };
-        const newStock = Math.max(0, currentInventory.currentStock - item.quantity);
-        
-        // Update the inventory
-        const result = await updateInventory(plantId, {
-          currentStock: newStock,
-          status: newStock > 0 ? 'In Stock' : 'Out of Stock',
-          notes: `Updated after order ${orderId}`
-        });
-        
-        updateResults.push(result);
-      }
-      
-      // If all updates were successful
-      const allSuccessful = updateResults.every(result => result && result.success);
-      
-      if (allSuccessful) {
-        // Check localStorage after updating
-        try {
-          const storedInventory = localStorage.getItem('plantInventory');
-          console.log("AdminOrders - Current localStorage inventory after update:", 
-            storedInventory ? JSON.parse(storedInventory) : "None");
-        } catch (e) {
-          console.error("AdminOrders - Error reading localStorage after update:", e);
-        }
-        
-        // Set status to success
-        setInventoryUpdateStatus(prev => ({
-          ...prev,
-          [orderId]: 'success'
-        }));
-        
-        // Clear success status after 3 seconds
-        setTimeout(() => {
-          setInventoryUpdateStatus(prev => ({
-            ...prev,
-            [orderId]: null
-          }));
-        }, 3000);
-        
-        // Update the order's inventory status
-        setOrders(prev => prev.map(o => {
-          if (o.id === orderId) {
-            return {
-              ...o,
-              inventoryUpdated: true
-            };
-          }
-          return o;
-        }));
-        
-        // Save updated orders to localStorage
-        try {
-          localStorage.setItem('orders', JSON.stringify(orders));
-          console.log("AdminOrders - Updated orders saved to localStorage");
-        } catch (e) {
-          console.error("AdminOrders - Error saving orders to localStorage:", e);
-        }
-        
-        // Show success message
-        alert('Inventory has been updated successfully!');
-        
-        // Refresh the orders list
-        console.log("AdminOrders - Refreshing orders list after inventory update");
-        loadOrders();
-      } else {
-        throw new Error('Some inventory updates failed');
-      }
-    } catch (error) {
-      console.error('Error updating inventory:', error);
-      
-      // Set status to error
-      setInventoryUpdateStatus(prev => ({
-        ...prev,
-        [orderId]: 'error'
-      }));
-      
-      // Clear error status after 3 seconds
-      setTimeout(() => {
-        setInventoryUpdateStatus(prev => ({
-          ...prev,
-          [orderId]: null
-        }));
-      }, 3000);
-      
-      throw error;
     }
   };
 
