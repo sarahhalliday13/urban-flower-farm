@@ -226,17 +226,21 @@
 }
 
 .plant-view {
-  background-color: #f5f5f5;
-  color: #333;
+  background-color: #f1f7f1;
+  color: #2c5530;
+  border: 1px solid #a8c5a9;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.plant-view:hover {
+  background-color: #2c5530;
+  color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .plant-buy {
   background-color: #2c5530;
   color: white;
-}
-
-.plant-view:hover {
-  background-color: #e5e5e5;
 }
 
 .plant-buy:hover {
