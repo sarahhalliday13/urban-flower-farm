@@ -142,25 +142,8 @@ function Shop() {
         </div>
         <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {sortedPlants.map(plant => {
-            // Get correct image URL for specific plants
-            let imageSrc = plant.mainImage || '/images/placeholder.jpg';
-            
-            // Special handling for specific plants
-            if (plant.name === "Palmer's Beardtongue") {
-              // Use placeholder image instead of Firebase URL
-              imageSrc = "/images/placeholder.jpg";
-              console.log("Palmer's Beardtongue image set to placeholder");
-            } else if (plant.name === "Gaillardia Pulchella Mix") {
-              // Use placeholder image instead of Firebase URL
-              imageSrc = "/images/placeholder.jpg";
-              console.log("Gaillardia Pulchella image set to placeholder");
-            } else if (plant.name === "Lavender Mist") {
-              // Ensure Lavender image has proper URL or use placeholder
-              if (!imageSrc || imageSrc.includes("firebasestorage")) {
-                imageSrc = "/images/placeholder.jpg";
-                console.log("Lavender Mist image set to placeholder");
-              }
-            }
+            // Get image URL with fallback
+            const imageSrc = plant.mainImage || '/images/placeholder.jpg';
             
             return (
               <div key={plant.id} className="plant-card" data-plant={plant.name}>

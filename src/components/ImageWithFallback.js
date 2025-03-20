@@ -12,57 +12,17 @@ const ImageWithFallback = ({
   width = 'auto'
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  // Using hasError to set a placeholder image
   const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src || '');
   
-  // Add debugging to help identify image issues
+  // Update image source when src prop changes
   useEffect(() => {
-    // This will help identify when props change
     if (src) {
-      // Clean up the URL for display in the console
-      const shortSrc = src.length > 50 ? `${src.substring(0, 47)}...` : src;
-      console.log(`ImageWithFallback received src: ${shortSrc} for alt: ${alt || 'Unknown'}`);
       setImageSrc(src);
     } else {
       setImageSrc('/images/placeholder.jpg');
     }
-  }, [src, alt]);
-  
-  // Helper function to check if a URL or text contains keywords
-  const contains = (text, keywords) => {
-    if (!text) return false;
-    return keywords.some(keyword => 
-      text.toLowerCase().includes(keyword.toLowerCase())
-    );
-  };
-  
-  // For known plants with Firebase issues, hardcode the correct URLs
-  useEffect(() => {
-    // Check for known problematic plants and apply special handling
-    if (src) {
-      if (((alt && contains(alt, ["Palmer's", "Palmer", "Beardtongue", "Penstemon"])) || 
-           (src && contains(src, ["palmer", "penstemon", "beardtongue"])))) {
-        console.log(`Special handling for Palmer's Beardtongue`, { src, alt });
-        // Use local image or placeholder
-        setImageSrc("/images/placeholder.jpg");
-      } 
-      else if (((alt && contains(alt, ["Gaillardia", "Pulchella"])) || 
-                (src && contains(src, ["gaillardia", "pulchella"])))) {
-        console.log(`Special handling for Gaillardia Pulchella`, { src, alt });
-        // Use local image or placeholder
-        setImageSrc("/images/placeholder.jpg");
-      }
-      else if (src.startsWith('local:')) {
-        // Handle local URLs (remove the 'local:' prefix)
-        setImageSrc(src.substring(6));
-      }
-      // If we have an error but a source is provided, set the placeholder
-      else if (hasError) {
-        setImageSrc('/images/placeholder.jpg');
-      }
-    }
-  }, [src, alt, hasError]);
+  }, [src]);
   
   const containerStyle = {
     position: 'relative',
@@ -110,28 +70,14 @@ const ImageWithFallback = ({
         alt={alt || 'Image'}
         className={className}
         style={imgStyle}
-        crossOrigin="anonymous"
-        referrerPolicy="no-referrer"
         loading="lazy"
         onLoad={() => {
-          console.log(`Image loaded successfully: ${alt || 'Unknown'}`);
           setIsLoaded(true);
         }}
         onError={(e) => {
-          console.log(`Image load error: ${alt || 'Unknown image'} with src: ${imageSrc?.substring(0, 50) || 'no src'}`);
-          
-          // For all Firebase storage images, just use placeholder instead of trying other Firebase URLs
-          if (imageSrc && imageSrc.includes('firebasestorage.googleapis.com')) {
-            console.log(`Firebase storage URL failed, using placeholder for: ${alt || 'Unknown'}`);
-            setHasError(true);
-            e.target.src = '/images/placeholder.jpg';
-          } else {
-            setHasError(true);
-            e.target.src = '/images/placeholder.jpg';
-          }
+          setHasError(true);
+          e.target.src = '/images/placeholder.jpg';
           setIsLoaded(true);
-          
-          // Return true to prevent the default error handling
           return true;
         }}
       />
