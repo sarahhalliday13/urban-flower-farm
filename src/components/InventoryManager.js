@@ -19,6 +19,7 @@ import { useAdmin, updatePlantData } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
+import ImageWithFallback from './ImageWithFallback';
 
 // Helper function to verify Firebase configuration
 const checkFirebaseConfig = () => {
@@ -1581,11 +1582,9 @@ const InventoryManager = () => {
   };
 
   // Modified to handle image rendering for both remote and local images
-  const renderImage = (src, alt, className = '') => {
-    if (!src) return null;
-    
-    const imageSrc = getImageSrc(src);
-    return <img src={imageSrc} alt={alt} className={className} />;
+  const renderImage = (imageSrc, alt, className) => {
+    if (!imageSrc) return null;
+    return <ImageWithFallback src={imageSrc} alt={alt} className={className} />;
   };
 
   // Add useEffect to set up beforeunload event listener
@@ -2264,7 +2263,12 @@ const InventoryManager = () => {
                           className={`image-item ${isMainImage ? 'main-image' : ''}`}
                         >
                           <div className="image-container">
-                            <img src={imageUrl} alt={`Plant image ${index+1}`} />
+                            <ImageWithFallback 
+                              src={imageUrl} 
+                              alt={`Plant image ${index+1}`}
+                              height={80}
+                              width={80}
+                            />
                             {isMainImage && (
                               <div className="main-image-badge">Main</div>
                             )}

@@ -395,6 +395,7 @@
   font-size: 0.9rem;
   transition: all 0.2s;
   color: #333;
+  font-weight: normal !important;
 }
 
 .view-button:hover {
@@ -405,6 +406,7 @@
   background-color: #2c5530;
   color: white;
   border-color: #2c5530;
+  font-weight: normal !important;
 }
 
 /* Style for list view */
@@ -415,103 +417,102 @@
 }
 
 .plant-grid.list-view .plant-card {
-  display: grid;
-  grid-template-columns: 120px 1fr auto;
-  grid-template-areas: 
-    "image details actions";
-  gap: 1rem;
-  padding: 0.8rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 1rem;
-  transition: transform 0.3s, box-shadow 0.3s;
+  display: flex;
+  flex-direction: row;
   align-items: center;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 4px;
+  transition: box-shadow 0.3s;
 }
 
 .plant-grid.list-view .plant-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  transform: none;
 }
 
 .plant-grid.list-view .plant-image {
-  width: 120px;
-  height: 120px;
-  grid-area: image;
-  margin: 0;
+  width: 180px;
+  height: 180px;
+  flex: 0 0 180px;
+  margin-right: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
 }
 
-.plant-grid.list-view .plant-card > a {
-  display: contents;
+.plant-grid.list-view .plant-image img,
+.plant-grid.list-view .plant-image > div {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
-.plant-grid.list-view .plant-details {
-  grid-area: details;
-  margin: 0;
+/* Ensure specific plant images fill their containers */
+.plant-grid.list-view .plant-card[data-plant="Palmer's Beardtongue"] .plant-image img,
+.plant-grid.list-view .plant-card[data-plant="Lavender Mist"] .plant-image img {
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
-.plant-grid.list-view .plant-card h3 {
+.plant-grid.list-view .plant-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding-right: 20px;
+}
+
+.plant-grid.list-view .plant-content h3 {
   margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
 }
 
-.plant-grid.list-view .plant-card p {
+.plant-grid.list-view .plant-content p {
   margin: 0 0 0.5rem 0;
 }
 
 .plant-grid.list-view .plant-actions {
-  grid-area: actions;
-  border-top: none;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  justify-self: end;
+  gap: 0.75rem;
+  border: none;
+  padding: 0;
+  width: 120px;
+  flex: 0 0 120px;
   align-self: center;
-  width: 90px;
 }
 
 .plant-grid.list-view .plant-view,
 .plant-grid.list-view .plant-buy {
-  padding: 0.5rem;
   width: 100%;
+  padding: 0.6rem 0;
   text-align: center;
-  font-size: 0.9rem;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
+  border-radius: 4px;
 }
 
-.plant-grid.list-view .plant-card a > div:not(.plant-image) {
-  grid-area: details;
-}
-
-/* Responsive adjustments for list view */
 @media screen and (max-width: 768px) {
   .plant-grid.list-view .plant-card {
-    grid-template-columns: 100px 1fr;
-    grid-template-areas: 
-      "image details"
-      "image actions";
-    gap: 0.75rem;
-    max-height: none;
+    flex-direction: column;
+    padding: 0;
   }
   
   .plant-grid.list-view .plant-image {
-    width: 100px;
-    height: 100px;
+    flex: 0 0 auto;
+    width: 100%;
+    height: 220px;
+  }
+  
+  .plant-grid.list-view .plant-content {
+    padding: 1rem;
   }
   
   .plant-grid.list-view .plant-actions {
     flex-direction: row;
-    grid-area: actions;
-    justify-self: start;
-    width: auto;
-  }
-  
-  .plant-grid.list-view .plant-view,
-  .plant-grid.list-view .plant-buy {
-    width: 80px;
-    height: 36px;
+    width: 100%;
+    flex: 0 0 auto;
+    padding: 1rem;
+    border-top: 1px solid #eee;
   }
 }
 

@@ -2,96 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
+import ImageWithFallback from './ImageWithFallback';
 
 // Plant Card component to properly handle state for each card
 const PlantCard = ({ plant }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
   // For specific plants, directly use the Firebase URL with token
-  let initialSrc = plant.mainImage || '/images/placeholder.jpg';
+  let imageSrc = plant.mainImage || '/images/placeholder.jpg';
   if (plant.name === "Palmer's Beardtongue") {
-    initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-    console.log('HARD-CODED PALMER URL:', initialSrc);
+    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
   } else if (plant.name === "Gaillardia Pulchella Mix") {
-    initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-    console.log('HARD-CODED GAILLARDIA URL:', initialSrc);
+    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
   }
-  
-  const [imageSrc, setImageSrc] = useState(initialSrc);
-  
-  // Debug log for plants with Firebase URLs
-  useEffect(() => {
-    if (plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") {
-      console.log(`RENDERING ${plant.name.toUpperCase()} IN HOME:`, {
-        name: plant.name,
-        id: plant.id,
-        mainImage: plant.mainImage,
-        initialImageSrc: imageSrc,
-        hasValidImage: !!plant.mainImage,
-        imageType: typeof plant.mainImage,
-        isLoaded: imageLoaded
-      });
-    }
-  }, [plant, imageSrc, imageLoaded]);
 
   return (
     <div className="plant-card">
-      {(plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") && (
-        <div style={{position: 'absolute', top: '5px', right: '5px', zIndex: 100}}>
-          <button onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const url = plant.name === "Palmer's Beardtongue" 
-              ? "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-              : "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-            window.open(url, "_blank");
-          }} style={{background: 'red', color: 'white', border: 'none', padding: '5px', borderRadius: '3px', fontSize: '10px'}}>
-            Test Firebase URL
-          </button>
-        </div>
-      )}
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="plant-image">
-          {!imageLoaded && 
-            <div className="image-placeholder" style={{
-              height: "200px",
-              background: "#f0f0f0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <span>Loading...</span>
-            </div>
-          }
-          <img 
-            src={imageSrc}
-            alt={plant.name}
-            style={{ display: imageLoaded ? 'block' : 'none' }}
-            onLoad={() => {
-              console.log('Image loaded successfully:', plant.name);
-              setImageLoaded(true);
-            }}
-            onError={(e) => {
-              console.error('Image failed to load:', imageSrc);
-              
-              // If this is the first error and it's a Firebase URL, try with cache buster
-              if (!imageSrc.includes('&t=') && 
-                  imageSrc.includes('firebasestorage')) {
-                
-                console.log('Adding cache buster to Firebase URL:', plant.name);
-                const timestamp = Date.now();
-                const newSrc = imageSrc.includes('?') 
-                  ? `${imageSrc}&t=${timestamp}` 
-                  : `${imageSrc}?alt=media&t=${timestamp}`;
-                  
-                console.log('New src with cache buster:', newSrc);
-                setImageSrc(newSrc);
-              } else {
-                // We've already tried or it's not a Firebase URL, use placeholder
-                console.log('Using placeholder for', plant.name);
-                setImageSrc('/images/placeholder.jpg');
-              }
-            }}
+          <ImageWithFallback 
+            src={imageSrc} 
+            alt={plant.name} 
+            height={250}
+            width="100%"
           />
         </div>
         <h3>{plant.name}</h3>

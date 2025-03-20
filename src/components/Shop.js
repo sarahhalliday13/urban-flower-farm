@@ -3,73 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
-
-// Added ShopImage component for better image handling
-const ShopImage = ({ plant }) => {
-  const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  // Set correct image URL on component mount
-  useEffect(() => {
-    let src = plant.mainImage || '/images/placeholder.jpg';
-    
-    // Use hard-coded URLs for specific plants
-    if (plant.name === "Palmer's Beardtongue") {
-      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('Setting hard-coded Palmer URL in Shop:', src);
-    } 
-    else if (plant.name === "Gaillardia Pulchella Mix") {
-      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('Setting hard-coded Gaillardia URL in Shop:', src);
-    }
-    
-    setImageSrc(src);
-  }, [plant.name, plant.mainImage]);
-  
-  return (
-    <>
-      {!imageLoaded && 
-        <div style={{
-          height: "200px",
-          background: "#f0f0f0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <span>Loading...</span>
-        </div>
-      }
-      <img 
-        src={imageSrc}
-        alt={plant.name}
-        style={{ display: imageLoaded ? 'block' : 'none' }}
-        onLoad={() => {
-          console.log(`Image loaded successfully in Shop: ${plant.name}`);
-          setImageLoaded(true);
-        }}
-        onError={(e) => {
-          console.error('Image failed to load:', imageSrc);
-          
-          // Try cache-busting for Firebase URLs
-          if (!imageSrc.includes('&t=') && imageSrc.includes('firebasestorage')) {
-            console.log('Adding cache buster to Firebase URL:', plant.name);
-            const timestamp = Date.now();
-            const newSrc = imageSrc.includes('?') 
-              ? `${imageSrc}&t=${timestamp}` 
-              : `${imageSrc}?alt=media&t=${timestamp}`;
-              
-            console.log('New src with cache buster:', newSrc);
-            setImageSrc(newSrc);
-          } else {
-            // We've already tried or it's not a Firebase URL, use placeholder
-            console.log('Using placeholder for', plant.name);
-            setImageSrc('/images/placeholder.jpg');
-          }
-        }}
-      />
-    </>
-  );
-};
+import ImageWithFallback from './ImageWithFallback';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
@@ -208,34 +142,76 @@ function Shop() {
         </div>
         <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
           {sortedPlants.map(plant => {
-            console.log('Rendering plant:', plant);
+            // Get correct image URL for specific plants
+            let imageSrc = plant.mainImage || '/images/placeholder.jpg';
+            
+            // Special handling for specific plants
+            if (plant.name === "Palmer's Beardtongue") {
+              imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+              console.log("Palmer's Beardtongue image:", imageSrc);
+            } else if (plant.name === "Gaillardia Pulchella Mix") {
+              imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+            } else if (plant.name === "Lavender Mist") {
+              // Ensure Lavender image has proper URL
+              if (!imageSrc.includes("?alt=media")) {
+                imageSrc = imageSrc.includes("?") 
+                  ? `${imageSrc}&alt=media` 
+                  : `${imageSrc}?alt=media`;
+              }
+              console.log("Lavender Mist image:", imageSrc);
+            }
+            
             return (
-              <div key={plant.id} className="plant-card">
+              <div key={plant.id} className="plant-card" data-plant={plant.name}>
                 {viewMode === 'grid' ? (
                   // Grid view - link wraps the entire content except actions
-                  <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="plant-image">
-                      <ShopImage plant={plant} />
-                    </div>
-                    <h3 className="plant-common-name">{plant.name}</h3>
-                    <p className="plant-description">
-                      {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
-                    </p>
-                    <p>${plant.price}</p>
-                    {plant.inventory?.status && (
-                      <div className="plant-status">
-                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                          {plant.inventory.status}
-                        </span>
+                  <>
+                    <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div className="plant-image">
+                        <ImageWithFallback 
+                          src={imageSrc} 
+                          alt={plant.name} 
+                          height={250}
+                          width="100%"
+                        />
                       </div>
-                    )}
-                  </Link>
+                      <h3 className="plant-common-name">{plant.name}</h3>
+                      <p className="plant-description">
+                        {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
+                      </p>
+                      <p>${plant.price}</p>
+                      {plant.inventory?.status && (
+                        <div className="plant-status">
+                          <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                            {plant.inventory.status}
+                          </span>
+                        </div>
+                      )}
+                    </Link>
+                    <div className="plant-actions">
+                      <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
+                      <button 
+                        className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                        onClick={() => handleAddToCart(plant)}
+                        disabled={!plant.inventory?.currentStock}
+                      >
+                        {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                      </button>
+                    </div>
+                  </>
                 ) : (
                   // List view - separate elements with links only on title and image
                   <>
-                    <Link to={`/plant/${plant.id}`} className="plant-image" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <ShopImage plant={plant} />
-                    </Link>
+                    <div className="plant-image">
+                      <Link to={`/plant/${plant.id}`} style={{ display: 'block', height: '100%' }}>
+                        <ImageWithFallback 
+                          src={imageSrc} 
+                          alt={plant.name} 
+                          height="100%"
+                          width="100%"
+                        />
+                      </Link>
+                    </div>
                     <div className="plant-content">
                       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                         <h3 className="plant-common-name">{plant.name}</h3>
@@ -252,19 +228,18 @@ function Shop() {
                         </div>
                       )}
                     </div>
+                    <div className="plant-actions">
+                      <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
+                      <button 
+                        className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
+                        onClick={() => handleAddToCart(plant)}
+                        disabled={!plant.inventory?.currentStock}
+                      >
+                        {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                      </button>
+                    </div>
                   </>
                 )}
-                
-                <div className="plant-actions">
-                  <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                  <button 
-                    className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
-                    onClick={() => handleAddToCart(plant)}
-                    disabled={!plant.inventory?.currentStock}
-                  >
-                    {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                  </button>
-                </div>
               </div>
             );
           })}
