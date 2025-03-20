@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
+import ImageWithFallback from './ImageWithFallback';
 
 function PlantDetails() {
   const { id } = useParams();
@@ -307,129 +308,19 @@ function PlantDetails() {
   // Log the images for debugging
   console.log('Plant images:', imagesFromDb);
   
-  // Enhanced image components with error handling
-  const MainImageWithFallback = ({ image, name }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    
-    // For specific plants, directly use the Firebase URL with token
-    let initialSrc = image || '/images/placeholder.jpg';
-    if (name === "Palmer's Beardtongue" && image && !image.includes('token')) {
-      initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('HARD-CODED PALMER URL IN DETAILS:', initialSrc);
-    } else if (name === "Gaillardia Pulchella Mix" && image && !image.includes('token')) {
-      initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('HARD-CODED GAILLARDIA URL IN DETAILS:', initialSrc);
-    }
-    
-    const [imageSrc, setImageSrc] = useState(initialSrc);
-    
-    return (
-      <>
-        {!imageLoaded && 
-          <div className="image-placeholder" style={{
-            height: "400px",
-            background: "#f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <span>Loading...</span>
-          </div>
-        }
-        <img 
-          src={imageSrc}
-          alt={name}
-          className="main-image"
-          style={{ display: imageLoaded ? 'block' : 'none' }}
-          onLoad={() => {
-            console.log('Detail image loaded successfully:', name);
-            setImageLoaded(true);
-          }}
-          onError={(e) => {
-            console.error('Detail image failed to load:', imageSrc);
-            
-            // If this is the first error and it's a Firebase URL, try with cache buster
-            if (!imageSrc.includes('&t=') && 
-                imageSrc.includes('firebasestorage')) {
-              
-              console.log('Adding cache buster to Firebase URL in details:', name);
-              const timestamp = Date.now();
-              const newSrc = imageSrc.includes('?') 
-                ? `${imageSrc}&t=${timestamp}` 
-                : `${imageSrc}?alt=media&t=${timestamp}`;
-                
-              console.log('New src with cache buster:', newSrc);
-              setImageSrc(newSrc);
-            } else {
-              // We've already tried or it's not a Firebase URL, use placeholder
-              console.log('Using placeholder for', name);
-              setImageSrc('/images/placeholder.jpg');
-            }
-          }}
-        />
-      </>
-    );
-  };
-
-  // Thumbnail image component with proper error handling for Firebase
+  // Use ImageWithFallback for thumbnail images
   const ThumbnailImage = ({ image, name, index, isActive, onClick }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    
-    // For specific plants, modify thumbs if needed
-    let initialSrc = image || '/images/placeholder.jpg';
-    if (name === "Palmer's Beardtongue" && image && !image.includes('token') && index > 0) {
-      const thumbNum = index + 1;
-      initialSrc = `https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri${thumbNum}.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739`;
-      console.log(`HARD-CODED PALMER THUMB ${index}:`, initialSrc);
-    } else if (name === "Gaillardia Pulchella Mix" && image && !image.includes('token') && index > 0) {
-      const thumbNum = index + 1;
-      initialSrc = `https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella${thumbNum}.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739`;
-      console.log(`HARD-CODED GAILLARDIA THUMB ${index}:`, initialSrc);
-    }
-    
-    const [imageSrc, setImageSrc] = useState(initialSrc);
-    
     return (
       <div 
-        className={`thumbnail ${isActive ? 'active' : ''}`} 
+        className={`thumbnail-image ${isActive ? 'active' : ''}`} 
         onClick={() => onClick(index)}
       >
-        {!imageLoaded && 
-          <div style={{
-            width: "60px",
-            height: "60px",
-            background: "#f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <span style={{fontSize: "10px"}}>Loading</span>
-          </div>
-        }
-        <img 
-          src={imageSrc}
-          alt={`${name} - view ${index + 1}`}
-          style={{ display: imageLoaded ? 'block' : 'none' }}
-          onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            console.error('Thumbnail failed to load:', imageSrc);
-            
-            // If this is the first error and it's a Firebase URL, try with cache buster
-            if (!imageSrc.includes('&t=') && 
-                imageSrc.includes('firebasestorage')) {
-              
-              console.log('Adding cache buster to thumbnail:', name, index);
-              const timestamp = Date.now();
-              const newSrc = imageSrc.includes('?') 
-                ? `${imageSrc}&t=${timestamp}` 
-                : `${imageSrc}?alt=media&t=${timestamp}`;
-                
-              setImageSrc(newSrc);
-            } else {
-              // We've already tried or it's not a Firebase URL, use placeholder
-              setImageSrc('/images/placeholder.jpg');
-            }
-          }}
+        <ImageWithFallback 
+          src={image} 
+          alt={`${name} - Image ${index + 1}`} 
+          height={80} 
+          width={80} 
+          style={{objectFit: 'cover'}}
         />
       </div>
     );
@@ -442,9 +333,11 @@ function PlantDetails() {
         <div className="plant-details-container">
           <div className="plant-details-gallery">
             <div className="plant-details-image">
-              <MainImageWithFallback 
-                image={imagesLoaded ? imagesFromDb[selectedImageIndex] : plant.mainImage} 
-                name={plant.name} 
+              <ImageWithFallback 
+                src={imagesLoaded ? imagesFromDb[selectedImageIndex] : plant.mainImage} 
+                alt={plant.name} 
+                height={500} 
+                width="100%"
               />
               {!imagesLoaded && (
                 <div className="image-loading-overlay">
@@ -488,11 +381,13 @@ function PlantDetails() {
               <div className="price-controls">
                 <div className="quantity-selector">
                   <button 
+                    className="quantity-button"
                     onClick={() => handleQuantityChange(-1)}
                     disabled={quantity <= 1}
                   >-</button>
-                  <span>{quantity}</span>
+                  <span className="quantity">{quantity}</span>
                   <button 
+                    className="quantity-button"
                     onClick={() => handleQuantityChange(1)}
                     disabled={quantity >= (plant.inventory?.currentStock || 0)}
                     title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
