@@ -1,7 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
+import ImageWithFallback from './ImageWithFallback';
+
+// Add an error boundary component
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("PlantDetails error caught:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong.</h2>
+          <details>
+            <summary>Error Details</summary>
+            <p>{this.state.error && this.state.error.toString()}</p>
+            <p>Component Stack: {this.state.errorInfo && this.state.errorInfo.componentStack}</p>
+          </details>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function PlantDetails() {
   const { id } = useParams();
@@ -22,11 +56,6 @@ function PlantDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [plant, setPlant] = useState(null);
-  const [images, setImages] = useState([]);
-
-  // Add image loading state
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const placeholderImage = '/images/placeholder.jpg';
 
   // Fetch plants from Firebase with fallbacks
   useEffect(() => {
@@ -92,6 +121,34 @@ function PlantDetails() {
           return;
         }
         
+        // Special handling for plants with known issues
+        if (plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") {
+          console.log(`FOUND PLANT WITH SPECIAL HANDLING: ${plant.name}`, plant);
+          
+          // Ensure additionalImages exists and is valid
+          if (!plant.additionalImages || !Array.isArray(plant.additionalImages) || plant.additionalImages.length === 0) {
+            console.log(`Fixing additionalImages for ${plant.name}`);
+            
+            if (plant.name === "Palmer's Beardtongue") {
+              plant.additionalImages = [
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri5.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+              ];
+            } else if (plant.name === "Gaillardia Pulchella Mix") {
+              plant.additionalImages = [
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+                "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella5.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+              ];
+            }
+            
+            console.log(`After fixing, additionalImages:`, plant.additionalImages);
+          }
+        }
+        
         // Process images - combine main image and additional images
         const mainImage = plant.mainImage || '/images/placeholder.jpg';
         const additionalImages = plant.additionalImages || [];
@@ -108,7 +165,6 @@ function PlantDetails() {
         }
         
         setPlant(plant);
-        setImages(allImages);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching plant:', err);
@@ -128,10 +184,31 @@ function PlantDetails() {
 
   // Handle different image field names from spreadsheet and filter out any empty/null images
   // Create a complete array of valid images
+  // 
+  // IMPORTANT: This app MUST use Firebase Storage URLs for images, not local paths.
+  // Images should use Firebase Storage URLs with format:
+  // https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
   const getValidImages = () => {
-    if (!plant) return [placeholderImage];
+    if (!plant) return ['/images/placeholder.jpg'];
     
-    // Start with the main image if it exists
+    // For known plants, use Firebase Storage URLs with tokens
+    if (plant.name === "Palmer's Beardtongue") {
+      return [
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+      ];
+    } else if (plant.name === "Gaillardia Pulchella Mix") {
+      return [
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+        "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+      ];
+    }
+    
+    // For other plants, start with main image
     let allImages = [];
     
     // Add main image if it exists and isn't empty
@@ -145,6 +222,7 @@ function PlantDetails() {
       const validAdditionalImages = plant.additionalImages.filter(
         img => img && typeof img === 'string' && img.trim() !== ''
       );
+      
       allImages = [...allImages, ...validAdditionalImages];
     } else if (plant.images && Array.isArray(plant.images)) {
       // Use images array if it exists (alternative format)
@@ -152,50 +230,20 @@ function PlantDetails() {
         img => img && typeof img === 'string' && img.trim() !== ''
       );
       allImages = validImages;
-    }
+    } 
     
     // If no valid images were found, use placeholder
-    return allImages.length > 0 ? allImages : [placeholderImage];
+    return allImages.length > 0 ? allImages : ['/images/placeholder.jpg'];
   };
   
   const imagesFromDb = getValidImages();
 
-  // Preload images
-  useEffect(() => {
-    if (!plant) return;
-    
-    const imageObjects = imagesFromDb.map(src => {
-      const img = new Image();
-      img.src = src;
-      img.onerror = () => console.log('Image failed to load:', src);
-      return img;
-    });
-    
-    // Mark images as loaded after a short delay, regardless of actual load status
-    // This ensures we don't wait forever for broken images
-    const timer = setTimeout(() => {
-      setImagesLoaded(true);
-    }, 1000);
-    
-    return () => {
-      clearTimeout(timer);
-      // Clean up image objects
-      imageObjects.forEach(img => {
-        img.onload = null;
-        img.onerror = null;
-      });
-    };
-  }, [plant, imagesFromDb]);
-
   const handleNavigation = (direction) => {
-    // Reset image loaded state when navigating
-    setImagesLoaded(false);
     setSelectedImageIndex(0);
     
     const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     if (newIndex >= 0 && newIndex < plantIds.length) {
       navigate(`/plant/${plantIds[newIndex]}`);
-      window.scrollTo(0, 0);
     }
   };
 
@@ -307,275 +355,163 @@ function PlantDetails() {
   // Log the images for debugging
   console.log('Plant images:', imagesFromDb);
   
-  // Enhanced image components with error handling
-  const MainImageWithFallback = ({ image, name }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    
-    // For specific plants, directly use the Firebase URL with token
-    let initialSrc = image || '/images/placeholder.jpg';
-    if (name === "Palmer's Beardtongue" && image && !image.includes('token')) {
-      initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('HARD-CODED PALMER URL IN DETAILS:', initialSrc);
-    } else if (name === "Gaillardia Pulchella Mix" && image && !image.includes('token')) {
-      initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('HARD-CODED GAILLARDIA URL IN DETAILS:', initialSrc);
-    }
-    
-    const [imageSrc, setImageSrc] = useState(initialSrc);
-    
-    return (
-      <>
-        {!imageLoaded && 
-          <div className="image-placeholder" style={{
-            height: "400px",
-            background: "#f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <span>Loading...</span>
-          </div>
-        }
-        <img 
-          src={imageSrc}
-          alt={name}
-          className="main-image"
-          style={{ display: imageLoaded ? 'block' : 'none' }}
-          onLoad={() => {
-            console.log('Detail image loaded successfully:', name);
-            setImageLoaded(true);
-          }}
-          onError={(e) => {
-            console.error('Detail image failed to load:', imageSrc);
-            
-            // If this is the first error and it's a Firebase URL, try with cache buster
-            if (!imageSrc.includes('&t=') && 
-                imageSrc.includes('firebasestorage')) {
-              
-              console.log('Adding cache buster to Firebase URL in details:', name);
-              const timestamp = Date.now();
-              const newSrc = imageSrc.includes('?') 
-                ? `${imageSrc}&t=${timestamp}` 
-                : `${imageSrc}?alt=media&t=${timestamp}`;
-                
-              console.log('New src with cache buster:', newSrc);
-              setImageSrc(newSrc);
-            } else {
-              // We've already tried or it's not a Firebase URL, use placeholder
-              console.log('Using placeholder for', name);
-              setImageSrc('/images/placeholder.jpg');
-            }
-          }}
-        />
-      </>
-    );
-  };
-
-  // Thumbnail image component with proper error handling for Firebase
-  const ThumbnailImage = ({ image, name, index, isActive, onClick }) => {
-    const [imageLoaded, setImageLoaded] = useState(false);
-    
-    // For specific plants, modify thumbs if needed
-    let initialSrc = image || '/images/placeholder.jpg';
-    if (name === "Palmer's Beardtongue" && image && !image.includes('token') && index > 0) {
-      const thumbNum = index + 1;
-      initialSrc = `https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri${thumbNum}.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739`;
-      console.log(`HARD-CODED PALMER THUMB ${index}:`, initialSrc);
-    } else if (name === "Gaillardia Pulchella Mix" && image && !image.includes('token') && index > 0) {
-      const thumbNum = index + 1;
-      initialSrc = `https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella${thumbNum}.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739`;
-      console.log(`HARD-CODED GAILLARDIA THUMB ${index}:`, initialSrc);
-    }
-    
-    const [imageSrc, setImageSrc] = useState(initialSrc);
-    
-    return (
-      <div 
-        className={`thumbnail ${isActive ? 'active' : ''}`} 
-        onClick={() => onClick(index)}
-      >
-        {!imageLoaded && 
-          <div style={{
-            width: "60px",
-            height: "60px",
-            background: "#f0f0f0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
-          }}>
-            <span style={{fontSize: "10px"}}>Loading</span>
-          </div>
-        }
-        <img 
-          src={imageSrc}
-          alt={`${name} - view ${index + 1}`}
-          style={{ display: imageLoaded ? 'block' : 'none' }}
-          onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            console.error('Thumbnail failed to load:', imageSrc);
-            
-            // If this is the first error and it's a Firebase URL, try with cache buster
-            if (!imageSrc.includes('&t=') && 
-                imageSrc.includes('firebasestorage')) {
-              
-              console.log('Adding cache buster to thumbnail:', name, index);
-              const timestamp = Date.now();
-              const newSrc = imageSrc.includes('?') 
-                ? `${imageSrc}&t=${timestamp}` 
-                : `${imageSrc}?alt=media&t=${timestamp}`;
-                
-              setImageSrc(newSrc);
-            } else {
-              // We've already tried or it's not a Firebase URL, use placeholder
-              setImageSrc('/images/placeholder.jpg');
-            }
-          }}
-        />
-      </div>
-    );
-  };
+  // Simplified thumbnail component
+  const ThumbnailImage = ({ image, name, index, isActive, onClick }) => (
+    <div 
+      className={`thumbnail ${isActive ? 'active' : ''}`} 
+      onClick={() => onClick(index)}
+    >
+      <ImageWithFallback 
+        src={image}
+        alt={`${name} - view ${index + 1}`}
+        height={60}
+        width={60}
+        lazyLoad={false}
+      />
+    </div>
+  );
 
   return (
-    <main>
-      <NavigationButtons className="top" />
-      <div className="plant-details">
-        <div className="plant-details-container">
-          <div className="plant-details-gallery">
-            <div className="plant-details-image">
-              <MainImageWithFallback 
-                image={imagesLoaded ? imagesFromDb[selectedImageIndex] : plant.mainImage} 
-                name={plant.name} 
-              />
-              {!imagesLoaded && (
-                <div className="image-loading-overlay">
-                  <div className="loading-spinner"></div>
+    <ErrorBoundary>
+      <main>
+        <NavigationButtons className="top" />
+        <div className="plant-details">
+          <div className="plant-details-container">
+            <div className="plant-details-gallery">
+              <div className="plant-details-image">
+                <ImageWithFallback 
+                  src={imagesFromDb[selectedImageIndex]}
+                  alt={plant.name}
+                  height={400}
+                  className="main-image"
+                  lazyLoad={false}
+                />
+              </div>
+              {imagesFromDb.length > 1 && (
+                <div className="image-thumbnails">
+                  {imagesFromDb.map((image, index) => (
+                    <ThumbnailImage
+                      key={index}
+                      image={image}
+                      name={plant.name}
+                      index={index}
+                      isActive={selectedImageIndex === index}
+                      onClick={(newIndex) => {
+                        setSelectedImageIndex(newIndex);
+                      }}
+                    />
+                  ))}
                 </div>
               )}
             </div>
-            {imagesFromDb.length > 1 && (
-              <div className="image-thumbnails">
-                {imagesFromDb.map((image, index) => (
-                  <ThumbnailImage
-                    key={index}
-                    image={image}
-                    name={plant.name}
-                    index={index}
-                    isActive={selectedImageIndex === index}
-                    onClick={(newIndex) => {
-                      setSelectedImageIndex(newIndex);
-                    }}
-                  />
-                ))}
+            <div className="plant-details-info">
+              <div className="plant-info">
+                <h1 className="plant-common-name">{plant.name}</h1>
+                {plant.scientificName && (
+                  <h2 className="scientific-name">{plant.scientificName}</h2>
+                )}
+                <div className="plant-meta">
+                  {plant.commonName && plant.scientificName && (
+                    <p className="plant-names">
+                      {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-          <div className="plant-details-info">
-            <div className="plant-info">
-              <h1 className="plant-common-name">{plant.name}</h1>
-              {plant.scientificName && (
-                <h2 className="scientific-name">{plant.scientificName}</h2>
-              )}
-              <div className="plant-meta">
-                {plant.commonName && plant.scientificName && (
-                  <p className="plant-names">
-                    {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
-                  </p>
+              <div className="price-action-container">
+                <p className="price">${plant.price}</p>
+                <div className="price-controls">
+                  <div className="quantity-selector">
+                    <button 
+                      onClick={() => handleQuantityChange(-1)}
+                      disabled={quantity <= 1}
+                    >-</button>
+                    <span>{quantity}</span>
+                    <button 
+                      onClick={() => handleQuantityChange(1)}
+                      disabled={quantity >= (plant.inventory?.currentStock || 0)}
+                      title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
+                    >+</button>
+                  </div>
+                  <button 
+                    className="plant-buy"
+                    onClick={handleAddToCart}
+                    disabled={!plant.inventory?.currentStock || plant.inventory.currentStock <= 0}
+                  >
+                    {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Inventory Status Information */}
+              <div className="inventory-status">
+                {plant.inventory?.currentStock > 0 && (
+                  <div className="inventory-status-row">
+                    <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                      {plant.inventory?.status || 'Unknown'}
+                    </span>
+                    
+                    <span className="stock-quantity">
+                      {plant.inventory.currentStock} in stock
+                    </span>
+                  </div>
+                )}
+                
+                {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
+                  <span className="restock-date">
+                    Expected restock: {plant.inventory.restockDate}
+                  </span>
+                )}
+                
+                {plant.inventory?.notes && (
+                  <p className="inventory-notes">{plant.inventory.notes}</p>
                 )}
               </div>
-            </div>
-            <div className="price-action-container">
-              <p className="price">${plant.price}</p>
-              <div className="price-controls">
-                <div className="quantity-selector">
-                  <button 
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
-                  >-</button>
-                  <span>{quantity}</span>
-                  <button 
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= (plant.inventory?.currentStock || 0)}
-                    title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
-                  >+</button>
-                </div>
-                <button 
-                  className="plant-buy"
-                  onClick={handleAddToCart}
-                  disabled={!plant.inventory?.currentStock || plant.inventory.currentStock <= 0}
-                >
-                  {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                </button>
+              
+              <p className="description">{plant.description}</p>
+              <div className="plant-specs">
+                <h3>Plant Specifications</h3>
+                {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
+                {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
+                {plant.light && <p><strong>Light:</strong> {plant.light}</p>}
+                {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing}</p>}
+                {plant.attributes && <p><strong>Attributes:</strong> {plant.attributes}</p>}
+                {plant.hardinessZone && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
+                {plant.height && <p><strong>Height:</strong> {plant.height}</p>}
               </div>
             </div>
-            
-            {/* Inventory Status Information */}
-            <div className="inventory-status">
-              {plant.inventory?.currentStock > 0 && (
-                <div className="inventory-status-row">
-                  <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                    {plant.inventory?.status || 'Unknown'}
-                  </span>
-                  
-                  <span className="stock-quantity">
-                    {plant.inventory.currentStock} in stock
-                  </span>
+          </div>
+
+          {/* Customer comments section hidden temporarily
+          <div className="comments-section">
+            <h2>Customer Comments</h2>
+            <form className="comment-form" onSubmit={handleSubmitComment}>
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Share your comment..."
+                required
+              />
+              <button type="submit">Post Comment</button>
+            </form>
+
+            <div className="comments-list">
+              {comments.map(comment => (
+                <div key={comment.id} className="comment">
+                  <div className="comment-header">
+                    <span>{comment.author}</span>
+                    <span>{comment.date}</span>
+                  </div>
+                  <p>{comment.text}</p>
                 </div>
-              )}
-              
-              {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
-                <span className="restock-date">
-                  Expected restock: {plant.inventory.restockDate}
-                </span>
-              )}
-              
-              {plant.inventory?.notes && (
-                <p className="inventory-notes">{plant.inventory.notes}</p>
-              )}
-            </div>
-            
-            <p className="description">{plant.description}</p>
-            <div className="plant-specs">
-              <h3>Plant Specifications</h3>
-              {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
-              {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
-              {plant.light && <p><strong>Light:</strong> {plant.light}</p>}
-              {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing}</p>}
-              {plant.attributes && <p><strong>Attributes:</strong> {plant.attributes}</p>}
-              {plant.hardinessZone && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
-              {plant.height && <p><strong>Height:</strong> {plant.height}</p>}
+              ))}
             </div>
           </div>
+          */}
         </div>
-
-        {/* Customer comments section hidden temporarily
-        <div className="comments-section">
-          <h2>Customer Comments</h2>
-          <form className="comment-form" onSubmit={handleSubmitComment}>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your comment..."
-              required
-            />
-            <button type="submit">Post Comment</button>
-          </form>
-
-          <div className="comments-list">
-            {comments.map(comment => (
-              <div key={comment.id} className="comment">
-                <div className="comment-header">
-                  <span>{comment.author}</span>
-                  <span>{comment.date}</span>
-                </div>
-                <p>{comment.text}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        */}
-      </div>
-      <NavigationButtons className="bottom" />
-    </main>
+        <NavigationButtons className="bottom" />
+      </main>
+    </ErrorBoundary>
   );
 }
 

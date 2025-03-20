@@ -1,75 +1,42 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Component } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
+import ImageWithFallback from './ImageWithFallback';
 
-// Added ShopImage component for better image handling
-const ShopImage = ({ plant }) => {
-  const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  // Set correct image URL on component mount
-  useEffect(() => {
-    let src = plant.mainImage || '/images/placeholder.jpg';
-    
-    // Use hard-coded URLs for specific plants
-    if (plant.name === "Palmer's Beardtongue") {
-      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('Setting hard-coded Palmer URL in Shop:', src);
-    } 
-    else if (plant.name === "Gaillardia Pulchella Mix") {
-      src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-      console.log('Setting hard-coded Gaillardia URL in Shop:', src);
-    }
-    
-    setImageSrc(src);
-  }, [plant.name, plant.mainImage]);
-  
-  return (
-    <>
-      {!imageLoaded && 
-        <div style={{
-          height: "200px",
-          background: "#f0f0f0",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          <span>Loading...</span>
+// Add an error boundary component
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Shop component error caught:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong in the Shop.</h2>
+          <details>
+            <summary>Error Details</summary>
+            <p>{this.state.error && this.state.error.toString()}</p>
+            <p>Component Stack: {this.state.errorInfo && this.state.errorInfo.componentStack}</p>
+          </details>
         </div>
-      }
-      <img 
-        src={imageSrc}
-        alt={plant.name}
-        style={{ display: imageLoaded ? 'block' : 'none' }}
-        onLoad={() => {
-          console.log(`Image loaded successfully in Shop: ${plant.name}`);
-          setImageLoaded(true);
-        }}
-        onError={(e) => {
-          console.error('Image failed to load:', imageSrc);
-          
-          // Try cache-busting for Firebase URLs
-          if (!imageSrc.includes('&t=') && imageSrc.includes('firebasestorage')) {
-            console.log('Adding cache buster to Firebase URL:', plant.name);
-            const timestamp = Date.now();
-            const newSrc = imageSrc.includes('?') 
-              ? `${imageSrc}&t=${timestamp}` 
-              : `${imageSrc}?alt=media&t=${timestamp}`;
-              
-            console.log('New src with cache buster:', newSrc);
-            setImageSrc(newSrc);
-          } else {
-            // We've already tried or it's not a Firebase URL, use placeholder
-            console.log('Using placeholder for', plant.name);
-            setImageSrc('/images/placeholder.jpg');
-          }
-        }}
-      />
-    </>
-  );
-};
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
@@ -175,73 +142,75 @@ function Shop() {
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
 
   return (
-    <div className={`shop-main ${viewMode === 'list' ? 'list-view-mode' : ''}`}>
-      <section className="featured-plants">
-        <div className="featured-plants-header">
-          <h2>All the Flowers</h2>
-          <div className="shop-controls">
-            <div className="sort-control">
-              <label htmlFor="sort-select">Sort by:</label>
-              <select 
-                id="sort-select" 
-                value={sortOption} 
-                onChange={handleSortChange}
-                className="sort-select"
-                aria-label="Sort plants by selected option"
-              >
-                <option value="default">Default</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="price-high-low">Price: High to Low</option>
-              </select>
-            </div>
-            <div className="view-toggle">
-              <button 
-                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
-                onClick={toggleViewMode}
-                title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-                aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-              >
-                {viewMode === 'grid' ? 'List View' : 'Grid View'}
-              </button>
+    <ErrorBoundary>
+      <div className={`shop-main ${viewMode === 'list' ? 'list-view-mode' : ''}`}>
+        <section className="featured-plants">
+          <div className="featured-plants-header">
+            <h2>All the Flowers</h2>
+            <div className="shop-controls">
+              <div className="sort-control">
+                <label htmlFor="sort-select">Sort by:</label>
+                <select 
+                  id="sort-select" 
+                  value={sortOption} 
+                  onChange={handleSortChange}
+                  className="sort-select"
+                  aria-label="Sort plants by selected option"
+                >
+                  <option value="default">Default</option>
+                  <option value="price-low-high">Price: Low to High</option>
+                  <option value="price-high-low">Price: High to Low</option>
+                </select>
+              </div>
+              <div className="view-toggle">
+                <button 
+                  className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
+                  onClick={toggleViewMode}
+                  title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                  aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
+                >
+                  {viewMode === 'grid' ? 'List View' : 'Grid View'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
-          {sortedPlants.map(plant => {
-            console.log('Rendering plant:', plant);
-            return (
-              <div key={plant.id} className="plant-card">
-                {viewMode === 'grid' ? (
-                  // Grid view - link wraps the entire content except actions
-                  <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    <div className="plant-image">
-                      <ShopImage plant={plant} />
-                    </div>
-                    <h3 className="plant-common-name">{plant.name}</h3>
-                    <p className="plant-description">
-                      {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
-                    </p>
-                    <p>${plant.price}</p>
-                    {plant.inventory?.status && (
-                      <div className="plant-status">
-                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                          {plant.inventory.status}
-                        </span>
+          <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+            {sortedPlants.map(plant => {
+              // IMPORTANT: This app MUST use Firebase Storage URLs for images, not local paths.
+              // Images should use Firebase Storage URLs with format:
+              // https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
+              
+              // Get Firebase Storage URLs with tokens
+              let imageSrc = plant.mainImage || '/images/placeholder.jpg';
+              
+              // Special handling for known plants
+              if (plant.name === "Palmer's Beardtongue") {
+                imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+              } else if (plant.name === "Gaillardia Pulchella Mix") {
+                imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+              } else if (plant.name === "Lavender Mist") {
+                // Use the mainImage from plant data, which should already have the Firebase URL
+                imageSrc = plant.mainImage;
+              } else if (plant.name === "Golden Jubilee Anise Hyssop") {
+                // Use the mainImage from plant data, which should already have the Firebase URL
+                imageSrc = plant.mainImage;
+              }
+              
+              return (
+                <div key={plant.id} className="plant-card">
+                  {viewMode === 'grid' ? (
+                    // Grid view - link wraps the entire content except actions
+                    <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <div className="plant-image">
+                        <ImageWithFallback 
+                          src={imageSrc}
+                          alt={plant.name}
+                          height={200}
+                        />
                       </div>
-                    )}
-                  </Link>
-                ) : (
-                  // List view - separate elements with links only on title and image
-                  <>
-                    <Link to={`/plant/${plant.id}`} className="plant-image" style={{ textDecoration: 'none', color: 'inherit' }}>
-                      <ShopImage plant={plant} />
-                    </Link>
-                    <div className="plant-content">
-                      <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <h3 className="plant-common-name">{plant.name}</h3>
-                      </Link>
+                      <h3 className="plant-common-name">{plant.name}</h3>
                       <p className="plant-description">
-                        {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
+                        {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
                       </p>
                       <p>${plant.price}</p>
                       {plant.inventory?.status && (
@@ -251,26 +220,53 @@ function Shop() {
                           </span>
                         </div>
                       )}
-                    </div>
-                  </>
-                )}
-                
-                <div className="plant-actions">
-                  <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                  <button 
-                    className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
-                    onClick={() => handleAddToCart(plant)}
-                    disabled={!plant.inventory?.currentStock}
-                  >
-                    {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                  </button>
+                    </Link>
+                  ) : (
+                    // List view - separate elements with links only on title and image
+                    <>
+                      <Link to={`/plant/${plant.id}`} className="plant-image" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <ImageWithFallback 
+                          src={imageSrc}
+                          alt={plant.name}
+                          height={200}
+                        />
+                      </Link>
+                      <div className="plant-content">
+                        <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <h3 className="plant-common-name">{plant.name}</h3>
+                        </Link>
+                        <p className="plant-description">
+                          {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
+                        </p>
+                        <p>${plant.price}</p>
+                        {plant.inventory?.status && (
+                          <div className="plant-status">
+                            <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                              {plant.inventory.status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  
+                  <div className="plant-actions">
+                    <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
+                    <button 
+                      className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`} 
+                      onClick={() => handleAddToCart(plant)}
+                      disabled={!plant.inventory?.currentStock}
+                    >
+                      {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-    </div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </ErrorBoundary>
   );
 }
 

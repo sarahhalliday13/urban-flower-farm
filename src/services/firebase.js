@@ -1,4 +1,15 @@
 // Firebase configuration and utility functions
+// 
+// CRITICAL: This application MUST use Firebase Storage URLs for all images.
+// DO NOT use local image paths. Always use Firebase Storage URLs with the following format:
+// https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
+//
+// The following plants require special handling with hardcoded Firebase URLs that include tokens:
+// - "Palmer's Beardtongue": Access from /images/penstemonpalmeri.jpg
+// - "Gaillardia Pulchella Mix": Access from /images/gaillardiapulchella.jpg
+//
+// The token is necessary for authentication to access the images.
+
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove, push, child, query, orderByChild } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
