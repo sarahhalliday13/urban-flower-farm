@@ -12,6 +12,7 @@ const ImageWithFallback = ({
   width = 'auto'
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  // Using hasError to set a placeholder image
   const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src || '');
   
@@ -40,13 +41,13 @@ const ImageWithFallback = ({
   useEffect(() => {
     // Check for known problematic plants and apply special handling
     if (src) {
-      if ((alt && contains(alt, ["Palmer's", "Palmer", "Beardtongue", "Penstemon"]) || 
-          src && contains(src, ["palmer", "penstemon", "beardtongue"]))) {
+      if (((alt && contains(alt, ["Palmer's", "Palmer", "Beardtongue", "Penstemon"])) || 
+           (src && contains(src, ["palmer", "penstemon", "beardtongue"])))) {
         console.log(`Special handling for Palmer's Beardtongue`, { src, alt });
         setImageSrc("https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739");
       } 
-      else if ((alt && contains(alt, ["Gaillardia", "Pulchella"]) || 
-              src && contains(src, ["gaillardia", "pulchella"]))) {
+      else if (((alt && contains(alt, ["Gaillardia", "Pulchella"])) || 
+                (src && contains(src, ["gaillardia", "pulchella"])))) {
         console.log(`Special handling for Gaillardia Pulchella`, { src, alt });
         setImageSrc("https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739");
       }
@@ -54,16 +55,37 @@ const ImageWithFallback = ({
         // Handle local URLs (remove the 'local:' prefix)
         setImageSrc(src.substring(6));
       }
+      // If we have an error but a source is provided, set the placeholder
+      else if (hasError) {
+        setImageSrc('/images/placeholder.jpg');
+      }
     }
-  }, [src, alt]);
+  }, [src, alt, hasError]);
+  
+  const containerStyle = {
+    position: 'relative',
+    height: height,
+    width: width,
+    overflow: 'hidden',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    border: '1px solid #eee',
+    borderRadius: '4px'
+  };
+  
+  const imgStyle = {
+    ...style,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center',
+    display: 'block'
+  };
   
   return (
-    <div style={{ 
-      position: 'relative', 
-      height: height, 
-      width: width,
-      overflow: 'hidden'
-    }}>
+    <div style={containerStyle}>
       {!isLoaded && 
         <div 
           style={{
@@ -85,13 +107,7 @@ const ImageWithFallback = ({
         src={imageSrc}
         alt={alt || 'Image'}
         className={className}
-        style={{ 
-          ...style,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          display: 'block'
-        }}
+        style={imgStyle}
         onLoad={() => {
           console.log(`Image loaded successfully: ${alt || 'Unknown'}`);
           setIsLoaded(true);
@@ -100,10 +116,12 @@ const ImageWithFallback = ({
           console.log(`Image load error: ${alt || 'Unknown image'} with src: ${imageSrc?.substring(0, 50) || 'no src'}`);
           
           // Additional fallback attempt for specific plants on error
-          if (src && (contains(src, ["palmer", "penstemon", "beardtongue"]) || contains(alt, ["Palmer", "Beardtongue", "Penstemon"]))) {
+          if (src && ((contains(src, ["palmer", "penstemon", "beardtongue"])) || 
+                      (contains(alt, ["Palmer", "Beardtongue", "Penstemon"])))) {
             console.log("Attempting secondary fallback for Palmer's Beardtongue");
             e.target.src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-          } else if (src && (contains(src, ["gaillardia", "pulchella"]) || contains(alt, ["Gaillardia", "Pulchella"]))) {
+          } else if (src && ((contains(src, ["gaillardia", "pulchella"])) || 
+                             (contains(alt, ["Gaillardia", "Pulchella"])))) {
             console.log("Attempting secondary fallback for Gaillardia Pulchella");
             e.target.src = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
           } else {
