@@ -80,15 +80,20 @@ const InventoryManager = () => {
     commonName: '',
     price: '',
     description: '',
-    images: [], // Use a single array for all images
-    mainImageIndex: 0, // Store the index of the main image
+    images: [],
+    mainImageIndex: 0,
     colour: '',
     light: '',
     height: '',
+    spread: '',
     bloomSeason: '',
-    attributes: '',
+    plantType: '',
+    specialFeatures: '',
+    uses: '',
+    aroma: '',
+    gardeningTips: '',
+    careTips: '',
     hardinessZone: '',
-    spacing: '',
     featured: false,
     inventory: {
       currentStock: 0,
@@ -826,6 +831,25 @@ const InventoryManager = () => {
         images: allImagesUrls,
         // Keep track of which image is the main one
         mainImageIndex: mainImageIndex,
+        // Ensure all fields are present
+        name: plantFormData.name || '',
+        scientificName: plantFormData.scientificName || '',
+        commonName: plantFormData.commonName || '',
+        price: parseFloat(plantFormData.price) || 0,
+        description: plantFormData.description || '',
+        colour: plantFormData.colour || '',
+        light: plantFormData.light || '',
+        height: plantFormData.height || '',
+        spacing: plantFormData.spread || '', // Map spread to spacing
+        bloomSeason: plantFormData.bloomSeason || '',
+        plantType: plantFormData.plantType || '',
+        specialFeatures: plantFormData.specialFeatures || '',
+        uses: plantFormData.uses || '',
+        aroma: plantFormData.aroma || '',
+        gardeningTips: plantFormData.gardeningTips || '',
+        careTips: plantFormData.careTips || '',
+        hardinessZone: plantFormData.hardinessZone || '',
+        featured: plantFormData.featured || false,
         // Remove any legacy additionalImages field to prevent Firebase errors
         additionalImages: null
       };
@@ -940,10 +964,15 @@ const InventoryManager = () => {
         colour: '',
         light: '',
         height: '',
+        spread: '',
         bloomSeason: '',
-        attributes: '',
+        plantType: '',
+        specialFeatures: '',
+        uses: '',
+        aroma: '',
+        gardeningTips: '',
+        careTips: '',
         hardinessZone: '',
-        spacing: '',
         featured: false,
         inventory: {
           currentStock: 0,
@@ -1017,10 +1046,15 @@ const InventoryManager = () => {
       colour: plant.colour || '',
       light: plant.light || '',
       height: plant.height || '',
+      spread: plant.spacing || '', // Map spacing to spread
       bloomSeason: plant.bloomSeason || '',
-      attributes: plant.attributes || '',
+      plantType: plant.plantType || '',
+      specialFeatures: plant.specialFeatures || '',
+      uses: plant.uses || '',
+      aroma: plant.aroma || '',
+      gardeningTips: plant.gardeningTips || '',
+      careTips: plant.careTips || '',
       hardinessZone: plant.hardinessZone || '',
-      spacing: plant.spacing || '',
       featured: plant.featured === true || plant.featured === 'true',
       inventory: {
         currentStock: plant.inventory?.currentStock || 0,
@@ -1230,22 +1264,27 @@ const InventoryManager = () => {
       
       // Transform plant data to match Firebase expected structure
       const transformedPlantsData = validPlants.map(plant => ({
-        id: parseInt(plant.id) || 0,
+        id: parseInt(plant.plant_id) || 0,
         name: plant.name || '',
-        scientificName: plant.latinname || plant.scientificname || '',
+        scientificName: plant.latinname || '',
         commonName: plant.commonname || '',
         price: plant.price || 0,
         featured: plant.featured === 'true' || plant.featured === true,
+        plantType: plant['type(annual/perennial)'] || '',
         description: plant.description || '',
-        bloomSeason: plant.bloomseason || '',
+        bloomSeason: plant['bloom season'] || '',
         colour: plant.colour || '',
-        light: plant.light || '',
-        spacing: plant.spacing || '',
-        attributes: plant.attributes || '',
-        hardinessZone: plant.hardinesszone || '',
-        height: plant.height || '',
-        mainImage: plant.mainimage || '',
-        additionalImages: plant.additionalimages || ''
+        light: plant['sun light'] || '',
+        spacing: plant['spread (inches)'] || '',
+        height: plant['height (inches)'] || '',
+        hardinessZone: plant['hardiness zones'] || '',
+        specialFeatures: plant['special features'] || '',
+        uses: plant.uses || '',
+        aroma: plant.aroma || '',
+        gardeningTips: plant['gardening tips'] || '',
+        careTips: plant['care tips'] || '',
+        mainImage: plant['main image'] || '',
+        additionalImages: plant['additional image'] || ''
       }));
       
       // Get inventory data (if available)
@@ -2533,6 +2572,19 @@ const InventoryManager = () => {
               </div>
               
               <div className="form-group">
+                <label htmlFor="spread">Spread</label>
+                <input
+                  type="text"
+                  id="spread"
+                  name="spread"
+                  value={plantFormData.spread}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
                 <label htmlFor="bloomSeason">Bloom Season</label>
                 <input
                   type="text"
@@ -2542,9 +2594,79 @@ const InventoryManager = () => {
                   onChange={handlePlantFormChange}
                 />
               </div>
+              
+              <div className="form-group">
+                <label htmlFor="plantType">Plant Type</label>
+                <input
+                  type="text"
+                  id="plantType"
+                  name="plantType"
+                  value={plantFormData.plantType}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
             </div>
             
             <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="specialFeatures">Special Features</label>
+                <input
+                  type="text"
+                  id="specialFeatures"
+                  name="specialFeatures"
+                  value={plantFormData.specialFeatures}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="uses">Uses</label>
+                <input
+                  type="text"
+                  id="uses"
+                  name="uses"
+                  value={plantFormData.uses}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="aroma">Aroma</label>
+                <input
+                  type="text"
+                  id="aroma"
+                  name="aroma"
+                  value={plantFormData.aroma}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="gardeningTips">Gardening Tips</label>
+                <input
+                  type="text"
+                  id="gardeningTips"
+                  name="gardeningTips"
+                  value={plantFormData.gardeningTips}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+            </div>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="careTips">Care Tips</label>
+                <input
+                  type="text"
+                  id="careTips"
+                  name="careTips"
+                  value={plantFormData.careTips}
+                  onChange={handlePlantFormChange}
+                />
+              </div>
+              
               <div className="form-group">
                 <label htmlFor="hardinessZone">Hardiness Zone</label>
                 <input
@@ -2555,29 +2677,6 @@ const InventoryManager = () => {
                   onChange={handlePlantFormChange}
                 />
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="spacing">Spacing</label>
-                <input
-                  type="text"
-                  id="spacing"
-                  name="spacing"
-                  value={plantFormData.spacing}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-group full-width">
-              <label htmlFor="attributes">Attributes</label>
-              <input
-                type="text"
-                id="attributes"
-                name="attributes"
-                value={plantFormData.attributes}
-                onChange={handlePlantFormChange}
-                placeholder="Drought-tolerant, Deer-resistant, etc."
-              />
             </div>
             
             <div className="form-actions">
