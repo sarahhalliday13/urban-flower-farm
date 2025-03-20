@@ -970,48 +970,6 @@ export const deletePlant = async (plantId) => {
   }
 };
 
-// Debug function to test Firebase Storage access
-export const testFirebaseStorage = async () => {
-  console.log('Testing Firebase Storage access...');
-  
-  try {
-    // Check if Firebase is initialized
-    if (!storage) {
-      console.warn('Firebase storage is not initialized!');
-      return { success: false, error: 'Firebase storage not initialized' };
-    }
-    
-    // Log Firebase config
-    const config = {
-      apiKey: process.env.REACT_APP_FIREBASE_API_KEY ? 'Set' : 'Not set',
-      authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ? 'Set' : 'Not set',
-      databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL ? 'Set' : 'Not set',
-      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ? 'Set' : 'Not set',
-      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ? 'Set' : 'Not set',
-      messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Not set',
-      appId: process.env.REACT_APP_FIREBASE_APP_ID ? 'Set' : 'Not set'
-    };
-    console.log('Firebase config:', config);
-    
-    // Try to access basic storage information
-    console.log('Firebase storage bucket:', storage.app.options.storageBucket);
-    
-    return { 
-      success: true,
-      message: "Images are working correctly despite console warnings. This is normal.",
-      bucketName: storage.app.options.storageBucket,
-      config
-    };
-  } catch (error) {
-    console.warn('Error in testFirebaseStorage:', error);
-    return { 
-      success: true, 
-      message: "Images are working correctly despite errors. This is normal.",
-      error: `${error.code || ''} ${error.message}`
-    };
-  }
-};
-
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -1027,8 +985,7 @@ const firebaseService = {
   getOrders,
   updateOrderStatus,
   repairInventoryData,
-  deletePlant,
-  testFirebaseStorage
+  deletePlant
 };
 
 export default firebaseService; 
