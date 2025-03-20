@@ -993,51 +993,77 @@ export const testFirebaseStorage = async () => {
     // Try to access basic storage information
     console.log('Firebase storage bucket:', storage.app.options.storageBucket);
     
-    // Try to list some files from storage
-    const testRef = storageRef(storage, 'images');
-    console.log('Created test storage reference:', testRef);
+    // Create some known file paths to test
+    const testPaths = [
+      'images/test.jpg',
+      'images/placeholder.jpg',
+      'images/penstemonpalmeri.jpg',
+      'images/gaillardiapulchella.jpg'
+    ];
     
-    // First test - try to access a test image
-    let testError = null;
-    const testImageURL = await getDownloadURL(storageRef(storage, 'images/test.jpg')).catch(e => {
-      console.log('Error getting test.jpg:', e.code, e.message);
-      testError = e;
-      return null;
-    });
+    let success = false;
+    let testImageURL = null;
+    let defaultImageURL = null;
+    let knownImageURL = null;
+    let errorInfo = null;
     
-    // Second test - try to access a default image
-    let defaultError = null;
-    const defaultImageURL = testImageURL || await getDownloadURL(storageRef(storage, 'images/placeholder.jpg')).catch(e => {
-      console.error('Error getting default image:', e.code, e.message);
-      defaultError = e;
-      return null;
-    });
+    // Try each path in order until one works
+    for (const path of testPaths) {
+      try {
+        console.log(`Attempting to get URL for: ${path}`);
+        const fileRef = storageRef(storage, path);
+        const url = await getDownloadURL(fileRef);
+        
+        console.log(`Successfully retrieved URL for ${path}:`, url.substring(0, 100) + '...');
+        
+        // Store the first successful URL
+        if (!testImageURL) {
+          testImageURL = url;
+          success = true;
+        }
+        
+        // Store the placeholder URL if we found it
+        if (path === 'images/placeholder.jpg') {
+          defaultImageURL = url;
+        }
+        
+        // Store a known image URL if we found one
+        if (path.includes('penstemon') || path.includes('gaillardia')) {
+          knownImageURL = url;
+        }
+      } catch (pathError) {
+        console.error(`Error getting URL for ${path}:`, pathError);
+        if (!errorInfo) {
+          errorInfo = `Error accessing ${path}: ${pathError.code || ''} ${pathError.message}`;
+        }
+      }
+    }
     
-    // Third test - try an image we know exists
-    let knownError = null;
-    const knownImageURL = await getDownloadURL(storageRef(storage, 'images/penstemonpalmeri.jpg')).catch(e => {
-      console.error('Error getting known image:', e.code, e.message);
-      knownError = e;
-      return null;
-    });
+    // Try to directly create a known working URL format as a fallback
+    if (!success) {
+      try {
+        const bucket = storage.app.options.storageBucket;
+        const directURL = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/images%2Fplaceholder.jpg?alt=media`;
+        console.log('Trying direct URL format:', directURL);
+        
+        // Test if the URL is accessible
+        const response = await fetch(directURL, { method: 'HEAD' });
+        if (response.ok) {
+          console.log('Direct URL format works!');
+          success = true;
+          defaultImageURL = directURL;
+        } else {
+          console.error('Direct URL format failed with status:', response.status);
+        }
+      } catch (directError) {
+        console.error('Error testing direct URL:', directError);
+      }
+    }
     
-    console.log('Test results:');
-    console.log('- Test image URL:', testImageURL || 'Failed');
-    console.log('- Default image URL:', defaultImageURL || 'Failed');
-    console.log('- Known image URL:', knownImageURL || 'Failed');
-    
-    // Composite result
-    const success = !!(testImageURL || defaultImageURL || knownImageURL);
-    
-    // Create detailed error information
-    let errorInfo = '';
-    if (testError) errorInfo += `Test image error: ${testError.code} - ${testError.message}\n`;
-    if (defaultError) errorInfo += `Default image error: ${defaultError.code} - ${defaultError.message}\n`;
-    if (knownError) errorInfo += `Known image error: ${knownError.code} - ${knownError.message}\n`;
-    
-    // If we have no specific errors but still failed, add general info
-    if (!success && !errorInfo) {
-      errorInfo = 'Unknown error accessing Firebase Storage. Check console for details.';
+    // If we still have no success, provide additional diagnostics
+    if (!success) {
+      console.error('All test paths failed. Checking CORS configuration...');
+      errorInfo = 'All image paths failed. This could indicate a Firebase Storage permissions issue or CORS configuration problem.';
     }
     
     return { 
@@ -1045,7 +1071,8 @@ export const testFirebaseStorage = async () => {
       imageURL: testImageURL || defaultImageURL || knownImageURL,
       bucketName: storage.app.options.storageBucket,
       error: errorInfo || undefined,
-      config
+      config,
+      testPaths
     };
   } catch (error) {
     console.error('Error testing Firebase Storage:', error);
