@@ -12,7 +12,6 @@ const ImageWithFallback = ({
   width = 'auto'
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [hasError, setHasError] = useState(false);
   const [imageSrc, setImageSrc] = useState(src || '');
   
   // Update image source when src prop changes
@@ -75,7 +74,6 @@ const ImageWithFallback = ({
           setIsLoaded(true);
         }}
         onError={(e) => {
-          setHasError(true);
           e.target.src = '/images/placeholder.jpg';
           setIsLoaded(true);
           return true;
