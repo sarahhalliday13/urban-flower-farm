@@ -15,3 +15,19 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+
+// Add global error handler
+window.addEventListener('error', (event) => {
+  console.error('Global error caught:', {
+    message: event.message,
+    source: event.filename,
+    lineNo: event.lineno,
+    colNo: event.colno,
+    error: event.error
+  });
+});
+
+// Catch unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled Promise Rejection:', event.reason);
+});

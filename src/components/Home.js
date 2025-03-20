@@ -1,83 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
+import ImageWithFallback from './ImageWithFallback';
 
-// Plant Card component to properly handle state for each card
+// Plant Card component with simplified image handling
+// 
+// IMPORTANT: This app MUST use Firebase Storage URLs for images, not local paths.
+// Images should use Firebase Storage with format:
+// https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
 const PlantCard = ({ plant }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
+  // Use Firebase Storage URLs with tokens
+  let imageSrc = plant.mainImage || '/images/placeholder.jpg';
   
-  // For specific plants, directly use the Firebase URL with token
-  let initialSrc = plant.mainImage || '/images/placeholder.jpg';
+  // Special handling for known plants
   if (plant.name === "Palmer's Beardtongue") {
-    initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-    console.log('HARD-CODED PALMER URL:', initialSrc);
+    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
   } else if (plant.name === "Gaillardia Pulchella Mix") {
-    initialSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-    console.log('HARD-CODED GAILLARDIA URL:', initialSrc);
+    imageSrc = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+  } else if (plant.name === "Lavender Mist" || plant.name === "Golden Jubilee Anise Hyssop") {
+    // Use the mainImage from plant data, which should already have the Firebase URL
+    imageSrc = plant.mainImage;
   }
-  
-  const [imageSrc, setImageSrc] = useState(initialSrc);
-  
-  // Debug log for plants with Firebase URLs
-  useEffect(() => {
-    if (plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") {
-      console.log(`RENDERING ${plant.name.toUpperCase()} IN HOME:`, {
-        name: plant.name,
-        id: plant.id,
-        mainImage: plant.mainImage,
-        initialImageSrc: imageSrc,
-        hasValidImage: !!plant.mainImage,
-        imageType: typeof plant.mainImage,
-        isLoaded: imageLoaded
-      });
-    }
-  }, [plant, imageSrc, imageLoaded]);
 
   return (
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="plant-image">
-          {!imageLoaded && 
-            <div className="image-placeholder" style={{
-              height: "200px",
-              background: "#f0f0f0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <span>Loading...</span>
-            </div>
-          }
-          <img 
+          <ImageWithFallback 
             src={imageSrc}
             alt={plant.name}
-            style={{ display: imageLoaded ? 'block' : 'none' }}
-            onLoad={() => {
-              console.log('Image loaded successfully:', plant.name);
-              setImageLoaded(true);
-            }}
-            onError={(e) => {
-              console.error('Image failed to load:', imageSrc);
-              
-              // If this is the first error and it's a Firebase URL, try with cache buster
-              if (!imageSrc.includes('&t=') && 
-                  imageSrc.includes('firebasestorage')) {
-                
-                console.log('Adding cache buster to Firebase URL:', plant.name);
-                const timestamp = Date.now();
-                const newSrc = imageSrc.includes('?') 
-                  ? `${imageSrc}&t=${timestamp}` 
-                  : `${imageSrc}?alt=media&t=${timestamp}`;
-                  
-                console.log('New src with cache buster:', newSrc);
-                setImageSrc(newSrc);
-              } else {
-                // We've already tried or it's not a Firebase URL, use placeholder
-                console.log('Using placeholder for', plant.name);
-                setImageSrc('/images/placeholder.jpg');
-              }
-            }}
+            height={200}
           />
         </div>
         <h3>{plant.name}</h3>
@@ -98,6 +51,39 @@ const PlantCard = ({ plant }) => {
     </div>
   );
 };
+
+// Add an error boundary component
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("Home component error caught:", error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <h2>Something went wrong on the Home page.</h2>
+          <details>
+            <summary>Error Details</summary>
+            <p>{this.state.error && this.state.error.toString()}</p>
+            <p>Component Stack: {this.state.errorInfo && this.state.errorInfo.componentStack}</p>
+          </details>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function Home({ isFirstVisit }) {
   const [showHero, setShowHero] = useState(false);
@@ -211,36 +197,38 @@ function Home({ isFirstVisit }) {
   };
   
   return (
-    <main>
-      {showHero && (
-        <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
-          <button className="hero-close" onClick={hideHero}>×</button>
-          <div className="hero-content">
-            <h1>Welcome</h1>
-            <p>Discover beautiful plants for your home and garden</p>
-          </div>
-        </section>
-      )}
-
-      <section className="featured-plants">
-        <div className="featured-plants-header">
-          {!isMobile && <h2>Featured</h2>}
-          <Link to="/shop" className="view-all-link">View All</Link>
-        </div>
-        
-        {loading ? (
-          <div className="loading">Loading featured plants...</div>
-        ) : error ? (
-          <div className="error">{error}</div>
-        ) : (
-          <div className="plant-grid">
-            {featuredPlants.map(plant => (
-              <PlantCard key={plant.id} plant={plant} />
-            ))}
-          </div>
+    <ErrorBoundary>
+      <main>
+        {showHero && (
+          <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
+            <button className="hero-close" onClick={hideHero}>×</button>
+            <div className="hero-content">
+              <h1>Welcome</h1>
+              <p>Discover beautiful plants for your home and garden</p>
+            </div>
+          </section>
         )}
-      </section>
-    </main>
+
+        <section className="featured-plants">
+          <div className="featured-plants-header">
+            {!isMobile && <h2>Featured</h2>}
+            <Link to="/shop" className="view-all-link">View All</Link>
+          </div>
+          
+          {loading ? (
+            <div className="loading">Loading featured plants...</div>
+          ) : error ? (
+            <div className="error">{error}</div>
+          ) : (
+            <div className="plant-grid">
+              {featuredPlants.map(plant => (
+                <PlantCard key={plant.id} plant={plant} />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+    </ErrorBoundary>
   );
 }
 
