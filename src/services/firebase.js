@@ -694,7 +694,6 @@ export const loadSamplePlants = async () => {
     const localImageMappings = {
       "Lavender": "/images/LavenderMist.jpg",
       "Lavender Mist": "/images/LavenderMist.jpg",
-      "Palmer's Beardtongue": "/images/penstemonpalmeri.jpg",
       "Gaillardia Pulchella Mix": "/images/gaillardiapulchella.jpg",
       "Korean Mint": "/images/koreanmint.jpg",
       "Golden Jubilee Anise Hyssop": "/images/koreanmint.jpg", // Using Korean mint image as fallback
@@ -702,8 +701,21 @@ export const loadSamplePlants = async () => {
 
     // Update each plant's mainImage to use local files
     const updatedData = data.map(plant => {
+      // For Palmer's Beardtongue, we'll ensure it uses Firebase storage
+      if (plant.name === "Palmer's Beardtongue") {
+        return {
+          ...plant,
+          mainImage: plant.mainImage || "https://firebasestorage.googleapis.com/v0/b/buttons-urban-flower-farm.appspot.com/o/plant_images%2Fpenstemonpalmeri.jpg?alt=media",
+          additionalImages: [
+            "https://firebasestorage.googleapis.com/v0/b/buttons-urban-flower-farm.appspot.com/o/plant_images%2Fpenstemonpalmeri2.jpg?alt=media",
+            "https://firebasestorage.googleapis.com/v0/b/buttons-urban-flower-farm.appspot.com/o/plant_images%2Fpenstemonpalmeri3.jpg?alt=media",
+            "https://firebasestorage.googleapis.com/v0/b/buttons-urban-flower-farm.appspot.com/o/plant_images%2Fpenstemonpalmeri4.jpg?alt=media",
+            "https://firebasestorage.googleapis.com/v0/b/buttons-urban-flower-farm.appspot.com/o/plant_images%2Fpenstemonpalmeri5.jpg?alt=media"
+          ]
+        };
+      }
       // Check if we have a mapping for this plant name
-      if (localImageMappings[plant.name]) {
+      else if (localImageMappings[plant.name]) {
         return {
           ...plant,
           mainImage: localImageMappings[plant.name]
