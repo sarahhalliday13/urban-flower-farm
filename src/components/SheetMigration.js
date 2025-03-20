@@ -156,22 +156,27 @@ const SheetMigration = () => {
       
       // Transform plant data to match Firebase expected structure
       const transformedPlantsData = validPlants.map(plant => ({
-        id: parseInt(plant.id) || 0,
+        id: parseInt(plant.plant_id) || 0,
         name: plant.name || '',
         scientificName: plant.latinname || '',
         commonName: plant.commonname || '',
         price: plant.price || 0,
         featured: plant.featured === 'true' || plant.featured === true,
+        plantType: plant['type(annual/perennial)'] || '',
         description: plant.description || '',
-        bloomSeason: plant.bloomseason || '',
+        bloomSeason: plant['bloom season'] || '',
         colour: plant.colour || '',
-        light: plant.light || '',
-        spacing: plant.spacing || '',
-        attributes: plant.attributes || '',
-        hardinessZone: plant.hardinesszone || '',
-        height: plant.height || '',
-        mainImage: plant.mainimage || '',
-        additionalImages: plant.additionalimages || ''
+        light: plant['sun light'] || '',
+        spacing: plant['spread (inches)'] || '',
+        height: plant['height (inches)'] || '',
+        hardinessZone: plant['hardiness zones'] || '',
+        specialFeatures: plant['special features'] || '',
+        uses: plant.uses || '',
+        aroma: plant.aroma || '',
+        gardeningTips: plant['gardening tips'] || '',
+        careTips: plant['care tips'] || '',
+        mainImage: plant['main image'] || '',
+        additionalImages: plant['additional image'] || ''
       }));
       
       // Get inventory data (if available)
