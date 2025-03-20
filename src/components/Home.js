@@ -36,20 +36,6 @@ const PlantCard = ({ plant }) => {
 
   return (
     <div className="plant-card">
-      {(plant.name === "Palmer's Beardtongue" || plant.name === "Gaillardia Pulchella Mix") && (
-        <div style={{position: 'absolute', top: '5px', right: '5px', zIndex: 100}}>
-          <button onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const url = plant.name === "Palmer's Beardtongue" 
-              ? "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
-              : "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
-            window.open(url, "_blank");
-          }} style={{background: 'red', color: 'white', border: 'none', padding: '5px', borderRadius: '3px', fontSize: '10px'}}>
-            Test Firebase URL
-          </button>
-        </div>
-      )}
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="plant-image">
           {!imageLoaded && 
