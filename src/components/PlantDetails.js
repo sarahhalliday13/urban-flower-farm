@@ -342,11 +342,7 @@ function PlantDetails() {
           </div>
           <div className="plant-details-info">
             <div className="plant-info">
-              <h1 className="plant-name">{plant.name}</h1>
-              <div className="plant-breadcrumb">
-                <a href="/">Home</a> / 
-                <a href="/shop" className="view-all-link">Back to Shop</a>
-              </div>
+              <h1 className="plant-common-name">{plant.name}</h1>
               {plant.scientificName && (
                 <h2 className="scientific-name">{plant.scientificName}</h2>
               )}
