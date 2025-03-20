@@ -1,6 +1,5 @@
 // Firebase configuration and utility functions
 import { initializeApp } from "firebase/app";
-// eslint-disable-next-line no-unused-vars
 import { getDatabase, ref, set, get, onValue, update, remove, push, child, query, orderByChild } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
@@ -702,8 +701,41 @@ export const loadSamplePlants = async () => {
 
     // Update each plant's mainImage to use local files
     const updatedData = data.map(plant => {
+      // For Palmer's Beardtongue, use Firebase storage URL with correct token
+      if (plant.name === "Palmer's Beardtongue") {
+        const fbUrl = "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739";
+        console.log('FIREBASE IMAGE URL DEBUG:', {
+          plant: "Palmer's Beardtongue",
+          url: fbUrl,
+          hasToken: fbUrl.includes('token'),
+          correctFormat: fbUrl.includes('alt=media')
+        });
+        return {
+          ...plant,
+          mainImage: fbUrl,
+          additionalImages: [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fpenstemonpalmeri5.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ]
+        };
+      }
+      // For Gaillardia, use Firebase storage URL with token
+      else if (plant.name === "Gaillardia Pulchella Mix") {
+        return {
+          ...plant,
+          mainImage: "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+          additionalImages: [
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella2.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella3.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella4.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+            "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fgaillardiapulchella5.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739"
+          ]
+        };
+      }
       // Check if we have a mapping for this plant name
-      if (localImageMappings[plant.name]) {
+      else if (localImageMappings[plant.name]) {
         return {
           ...plant,
           mainImage: localImageMappings[plant.name]
