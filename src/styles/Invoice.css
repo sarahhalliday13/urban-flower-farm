@@ -87,6 +87,13 @@
   padding: 0.75rem;
   border-bottom: 1px solid #eee;
   font-size: 0.9rem;
+  text-align: left;
+}
+
+.invoice-items td:nth-child(2),
+.invoice-items td:nth-child(3),
+.invoice-items td:nth-child(4) {
+  text-align: right;
 }
 
 .invoice-items tfoot td {
@@ -143,25 +150,13 @@
 
 .invoice-payment ul {
   margin: 0.5rem 0;
-  padding-left: 1.5rem;
+  padding-left: 0;
+  list-style-type: none;
 }
 
 .invoice-payment li {
   margin: 0.25rem 0;
   font-size: 0.9rem;
-}
-
-.invoice-footer {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid #eee;
-  text-align: center;
-  font-size: 0.8rem;
-  color: #777;
-}
-
-.invoice-footer p {
-  margin: 0.25rem 0;
 }
 
 .print-controls {
@@ -184,27 +179,78 @@
   background-color: #1f3d22;
 }
 
+/* Special class for print mode */
+html.printing .invoice-container {
+  box-shadow: none;
+  max-width: 100%;
+}
+
 /* Print styles */
 @media print {
+  @page {
+    size: auto;
+    margin: 0.5in;
+  }
+
+  /* Clear everything else */
+  html, body {
+    height: auto !important;
+    overflow: auto !important;
+    background: white !important;
+  }
+  
   body * {
-    visibility: hidden;
+    visibility: hidden !important;
+    display: none !important;
   }
   
-  .invoice-container, .invoice-container * {
-    visibility: visible;
+  /* Only show the invoice */
+  .invoice-container,
+  .invoice-container * {
+    visibility: visible !important;
+    display: block;
   }
   
+  .invoice-container table,
+  .invoice-container tr,
+  .invoice-container th,
+  .invoice-container td {
+    display: table;
+    display: table-row;
+    display: table-cell;
+  }
+  
+  /* Position properly */
   .invoice-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    box-shadow: none;
-    padding: 0.5in;
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 7.5in !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    background: white !important;
   }
   
-  .print-controls {
-    display: none;
+  /* Hide controls */
+  .print-controls, .close-invoice {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  
+  /* Force single page */
+  .invoice-modal, 
+  .invoice-modal-content,
+  .invoice-modal * {
+    overflow: visible !important;
+    position: static !important;
+    visibility: visible !important;
+    display: block !important;
+    height: auto !important;
+    background: white !important;
   }
 }
 

@@ -329,6 +329,17 @@
   color: #555;
 }
 
+.customer-info a {
+  color: #3498db;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.customer-info a:hover {
+  color: #2980b9;
+  text-decoration: underline;
+}
+
 /* Improve spacing in items table */
 .items-table tbody tr {
   border-bottom: 1px solid #eee;
@@ -571,10 +582,28 @@
   background-color: white;
   padding: 2rem;
   border-radius: 8px;
-  max-width: 90%;
-  max-height: 90%;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
   overflow-y: auto;
   position: relative;
+}
+
+/* Additional print-specific styles for the modal */
+@media print {
+  .invoice-modal {
+    position: absolute;
+    background: none;
+    overflow: visible;
+  }
+  
+  .invoice-modal-content {
+    overflow: visible;
+    max-height: none;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
 }
 
 .close-invoice {
@@ -584,13 +613,13 @@
   background: none;
   border: none;
   font-size: 1.5rem;
-  cursor: pointer;
   color: #333;
-  z-index: 1;
+  cursor: pointer;
+  z-index: 10;
 }
 
 .close-invoice:hover {
-  color: #e74c3c;
+  color: #000;
 }
 
 /* Responsive styles */
@@ -684,10 +713,12 @@
   }
   
   .customer-info, 
-  .order-notes {
+  .order-notes,
+  .status-management {
     height: auto;
     min-height: auto;
     padding: 1rem;
+    grid-column: auto;
   }
   
   /* Completely reset the table layout for mobile */
@@ -1020,7 +1051,7 @@ td[data-label="Total"] {
 
 /* Status Management section - make it more prominent */
 .status-management {
-  grid-column: 1 / -1;
+  grid-column: 2;
   background-color: #f8f9fa;
   border-radius: 8px;
   padding: 1.5rem;

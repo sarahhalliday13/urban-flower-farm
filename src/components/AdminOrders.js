@@ -444,18 +444,11 @@ const AdminOrders = () => {
                             <div className="customer-info">
                               <h4>Customer Information</h4>
                               <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
-                              <p><strong>Email:</strong> {order.customer.email}</p>
+                              <p><strong>Email:</strong> <a href={`mailto:${order.customer.email}`}>{order.customer.email}</a></p>
                               {order.customer.phone && order.customer.phone !== 'Not provided' && (
-                                <p><strong>Phone:</strong> {order.customer.phone}</p>
+                                <p><strong>Phone:</strong> <a href={`tel:${order.customer.phone}`}>{order.customer.phone}</a></p>
                               )}
                             </div>
-                            
-                            {order.notes && (
-                              <div className="order-notes">
-                                <h4>Order Notes</h4>
-                                <p>{order.notes}</p>
-                              </div>
-                            )}
                             
                             <div className="status-management">
                               <h4>Status Management</h4>
@@ -493,6 +486,13 @@ const AdminOrders = () => {
                               </div>
                             </div>
                             
+                            {order.notes && (
+                              <div className="order-notes">
+                                <h4>Order Notes</h4>
+                                <p>{order.notes}</p>
+                              </div>
+                            )}
+                            
                             <div className="invoice-section">
                               <h4>Invoice Options</h4>
                               <div className="invoice-buttons">
@@ -527,7 +527,11 @@ const AdminOrders = () => {
         <div className="invoice-modal">
           <div className="invoice-modal-content">
             <button className="close-invoice" onClick={closeInvoice}>×</button>
-            <Invoice order={orders.find(order => order.id === showInvoice)} type="print" />
+            <Invoice 
+              order={orders.find(order => order.id === showInvoice)} 
+              type="print" 
+              key={`invoice-${showInvoice}`} 
+            />
           </div>
         </div>
       )}
