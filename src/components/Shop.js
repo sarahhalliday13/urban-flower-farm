@@ -111,8 +111,8 @@ function Shop() {
   return (
     <div className={`shop-main ${viewMode === 'list' ? 'list-view-mode' : ''}`}>
       <section className="featured-plants">
-        <div className="featured-plants-header">
-          <h2>All the Flowers</h2>
+        <div className="shop-header">
+          <h2>Shop</h2>
           <div className="shop-controls">
             <div className="sort-control">
               <label htmlFor="sort-select">Sort by:</label>
@@ -179,14 +179,16 @@ function Shop() {
                       <p className="plant-description">
                         {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
                       </p>
-                      <p>${plant.price}</p>
-                      {plant.inventory?.status && (
-                        <div className="plant-status">
-                          <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                            {plant.inventory.status}
-                          </span>
-                        </div>
-                      )}
+                      <div className="plant-info-row">
+                        {plant.inventory?.status && (
+                          <div className="plant-status">
+                            <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                              {plant.inventory.status}
+                            </span>
+                          </div>
+                        )}
+                        <p className="plant-price">${plant.price}</p>
+                      </div>
                     </Link>
                     <div className="plant-actions">
                       <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
@@ -219,14 +221,16 @@ function Shop() {
                       <p className="plant-description">
                         {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
                       </p>
-                      <p>${plant.price}</p>
-                      {plant.inventory?.status && (
-                        <div className="plant-status">
-                          <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
-                            {plant.inventory.status}
-                          </span>
-                        </div>
-                      )}
+                      <div className="plant-info-row">
+                        {plant.inventory?.status && (
+                          <div className="plant-status">
+                            <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                              {plant.inventory.status}
+                            </span>
+                          </div>
+                        )}
+                        <p className="plant-price">${plant.price}</p>
+                      </div>
                     </div>
                     <div className="plant-actions">
                       <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
