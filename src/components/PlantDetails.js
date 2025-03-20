@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
-import ImageWithFallback from './ImageWithFallback';
 
 function PlantDetails() {
   const { id } = useParams();
