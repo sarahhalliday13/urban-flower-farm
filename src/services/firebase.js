@@ -967,6 +967,57 @@ export const deletePlant = async (plantId) => {
   }
 };
 
+// Debug function to test Firebase Storage access
+export const testFirebaseStorage = async () => {
+  console.log('Testing Firebase Storage access...');
+  
+  try {
+    // Check if Firebase is initialized
+    if (!storage) {
+      console.error('Firebase storage is not initialized!');
+      return { success: false, error: 'Firebase storage not initialized' };
+    }
+    
+    // Log Firebase config
+    console.log('Firebase config:', {
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY ? 'Set' : 'Not set',
+      authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN ? 'Set' : 'Not set',
+      databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL ? 'Set' : 'Not set',
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID ? 'Set' : 'Not set',
+      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET ? 'Set' : 'Not set',
+      messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ? 'Set' : 'Not set',
+      appId: process.env.REACT_APP_FIREBASE_APP_ID ? 'Set' : 'Not set'
+    });
+    
+    // Try to list some files from storage
+    const testRef = storageRef(storage, 'images');
+    console.log('Created test storage reference:', testRef);
+    
+    // Try to get a download URL for a known image
+    const testImageURL = await getDownloadURL(storageRef(storage, 'images/test.jpg')).catch(e => {
+      console.log('Expected error for test.jpg, trying default image');
+      return null;
+    });
+    
+    // If the first attempt failed, try a different path
+    const defaultImageURL = testImageURL || await getDownloadURL(storageRef(storage, 'images/placeholder.jpg')).catch(e => {
+      console.error('Error getting default image:', e);
+      return null;
+    });
+    
+    console.log('Default image URL:', defaultImageURL || 'Failed to retrieve');
+    
+    return { 
+      success: !!defaultImageURL, 
+      imageURL: defaultImageURL,
+      bucketName: storage.app.options.storageBucket
+    };
+  } catch (error) {
+    console.error('Error testing Firebase Storage:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -982,7 +1033,8 @@ const firebaseService = {
   getOrders,
   updateOrderStatus,
   repairInventoryData,
-  deletePlant
+  deletePlant,
+  testFirebaseStorage
 };
 
 export default firebaseService; 
