@@ -18,15 +18,8 @@ const PlantCard = ({ plant }) => {
         </div>
         <h3>{plant.name}</h3>
         <p className="plant-description">
-          {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
+          {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
         </p>
-        {plant.inventory?.status && (
-          <div className="plant-status">
-            <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-              {plant.inventory.status}
-            </span>
-          </div>
-        )}
       </Link>
       <div className="plant-actions">
         <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
@@ -181,7 +174,7 @@ function Home({ isFirstVisit }) {
   
   return (
     <ErrorBoundary>
-      <main>
+      <main className="homepage">
         {showHero && (
           <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
             <button className="hero-close" onClick={hideHero}>×</button>
@@ -194,7 +187,7 @@ function Home({ isFirstVisit }) {
 
         <section className="featured-plants">
           <div className="featured-plants-header">
-            {!isMobile && <h2>Featured</h2>}
+            <h2 style={{ fontSize: '28px', fontWeight: 'bold' }}>Featured</h2>
             <Link to="/shop" className="view-all-button">View All</Link>
           </div>
           
