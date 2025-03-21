@@ -71,11 +71,6 @@ function Shop() {
     setDisplayCount(12);
   }, [sortOption]);
 
-  // Check if there are more plants to load after sorted plants change
-  useEffect(() => {
-    setHasMore(sortedPlants.length > displayCount);
-  }, [sortedPlants, displayCount]);
-
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
     if (!plants.length) return [];
@@ -107,6 +102,11 @@ function Shop() {
         return [...plants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
   }, [plants, sortOption]);
+
+  // Check if there are more plants to load after sorted plants change
+  useEffect(() => {
+    setHasMore(sortedPlants.length > displayCount);
+  }, [sortedPlants, displayCount]);
 
   // Get the plants to display based on current display count
   const displayedPlants = useMemo(() => {
