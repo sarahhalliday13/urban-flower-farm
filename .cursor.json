@@ -1,0 +1,12 @@
+{
+  "aiContext": {
+    "projectInstructions": [
+      "When sorting, default to 'Name: A to Z' rather than 'Default'",
+      "When fixing images, never use ImageFallBack.js",
+      "When making changes, never push to git until explicitly instructed",
+      "The site is hosted on Netlify which auto-deploys from git main branch",
+      "The development workflow is: develop on 'development' branch, then merge to 'main' for deployment"
+    ],
+    "projectContext": "An e-commerce plant store with focus on user experience and mobile responsiveness."
+  }
+} 
