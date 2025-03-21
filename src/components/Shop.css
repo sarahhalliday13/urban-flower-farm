@@ -655,9 +655,9 @@
 }
 
 .status-badge.coming-soon {
-  background-color: #fff3e0;
-  color: #e65100;
-  border: 1px solid #ffe0b2;
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #bbdefb;
 }
 
 .plant-grid.list-view .plant-info-row {
