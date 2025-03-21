@@ -343,13 +343,13 @@ function PlantDetails() {
           <div className="plant-details-info">
             <div className="plant-info">
               <h1 className="plant-common-name">{plant.name}</h1>
-              {plant.scientificName && (
-                <h2 className="scientific-name">{plant.scientificName}</h2>
+              {(plant.scientificName || plant.latinname) && (
+                <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
               )}
               <div className="plant-meta">
-                {plant.commonName && plant.scientificName && (
+                {(plant.commonName || plant.commonname) && (plant.scientificName || plant.latinname) && (
                   <p className="plant-names">
-                    {plant.commonName} <span className="latin-name">({plant.scientificName})</span>
+                    {plant.commonName || plant.commonname} <span className="latin-name">({plant.scientificName || plant.latinname})</span>
                   </p>
                 )}
               </div>
@@ -409,13 +409,29 @@ function PlantDetails() {
             <p className="description">{plant.description}</p>
             <div className="plant-specs">
               <h3>Plant Specifications</h3>
+              {plant.plantType && <p><strong>Type:</strong> {plant.plantType}</p>}
+              {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches} inches</p>}
+              {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height}</p>}
+              {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches} inches</p>}
+              {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
+              {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
+              {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
+              {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
               {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
+              {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
               {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
-              {plant.light && <p><strong>Light:</strong> {plant.light}</p>}
+              {plant.featured && <p><strong>Featured:</strong> Yes</p>}
               {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing}</p>}
-              {plant.attributes && <p><strong>Attributes:</strong> {plant.attributes}</p>}
-              {plant.hardinessZone && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
-              {plant.height && <p><strong>Height:</strong> {plant.height}</p>}
+              {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
+              {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
+              {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
+              {plant.aroma && <p><strong>Aroma:</strong> {plant.aroma}</p>}
+              {plant.gardeningTips && <p><strong>Gardening Tips:</strong> {plant.gardeningTips}</p>}
+              {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
+              {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
+              {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
+              {plant.latinname && <p><strong>Latin Name:</strong> {plant.latinname}</p>}
+              {plant.commonname && <p><strong>Common Name:</strong> {plant.commonname}</p>}
             </div>
           </div>
         </div>
