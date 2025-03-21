@@ -181,6 +181,7 @@ function Shop() {
                             <h3 className="plant-common-name">{plant.name}</h3>
                             <p className="plant-description">
                               {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                              {plant.plantType && ` • ${plant.plantType}`}
                             </p>
                             <div className="plant-info-row">
                               {plant.inventory?.status && (
@@ -218,6 +219,7 @@ function Shop() {
                             </Link>
                             <p className="plant-description">
                               {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                              {plant.plantType && ` • ${plant.plantType}`}
                             </p>
                             <div className="plant-info-row">
                               {plant.inventory?.status && (
@@ -263,6 +265,7 @@ function Shop() {
                         <h3 className="plant-common-name">{plant.name}</h3>
                         <p className="plant-description">
                           {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                          {plant.plantType && ` • ${plant.plantType}`}
                         </p>
                         <div className="plant-info-row">
                           {plant.inventory?.status && (
@@ -300,6 +303,7 @@ function Shop() {
                         </Link>
                         <p className="plant-description">
                           {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                          {plant.plantType && ` • ${plant.plantType}`}
                         </p>
                         <div className="plant-info-row">
                           {plant.inventory?.status && (
