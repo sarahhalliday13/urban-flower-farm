@@ -286,7 +286,7 @@ function PlantDetails() {
       >
         <img 
           src={image} 
-          alt={`${name} - Image ${index + 1}`} 
+          alt={`${name} thumbnail ${index + 1}`} 
           height={80} 
           width={80} 
           style={{objectFit: 'cover'}}
@@ -430,8 +430,6 @@ function PlantDetails() {
               {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
               {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
               {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
-              {plant.latinname && <p><strong>Latin Name:</strong> {plant.latinname}</p>}
-              {plant.commonname && <p><strong>Common Name:</strong> {plant.commonname}</p>}
             </div>
           </div>
         </div>
