@@ -29,4 +29,38 @@
 .plant-details-image {
   position: relative;
   /* Keep any existing styles */
+}
+
+/* Type badge styles */
+.type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: #e6f3e6;
+  color: #2c5530;
+  border: 1px solid #c8e6c9;
+  text-transform: capitalize;
+  margin-left: 0.5rem;
+}
+
+/* Type-specific badges */
+.type-badge.annual {
+  background-color: #f0f4fa;
+  color: #4a6da7;
+  border: 1px solid #d0d9e8;
+}
+
+.type-badge.perennial {
+  background-color: #f4edf7;
+  color: #8e5ba6;
+  border: 1px solid #e6d6f0;
+}
+
+/* Default for other types */
+.type-badge.other {
+  background-color: #f5f5f5;
+  color: #6c757d;
+  border: 1px solid #e0e0e0;
 } 
