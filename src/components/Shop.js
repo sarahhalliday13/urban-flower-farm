@@ -206,7 +206,9 @@ function Shop() {
                                 )}
                                 {plant.plantType && (
                                   <div className="plant-type-badge">
-                                    <span className="type-badge">{plant.plantType}</span>
+                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                      {plant.plantType}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -254,7 +256,9 @@ function Shop() {
                                 )}
                                 {plant.plantType && (
                                   <div className="plant-type-badge">
-                                    <span className="type-badge">{plant.plantType}</span>
+                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                      {plant.plantType}
+                                    </span>
                                   </div>
                                 )}
                               </div>
@@ -310,7 +314,9 @@ function Shop() {
                             )}
                             {plant.plantType && (
                               <div className="plant-type-badge">
-                                <span className="type-badge">{plant.plantType}</span>
+                                <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                  {plant.plantType}
+                                </span>
                               </div>
                             )}
                           </div>
@@ -358,7 +364,9 @@ function Shop() {
                             )}
                             {plant.plantType && (
                               <div className="plant-type-badge">
-                                <span className="type-badge">{plant.plantType}</span>
+                                <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                  {plant.plantType}
+                                </span>
                               </div>
                             )}
                           </div>
