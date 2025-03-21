@@ -153,7 +153,7 @@ function Shop() {
                       </div>
                       <h3 className="plant-common-name">{plant.name}</h3>
                       <p className="plant-description">
-                        {plant.shortDescription || plant.description?.substring(0, 80) + '...'}
+                        {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                       </p>
                       <div className="plant-info-row">
                         {plant.inventory?.status && (
@@ -190,7 +190,7 @@ function Shop() {
                         <h3 className="plant-common-name">{plant.name}</h3>
                       </Link>
                       <p className="plant-description">
-                        {plant.shortDescription || plant.description?.substring(0, 120) + '...'}
+                        {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                       </p>
                       <div className="plant-info-row">
                         {plant.inventory?.status && (
