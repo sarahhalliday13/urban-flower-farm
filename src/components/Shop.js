@@ -14,7 +14,7 @@ function Shop() {
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'price-low-high', 'price-high-low'
-  const [displayCount, setDisplayCount] = useState(12); // Number of plants to display initially
+  const [displayCount, setDisplayCount] = useState(5); // Temporarily reduced to 5 for testing
   const [hasMore, setHasMore] = useState(true); // Flag to check if there are more plants to load
 
   useEffect(() => {
@@ -68,7 +68,7 @@ function Shop() {
 
   // Reset display count when sort option changes
   useEffect(() => {
-    setDisplayCount(12);
+    setDisplayCount(5); // Temporarily reduced to 5 for testing
   }, [sortOption]);
 
   // Sort plants based on selected option
@@ -140,7 +140,7 @@ function Shop() {
   };
 
   const handleLoadMore = () => {
-    setDisplayCount(prevCount => prevCount + 12);
+    setDisplayCount(prevCount => prevCount + 5); // Temporarily reduced to 5 for testing
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
