@@ -733,4 +733,36 @@
   .plant-type-group {
     margin-bottom: 2rem;
   }
+}
+
+/* Load More styles */
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0 3rem;
+  width: 100%;
+}
+
+.load-more button {
+  background-color: #2c5530;
+  color: white;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.load-more button:hover {
+  background-color: #1e3c21;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.load-more button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 } 
