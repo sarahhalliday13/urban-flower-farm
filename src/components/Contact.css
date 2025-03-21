@@ -112,7 +112,7 @@
 
 .map-link {
   display: inline-block;
-  color: #4CAF50;
+  color: #1877F2;
   margin-top: 8px;
   font-size: 0.9rem;
   text-decoration: none;
@@ -125,7 +125,7 @@
 }
 
 .map-link:hover {
-  color: #3d8b40;
+  color: #1561c8;
   text-decoration: underline;
 }
 
@@ -220,13 +220,24 @@
 }
 
 .social-icon {
-  font-size: 1.5rem;
+  font-size: 1rem;
   text-decoration: none;
-  transition: transform 0.2s;
+  transition: color 0.2s;
 }
 
 .social-icon:hover {
-  transform: scale(1.1);
+  /* transform scale removed */
+}
+
+.facebook-icon {
+  color: #1877F2;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.facebook-icon:hover {
+  text-decoration: underline;
 }
 
 /* Contact form styles */

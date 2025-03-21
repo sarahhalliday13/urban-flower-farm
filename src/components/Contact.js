@@ -10,7 +10,7 @@ function Contact() {
     email: '',
     phone: '',
     subject: '',
-    message: ''
+    message: 'I want to come and see all your beautiful flowers!'
   });
   
   const [formStatus, setFormStatus] = useState({
@@ -18,17 +18,61 @@ function Contact() {
     error: null
   });
   
-  // Check for subject in URL parameters and load saved form data from localStorage
+  // Handle scrolling behavior on mount - this runs only once when the component loads
+  // If this is a direct navigation to the map section without "Schedule a Visit"
   useEffect(() => {
-    // Load saved form data from localStorage
+    // First check if there's dedicated customer data
+    const customerData = localStorage.getItem('customerData');
+    if (customerData) {
+      try {
+        const parsedCustomerData = JSON.parse(customerData);
+        setFormData(prev => ({
+          ...prev,
+          name: parsedCustomerData.name || prev.name,
+          email: parsedCustomerData.email || prev.email,
+          phone: parsedCustomerData.phone || prev.phone,
+          // Keep existing message and subject
+          message: prev.message,
+          subject: prev.subject
+        }));
+      } catch (error) {
+        console.error('Error parsing customer data:', error);
+      }
+    }
+    
+    // Then check if user has placed an order previously and has customer info
+    else {
+      const lastOrder = localStorage.getItem('lastOrder');
+      if (lastOrder) {
+        try {
+          const orderData = JSON.parse(lastOrder);
+          // If order contains customer data, use it to prepopulate form
+          if (orderData.customer) {
+            setFormData(prev => ({
+              ...prev,
+              name: orderData.customer.name || prev.name,
+              email: orderData.customer.email || prev.email,
+              phone: orderData.customer.phone || prev.phone,
+              // Keep existing message and subject
+              message: prev.message,
+              subject: prev.subject
+            }));
+          }
+        } catch (error) {
+          console.error('Error parsing last order data:', error);
+        }
+      }
+    }
+    
+    // Then check saved contact form data from localStorage (lowest priority)
     const savedFormData = localStorage.getItem('contactFormData');
     if (savedFormData) {
       const parsedData = JSON.parse(savedFormData);
       setFormData(prev => ({
         ...prev,
-        name: parsedData.name || '',
-        email: parsedData.email || '',
-        phone: parsedData.phone || '',
+        name: prev.name || parsedData.name || '',
+        email: prev.email || parsedData.email || '',
+        phone: prev.phone || parsedData.phone || '',
         // Don't restore the subject and message from localStorage by default
       }));
     }
@@ -44,26 +88,9 @@ function Contact() {
       }));
     }
     
-    // Handle scrolling behavior on mount - this runs only once when the component loads
-    // If this is a direct navigation to the map section without "Schedule a Visit"
-    if (location.hash === '#map-section' && !location.search.includes('Schedule')) {
-      // Allow the default browser behavior to scroll to the map section
-      // Browser will automatically scroll to the element with id="map-section"
-    } else {
-      // For any other case (including Schedule a Visit), prevent auto-scrolling
-      // by forcing scroll to top
-      window.scrollTo(0, 0);
-    }
+    // Handle scrolling behavior on mount
+    window.scrollTo(0, 0);
   }, [location.search, location.hash]);
-
-  // Function to handle scrolling to map
-  const scrollToMap = (e) => {
-    e.preventDefault();
-    const mapSection = document.getElementById('map-section');
-    if (mapSection) {
-      mapSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -91,6 +118,23 @@ function Contact() {
       email: formData.email,
       phone: formData.phone
     }));
+    
+    // Save customer data in a format consistent with order data
+    try {
+      // First check if there's already customer data
+      const existingCustomerData = localStorage.getItem('customerData');
+      const customerData = existingCustomerData ? JSON.parse(existingCustomerData) : {};
+      
+      // Update with latest information
+      customerData.name = formData.name;
+      customerData.email = formData.email;
+      customerData.phone = formData.phone;
+      
+      // Save back to localStorage
+      localStorage.setItem('customerData', JSON.stringify(customerData));
+    } catch (error) {
+      console.error('Error saving customer data:', error);
+    }
     
     // Create mailto link with form data
     const subject = encodeURIComponent(formData.subject || 'Message from website');
@@ -157,8 +201,7 @@ function Contact() {
               <div className="info-icon">📍</div>
               <div className="info-text">
                 <h3>Location</h3>
-                <p>349 9th Street East, North Vancouver, BC V7L2B1</p>
-                <button onClick={scrollToMap} className="map-link">Get a map</button>
+                <p>Central Lonsdale Area<br />North Vancouver, BC</p>
               </div>
             </div>
             
@@ -191,6 +234,28 @@ function Contact() {
               <div className="info-text">
                 <h3>Hours</h3>
                 <p>By appointment only</p>
+              </div>
+            </div>
+            
+            <div className="info-item">
+              <div className="info-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#1877F2">
+                  <path d="M20.625 2.625H3.375C2.96016 2.625 2.625 2.96016 2.625 3.375V20.625C2.625 21.0398 2.96016 21.375 3.375 21.375H12.8672V14.1992H10.2891V11.1328H12.8672V8.85938C12.8672 6.24609 14.4141 4.88672 16.7578 4.88672C17.8828 4.88672 18.8438 4.97344 19.1367 5.01328V7.78359H17.4961C16.2188 7.78359 15.9492 8.38828 15.9492 9.27422V11.1328H19.0312L18.6211 14.1992H15.9492V21.375H20.625C21.0398 21.375 21.375 21.0398 21.375 20.625V3.375C21.375 2.96016 21.0398 2.625 20.625 2.625Z"/>
+                </svg>
+              </div>
+              <div className="info-text">
+                <h3>The Socials</h3>
+                <div className="social-icons">
+                  <a 
+                    href="https://www.facebook.com/share/g/1Dn9gPpobA/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="social-icon facebook-icon"
+                    title="Follow us on Facebook"
+                  >
+                    Buttons Urban Flower Farm
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -275,23 +340,6 @@ function Contact() {
               </form>
             )}
           </div>
-        </div>
-      </div>
-      
-      <div id="map-section" className="map-section">
-        <h2>Visit Our Farm</h2>
-        <p>We're located in North Vancouver - please contact us for specific directions and to schedule a visit.</p>
-        <div className="map-container">
-          <iframe 
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2601.3089291400557!2d-123.07396922355863!3d49.32470257139288!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5486708a4d526125%3A0xe8177a66d51d9a9a!2s349%20E%209th%20St%2C%20North%20Vancouver%2C%20BC%20V7L%202B1%2C%20Canada!5e0!3m2!1sen!2sus!4v1717380333665!5m2!1sen!2sus" 
-            width="100%" 
-            height="450" 
-            style={{ border: 0 }}
-            allowFullScreen="" 
-            loading="lazy" 
-            referrerPolicy="no-referrer-when-downgrade"
-            title="349 9th Street East, North Vancouver, BC V7L2B1"
-          ></iframe>
         </div>
       </div>
     </div>
