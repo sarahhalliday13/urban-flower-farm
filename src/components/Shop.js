@@ -183,11 +183,15 @@ function Shop() {
                               {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                             </p>
                             <div className="plant-info-row">
-                              {plant.inventory?.status && (
+                              {plant.inventory?.status ? (
                                 <div className="plant-status">
                                   <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
                                     {plant.inventory.status}
                                   </span>
+                                </div>
+                              ) : (
+                                <div className="plant-status">
+                                  <span className="status-badge in-stock">In Stock</span>
                                 </div>
                               )}
                               <p className="plant-price">${plant.price}</p>
@@ -220,11 +224,15 @@ function Shop() {
                               {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                             </p>
                             <div className="plant-info-row">
-                              {plant.inventory?.status && (
+                              {plant.inventory?.status ? (
                                 <div className="plant-status">
                                   <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
                                     {plant.inventory.status}
                                   </span>
+                                </div>
+                              ) : (
+                                <div className="plant-status">
+                                  <span className="status-badge in-stock">In Stock</span>
                                 </div>
                               )}
                               <p className="plant-price">${plant.price}</p>
@@ -265,11 +273,20 @@ function Shop() {
                           {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                         </p>
                         <div className="plant-info-row">
-                          {plant.inventory?.status && (
+                          {plant.plantType && (
+                            <div className="plant-type">
+                              <span className="type-badge">{plant.plantType}</span>
+                            </div>
+                          )}
+                          {plant.inventory?.status ? (
                             <div className="plant-status">
                               <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
                                 {plant.inventory.status}
                               </span>
+                            </div>
+                          ) : (
+                            <div className="plant-status">
+                              <span className="status-badge in-stock">In Stock</span>
                             </div>
                           )}
                           <p className="plant-price">${plant.price}</p>
@@ -302,11 +319,20 @@ function Shop() {
                           {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                         </p>
                         <div className="plant-info-row">
-                          {plant.inventory?.status && (
+                          {plant.plantType && (
+                            <div className="plant-type">
+                              <span className="type-badge">{plant.plantType}</span>
+                            </div>
+                          )}
+                          {plant.inventory?.status ? (
                             <div className="plant-status">
                               <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
                                 {plant.inventory.status}
                               </span>
+                            </div>
+                          ) : (
+                            <div className="plant-status">
+                              <span className="status-badge in-stock">In Stock</span>
                             </div>
                           )}
                           <p className="plant-price">${plant.price}</p>
