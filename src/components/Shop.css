@@ -649,9 +649,9 @@
 }
 
 .status-badge.pre-order {
-  background-color: #e3f2fd;
-  color: #0d47a1;
-  border: 1px solid #bbdefb;
+  background-color: #fce4ec;
+  color: #c2185b;
+  border: 1px solid #f8bbd0;
 }
 
 .plant-grid.list-view .plant-info-row {
