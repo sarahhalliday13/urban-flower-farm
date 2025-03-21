@@ -13,7 +13,7 @@ function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [sortOption, setSortOption] = useState('default'); // 'default', 'price-low-high', 'price-high-low', 'name-a-z', 'name-z-a', 'type-a-z'
+  const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'price-low-high', 'price-high-low'
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -77,6 +77,14 @@ function Shop() {
         return [...plants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'name-z-a':
         return [...plants].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+      case 'type-annual':
+        return [...plants]
+          .filter(plant => plant.plantType?.toLowerCase() === 'annual')
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'type-perennial':
+        return [...plants]
+          .filter(plant => plant.plantType?.toLowerCase() === 'perennial')
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'type-a-z':
         return [...plants].sort((a, b) => {
           const typeA = a.plantType || '';
@@ -84,7 +92,7 @@ function Shop() {
           return typeA.localeCompare(typeB) || (a.name || '').localeCompare(b.name || '');
         });
       default:
-        return plants;
+        return [...plants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
   }, [plants, sortOption]);
 
@@ -133,10 +141,11 @@ function Shop() {
                 className="sort-select"
                 aria-label="Sort plants by selected option"
               >
-                <option value="default">Default</option>
                 <option value="name-a-z">Name: A to Z</option>
                 <option value="name-z-a">Name: Z to A</option>
-                <option value="type-a-z">Type</option>
+                <option value="type-a-z">Type: All</option>
+                <option value="type-annual">Type: Annual (A to Z)</option>
+                <option value="type-perennial">Type: Perennial (A to Z)</option>
                 <option value="price-low-high">Price: Low to High</option>
                 <option value="price-high-low">Price: High to Low</option>
               </select>
