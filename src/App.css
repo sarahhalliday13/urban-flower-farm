@@ -740,28 +740,30 @@ footer {
 }
 
 .image-thumbnails {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  display: flex;
   gap: 0.5rem;
   max-width: 100%;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  justify-content: flex-start;
 }
 
-.thumbnail {
-  width: 100%;
-  aspect-ratio: 1;
-  padding: 0;
+.thumbnail-image {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
   border: 2px solid transparent;
   border-radius: 4px;
   overflow: hidden;
-  cursor: pointer;
-  background: none;
+  transition: border-color 0.2s;
 }
 
-.thumbnail.active {
+.thumbnail-image.active {
   border-color: #2c5530;
 }
 
-.thumbnail img {
+.thumbnail-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -777,14 +779,39 @@ footer {
   font-size: 2.5rem;
 }
 
+.name-and-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.name-and-status h1 {
+  margin: 0;
+}
+
+.name-and-status .status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  vertical-align: middle;
+  box-shadow: none;
+  margin-left: auto;
+}
+
 .plant-names {
   color: #666;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   margin: 0 0 1rem 0;
 }
 
 .latin-name {
   font-style: italic;
+  font-size: 0.9rem;
 }
 
 .plant-details-info .price {
@@ -799,8 +826,9 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
 }
 
 .quantity-selector {
@@ -966,6 +994,16 @@ footer {
 
   .comments-section {
     padding: 1rem;
+  }
+
+  .name-and-status {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .name-and-status .status-badge {
+    margin-bottom: 0;
   }
 }
 
@@ -1159,19 +1197,20 @@ footer {
 
 /* Add these styles for the inventory status section */
 .inventory-status {
-  margin: 1rem 0;
-  padding: 0.75rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
+  margin: 0.5rem 0;
+  padding: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 0.5rem;
+  border-top: 1px solid #eee;
+  padding-top: 0.75rem;
+  background-color: transparent;
 }
 
 .inventory-status-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
 }
 
 .stock-quantity {
@@ -1180,25 +1219,18 @@ footer {
   font-weight: normal;
 }
 
-.stock-count {
-  font-size: 0.9rem;
-  color: #2e7d32;
-  margin-top: 0.25rem;
-}
-
 .restock-date {
   font-size: 0.9rem;
   color: #ef6c00;
-  margin-top: 0.25rem;
 }
 
 .inventory-notes {
   font-size: 0.9rem;
   color: #666;
   font-style: italic;
-  margin: 0.5rem 0 0 0;
-  padding-top: 0.5rem;
-  border-top: 1px solid #eee;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
 /* Card inventory status styles */
@@ -1248,7 +1280,7 @@ footer {
 }
 
 .plant-info {
-  padding: 1rem;
+  padding: 0;
 }
 
 .plant-info h3 {
@@ -1269,10 +1301,10 @@ footer {
 }
 
 .scientific-name {
-  font-size: 0.9rem;
-  color: #666;
-  margin: -0.5rem 0 0.5rem;
   font-style: italic;
+  color: #666;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
 }
 
 .price {
@@ -1872,8 +1904,8 @@ footer {
 .scientific-name {
   font-style: italic;
   color: #666;
-  margin: 0.25rem 0 1rem;
-  font-size: 1.1rem;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
 }
 
 /* Specific styles for PlantDetails */
@@ -1883,8 +1915,16 @@ footer {
 }
 
 .plant-info .scientific-name {
-  font-size: 1.3rem;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+.description {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #4a4a4a;
   margin-bottom: 1.5rem;
+  margin-top: 1.5rem;
 }
 
 /* Responsive adjustments */
@@ -1894,7 +1934,7 @@ footer {
   }
   
   .scientific-name {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .plant-info .plant-common-name {
@@ -1902,7 +1942,7 @@ footer {
   }
   
   .plant-info .scientific-name {
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
 }
 

@@ -850,8 +850,12 @@ const InventoryManager = () => {
         careTips: plantFormData.careTips || '',
         hardinessZone: plantFormData.hardinessZone || '',
         featured: plantFormData.featured || false,
-        // Remove any legacy additionalImages field to prevent Firebase errors
-        additionalImages: null
+        // Preserve additionalImages if it's an array, otherwise convert to empty array
+        additionalImages: Array.isArray(plantFormData.additionalImages) 
+          ? plantFormData.additionalImages 
+          : (typeof plantFormData.additionalImages === 'string' && plantFormData.additionalImages.trim() 
+            ? [plantFormData.additionalImages.trim()] 
+            : [])
       };
       
       console.log('Prepared plant data for saving:', plantData);
@@ -1288,9 +1292,23 @@ const InventoryManager = () => {
           gardeningTips: plant.gardening_tips || plant.gardeningtips || plant.gardeningTips || plant['gardening tips'] || plant['Gardening Tips'] || '',
           careTips: plant.care_tips || plant.caretips || plant.careTips || plant['care tips'] || plant['Care Tips'] || '',
           mainImage: plant.mainimage || plant.mainImage || plant.MainImage || plant['main image'] || plant['Main Image'] || '',
-          additionalImages: plant.additionalimage || plant.additionalImage || plant.AdditionalImage || plant['additional image'] || plant['Additional Image'] || ''
+          additionalImages: processAdditionalImages(plant.additionalimage || plant.additionalImage || plant.AdditionalImage || plant['additional image'] || plant['Additional Image'] || '')
         };
       });
+      
+      // Helper function to process additionalImages
+      function processAdditionalImages(imagesString) {
+        if (!imagesString) return [];
+        if (typeof imagesString !== 'string') return [];
+        
+        // Split by commas if there are multiple URLs
+        if (imagesString.includes(',')) {
+          return imagesString.split(',').map(url => url.trim()).filter(url => url);
+        }
+        
+        // If it's a single URL, return as array with one item
+        return [imagesString.trim()];
+      }
       
       // Get inventory data (if available)
       let inventoryData = [];
