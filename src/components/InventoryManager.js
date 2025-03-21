@@ -1274,21 +1274,21 @@ const InventoryManager = () => {
           commonName: plant.commonname || '',
           price: plant.price || plant.Price || 0,
           featured: plant.featured === 'true' || plant.featured === true || plant.Featured === 'true' || plant.Featured === true,
-          plantType: plant['type(annual/perennial)'] || plant['Type(Annual/Perennial)'] || '',
+          plantType: plant.type || plant.Type || plant['type(annual/perennial)'] || plant['Type(Annual/Perennial)'] || '',
           description: plant.description || '',
-          bloomSeason: plant['bloom season'] || plant['Bloom Season'] || plant['bloom Season'] || plant['Bloom season'] || '',
+          bloomSeason: plant.bloom_season || plant.bloom_Season || plant.bloomseason || plant.bloomSeason || plant['bloom season'] || plant['Bloom Season'] || '',
           colour: plant.colour || plant.Colour || plant.color || plant.Color || '',
-          light: plant['sun light'] || plant['Sun Light'] || plant['sunlight'] || plant['Sunlight'] || plant['sun_light'] || plant['Sun_Light'] || '',
-          spacing: plant['spread (inches)'] || plant['Spread (inches)'] || plant['spread(inches)'] || plant['Spread(inches)'] || '',
-          height: plant['height (inches)'] || plant['Height (inches)'] || plant['height(inches)'] || plant['Height(inches)'] || '',
-          hardinessZone: plant['hardiness zones'] || plant['Hardiness Zones'] || plant['hardiness zone'] || plant['Hardiness Zone'] || '',
-          specialFeatures: plant['special features'] || plant['Special Features'] || '',
+          light: plant.sunlight || plant.Sunlight || plant.sun_light || plant.Sun_Light || plant['sun light'] || plant['Sun Light'] || '',
+          spacing: plant.spread_inches || plant.spreadinches || plant['spread (inches)'] || plant['Spread (inches)'] || '',
+          height: plant.height_inches || plant.heightinches || plant['height (inches)'] || plant['Height (inches)'] || '',
+          hardinessZone: plant.hardiness_zones || plant.hardinessZones || plant.hardiness_zone || plant['hardiness zones'] || plant['Hardiness Zones'] || '',
+          specialFeatures: plant.special_features || plant.specialfeatures || plant.specialFeatures || plant['special features'] || plant['Special Features'] || '',
           uses: plant.uses || plant.Uses || '',
           aroma: plant.aroma || plant.Aroma || '',
-          gardeningTips: plant['gardening tips'] || plant['Gardening Tips'] || '',
-          careTips: plant['care tips'] || plant['Care Tips'] || '',
-          mainImage: plant['main image'] || plant['Main Image'] || plant['mainimage'] || plant['MainImage'] || '',
-          additionalImages: plant['additional image'] || plant['Additional Image'] || plant['additionalimage'] || plant['AdditionalImage'] || ''
+          gardeningTips: plant.gardening_tips || plant.gardeningtips || plant.gardeningTips || plant['gardening tips'] || plant['Gardening Tips'] || '',
+          careTips: plant.care_tips || plant.caretips || plant.careTips || plant['care tips'] || plant['Care Tips'] || '',
+          mainImage: plant.mainimage || plant.mainImage || plant.MainImage || plant['main image'] || plant['Main Image'] || '',
+          additionalImages: plant.additionalimage || plant.additionalImage || plant.AdditionalImage || plant['additional image'] || plant['Additional Image'] || ''
         };
       });
       
@@ -2863,26 +2863,26 @@ const InventoryManager = () => {
                         <li><strong>commonname</strong> - Common name</li>
                         <li><strong>price</strong> - Price</li>
                         <li><strong>featured</strong> - Featured (true/false)</li>
-                        <li><strong>type(annual/perennial)</strong> - Plant type</li>
+                        <li><strong>type</strong> - Plant type</li>
                         <li><strong>description</strong> - Description</li>
-                        <li><strong>bloom season</strong> - Bloom season</li>
+                        <li><strong>bloom_season</strong> - Bloom season</li>
+                        <li><strong>colour</strong> - Color</li>
                       </ul>
                       <ul className="format-columns">
-                        <li><strong>colour</strong> or <strong>color</strong> - Color</li>
-                        <li><strong>sun light</strong> - Light requirements</li>
-                        <li><strong>spread (inches)</strong> - Spacing requirements</li>
-                        <li><strong>height (inches)</strong> - Height</li>
-                        <li><strong>hardiness zones</strong> - Hardiness zone</li>
-                        <li><strong>special features</strong> - Special features</li>
+                        <li><strong>sunlight</strong> - Light requirements</li>
+                        <li><strong>spread_inches</strong> - Spread in inches</li>
+                        <li><strong>height_inches</strong> - Height in inches</li>
+                        <li><strong>hardiness_zones</strong> - Hardiness zones</li>
+                        <li><strong>special_features</strong> - Special features</li>
                         <li><strong>uses</strong> - Uses</li>
                         <li><strong>aroma</strong> - Aroma</li>
-                        <li><strong>gardening tips</strong> - Gardening tips</li>
-                        <li><strong>care tips</strong> - Care tips</li>
-                        <li><strong>main image</strong> - URL to main image</li>
-                        <li><strong>additional image</strong> - Additional image URLs</li>
+                        <li><strong>gardening_tips</strong> - Gardening tips</li>
+                        <li><strong>care_tips</strong> - Care tips</li>
+                        <li><strong>mainimage</strong> - URL to main image</li>
+                        <li><strong>additionalimage</strong> - Additional image URLs</li>
                       </ul>
                     </div>
-                    <p>Note: Headers are case-sensitive. The system will also look for variations including capitalized versions (e.g., "Bloom Season" or "Sun Light").</p>
+                    <p>Note: For best results, use these exact header names with underscores in your CSV file.</p>
                   </div>
                   
                   <div className="format-section">
