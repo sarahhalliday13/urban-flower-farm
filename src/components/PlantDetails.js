@@ -393,7 +393,14 @@ function PlantDetails() {
             
             <div className="plant-specs">
               <h3>Plant Specifications</h3>
-              {plant.plantType && <p><strong>Type:</strong> {plant.plantType}</p>}
+              {plant.plantType && (
+                <p>
+                  <strong>Type:</strong> 
+                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                    {plant.plantType}
+                  </span>
+                </p>
+              )}
               {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
               {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
               {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
