@@ -680,9 +680,9 @@
   border-radius: 4px;
   font-size: 0.8rem;
   font-weight: 500;
-  background-color: #f0f4fa;
-  color: #4a6da7;
-  border: 1px solid #d0d9e8;
+  background-color: #e6f3e6;
+  color: #2c5530;
+  border: 1px solid #c8e6c9;
   text-transform: capitalize;
 }
 
@@ -744,15 +744,34 @@
   }
 }
 
-/* Type badge styles */
-.type-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+/* Load More styles */
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0 3rem;
+  width: 100%;
+}
+
+.load-more button {
+  background-color: #2c5530;
+  color: white;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
   font-weight: 500;
-  background-color: #e6f3e6;
-  color: #2c5530;
-  border: 1px solid #c8e6c9;
-  text-transform: capitalize;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.load-more button:hover {
+  background-color: #1e3c21;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.load-more button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 } 
