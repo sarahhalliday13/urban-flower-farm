@@ -1331,6 +1331,8 @@
   width: 100%;
   padding-top: 100%; /* 1:1 Aspect Ratio */
   overflow: hidden;
+  background-color: #f8f9fa;
+  border-radius: 4px;
 }
 
 .image-container img {
@@ -1684,6 +1686,8 @@
   width: 100%;
   padding-top: 100%; /* 1:1 Aspect Ratio */
   overflow: hidden;
+  background-color: #f8f9fa;
+  border-radius: 4px;
 }
 
 .image-container img {

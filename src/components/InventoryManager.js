@@ -2452,11 +2452,20 @@ const InventoryManager = () => {
                           className={`image-item ${isMainImage ? 'main-image' : ''}`}
                         >
                           <div className="image-container">
-                            <ImageWithFallback 
+                            <img 
                               src={imageUrl} 
                               alt={`Plant image ${index+1}`}
-                              height={80}
-                              width={80}
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
+                              }}
+                              onError={(e) => {
+                                e.target.src = '/images/placeholder.jpg';
+                              }}
                             />
                             {isMainImage && (
                               <div className="main-image-badge">Main</div>
