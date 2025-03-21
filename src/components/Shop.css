@@ -643,6 +643,11 @@
   color: #856404;
 }
 
+.status-badge.in-stock {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
 .plant-grid.list-view .plant-info-row {
   margin: 0.5rem 0 0.25rem;
 }
