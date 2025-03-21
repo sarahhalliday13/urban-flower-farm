@@ -610,9 +610,18 @@
   justify-content: space-between;
   align-items: center;
   margin: 0 0 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.plant-status {
+.badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.plant-status, .plant-type-badge {
   display: flex;
   align-items: center;
 }
@@ -676,4 +685,17 @@
   .plant-type-group {
     margin-bottom: 2rem;
   }
+}
+
+/* Type badge styles */
+.type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: #e6f3e6;
+  color: #2c5530;
+  border: 1px solid #c8e6c9;
+  text-transform: capitalize;
 } 
