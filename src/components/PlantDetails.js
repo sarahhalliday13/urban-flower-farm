@@ -361,6 +361,9 @@ function PlantDetails() {
                 )}
               </div>
             </div>
+            
+            <p className="description">{plant.description}</p>
+            
             <div className="price-action-container">
               <p className="price">${plant.price}</p>
               <div className="price-controls">
@@ -388,26 +391,13 @@ function PlantDetails() {
               </div>
             </div>
             
-            {/* Inventory Status Information */}
-            <div className="inventory-status">
-              {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
-                <span className="restock-date">
-                  Expected restock: {plant.inventory.restockDate}
-                </span>
-              )}
-              
-              {plant.inventory?.notes && (
-                <p className="inventory-notes">{plant.inventory.notes}</p>
-              )}
-            </div>
-            
-            <p className="description">{plant.description}</p>
             <div className="plant-specs">
               <h3>Plant Specifications</h3>
               {plant.plantType && <p><strong>Type:</strong> {plant.plantType}</p>}
-              {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches} inches</p>}
-              {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height}</p>}
-              {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches} inches</p>}
+              {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
+              {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
+              {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
+              {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing.toString().includes('"') ? plant.spacing : `${plant.spacing}"`}</p>}
               {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
               {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
               {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
@@ -416,7 +406,6 @@ function PlantDetails() {
               {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
               {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
               {plant.featured && <p><strong>Featured:</strong> Yes</p>}
-              {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing}</p>}
               {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
               {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
               {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
