@@ -342,7 +342,14 @@ function PlantDetails() {
           </div>
           <div className="plant-details-info">
             <div className="plant-info">
-              <h1 className="plant-common-name">{plant.name}</h1>
+              <div className="name-and-status">
+                <h1 className="plant-common-name">{plant.name}</h1>
+                {plant.inventory?.currentStock > 0 && plant.inventory?.status && (
+                  <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
+                    {plant.inventory?.status || 'Unknown'}
+                  </span>
+                )}
+              </div>
               {(plant.scientificName || plant.latinname) && (
                 <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
               )}
@@ -383,18 +390,6 @@ function PlantDetails() {
             
             {/* Inventory Status Information */}
             <div className="inventory-status">
-              {plant.inventory?.currentStock > 0 && (
-                <div className="inventory-status-row">
-                  <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                    {plant.inventory?.status || 'Unknown'}
-                  </span>
-                  
-                  <span className="stock-quantity">
-                    {plant.inventory.currentStock} in stock
-                  </span>
-                </div>
-              )}
-              
               {plant.inventory?.restockDate && plant.inventory.currentStock <= 0 && (
                 <span className="restock-date">
                   Expected restock: {plant.inventory.restockDate}
