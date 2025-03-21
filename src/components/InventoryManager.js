@@ -2150,38 +2150,6 @@ const InventoryManager = () => {
                   <th>Stock</th>
                   <th>
                     Status
-                    <span 
-                      className="check-link" 
-                      onClick={handleRepairInventory}
-                      style={{ 
-                        marginLeft: '8px', 
-                        cursor: repairStatus.loading ? 'default' : 'pointer', 
-                        color: repairStatus.loading ? '#999' : '#4a90e2',
-                        fontSize: '0.8rem',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {repairStatus.loading ? 'Checking...' : 'Check'}
-                    </span>
-                    {(repairStatus.success || repairStatus.error) && (
-                      <div 
-                        className={`status-tooltip ${repairStatus.success ? 'success' : 'error'}`}
-                        style={{
-                          position: 'absolute',
-                          backgroundColor: repairStatus.success ? '#d4edda' : '#f8d7da',
-                          color: repairStatus.success ? '#155724' : '#721c24',
-                          padding: '8px 12px',
-                          borderRadius: '4px',
-                          fontSize: '0.75rem',
-                          marginTop: '4px',
-                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                          zIndex: 100,
-                          maxWidth: '250px'
-                        }}
-                      >
-                        {repairStatus.message}
-                      </div>
-                    )}
                   </th>
                   <th>Restock Date</th>
                   <th>Featured</th>
