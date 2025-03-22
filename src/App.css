@@ -317,24 +317,21 @@ main {
 .plant-image {
   position: relative;
   width: 100%;
-  padding-bottom: 100%; /* 1:1 Aspect Ratio */
+  height: 200px;
   overflow: hidden;
-}
-
-.plant-image > div {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  min-width: 100%;
+  max-width: 100%;
 }
 
 .plant-image img {
-  transition: transform 0.3s ease;
-}
-
-.plant-card:hover .plant-image img {
-  transform: scale(1.05);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  min-width: 100%;
 }
 
 /* Plant image container for shop page */
@@ -1850,47 +1847,67 @@ footer {
 
 .list-view .plant-card {
   display: grid;
-  grid-template-columns: 180px 1fr auto;
-  grid-gap: 1rem;
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: auto;
+  gap: 1.5rem;
+  padding: 1.25rem;
   align-items: center;
-  height: auto;
 }
 
-.list-view .plant-image {
-  width: 180px;
-  height: 180px;
-  padding-bottom: 0;
-}
-
-.list-view .plant-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.list-view .plant-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: stretch;
-}
-
-.list-view .plant-view,
-.list-view .plant-buy {
-  width: 110px;
-  min-width: 110px;
-}
-
-/* Fixes for PlantImage component */
-.plant-image > div {
-  background-color: #f6f6f6 !important;
-}
-
-.plant-image img {
-  object-fit: cover;
-  object-position: center;
+.list-view .plant-card .plant-image {
   width: 100%;
-  height: 100%;
+  height: 200px;
+  grid-row: span 5;
+  margin-bottom: 0;
+  margin-right: 1rem;
+}
+
+.list-view .plant-card h3 {
+  text-align: left;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.4rem;
+}
+
+.list-view .plant-card .plant-description {
+  text-align: left;
+  margin-bottom: 0.75rem;
+}
+
+.list-view .plant-card p:not(.plant-description) {
+  text-align: left;
+  margin-bottom: 0.75rem;
+  font-size: 1.3rem;
+}
+
+.list-view .plant-card .plant-status {
+  justify-content: flex-start;
+  margin-bottom: 1rem;
+}
+
+.list-view .plant-card .plant-actions {
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
+/* Responsive adjustments for list view */
+@media (max-width: 768px) {
+  .list-view .plant-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 1rem;
+  }
+  
+  .list-view .plant-card .plant-image {
+    grid-row: span 1;
+    margin-right: 0;
+  }
+}
+
+/* Make the status badge clearer in list view */
+.list-view .status-badge {
+  font-size: 0.9rem;
+  padding: 0.3rem 0.7rem;
 }
 
 /* Additional mobile optimizations */
@@ -2100,5 +2117,46 @@ footer {
 @media (min-width: 769px) {
   .desktop-only {
     display: inline-block !important;
+  }
+}
+
+.featured-plants .plant-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.featured-plants .plant-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.featured-plants .plant-image {
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 0;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .featured-plants .plant-grid {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .featured-plants .plant-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
