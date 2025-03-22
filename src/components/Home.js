@@ -13,8 +13,8 @@ const PlantCard = ({ plant }) => {
   return (
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
-        <div className="plant-image" style={{ width: '100%', maxWidth: '100%' }}>
-          <PlantImage plant={plant} height={200} width="100%" />
+        <div className="plant-image">
+          <PlantImage plant={plant} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
         <h3>{plant.name}</h3>
         <p className="plant-description">
