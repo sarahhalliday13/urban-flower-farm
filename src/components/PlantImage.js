@@ -5,6 +5,9 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
+    // Reset error state when plant changes
+    setImageError(false);
+    
     // Get a suitable image - use the first available option in order of preference
     const sourceImage = plant.mainImage || 
                        (Array.isArray(plant.images) && plant.images.length > 0 ? plant.images[0] : null) ||
@@ -31,11 +34,20 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
-    borderRadius: '4px'
+    borderRadius: '4px',
+    position: 'relative'
+  };
+  
+  const imageStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    objectPosition: 'center',
+    transition: 'transform 0.5s ease'
   };
   
   const handleImageError = (e) => {
-    // Silently handle errors since we know things are working
+    // Silently handle errors
     setImageError(true);
     e.target.src = '/images/placeholder.jpg';
     
@@ -50,12 +62,8 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
     <div style={containerStyle}>
       <img 
         src={imageSrc} 
-        alt={plant.name} 
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover'
-        }}
+        alt={plant.name || 'Plant image'}
+        style={imageStyle}
         onError={handleImageError}
       />
     </div>
