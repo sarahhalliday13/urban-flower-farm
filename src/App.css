@@ -10,7 +10,7 @@
 }
 
 .logo-image {
-  width: 300px;
+  width: 200px;
   height: auto;
   max-width: 100%;
 }
@@ -21,13 +21,13 @@
   }
   
   .logo-image {
-    width: 220px;
+    width: 160px;
   }
 }
 
 @media (max-width: 480px) {
   .logo-image {
-    width: 180px;
+    width: 130px;
   }
 }
 
@@ -55,7 +55,9 @@
 .App-header {
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 0.5rem 0;
+  height: 100px;
+  padding-top: 0px;
+  padding-bottom: 5px;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -67,6 +69,7 @@
 
 .App-header.compact {
   padding: 0.25rem 0;
+  height: 80px;
 }
 
 .App-header.compact .logo {

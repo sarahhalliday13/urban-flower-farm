@@ -395,7 +395,7 @@ function PlantDetails() {
               <h3>Plant Specifications</h3>
               {plant.plantType && (
                 <p>
-                  <strong>Type:</strong> 
+                  <strong>Type:</strong>&nbsp;&nbsp;
                   <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
                     {plant.plantType}
                   </span>
