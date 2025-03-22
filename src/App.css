@@ -701,12 +701,11 @@ footer {
   border-top: none;
 }
 
-/* Existing plant-actions style remains unchanged for shop page */
+/* Plant actions style for all cards */
 .plant-actions {
   margin-top: auto;
   display: flex;
   justify-content: center;
-  border-top: 1px solid #eee;
   padding-top: 1rem;
 }
 

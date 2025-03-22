@@ -206,7 +206,6 @@
   display: flex;
   padding: 0.5rem 1rem 1rem;
   gap: 1rem;
-  border-top: 1px solid #eee;
   margin-top: 0;
   flex-direction: row;
   justify-content: space-between;
@@ -441,14 +440,31 @@
 .view-toggle {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
 }
 
 .view-button {
-  width: 70px;
-  min-width: 70px;
-  height: 36px;
-  box-sizing: border-box;
+  background-color: #f8f9fa;
+  border: 1px solid #d1e7d2;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  color: #2c5530;
+  font-weight: normal !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.view-button:hover {
+  background-color: #e9f2ea;
+  color: #1e3c21;
+}
+
+.view-button.active {
+  background-color: #e9f2ea;
+  color: #1e3c21;
+  border-color: #a8c5a9;
+  font-weight: normal !important;
 }
 
 /* Style for list view */
@@ -574,7 +590,6 @@
     flex: 0 0 auto;
     padding: 0.5rem 0.75rem;
     margin-top: 0;
-    border-top: 1px solid #eee;
     display: flex;
     justify-content: space-between;
     gap: 0.5rem;
@@ -868,7 +883,6 @@
   display: flex;
   width: 100%;
   gap: 0.5rem;
-  align-items: center;
 }
 
 .search-input-container {
@@ -887,17 +901,18 @@
 }
 
 .search-button {
+  background-color: #f8f9fa;
+  color: #2c5530;
+  border: 1px solid #d1e7d2;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: normal;
   width: 30%;
   min-width: 70px;
   height: 36px;
   box-sizing: border-box;
-  background-color: #f8f9fa !important;
-  color: #2c5530 !important;
-  border: 1px solid #d1e7d2 !important;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: normal;
 }
 
 .search-button:hover {
@@ -975,9 +990,9 @@
 .secondary-button, 
 .search-button,
 .view-button {
-  background-color: #f8f9fa !important;
-  color: #2c5530 !important;
-  border: 1px solid #d1e7d2 !important;
+  background-color: #f8f9fa;
+  color: #2c5530;
+  border: 1px solid #d1e7d2;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   cursor: pointer;
   transition: all 0.2s;
@@ -990,15 +1005,14 @@
 .secondary-button:hover,
 .search-button:hover,
 .view-button:hover {
-  background-color: #e9f2ea !important;
-  color: #1e3c21 !important;
+  background-color: #e9f2ea;
+  color: #1e3c21;
 }
 
-.view-button.active,
-.search-button.active {
-  background-color: #e9f2ea !important;
-  color: #1e3c21 !important;
-  border-color: #a8c5a9 !important;
+.view-button.active {
+  background-color: #e9f2ea;
+  color: #1e3c21;
+  border-color: #a8c5a9;
 }
 
 /* Search button specific sizing */
