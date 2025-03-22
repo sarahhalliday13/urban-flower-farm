@@ -510,8 +510,14 @@
 .inventory-table .save-btn {
   padding: 0.5rem 1rem;
   white-space: nowrap;
-  width: auto;
-  min-width: 80px;
+  width: 75%;
+  max-width: 75%;
+  min-width: auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0 auto;
+  display: block;
 }
 
 /* Ensure buttons don't overflow */
@@ -562,18 +568,6 @@
     min-width: auto; /* Override min-width to fit within container */
     box-sizing: border-box;
   }
-}
-
-/* Make the Update button fit properly within all containers */
-.inventory-table .save-btn {
-  padding: 0.5rem 1rem;
-  white-space: nowrap;
-  width: 100%;
-  max-width: 100%;
-  min-width: auto;
-  box-sizing: border-box;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .plant-name {
