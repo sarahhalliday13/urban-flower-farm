@@ -1447,6 +1447,10 @@ footer {
   border-radius: 4px;
   text-decoration: none;
   transition: background-color 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+  display: inline-block;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .admin-link:hover {
@@ -1473,6 +1477,7 @@ footer {
   position: static;
   background-color: transparent;
   border: none;
+  line-height: normal;
 }
 
 .admin-link.footer-link:hover {
