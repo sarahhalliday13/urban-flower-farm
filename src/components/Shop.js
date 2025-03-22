@@ -207,7 +207,7 @@ function Shop() {
                 <div className="search-input-container">
                   <input 
                     type="text" 
-                    placeholder="Search by name, type, or colour"
+                    placeholder="Search by keyword"
                     value={searchTerm}
                     onChange={handleSearchChange}
                     className="search-input"
