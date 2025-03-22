@@ -884,6 +884,7 @@
 .search-bar form {
   display: flex;
   width: 100%;
+  gap: 0.5rem;
 }
 
 .search-input-container {
@@ -895,7 +896,7 @@
   width: 100%;
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid #ddd;
-  border-radius: 4px 0 0 4px;
+  border-radius: 4px;
   font-size: 0.9rem;
   height: 36px;
   box-sizing: border-box;
@@ -905,7 +906,7 @@
   background-color: #f8f9fa;
   color: #2c5530;
   border: 1px solid #d1e7d2;
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   padding: 0.5rem 1rem;
   cursor: pointer;
   font-size: 0.9rem;
@@ -914,7 +915,6 @@
   min-width: 70px;
   height: 36px;
   box-sizing: border-box;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 .search-button:hover {
@@ -1024,7 +1024,7 @@
 
 /* Search button specific styles */
 .search-button {
-  border-radius: 0 4px 4px 0;
+  border-radius: 4px;
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
   font-weight: normal;
