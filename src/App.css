@@ -2169,20 +2169,19 @@ footer {
   margin: 1rem;
   font-size: 1.2rem;
   color: #333;
-  text-align: left;
+  text-align: center;
 }
 
 .featured-plants .plant-card p {
   margin: 0 1rem 1rem;
   color: #666;
-  text-align: left;
+  text-align: center;
 }
 
 .featured-plants .plant-card .plant-actions {
   display: flex;
   padding: 0.5rem 1rem 1rem;
   gap: 1rem;
-  border-top: 1px solid #eee;
   margin-top: auto;
   flex-direction: row;
   justify-content: center;
