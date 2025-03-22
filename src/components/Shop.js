@@ -258,17 +258,44 @@ function Shop() {
                             </p>
                             <div className="plant-info-row">
                               <div className="badge-container">
-                                {plant.inventory?.status ? (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.inventory.status}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get the current stock
+                                  const currentStock = plant.inventory?.currentStock || 0;
+                                  
+                                  if (currentStock <= 0) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Out of Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (currentStock < 10) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Low Stock ({currentStock} left)
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (plant.inventory?.status) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                          {plant.inventory.status}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          In Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                })()}
                                 {plant.plantType && (
                                   <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
                                     <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
@@ -283,9 +310,9 @@ function Shop() {
                           <div className="plant-actions">
                             <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                             <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
                               onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock}
+                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
                             >
                               {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                             </button>
@@ -311,17 +338,44 @@ function Shop() {
                             </p>
                             <div className="plant-info-row">
                               <div className="badge-container">
-                                {plant.inventory?.status ? (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.inventory.status}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get the current stock
+                                  const currentStock = plant.inventory?.currentStock || 0;
+                                  
+                                  if (currentStock <= 0) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Out of Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (currentStock < 10) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Low Stock ({currentStock} left)
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (plant.inventory?.status) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                          {plant.inventory.status}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          In Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                })()}
                                 {plant.plantType && (
                                   <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
                                     <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
@@ -335,9 +389,9 @@ function Shop() {
                           <div className="plant-actions">
                             <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                             <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
                               onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock}
+                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
                             >
                               {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                             </button>
@@ -380,17 +434,44 @@ function Shop() {
                             </p>
                             <div className="plant-info-row">
                               <div className="badge-container">
-                                {plant.inventory?.status ? (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.inventory.status}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get the current stock
+                                  const currentStock = plant.inventory?.currentStock || 0;
+                                  
+                                  if (currentStock <= 0) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Out of Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (currentStock < 10) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Low Stock ({currentStock} left)
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (plant.inventory?.status) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                          {plant.inventory.status}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          In Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                })()}
                                 {plant.plantType && (
                                   <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
                                     <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
@@ -405,9 +486,9 @@ function Shop() {
                           <div className="plant-actions">
                             <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                             <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
                               onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock}
+                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
                             >
                               {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                             </button>
@@ -433,17 +514,44 @@ function Shop() {
                             </p>
                             <div className="plant-info-row">
                               <div className="badge-container">
-                                {plant.inventory?.status ? (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.inventory.status}
-                                    </span>
-                                  </div>
-                                ) : (
-                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
-                                  </div>
-                                )}
+                                {(() => {
+                                  // Get the current stock
+                                  const currentStock = plant.inventory?.currentStock || 0;
+                                  
+                                  if (currentStock <= 0) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Out of Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (currentStock < 10) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          Low Stock ({currentStock} left)
+                                        </span>
+                                      </div>
+                                    );
+                                  } else if (plant.inventory?.status) {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                          {plant.inventory.status}
+                                        </span>
+                                      </div>
+                                    );
+                                  } else {
+                                    return (
+                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                                          In Stock
+                                        </span>
+                                      </div>
+                                    );
+                                  }
+                                })()}
                                 {plant.plantType && (
                                   <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
                                     <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
@@ -457,9 +565,9 @@ function Shop() {
                           <div className="plant-actions">
                             <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
                             <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
                               onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock}
+                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
                             >
                               {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
                             </button>

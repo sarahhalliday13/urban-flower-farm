@@ -344,11 +344,36 @@ function PlantDetails() {
             <div className="plant-info">
               <div className="name-and-status">
                 <h1 className="plant-common-name">{plant.name}</h1>
-                {plant.inventory?.currentStock > 0 && plant.inventory?.status && (
-                  <span className={`status-badge ${plant.inventory?.status?.toLowerCase().replace(' ', '-') || 'unknown'}`}>
-                    {plant.inventory?.status || 'Unknown'}
-                  </span>
-                )}
+                {(() => {
+                  // Get the current stock
+                  const currentStock = plant.inventory?.currentStock || 0;
+                  
+                  if (currentStock <= 0) {
+                    return (
+                      <span className="status-badge sold-out">
+                        Out of Stock
+                      </span>
+                    );
+                  } else if (currentStock < 10) {
+                    return (
+                      <span className="status-badge low-stock">
+                        Low Stock ({currentStock} left)
+                      </span>
+                    );
+                  } else if (plant.inventory?.status) {
+                    return (
+                      <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`}>
+                        {plant.inventory.status}
+                      </span>
+                    );
+                  } else {
+                    return (
+                      <span className="status-badge in-stock">
+                        In Stock
+                      </span>
+                    );
+                  }
+                })()}
               </div>
               {(plant.scientificName || plant.latinname) && (
                 <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
@@ -371,7 +396,7 @@ function PlantDetails() {
                   <button 
                     className="quantity-button"
                     onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1}
+                    disabled={quantity <= 1 || plant.inventory?.currentStock <= 0}
                   >-</button>
                   <span className="quantity">{quantity}</span>
                   <button 
