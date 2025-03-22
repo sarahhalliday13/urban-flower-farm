@@ -465,7 +465,7 @@
   background-color: #e9f2ea;
   color: #1e3c21;
   border-color: #a8c5a9;
-  font-weight: bold !important;
+  font-weight: normal !important;
 }
 
 /* Style for list view */
@@ -1019,7 +1019,7 @@
   background-color: #e9f2ea;
   color: #1e3c21;
   border-color: #a8c5a9;
-  font-weight: bold !important;
+  font-weight: normal !important;
 }
 
 /* Search button specific styles */
