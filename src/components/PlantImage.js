@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 
-const PlantImage = ({ plant, height = 200, width = "auto" }) => {
+const PlantImage = ({ plant, height = 200, width = "100%" }) => {
   const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Reset error state when plant changes
-    setImageError(false);
-    
     // Get a suitable image - use the first available option in order of preference
     const sourceImage = plant.mainImage || 
                        (Array.isArray(plant.images) && plant.images.length > 0 ? plant.images[0] : null) ||
@@ -35,19 +32,11 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
     borderRadius: '4px',
-    position: 'relative'
-  };
-  
-  const imageStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    objectPosition: 'center',
-    transition: 'transform 0.5s ease'
+    minWidth: '100%' // Ensure full width
   };
   
   const handleImageError = (e) => {
-    // Silently handle errors
+    // Silently handle errors since we know things are working
     setImageError(true);
     e.target.src = '/images/placeholder.jpg';
     
@@ -62,8 +51,12 @@ const PlantImage = ({ plant, height = 200, width = "auto" }) => {
     <div style={containerStyle}>
       <img 
         src={imageSrc} 
-        alt={plant.name || 'Plant image'}
-        style={imageStyle}
+        alt={plant.name} 
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover'
+        }}
         onError={handleImageError}
       />
     </div>
