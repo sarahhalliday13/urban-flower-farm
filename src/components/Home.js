@@ -186,9 +186,9 @@ function Home({ isFirstVisit }) {
         )}
 
         <section className="featured-plants" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
-          <div className="featured-plants-header">
+          <div className="featured-plants-header" style={{ marginBottom: '0px' }}>
             <h2>Featured</h2>
-            <Link to="/shop" className="view-all-button" style={{ padding: '8px' }}>View All</Link>
+            <Link to="/shop" className="view-all-button desktop-only" style={{ padding: '8px' }}>View All</Link>
           </div>
           
           {loading ? (
@@ -204,8 +204,8 @@ function Home({ isFirstVisit }) {
           )}
           
           {!loading && !error && (
-            <div className="featured-plants-footer" style={{ marginTop: '2rem', textAlign: 'center' }}>
-              <Link to="/shop" className="view-all-button">View All</Link>
+            <div className="featured-plants-footer" style={{ marginTop: '1rem', textAlign: 'center', padding: '32px' }}>
+              <Link to="/shop" className="view-all-button" style={{ display: 'inline-block', padding: '10px 20px', backgroundColor: '#2c5530', color: 'white', borderRadius: '4px', textDecoration: 'none' }}>View All</Link>
             </div>
           )}
         </section>
