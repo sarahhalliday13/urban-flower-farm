@@ -12,8 +12,8 @@ import PlantImage from './PlantImage';
 const PlantCard = ({ plant }) => {
   return (
     <div className="plant-card">
-      <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div className="plant-image">
+      <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
+        <div className="plant-image" style={{ width: '100%', maxWidth: '100%' }}>
           <PlantImage plant={plant} height={200} width="100%" />
         </div>
         <h3>{plant.name}</h3>
