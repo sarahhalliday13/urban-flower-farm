@@ -829,4 +829,18 @@
 .load-more button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Mobile styling for load more button */
+@media screen and (max-width: 768px) {
+  .load-more {
+    margin: 1.5rem 0 2rem;
+  }
+  
+  .load-more button {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.95rem;
+    width: 80%;
+    max-width: 250px;
+  }
 } 
