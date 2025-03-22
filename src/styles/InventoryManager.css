@@ -537,13 +537,14 @@
     gap: 15px;
     padding: 0;
     align-items: center; /* Keep vertical alignment */
+    justify-content: space-between;
   }
   
   .search-box {
     max-width: 100%;
     width: 100%;
     flex: 1;
-    order: 3;
+    order: 2;
     margin: 0; /* Remove all margins */
     margin-bottom: 15px; /* Add some bottom margin for spacing */
     padding: 0; /* Remove padding */
@@ -557,10 +558,9 @@
   
   .filter-controls {
     flex: 0 0 auto;
-    width: 100%;
+    width: 48%; /* Make it take roughly half the width */
     order: 1;
     margin: 0; /* Remove all margins */
-    margin-bottom: 10px;
     padding: 0; /* Remove padding */
     align-self: center; /* Maintain vertical alignment */
   }
@@ -573,9 +573,22 @@
     border-radius: 5px;
   }
   
+  .add-new-button-container {
+    order: 1;
+    width: 48%; /* Make it take roughly half the width */
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  .add-new-button {
+    width: 100%; /* Make button fill its container */
+    min-width: unset;
+    white-space: nowrap;
+  }
+  
   .plant-counts {
     flex: 1;
-    order: 2;
+    order: 3;
     justify-content: flex-start;
     width: 100%;
     margin-bottom: 10px;
@@ -663,9 +676,16 @@
   }
 }
 
+/* Special adjustment for very small screens to fit Update button */
 @media (max-width: 576px) {
   .inventory-manager {
     padding: 0.75rem;
+  }
+  
+  /* Make filter and add button stack on very small screens */
+  .filter-controls,
+  .add-new-button-container {
+    width: 100%;
   }
   
   .inventory-controls {
@@ -738,6 +758,19 @@
     min-width: unset;
     height: 44px;
     font-size: 0.95rem;
+  }
+  
+  .inventory-table .edit-plant-btn {
+    width: 100%;
+    padding: 8px 12px;
+    text-align: center;
+    height: auto;
+    font-size: 0.95rem;
+  }
+  
+  /* Make action button container take full width */
+  .inventory-table td[data-label="Actions"] {
+    padding: 1rem;
   }
 }
 
