@@ -4,19 +4,27 @@ import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import PlantImage from './PlantImage';
+import useWindowSize from '../hooks/useWindowSize';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { width } = useWindowSize();
+  const isMobile = width < 768;
+  
+  // Initial display count based on screen size
+  const initialDisplayCount = useMemo(() => isMobile ? 12 : 24, [isMobile]);
+  
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'price-low-high', 'price-high-low'
-  const [displayCount, setDisplayCount] = useState(12); // Number of plants to display initially
+  const [displayCount, setDisplayCount] = useState(initialDisplayCount); // Number of plants to display initially
   const [hasMore, setHasMore] = useState(true); // Flag to check if there are more plants to load
   const [searchTerm, setSearchTerm] = useState(''); // Search term state
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -67,10 +75,15 @@ function Shop() {
     loadPlants();
   }, []);
 
+  // Update display count when screen size changes between mobile and desktop
+  useEffect(() => {
+    setDisplayCount(initialDisplayCount);
+  }, [initialDisplayCount]);
+
   // Reset display count when sort option changes
   useEffect(() => {
-    setDisplayCount(12);
-  }, [sortOption]);
+    setDisplayCount(initialDisplayCount);
+  }, [sortOption, initialDisplayCount]);
 
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
@@ -155,17 +168,28 @@ function Shop() {
   };
 
   const handleLoadMore = () => {
-    setDisplayCount(prevCount => prevCount + 12);
+    // Increment based on screen size
+    setDisplayCount(prevCount => prevCount + (isMobile ? 12 : 24));
   };
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setDisplayCount(12); // Reset display count when search changes
+    if (e.target.value === '') {
+      setIsSearching(false);
+      setDisplayCount(initialDisplayCount); // Reset display count when search is cleared
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setIsSearching(true);
+    setDisplayCount(initialDisplayCount); // Reset display count when search changes
   };
 
   const clearSearch = () => {
     setSearchTerm('');
-    setDisplayCount(12); // Reset display count when clearing search
+    setIsSearching(false);
+    setDisplayCount(initialDisplayCount); // Reset display count when clearing search
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
@@ -178,25 +202,37 @@ function Shop() {
         <div className="shop-header">
           <h2>Shop</h2>
           <div className="shop-controls">
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Search by name, type, or colour"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="search-input"
-                aria-label="Search plants"
-              />
-              <span className="search-icon">🔍</span>
-              {searchTerm && (
+            <div className="search-bar">
+              <form onSubmit={handleSearch}>
+                <div className="search-input-container">
+                  <input 
+                    type="text" 
+                    placeholder="Search by name, type, or colour"
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="search-input"
+                    aria-label="Search plants"
+                  />
+                  {searchTerm && (
+                    <button 
+                      type="button" 
+                      className="clear-search" 
+                      onClick={clearSearch}
+                      title="Clear search"
+                      aria-label="Clear search"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <button 
-                  className="clear-search" 
-                  onClick={clearSearch}
-                  aria-label="Clear search"
+                  type="submit" 
+                  className="search-button"
+                  aria-label="Search"
                 >
-                  ✕
+                  Search
                 </button>
-              )}
+              </form>
             </div>
             <div className="sort-control">
               <label htmlFor="sort-select">Sort by:</label>
