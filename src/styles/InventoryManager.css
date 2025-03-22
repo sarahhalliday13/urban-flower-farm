@@ -499,28 +499,25 @@
 /* Make sure the action button column has proper spacing */
 .action-buttons {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.6rem;
-  align-items: stretch;
+  align-items: center;
   justify-content: center;
-  width: 80%;
+  width: 100%;
   margin: 0 auto;
-  font-weight: 800;
-  flex-direction: column;
 }
 
 /* Make the Update button fit properly */
-.inventory-table .save-btn {
+.inventory-table .save-btn,
+.inventory-table .edit-plant-btn {
   padding: 0.5rem 1rem;
   white-space: nowrap;
-  width: 75%;
-  max-width: 75%;
+  width: auto;
   min-width: auto;
   box-sizing: border-box;
-  overflow: hidden;
   text-overflow: ellipsis;
   margin: 0 auto;
-  display: block;
+  display: inline-block;
 }
 
 /* Ensure buttons don't overflow */
@@ -534,380 +531,6 @@
 }
 
 /* Mobile-specific fixes */
-@media (max-width: 992px) {
-  .inventory-table {
-    min-width: unset; /* Remove minimum width on mobile */
-  }
-  
-  .inventory-table td {
-    padding: 0.5rem;
-    text-align: right;
-  }
-  
-  .inventory-table td.action-buttons,
-  .inventory-table td[data-label="Actions"] {
-    text-align: center;
-    justify-content: center;
-  }
-  
-  /* Hide the Actions header on mobile */
-  .inventory-table td[data-label="Actions"]::before {
-    display: none;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-  }
-  
-  .inventory-table .save-btn,
-  .inventory-table .edit-btn,
-  .inventory-table .cancel-btn {
-    width: 100%;
-    margin: 0.25rem 0;
-    padding: 0.5rem 0.75rem;
-    font-size: 0.9rem;
-    min-width: auto; /* Override min-width to fit within container */
-    box-sizing: border-box;
-  }
-}
-
-.plant-name {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 1rem;
-  margin-bottom: 4px;
-  display: block;
-}
-
-.scientific-name {
-  font-style: italic;
-  font-size: 0.85rem;
-  color: #64748b;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: none;
-}
-
-.status-badge.in-stock {
-  background-color: #d4edda;
-  color: #155724;
-}
-
-.status-badge.low-stock {
-  background-color: #fff3cd;
-  color: #856404;
-}
-
-.status-badge.sold-out {
-  background-color: #f8d7da;
-  color: #721c24;
-}
-
-.status-badge.coming-soon {
-  background-color: #e3f2fd;
-  color: #1565c0;
-}
-
-.status-badge.pre-order {
-  background-color: #f3e5f5;
-  color: #6a1b9a;
-}
-
-.status-badge.unknown {
-  background-color: #f5f5f5;
-  color: #757575;
-}
-
-.notes-cell {
-  max-width: 250px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #4b5563;
-  line-height: 1.4;
-}
-
-/* 
- * BUTTON STYLE GUIDE
- * ------------------
- * Primary buttons: Green background (#10b981) with white text - Used for main actions like Save
- * Secondary buttons: Blue background (#3b82f6) with white text - Used for secondary actions like Edit/Update
- * Tertiary buttons: White background with grey text (#4b5563) - Used for less important actions like Cancel
- */
-
-.edit-btn, .edit-plant-btn {
-  background-color: #3b82f6; /* Secondary button: Blue for secondary actions */
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  min-width: 180px;
-  width: 180px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  display: inline-block;
-}
-
-.edit-btn:hover {
-  background-color: #2563eb; /* Darker blue on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.edit-plant-btn {
-  background-color: #3b82f6; /* Secondary button: Consistent with edit-btn */
-  min-width: 180px;
-  width: 180px;
-}
-
-.edit-plant-btn:hover {
-  background-color: #2563eb; /* Darker blue on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.save-btn, .cancel-btn, .delete-btn {
-  border: none;
-  padding: 0.6rem 1.2rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all 0.2s;
-  min-width: 180px;
-  width: 180px;
-  text-align: center;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  display: inline-block;
-}
-
-.save-btn {
-  background-color: #10b981; /* Primary button: Green for primary actions */
-  color: white;
-}
-
-.save-btn:hover {
-  background-color: #059669; /* Darker green on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.save-btn:disabled {
-  background-color: #d1d5db;
-  cursor: not-allowed;
-  color: #9ca3af;
-}
-
-.delete-btn {
-  background-color: #f44336;
-  color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s;
-  margin-right: 12px;
-}
-
-.delete-btn:hover {
-  background-color: #d32f2f;
-}
-
-.cancel-btn {
-  background-color: #ffffff; /* Tertiary button: White background */
-  color: #4b5563; /* Grey text */
-  border: 1px solid #d1d5db; /* Light grey border */
-}
-
-.cancel-btn:hover {
-  background-color: #f3f4f6; /* Light grey background on hover */
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.save-success {
-  color: #27ae60;
-  font-size: 0.85rem;
-  margin-top: 0.5rem;
-}
-
-.save-error {
-  color: #e74c3c;
-  font-size: 0.85rem;
-  margin-top: 0.5rem;
-}
-
-.no-results {
-  text-align: center;
-  padding: 2rem;
-  color: #7f8c8d;
-  font-style: italic;
-}
-
-/* Form input styles */
-.inventory-table input[type="number"],
-.inventory-table input[type="date"],
-.inventory-table select,
-.inventory-table textarea {
-  width: 100%;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.95rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background-color: #f9fafb;
-  color: #1e293b;
-}
-
-.inventory-table input[type="number"]:focus,
-.inventory-table input[type="date"]:focus,
-.inventory-table select:focus,
-.inventory-table textarea:focus {
-  outline: none;
-  border-color: #93c5fd;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
-.inventory-table textarea {
-  min-height: 80px;
-  resize: vertical;
-  line-height: 1.5;
-}
-
-/* Loading state */
-.inventory-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  text-align: center;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin: 2rem auto;
-  max-width: 600px;
-}
-
-.loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1.5rem;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loading-message {
-  color: #2c3e50;
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 1rem;
-}
-
-.loading-tip {
-  color: #555;
-  font-size: 0.95rem;
-  margin-bottom: 1.5rem;
-  max-width: 400px;
-}
-
-.loading-note {
-  color: #777;
-  font-size: 0.85rem;
-  font-style: italic;
-  margin-top: 1rem;
-  max-width: 400px;
-}
-
-.loading-buttons,
-.error-buttons {
-  display: flex;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-
-.force-load-btn {
-  background-color: #3498db;
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 0.5rem;
-}
-
-.force-load-btn:hover {
-  background-color: #2980b9;
-}
-
-.force-load-btn.secondary {
-  background-color: #95a5a6;
-  color: white;
-}
-
-.force-load-btn.secondary:hover {
-  background-color: #7f8c8d;
-}
-
-.inventory-error {
-  background-color: #fff8f8;
-  border: 1px solid #f8d7da;
-  color: #721c24;
-  padding: 2rem;
-  border-radius: 8px;
-  margin: 2rem auto;
-  max-width: 600px;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.error-message {
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-}
-
-.api-retry-info {
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.api-retry-info p {
-  margin: 0.5rem 0;
-}
-
-/* Enhanced Responsive styles for inventory table */
 @media (max-width: 992px) {
   .inventory-controls {
     flex-wrap: wrap;
@@ -1063,24 +686,22 @@
   
   /* Action buttons in a column on mobile */
   .action-buttons {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    gap: 0.5rem;
     width: 100%;
-    gap: 0.6rem;
+    justify-content: center;
   }
   
   .edit-btn, 
   .edit-plant-btn, 
   .save-btn, 
   .cancel-btn {
-    width: 100%;
-    margin-bottom: 0;
-    padding: 0.75rem;
-    text-align: center;
-    justify-content: center;
-    display: flex;
-    align-items: center;
-    font-weight: 500;
+    width: auto;
+    margin: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: auto; /* Override min-width to fit within container */
+    box-sizing: border-box;
   }
   
   /* Make status badges more visible */
