@@ -1443,14 +1443,22 @@ footer {
   color: #4caf50 !important;
   font-weight: 500;
   position: relative;
-  padding-bottom: 3px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.admin-link:hover {
+  background-color: rgba(76, 175, 80, 0.1);
 }
 
 .admin-link.active {
   border: 1px solid #4caf50;
   font-weight: 600;
-  padding: 3px 8px;
+  padding: 6px 12px;
   border-radius: 4px;
+  background-color: rgba(76, 175, 80, 0.1);
 }
 
 /* Admin link specifically for footer */
@@ -1461,19 +1469,22 @@ footer {
   font-size: 13px;
   font-weight: normal;
   transition: color 0.3s ease;
-  padding-bottom: 0;
+  padding: 0;
   position: static;
+  background-color: transparent;
+  border: none;
 }
 
 .admin-link.footer-link:hover {
   color: #444 !important;
   text-decoration: underline;
+  background-color: transparent;
 }
 
 .admin-links {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 8px;
 }
 
 /* Media queries for responsive navigation */
@@ -1607,11 +1618,6 @@ footer {
 
 .admin-link.footer-link:hover {
   color: #444 !important;
-  text-decoration: underline;
-}
-
-.admin-link:hover {
-  color: #444;
   text-decoration: underline;
 }
 
