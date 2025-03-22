@@ -219,7 +219,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0px;
+  margin-bottom: 0;
   padding-bottom: 0;
   border-bottom: none;
   flex-wrap: wrap;
