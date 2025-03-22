@@ -541,32 +541,44 @@
   
   .search-box {
     max-width: 100%;
+    width: 100%;
     flex: 1;
     order: 3;
     margin: 0; /* Remove all margins */
-    margin-bottom: 0; /* Explicitly set no bottom margin */
+    margin-bottom: 15px; /* Add some bottom margin for spacing */
     padding: 0; /* Remove padding */
     align-self: center; /* Maintain vertical alignment */
   }
   
+  .search-box input {
+    width: 100%;
+    min-height: 38px; /* Improve tap target size */
+  }
+  
   .filter-controls {
     flex: 0 0 auto;
+    width: 100%;
     order: 1;
     margin: 0; /* Remove all margins */
-    padding: 15px 10px; /* Add horizontal and vertical padding for medium viewports */
+    margin-bottom: 10px;
+    padding: 0; /* Remove padding */
     align-self: center; /* Maintain vertical alignment */
   }
   
   .filter-controls select {
-    padding: 6px 10px; /* Ensure consistent padding at smaller screen sizes */
+    width: 100%;
+    padding: 8px 10px; /* Increase padding for better touch targets */
     margin: 0;
-    height: 33px; /* Maintain consistent height */
+    height: 38px; /* Increase height for better tap targets */
+    border-radius: 5px;
   }
   
   .plant-counts {
     flex: 1;
     order: 2;
-    justify-content: flex-end;
+    justify-content: flex-start;
+    width: 100%;
+    margin-bottom: 10px;
   }
   
   /* Existing responsive table styles */
@@ -574,11 +586,14 @@
     overflow-x: visible;
     padding-top: 0; /* Ensure no top padding on medium screens */
     margin-top: 1rem;
+    box-shadow: none;
+    border-radius: 0;
   }
   
   .inventory-table {
     display: block;
     width: 100%;
+    min-width: unset; /* Override min-width on mobile */
   }
   
   .inventory-table thead {
@@ -588,8 +603,8 @@
   .inventory-table tr {
     display: block;
     margin-bottom: 1.5rem;
-    border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     background-color: white;
     overflow: hidden;
   }
@@ -601,10 +616,11 @@
   .inventory-table td {
     display: flex;
     justify-content: space-between;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 1rem;
     text-align: right;
     border-bottom: 1px solid #e5e7eb;
     align-items: center;
+    min-height: 24px;
   }
   
   .inventory-table td:last-child {
@@ -624,137 +640,29 @@
     letter-spacing: 0.025em;
   }
   
-  /* Plant info cell special styling */
-  .inventory-table td.plant-info {
-    display: block;
-    text-align: left;
-    padding: 1.25rem;
-    background-color: #f8fafc;
-  }
-  
-  .inventory-table td.plant-info::before {
-    display: block;
-    margin-bottom: 1rem;
-    font-weight: 600;
-    color: #1e293b;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    letter-spacing: 0.025em;
-  }
-  
-  /* Adjust the plant info layout */
-  .plant-info {
-    display: block;
-  }
-  
-  .plant-image {
-    width: 90px;
-    height: 90px;
-    margin-right: 1.25rem;
-    margin-bottom: 0.75rem;
-    float: left;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .plant-details {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* prevent text overflow */
-  }
-  
-  .plant-name {
-    font-size: 1.15rem;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #1e293b;
-  }
-  
-  .plant-scientific-name {
-    font-style: italic;
-    color: #64748b;
-    margin-bottom: 6px;
-    font-size: 0.95rem;
-  }
-  
-  .plant-price {
-    font-weight: 600;
-    color: #059669;
-    font-size: 1.05rem;
-  }
-  
-  /* Action buttons in a column on mobile */
+  /* Action buttons in a row on mobile */
   .action-buttons {
     flex-direction: row;
     gap: 0.5rem;
     width: 100%;
-    justify-content: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
   }
   
-  .edit-btn, 
-  .edit-plant-btn, 
-  .save-btn, 
-  .cancel-btn {
+  .inventory-table .save-btn,
+  .inventory-table .edit-plant-btn,
+  .inventory-table .edit-btn,
+  .inventory-table .cancel-btn {
     width: auto;
     margin: 0.25rem;
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
     min-width: auto; /* Override min-width to fit within container */
     box-sizing: border-box;
-  }
-  
-  /* Make status badges more visible */
-  .status-badge {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8rem;
-  }
-  
-  /* Add New Flower tab specific styles */
-  .tab-content h2 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    text-align: center;
-  }
-  
-  /* Ensure form elements aren't too tight */
-  .plant-form input,
-  .plant-form textarea,
-  .plant-form select {
-    font-size: 16px; /* Prevents iOS zoom on focus */
-    padding: 10px;
-  }
-  
-  /* Specific improvements for the consolidated Images section */
-  .plant-form .full-width {
-    margin-bottom: 20px;
-  }
-  
-  .plant-form .full-width label {
-    font-size: 16px;
-    margin-bottom: 10px;
-    display: block;
-  }
-  
-  /* Better handling of the description textarea */
-  .plant-form textarea {
-    min-height: 100px;
-  }
-  
-  /* Improve spacing in form-row elements */
-  .plant-form .form-row {
-    margin-bottom: 10px;
-    flex-direction: column;
-    gap: 10px;
-  }
-  
-  /* Fix upload button alignment */
-  .image-file-input {
-    width: 100%;
+    height: 38px; /* Fixed height for consistent look */
   }
 }
 
-/* Extra small devices (phones) */
 @media (max-width: 576px) {
   .inventory-manager {
     padding: 0.75rem;
@@ -767,91 +675,69 @@
     gap: 0.75rem;
   }
   
-  .filter-controls {
+  .search-box,
+  .filter-controls,
+  .plant-counts {
     width: 100%;
-    margin: 0;
+    margin: 0 0 10px 0;
     padding: 0;
   }
   
-  .filter-controls select {
+  /* Improve tap targets on very small screens */
+  .filter-controls select,
+  .search-box input {
     width: 100%;
-    padding: 0.6rem 0.8rem;
+    padding: 10px;
     margin: 0;
-    height: 40px;
+    height: 44px;
     border-radius: 6px;
-  }
-  
-  .inventory-table td {
-    padding: 0.85rem 1rem;
-  }
-  
-  .inventory-table td.plant-info {
-    padding: 1rem;
-  }
-  
-  .plant-image {
-    width: 75px;
-    height: 75px;
-  }
-  
-  .plant-name {
-    font-size: 1.05rem;
-  }
-  
-  .plant-scientific-name {
-    font-size: 0.9rem;
-  }
-  
-  .tab-button {
-    font-size: 0.85rem;
-    padding: 8px 12px;
+    font-size: 16px; /* Prevent iOS zoom on focus */
   }
   
   /* Make the tabs more compact on very small screens */
   .inventory-tabs {
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
   }
   
-  /* Ensure plant name is clearly visible */
-  .plant-name {
-    font-size: 1.1rem;
-    margin-bottom: 5px;
-  }
-  
-  /* Make scientific name smaller */
-  .plant-scientific-name {
+  .tab-button {
+    flex: 1;
+    min-width: 0;
     font-size: 0.85rem;
-    font-style: italic;
+    padding: 10px;
+    text-align: center;
   }
   
-  /* Add more breathing room between sections */
-  .tab-content {
-    padding: 0.5rem 0 2rem;
-  }
-  
-  .tab-content h2 {
-    font-size: 1.3rem;
-  }
-  
-  /* Ensure form content is visible without excessive scrolling */
-  .tab-content {
-    padding-bottom: 30px;
-  }
-  
-  .header-left {
+  /* Adjust the header for mobile */
+  .sales-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 1rem;
   }
   
-  .header-left .back-button {
-    font-size: 0.85rem;
-    padding: 0.5rem 1rem;
-  }
-  
-  .header-left h1,
-  .header-left h2 {
+  .sales-header h2 {
+    width: 100%;
+    text-align: center;
     font-size: 1.3rem;
+  }
+  
+  .header-controls {
+    width: 100%;
+    margin: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .add-new-button,
+  .save-btn,
+  .back-button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    min-width: unset;
+    height: 44px;
+    font-size: 0.95rem;
   }
 }
 
