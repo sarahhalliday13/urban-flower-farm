@@ -505,9 +505,9 @@ footer {
   }
 
   .featured-plants-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
     padding: 0 1rem;
     margin-bottom: 0.5rem;
@@ -559,6 +559,10 @@ footer {
     margin-right: auto;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+  
+  .featured-plants-footer {
+    margin-top: 0.5rem;
   }
 }
 
@@ -2047,5 +2051,15 @@ footer {
     height: 80px;
     padding-top: 0px;
     padding-bottom: 0px;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .desktop-only {
+    display: inline-block !important;
   }
 }
