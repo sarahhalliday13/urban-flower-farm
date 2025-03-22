@@ -184,7 +184,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
 }
 
 .plant-card h3 {
@@ -494,19 +493,10 @@
   position: relative;
 }
 
-.plant-grid.list-view .plant-image img,
-.plant-grid.list-view .plant-image > div {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-}
-
-/* Ensure specific plant images fill their containers */
-.plant-grid.list-view .plant-card[data-plant="Palmer's Beardtongue"] .plant-image img,
-.plant-grid.list-view .plant-card[data-plant="Lavender Mist"] .plant-image img {
-  object-fit: cover !important;
-  width: 100% !important;
-  height: 100% !important;
+.plant-grid.list-view .plant-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .plant-grid.list-view .plant-content {
