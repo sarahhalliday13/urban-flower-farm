@@ -541,6 +541,11 @@
     justify-content: center;
   }
   
+  /* Hide the Actions header on mobile */
+  .inventory-table td[data-label="Actions"]::before {
+    display: none;
+  }
+  
   .action-buttons {
     flex-direction: column;
     gap: 0.5rem;
@@ -553,7 +558,22 @@
     width: 100%;
     margin: 0.25rem 0;
     padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    min-width: auto; /* Override min-width to fit within container */
+    box-sizing: border-box;
   }
+}
+
+/* Make the Update button fit properly within all containers */
+.inventory-table .save-btn {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: auto;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .plant-name {
