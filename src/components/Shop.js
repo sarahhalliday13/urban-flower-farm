@@ -214,19 +214,19 @@ function Shop() {
                             <div className="plant-info-row">
                               <div className="badge-container">
                                 {plant.inventory?.status ? (
-                                  <div className="plant-status">
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                       {plant.inventory.status}
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="plant-status">
-                                    <span className="status-badge in-stock">In Stock</span>
+                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
                                   </div>
                                 )}
                                 {plant.plantType && (
-                                  <div className="plant-type-badge">
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                       {plant.plantType}
                                     </span>
                                   </div>
@@ -255,34 +255,36 @@ function Shop() {
                             </Link>
                           </div>
                           <div className="plant-content">
-                            <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                              <h3 className="plant-common-name">{plant.name}</h3>
-                            </Link>
+                            <div className="name-price-row">
+                              <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                <h3 className="plant-common-name">{plant.name}</h3>
+                              </Link>
+                              <div className="plant-price">${plant.price}</div>
+                            </div>
                             <p className="plant-description">
                               {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                             </p>
                             <div className="plant-info-row">
                               <div className="badge-container">
                                 {plant.inventory?.status ? (
-                                  <div className="plant-status">
-                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                       {plant.inventory.status}
                                     </span>
                                   </div>
                                 ) : (
-                                  <div className="plant-status">
-                                    <span className="status-badge in-stock">In Stock</span>
+                                  <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
                                   </div>
                                 )}
                                 {plant.plantType && (
-                                  <div className="plant-type-badge">
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                       {plant.plantType}
                                     </span>
                                   </div>
                                 )}
                               </div>
-                              <p className="plant-price">${plant.price}</p>
                             </div>
                           </div>
                           <div className="plant-actions">
@@ -329,19 +331,19 @@ function Shop() {
                           <div className="plant-info-row">
                             <div className="badge-container">
                               {plant.inventory?.status ? (
-                                <div className="plant-status">
-                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                     {plant.inventory.status}
                                   </span>
                                 </div>
                               ) : (
-                                <div className="plant-status">
-                                  <span className="status-badge in-stock">In Stock</span>
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
                                 </div>
                               )}
                               {plant.plantType && (
-                                <div className="plant-type-badge">
-                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                     {plant.plantType}
                                   </span>
                                 </div>
@@ -370,34 +372,36 @@ function Shop() {
                           </Link>
                         </div>
                         <div className="plant-content">
-                          <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <h3 className="plant-common-name">{plant.name}</h3>
-                          </Link>
+                          <div className="name-price-row">
+                            <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                              <h3 className="plant-common-name">{plant.name}</h3>
+                            </Link>
+                            <div className="plant-price">${plant.price}</div>
+                          </div>
                           <p className="plant-description">
                             {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
                           </p>
                           <div className="plant-info-row">
                             <div className="badge-container">
                               {plant.inventory?.status ? (
-                                <div className="plant-status">
-                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`}>
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                     {plant.inventory.status}
                                   </span>
                                 </div>
                               ) : (
-                                <div className="plant-status">
-                                  <span className="status-badge in-stock">In Stock</span>
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
                                 </div>
                               )}
                               {plant.plantType && (
-                                <div className="plant-type-badge">
-                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                                <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
                                     {plant.plantType}
                                   </span>
                                 </div>
                               )}
                             </div>
-                            <p className="plant-price">${plant.price}</p>
                           </div>
                         </div>
                         <div className="plant-actions">
@@ -416,7 +420,6 @@ function Shop() {
                 );
               })}
             </div>
-            {/* Load More button when in regular view */}
             {hasMore && (
               <div className="load-more">
                 <button onClick={handleLoadMore}>Load More</button>
@@ -429,4 +432,4 @@ function Shop() {
   );
 }
 
-export default Shop; 
+export default Shop;
