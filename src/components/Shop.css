@@ -719,6 +719,7 @@
 .status-badge.in-stock {
   background-color: #e8f5e9;
   color: #2e7d32;
+  border: 1px solid #c8e6c9;
 }
 
 .status-badge.pre-order {
