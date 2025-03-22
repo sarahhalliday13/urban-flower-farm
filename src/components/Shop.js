@@ -83,7 +83,10 @@ function Shop() {
       filteredPlants = plants.filter(plant => 
         (plant.name && plant.name.toLowerCase().includes(search)) || 
         (plant.description && plant.description.toLowerCase().includes(search)) ||
-        (plant.plantType && plant.plantType.toLowerCase().includes(search))
+        (plant.plantType && plant.plantType.toLowerCase().includes(search)) ||
+        (plant.color && plant.color.toLowerCase().includes(search)) ||
+        (plant.flowerColor && plant.flowerColor.toLowerCase().includes(search)) ||
+        (plant.foliageColor && plant.foliageColor.toLowerCase().includes(search))
       );
     }
     
@@ -178,7 +181,7 @@ function Shop() {
             <div className="search-container">
               <input
                 type="text"
-                placeholder="Search plants..."
+                placeholder="Search by name, type, or color..."
                 value={searchTerm}
                 onChange={handleSearchChange}
                 className="search-input"
