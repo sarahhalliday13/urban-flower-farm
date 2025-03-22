@@ -188,7 +188,7 @@ function Home({ isFirstVisit }) {
         <section className="featured-plants">
           <div className="featured-plants-header">
             <h2>Featured</h2>
-            <Link to="/shop" className="view-all-button">View All</Link>
+            <Link to="/shop" className="view-all-button" style={{ padding: '8px' }}>View All</Link>
           </div>
           
           {loading ? (

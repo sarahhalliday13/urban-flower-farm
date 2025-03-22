@@ -219,7 +219,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 0px;
   padding-bottom: 0;
   border-bottom: none;
   flex-wrap: wrap;
@@ -291,7 +291,8 @@ main {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
-  padding: 0 2rem;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .plant-card {
@@ -2021,4 +2022,10 @@ footer {
 
 .arrow {
   margin-left: 5px;
+}
+
+.homepage {
+  padding-top: 15px;
+  padding-left: 25px;
+  padding-right: 25px;
 }
