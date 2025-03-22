@@ -988,7 +988,7 @@
   }
 }
 
-/* Secondary button style */
+/* Secondary button style - shared base styles */
 .secondary-button, 
 .search-button,
 .view-button {
@@ -998,6 +998,10 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
   cursor: pointer;
   transition: all 0.2s;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: normal;
 }
 
 .secondary-button:hover,
@@ -1007,27 +1011,14 @@
   color: #1e3c21;
 }
 
-/* View toggle buttons with secondary style */
-.view-button {
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: normal !important;
-}
-
 .view-button.active {
   background-color: #e9f2ea;
   color: #1e3c21;
   border-color: #a8c5a9;
-  font-weight: normal !important;
 }
 
-/* Search button specific styles */
+/* Search button specific sizing */
 .search-button {
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-size: 0.9rem;
-  font-weight: normal;
   width: 30%;
   min-width: 70px;
   height: 36px;
