@@ -2230,7 +2230,20 @@ const InventoryManager = () => {
                               onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
                             />
                           ) : (
-                            <span>{plant.featured ? 'Yes' : 'No'}</span>
+                            <>
+                              {plant.featured ? (
+                                <>
+                                  {plant.imageURL && (
+                                    <div className="featured-image-container">
+                                      <img src={plant.imageURL} alt={plant.name} />
+                                    </div>
+                                  )}
+                                  <span>Yes</span>
+                                </>
+                              ) : (
+                                <span>No</span>
+                              )}
+                            </>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
