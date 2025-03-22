@@ -187,7 +187,7 @@ function Home({ isFirstVisit }) {
 
         <section className="featured-plants">
           <div className="featured-plants-header">
-            <h2 style={{ fontSize: '28px', fontWeight: 'bold' }}>Featured</h2>
+            <h2>Featured</h2>
             <Link to="/shop" className="view-all-button">View All</Link>
           </div>
           
