@@ -164,7 +164,6 @@ function Shop() {
               >
                 <option value="name-a-z">Name: A to Z</option>
                 <option value="name-z-a">Name: Z to A</option>
-                <option value="type-a-z">Type: All</option>
                 <option value="type-annual">Type: Annual (A to Z)</option>
                 <option value="type-perennial">Type: Perennial (A to Z)</option>
                 <option value="price-low-high">Price: Low to High</option>
