@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const PlantImage = ({ plant, height = 200, width = "100%" }) => {
+const PlantImage = ({ plant, height = 200, width = "100%", style }) => {
   const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
   const [imageError, setImageError] = useState(false);
 
@@ -8,6 +8,7 @@ const PlantImage = ({ plant, height = 200, width = "100%" }) => {
     // Get a suitable image - use the first available option in order of preference
     const sourceImage = plant.mainImage || 
                        (Array.isArray(plant.images) && plant.images.length > 0 ? plant.images[0] : null) ||
+                       plant.imageURL ||
                        '/images/placeholder.jpg';
     
     setImageSrc(sourceImage);
@@ -32,7 +33,8 @@ const PlantImage = ({ plant, height = 200, width = "100%" }) => {
     backgroundColor: '#f8f9fa',
     overflow: 'hidden',
     borderRadius: '4px',
-    minWidth: '100%' // Ensure full width
+    minWidth: '100%', // Ensure full width
+    ...(style || {}) // Merge custom styles if provided
   };
   
   const handleImageError = (e) => {
