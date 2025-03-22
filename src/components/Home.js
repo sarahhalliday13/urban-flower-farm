@@ -8,17 +8,17 @@ import PlantImage from './PlantImage';
 // 
 // IMPORTANT: This app MUST use Firebase Storage URLs for images, not local paths.
 // Images should use Firebase Storage with format:
-// https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.appspot.com/o/images%2F[filename].jpg?alt=media&token=[token]
+// https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2F[filename].jpg?alt=media&token=[token]
 const PlantCard = ({ plant }) => {
   return (
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
-        <div className="plant-image">
-          <PlantImage plant={plant} height={220} width="100%" />
+        <div className="plant-image" style={{ width: '100%', maxWidth: '100%' }}>
+          <PlantImage plant={plant} height={200} width="100%" />
         </div>
         <h3>{plant.name}</h3>
         <p className="plant-description">
-          {plant.shortDescription || (plant.description ? plant.description.substring(0, 100) + (plant.description.length > 100 ? '...' : '') : '')}
+          {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
         </p>
       </Link>
       <div className="plant-actions">
