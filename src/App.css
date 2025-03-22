@@ -1446,13 +1446,15 @@ footer {
   padding: 6px 10px;
   border-radius: 4px;
   transition: all 0.2s ease;
-  text-decoration: none;
+  text-decoration: none !important;
   display: flex;
   align-items: center;
+  font-size: 0.9rem;
 }
 
 .admin-link:hover {
   background-color: rgba(44, 85, 48, 0.08);
+  text-decoration: none !important;
 }
 
 .admin-link.active {
@@ -1460,6 +1462,14 @@ footer {
   font-weight: 600;
   color: #2c5530 !important;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-decoration: none !important;
+}
+
+/* Override any other styles that might add underlines */
+.admin-links a, 
+.admin-links a:hover, 
+.admin-links a.active {
+  text-decoration: none !important;
 }
 
 /* Admin link specifically for footer */
@@ -1511,7 +1521,7 @@ footer {
     padding-left: 0.5rem;
     color: #2c5530;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
@@ -1530,6 +1540,8 @@ footer {
     padding: 10px 12px;
     border-radius: 4px;
     width: 100%;
+    font-size: 0.85rem;
+    text-decoration: none;
   }
   
   .logout-button {
