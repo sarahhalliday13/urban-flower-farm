@@ -105,7 +105,7 @@
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  gap: 1rem;
   align-items: center;
   margin: 0;
 }
@@ -1462,11 +1462,11 @@ footer {
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 4px;
-  background-color: rgba(76, 175, 80, 0.1);
+  background-color: transparent;
 }
 
 .admin-link.active:hover {
-  background-color: rgba(76, 175, 80, 0.2);
+  background-color: transparent;
 }
 
 /* Admin link specifically for footer */
@@ -1492,7 +1492,7 @@ footer {
 .admin-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 1rem;
 }
 
 /* Media queries for responsive navigation */
