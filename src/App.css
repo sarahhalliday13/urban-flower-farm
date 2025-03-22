@@ -1454,7 +1454,7 @@ footer {
 }
 
 .admin-link:hover {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #388e3c !important;
 }
 
 .admin-link.active {
@@ -1463,6 +1463,10 @@ footer {
   padding: 6px 12px;
   border-radius: 4px;
   background-color: rgba(76, 175, 80, 0.1);
+}
+
+.admin-link.active:hover {
+  background-color: rgba(76, 175, 80, 0.2);
 }
 
 /* Admin link specifically for footer */
@@ -1483,7 +1487,6 @@ footer {
 .admin-link.footer-link:hover {
   color: #444 !important;
   text-decoration: underline;
-  background-color: transparent;
 }
 
 .admin-links {
