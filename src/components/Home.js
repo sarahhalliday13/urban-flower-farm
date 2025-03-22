@@ -14,7 +14,12 @@ const PlantCard = ({ plant }) => {
     <div className="plant-card">
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', width: '100%' }}>
         <div className="plant-image">
-          <PlantImage plant={plant} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img 
+            src={plant.imageURL || plant.mainImage || (plant.images && plant.images.length > 0 ? plant.images[0] : '/images/placeholder.jpg')} 
+            alt={plant.name} 
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => { e.target.src = '/images/placeholder.jpg'; }}
+          />
         </div>
         <h3>{plant.name}</h3>
         <p className="plant-description">
