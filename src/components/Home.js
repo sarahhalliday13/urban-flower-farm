@@ -185,7 +185,7 @@ function Home({ isFirstVisit }) {
           </section>
         )}
 
-        <section className="featured-plants">
+        <section className="featured-plants" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
           <div className="featured-plants-header">
             <h2>Featured</h2>
             <Link to="/shop" className="view-all-button" style={{ padding: '8px' }}>View All</Link>
