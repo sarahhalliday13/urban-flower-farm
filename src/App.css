@@ -2026,6 +2026,26 @@ footer {
 
 .homepage {
   padding-top: 15px;
-  padding-left: 25px;
-  padding-right: 25px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+@media (min-width: 768px) {
+  .homepage {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+}
+
+.featured-plants {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+
+@media (max-width: 768px) {
+  .App-header {
+    height: 80px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+  }
 }
