@@ -1,3 +1,36 @@
+/* Add this at the beginning of the file to ensure it's clear these are our primary styles */
+
+/* Logo styles - these are the canonical styles, other instances should be removed */
+.logo {
+  text-decoration: none;
+  margin-right: auto;
+  padding: 1rem 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  width: 250px;
+  height: auto;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .logo {
+    padding: 0.5rem;
+  }
+  
+  .logo-image {
+    width: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-image {
+    width: 150px;
+  }
+}
+
 .App {
   text-align: center;
   min-height: 100vh;
@@ -35,7 +68,7 @@
 }
 
 .App-header.compact .logo {
-  font-size: 1.1rem;
+  padding: 0.5rem;
 }
 
 .App-header.compact .nav-links a {
@@ -61,20 +94,7 @@
   align-items: center;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 2rem;
-}
-
-.logo {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #2c5530;
-  text-decoration: none;
-  margin-right: auto;
-  padding: 1rem 0.5rem;
-}
-
-.logo:hover {
-  color: #1f3d22;
+  padding: 0.5rem 1rem;
 }
 
 .nav-links {
@@ -361,7 +381,8 @@ footer {
   }
 
   .logo {
-    margin-right: 0;
+    padding: 0.5rem;
+    font-size: 1.1rem;
   }
 
   .nav-links {
@@ -552,14 +573,6 @@ footer {
 }
 */
 
-.logo {
-  text-decoration: none;
-  color: #2c5530;
-  font-size: 1.3rem;
-  font-weight: bold;
-  padding: 1rem 0.5rem;
-}
-
 .hamburger-menu {
   display: none;
   background: none;
@@ -584,10 +597,8 @@ footer {
   }
 
   .logo {
-    font-size: 1.2rem;
-    text-align: center;
-    flex: 1;
-    min-width: 0;
+    padding: 0.5rem;
+    font-size: 1.1rem;
   }
 
   .nav-links {
@@ -1169,30 +1180,16 @@ footer {
 }
 
 .logo-link {
-  display: block;
-  max-width: 100%;
-  padding: 1rem;
+  /* Keep only if needed for specific use cases different from .logo */
 }
 
-.logo-image {
-  width: 100%;
-  max-width: 400px;
-  height: auto;
-  display: block;
-}
-
-/* Tablet and larger */
+/* Any remaining duplicate logo styles should be removed */
 @media (min-width: 768px) {
-  .logo-image {
-    max-width: 600px;
-  }
+  /* Non-logo styles can stay */
 }
 
-/* Desktop */
 @media (min-width: 1024px) {
-  .logo-image {
-    max-width: 800px;
-  }
+  /* Non-logo styles can stay */
 }
 
 /* Add these styles for the inventory status section */
