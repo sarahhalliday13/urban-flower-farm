@@ -105,7 +105,7 @@
 
 .nav-links {
   display: flex;
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
   margin: 0;
 }
@@ -1440,33 +1440,26 @@ footer {
 
 /* Admin link styles for navigation */
 .admin-link {
-  color: #4caf50 !important;
+  color: #2c5530 !important;
   font-weight: 500;
   position: relative;
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 4px;
+  transition: all 0.2s ease;
   text-decoration: none;
-  transition: background-color 0.2s, border-color 0.2s;
-  border: 1px solid transparent;
-  display: inline-block;
-  line-height: 1.5;
-  margin: 0;
+  display: flex;
+  align-items: center;
 }
 
 .admin-link:hover {
-  color: #388e3c !important;
+  background-color: rgba(44, 85, 48, 0.08);
 }
 
 .admin-link.active {
-  border: 1px solid #4caf50;
+  background-color: rgba(44, 85, 48, 0.15);
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 4px;
-  background-color: transparent;
-}
-
-.admin-link.active:hover {
-  background-color: transparent;
+  color: #2c5530 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Admin link specifically for footer */
@@ -1477,22 +1470,23 @@ footer {
   font-size: 13px;
   font-weight: normal;
   transition: color 0.3s ease;
-  padding: 0;
+  padding-bottom: 0;
   position: static;
-  background-color: transparent;
-  border: none;
-  line-height: normal;
 }
 
 .admin-link.footer-link:hover {
   color: #444 !important;
   text-decoration: underline;
+  background-color: transparent;
 }
 
 .admin-links {
   display: flex;
   align-items: center;
   gap: 1rem;
+  background-color: #f8f9f8;
+  border-radius: 6px;
+  padding: 4px;
 }
 
 /* Media queries for responsive navigation */
@@ -1507,27 +1501,50 @@ footer {
   .nav-divider {
     display: block;
     margin: 1rem 0;
+    height: 2px;
+    background-color: rgba(44, 85, 48, 0.1);
   }
   
   .section-label {
     display: block;
-    margin-bottom: 0.5rem;
-    padding-left: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding-left: 0.5rem;
+    color: #2c5530;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   
   .admin-links {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0;
+    align-items: stretch;
+    gap: 0.5rem;
+    width: 100%;
+    background-color: #f8f9f8;
+    border-radius: 6px;
+    padding: 0.75rem;
+  }
+  
+  .admin-link {
+    padding: 10px 12px;
+    border-radius: 4px;
     width: 100%;
   }
   
   .logout-button {
-    padding: 15px 20px;
-    border-top: 1px solid #eee;
-    margin-top: 0.5rem;
+    padding: 12px 15px;
+    border-top: 1px solid rgba(44, 85, 48, 0.1);
+    margin-top: 0.75rem;
     width: 100%;
     text-align: left;
+    color: #d32f2f;
+    font-weight: 500;
+    border-radius: 4px;
+  }
+  
+  .logout-button:hover {
+    background-color: rgba(211, 47, 47, 0.1);
   }
 }
 
@@ -1540,18 +1557,22 @@ footer {
   .admin-links {
     position: relative;
     margin-left: 1.5rem;
-    padding-left: 1.5rem;
+    background-color: #f8f9f8;
+    border-radius: 6px;
+    padding: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
   }
   
   .admin-links::before {
     content: "";
     position: absolute;
-    left: 0;
+    left: -0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    height: 20px;
-    width: 1px;
-    background-color: #e0e0e0;
+    height: 24px;
+    width: 2px;
+    background-color: rgba(44, 85, 48, 0.2);
+    border-radius: 1px;
   }
 }
 
@@ -1626,6 +1647,11 @@ footer {
 
 .admin-link.footer-link:hover {
   color: #444 !important;
+  text-decoration: underline;
+}
+
+.admin-link:hover {
+  color: #444;
   text-decoration: underline;
 }
 
