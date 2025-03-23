@@ -35,7 +35,7 @@ const storage = getStorage(app);
 const db = getFirestore(app);
 
 // Export Firebase utilities
-export { set, onValue, storage, db };
+export { set, get, onValue, storage, db };
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {
@@ -974,6 +974,72 @@ export const deletePlant = async (plantId) => {
   }
 };
 
+/**
+ * Save news items to Firebase
+ * @param {Array} newsItems - Array of news items to save
+ * @returns {Promise<Object>} Result of the operation
+ */
+export const saveNewsItems = async (newsItems) => {
+  try {
+    console.log('Saving news items to Firebase:', newsItems);
+    
+    if (!Array.isArray(newsItems) || newsItems.length === 0) {
+      return {
+        success: false,
+        message: 'Invalid news data',
+        error: 'No valid news items provided'
+      };
+    }
+    
+    // Format news items for storage
+    const newsData = newsItems.map(item => ({
+      id: item.id,
+      subject: item.subject,
+      content: item.content,
+      date: typeof item.date === 'string' ? item.date : item.date.toISOString()
+    }));
+    
+    // Update in Firebase
+    const newsRef = ref(database, 'news');
+    await set(newsRef, newsData);
+    
+    return {
+      success: true,
+      message: 'News items saved successfully to Firebase'
+    };
+  } catch (error) {
+    console.error('Error saving news to Firebase:', error);
+    return {
+      success: false,
+      message: 'Failed to save news',
+      error: error.message
+    };
+  }
+};
+
+/**
+ * Fetch news items from Firebase
+ * @returns {Promise<Array>} Array of news items
+ */
+export const fetchNewsItems = async () => {
+  try {
+    console.log('Fetching news items from Firebase');
+    
+    const newsRef = ref(database, 'news');
+    const snapshot = await get(newsRef);
+    
+    if (snapshot.exists()) {
+      const newsData = snapshot.val();
+      return Array.isArray(newsData) ? newsData : Object.values(newsData);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error fetching news from Firebase:', error);
+    throw error;
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -989,7 +1055,9 @@ const firebaseService = {
   getOrders,
   updateOrderStatus,
   repairInventoryData,
-  deletePlant
+  deletePlant,
+  saveNewsItems,
+  fetchNewsItems
 };
 
 export default firebaseService; 
