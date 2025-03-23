@@ -69,7 +69,7 @@ main {
 .plant-details-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 10px;
   background: white;
   padding: 2rem;
   border-radius: 8px;
