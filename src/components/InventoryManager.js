@@ -2192,7 +2192,7 @@ const InventoryManager = () => {
                   </th>
                   <th>Restock Date</th>
                   <th>Featured</th>
-                  <th>Actions</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
