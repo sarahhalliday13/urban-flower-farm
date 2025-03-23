@@ -20,6 +20,7 @@ import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
 import './cart-styles.css';
+import FAQ from './components/FAQ';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -139,6 +140,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
           {!isAuthenticated && (
             <>
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+              <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
             </>
           )}
@@ -257,6 +259,7 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQ />} />
                 <Route path="/plant/:id" element={
                   <PlantDetailsWrapper>
                     <PlantDetails />
