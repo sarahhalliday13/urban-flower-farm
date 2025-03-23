@@ -506,15 +506,14 @@
 }
 
 .inventory-table th {
-  background-color: #f8fafc;
+  position: relative;
+  background-color: #f8f9fa;
   font-weight: 600;
-  color: #1e293b;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  text-transform: none;
-  font-size: 0.9rem;
-  letter-spacing: 0.01em;
+  text-align: left;
+  padding: 12px 15px;
+  border-bottom: 2px solid #e9ecef;
+  color: #495057;
+  white-space: nowrap;
 }
 
 .inventory-table tr:last-child td {
@@ -1569,4 +1568,21 @@
     font-size: 14px;
     width: 100%;
   }
+}
+
+/* Add styles for sortable headers */
+.sortable-header {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+.sortable-header:hover {
+  background-color: #e9ecef;
+}
+
+.sortable-header::after {
+  display: inline-block;
+  margin-left: 5px;
+  width: 10px;
 } 
