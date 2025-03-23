@@ -27,6 +27,15 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const AdminOrders = lazy(() => import('./components/AdminOrders'));
 const AdminUtilities = lazy(() => import('./components/AdminUtilities'));
 
+// Custom wrapper for plant details
+const PlantDetailsWrapper = ({ children }) => {
+  return (
+    <div className="plant-details-section">
+      {children}
+    </div>
+  );
+};
+
 // Custom NavigationLink component for admin links
 function AdminNavLink({ to, children, currentPath, onClick }) {
   // Dashboard link should be active only if the path is exactly '/admin'
@@ -248,7 +257,11 @@ function App() {
                 <Route path="/about" element={<About />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/contact" element={<Contact />} />
-                <Route path="/plant/:id" element={<PlantDetails />} />
+                <Route path="/plant/:id" element={
+                  <PlantDetailsWrapper>
+                    <PlantDetails />
+                  </PlantDetailsWrapper>
+                } />
                 <Route path="/login" element={<Login />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/checkout/confirmation" element={<Checkout />} />
