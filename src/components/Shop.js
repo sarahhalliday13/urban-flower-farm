@@ -193,13 +193,10 @@ function Shop() {
     if (e.target.value === '') {
       setIsSearching(false);
       setDisplayCount(initialDisplayCount); // Reset display count when search is cleared
+    } else {
+      setIsSearching(true);
+      setDisplayCount(initialDisplayCount); // Reset display count when search changes
     }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setIsSearching(true);
-    setDisplayCount(initialDisplayCount); // Reset display count when search changes
   };
 
   const clearSearch = () => {
@@ -218,38 +215,6 @@ function Shop() {
         <div className="shop-header">
           <h2>Shop</h2>
           <div className="shop-controls">
-            <div className="search-bar">
-              <form onSubmit={handleSearch}>
-                <div className="search-input-container">
-                  <input 
-                    type="text" 
-                    placeholder="Search by keyword"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="search-input"
-                    aria-label="Search plants"
-                  />
-                  {searchTerm && (
-                    <button 
-                      type="button" 
-                      className="clear-search" 
-                      onClick={clearSearch}
-                      title="Clear search"
-                      aria-label="Clear search"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-                <button 
-                  type="submit" 
-                  className="search-button"
-                  aria-label="Search"
-                >
-                  Search
-                </button>
-              </form>
-            </div>
             <div className="sort-control">
               <label htmlFor="sort-select">Sort by:</label>
               <select 
@@ -267,6 +232,29 @@ function Shop() {
                 <option value="status-coming-soon">Status: Coming Soon</option>
                 <option value="status-pre-order">Status: Pre-Order</option>
               </select>
+            </div>
+            <div className="search-bar">
+              <div className="search-input-container">
+                <input 
+                  type="text" 
+                  placeholder="Search by keyword"
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="search-input"
+                  aria-label="Search plants"
+                />
+                {searchTerm && (
+                  <button 
+                    type="button" 
+                    className="clear-search" 
+                    onClick={clearSearch}
+                    title="Clear search"
+                    aria-label="Clear search"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
             <div className="view-toggle">
               <button 
