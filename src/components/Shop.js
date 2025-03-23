@@ -4,6 +4,7 @@ import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import PlantImage from './PlantImage';
+import { useWindowSize } from '../hooks/useWindowSize';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
@@ -19,6 +20,7 @@ function Shop() {
   const [searchTerm, setSearchTerm] = useState(''); // Search term state
   const [isSearching, setIsSearching] = useState(false);
   const [initialDisplayCount, setInitialDisplayCount] = useState(12);
+  const { width } = useWindowSize();
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -154,7 +156,7 @@ function Shop() {
 
   const handleLoadMore = () => {
     // Increment based on screen size
-    setDisplayCount(prevCount => prevCount + (isMobile ? 12 : 24));
+    setDisplayCount(prevCount => prevCount + (width < 768 ? 12 : 24));
   };
 
   const handleSearchChange = (e) => {
