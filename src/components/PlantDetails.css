@@ -210,7 +210,8 @@ main {
   font-size: 1rem;
   line-height: 1.6;
   color: #4a4a4a;
-  margin-bottom: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .price-action-container {
