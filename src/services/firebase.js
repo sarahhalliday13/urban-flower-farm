@@ -13,6 +13,7 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 // Import auth functions only when needed
 
 // Your web app's Firebase configuration
@@ -31,9 +32,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const storage = getStorage(app);
+const db = getFirestore(app);
 
 // Export Firebase utilities
-export { set, onValue, storage };
+export { set, onValue, storage, db };
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {

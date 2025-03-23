@@ -21,6 +21,9 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
 import './cart-styles.css';
 import FAQ from './components/FAQ';
+import WhatsNew from './components/WhatsNew';
+import UpdatesPage from './components/UpdatesPage';
+import AdminUpdates from './components/AdminUpdates';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -140,12 +143,13 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
           {!isAuthenticated && (
             <>
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
+              <Link to="/updates" onClick={() => setIsMenuOpen(false)}>News</Link>
               <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
+              {hasOrders && (
+                <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
+              )}
             </>
-          )}
-          {hasOrders && (
-            <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
           )}
         </div>
         
@@ -163,18 +167,25 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
                 Dashboard
               </AdminNavLink>
               <AdminNavLink 
-                to="/inventory" 
+                to="/admin/orders" 
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Orders
+              </AdminNavLink>
+              <AdminNavLink 
+                to="/admin/inventory" 
                 currentPath={currentPath}
                 onClick={() => setIsMenuOpen(false)}
               >
                 Inventory
               </AdminNavLink>
               <AdminNavLink 
-                to="/admin/orders" 
+                to="/admin/updates" 
                 currentPath={currentPath}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Order Management
+                News
               </AdminNavLink>
               <AdminNavLink 
                 to="/admin/utilities" 
@@ -183,7 +194,9 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               >
                 Utilities
               </AdminNavLink>
-              <button onClick={() => { handleLogout(); setIsMenuOpen(false); }} className="logout-button">Logout</button>
+              <button className="logout-button" onClick={handleLogout}>
+                Logout
+              </button>
             </div>
           </>
         )}
@@ -249,93 +262,121 @@ function App() {
       <CartProvider>
         <AdminProvider>
           <Router>
-            <div className="App">
-              <header className="App-header">
-                <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-              </header>
-              
-              <Routes>
-                <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/faq" element={<FAQ />} />
-                <Route path="/plant/:id" element={
-                  <PlantDetailsWrapper>
-                    <PlantDetails />
-                  </PlantDetailsWrapper>
-                } />
-                <Route path="/login" element={<Login />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/checkout/confirmation" element={<Checkout />} />
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/firebase-test" element={<FirebaseTest />} />
-                <Route 
-                  path="/admin" 
-                  element={
-                    <ProtectedRoute>
-                      <AdminContentWrapper>
-                        <AdminDashboard />
-                      </AdminContentWrapper>
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/inventory" 
-                  element={
-                    <ProtectedRoute>
-                      <AdminContentWrapper>
-                        <InventoryManager />
-                      </AdminContentWrapper>
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/admin/orders" 
-                  element={
-                    <ProtectedRoute>
-                      <AdminContentWrapper>
-                        <AdminOrders />
-                      </AdminContentWrapper>
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/firebase-migration" 
-                  element={
-                    <ProtectedRoute>
-                      <FirebaseMigration />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route
-                  path="/admin/utilities"
-                  element={
-                    <ProtectedRoute>
-                      <AdminContentWrapper>
-                        <AdminUtilities />
-                      </AdminContentWrapper>
-                    </ProtectedRoute>
-                  }
-                />
-              </Routes>
-
-              <footer>
-                <p>© 2024 Buttons Urban Flower Farm. All rights reserved. <Link to="/inventory" className="admin-link footer-link">Inventory</Link></p>
-              </footer>
-
-              <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
-              
-              {/* API Debugger component */}
-              {showDebugger && <ApiDebugger />}
-              
-              {/* Toast notifications */}
-              <ToastManager />
-            </div>
+            <AppContent 
+              showModal={showModal} 
+              setShowModal={setShowModal}
+              isMenuOpen={isMenuOpen}
+              setIsMenuOpen={setIsMenuOpen}
+              isFirstVisit={isFirstVisit}
+              showDebugger={showDebugger}
+            />
           </Router>
         </AdminProvider>
       </CartProvider>
     </AuthProvider>
+  );
+}
+
+// Separate component for the app content that can safely use hooks within the providers
+function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirstVisit, showDebugger }) {
+  // Now useAuth is safely inside the AuthProvider
+  const { isAuthenticated: isAdmin } = useAuth();
+  
+  return (
+    <div className="App">
+      <header className="App-header">
+        <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+      </header>
+      
+      <Routes>
+        <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/shop" element={<Shop />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/plant/:id" element={
+          <PlantDetailsWrapper>
+            <PlantDetails />
+          </PlantDetailsWrapper>
+        } />
+        <Route path="/login" element={<Login />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/checkout/confirmation" element={<Checkout />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/firebase-test" element={<FirebaseTest />} />
+        <Route 
+          path="/admin" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <AdminDashboard />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/inventory" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <InventoryManager />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/orders" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <AdminOrders />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/firebase-migration" 
+          element={
+            <ProtectedRoute>
+              <FirebaseMigration />
+            </ProtectedRoute>
+          } 
+        />
+        <Route
+          path="/admin/utilities"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <AdminUtilities />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/admin/updates"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <AdminUpdates />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/updates" element={<UpdatesPage />} />
+      </Routes>
+
+      <footer>
+        <p>© 2024 Buttons Urban Flower Farm. All rights reserved. <Link to="/inventory" className="admin-link footer-link">Inventory</Link></p>
+      </footer>
+
+      <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
+      
+      {/* API Debugger component */}
+      {showDebugger && <ApiDebugger />}
+      
+      {/* Toast notifications */}
+      <ToastManager />
+    </div>
   );
 }
 
