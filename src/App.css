@@ -590,22 +590,6 @@ footer {
   cursor: pointer;
 }
 
-.cart-count {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: #e67e22;
-  color: white;
-  font-size: 0.7rem;
-  font-weight: bold;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .hamburger-menu {
   display: none;
   background: none;
