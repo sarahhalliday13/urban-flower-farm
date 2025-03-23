@@ -43,6 +43,7 @@ main {
   margin: 0 auto;
   padding: 0;
   box-sizing: border-box;
+  border: 5px solid red; /* Temporary test border */
 }
 
 .plant-navigation {
