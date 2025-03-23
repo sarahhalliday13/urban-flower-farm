@@ -20,7 +20,7 @@ function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'price-low-high', 'in-stock-only'
+  const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'status-in-stock', 'status-coming-soon', 'status-pre-order'
   const [displayCount, setDisplayCount] = useState(initialDisplayCount); // Number of plants to display initially
   const [hasMore, setHasMore] = useState(true); // Flag to check if there are more plants to load
   const [searchTerm, setSearchTerm] = useState(''); // Search term state
@@ -103,19 +103,23 @@ function Shop() {
       );
     }
     
-    // If "In Stock Only" is selected, filter out out-of-stock items
-    if (sortOption === 'in-stock-only') {
+    // Filter by inventory status if selected
+    if (sortOption === 'status-in-stock') {
       filteredPlants = filteredPlants.filter(plant => {
         const currentStock = plant.inventory?.currentStock || 0;
-        return currentStock > 0;
+        return currentStock > 0 && (!plant.inventory?.status || plant.inventory.status === 'In Stock');
       });
+    } else if (sortOption === 'status-coming-soon') {
+      filteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'coming soon'
+      );
+    } else if (sortOption === 'status-pre-order') {
+      filteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'pre-order'
+      );
     }
     
     switch (sortOption) {
-      case 'price-low-high':
-        return [...filteredPlants].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-      case 'in-stock-only':
-        return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'name-a-z':
         return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'name-z-a':
@@ -134,6 +138,10 @@ function Shop() {
           const typeB = b.plantType || '';
           return typeA.localeCompare(typeB) || (a.name || '').localeCompare(b.name || '');
         });
+      case 'status-in-stock':
+      case 'status-coming-soon':
+      case 'status-pre-order':
+        return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
@@ -255,8 +263,9 @@ function Shop() {
                 <option value="name-z-a">Name: Z to A</option>
                 <option value="type-annual">Type: Annual (A to Z)</option>
                 <option value="type-perennial">Type: Perennial (A to Z)</option>
-                <option value="price-low-high">Price: Low to High</option>
-                <option value="in-stock-only">In Stock Only</option>
+                <option value="status-in-stock">Status: In Stock</option>
+                <option value="status-coming-soon">Status: Coming Soon</option>
+                <option value="status-pre-order">Status: Pre-Order</option>
               </select>
             </div>
             <div className="view-toggle">
