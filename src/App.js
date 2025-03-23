@@ -125,11 +125,12 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
       <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
         ☰
       </button>
-      <Link to="/" className="logo">
+      <Link to="/" className="logo" onClick={() => setIsMenuOpen(false)}>
         <img 
           src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" 
           alt="Buttons Urban Flower Farm" 
           className="logo-image"
+          draggable="false"
         />
       </Link>
       <div className={`nav-links ${isMenuOpen ? 'nav-open' : ''}`}>

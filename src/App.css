@@ -7,12 +7,21 @@
   padding: 0;
   display: flex;
   align-items: center;
+  cursor: pointer;
+  position: relative;
+  z-index: 100;
 }
 
 .logo-image {
   width: 200px;
   height: auto;
   max-width: 100%;
+  display: block; /* Ensures the image takes the full space and is properly clickable */
+  -webkit-touch-callout: none; /* Prevents iOS callout when tapping */
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* IE/Edge */
+  user-select: none; /* Non-prefixed version */
 }
 
 @media (max-width: 768px) {
