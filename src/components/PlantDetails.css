@@ -26,9 +26,306 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Plant details layout styles to match Shop page */
+main {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.plant-details {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.plant-details-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.plant-details-gallery {
+  width: 100%;
+}
+
 .plant-details-image {
   position: relative;
-  /* Keep any existing styles */
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  background-color: #f8f9fa;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.plant-details-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 0.5rem 0;
+  justify-content: flex-start;
+  margin-top: 1rem;
+}
+
+.thumbnail-image {
+  flex: 0 0 auto;
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.thumbnail-image.active {
+  border-color: #2c5530;
+}
+
+.thumbnail-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.plant-details-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.plant-info {
+  width: 100%;
+}
+
+.name-and-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.plant-common-name {
+  color: #2c5530;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.scientific-name {
+  font-style: italic;
+  color: #666;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+}
+
+.status-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: inline-block;
+  margin-left: auto;
+}
+
+.status-badge.in-stock {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-badge.low-stock {
+  background-color: #fff8e1;
+  color: #f57f17;
+  border: 1px solid #ffecb3;
+}
+
+.status-badge.sold-out {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.status-badge.coming-soon {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+}
+
+.description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a4a4a;
+  margin-bottom: 1.5rem;
+}
+
+.price-action-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+}
+
+.price {
+  font-size: 1.5rem;
+  color: #2c5530;
+  font-weight: bold;
+  margin: 0;
+}
+
+.price-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantity-selector button {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  color: #333;
+}
+
+.quantity-selector button:hover {
+  background-color: #f8f9fa;
+}
+
+.quantity-selector span {
+  min-width: 28px;
+  text-align: center;
+  font-size: 1rem;
+  color: #333;
+}
+
+.plant-buy {
+  background-color: #2c5530;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.plant-buy:hover {
+  background-color: #1e3c21;
+}
+
+.plant-buy:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.plant-specs {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.plant-specs h3 {
+  color: #2c5530;
+  margin: 0 0 1rem 0;
+}
+
+.plant-specs p {
+  margin-bottom: 0.5rem;
+  color: #4a4a4a;
+}
+
+.plant-navigation {
+  max-width: 1200px;
+  margin: 0 auto 1rem;
+  padding: 0 1rem;
+}
+
+.plant-navigation.bottom {
+  margin-top: 2rem;
+}
+
+.navigation-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-view-all {
+  flex: 1;
+}
+
+.view-all-link {
+  color: #2c5530;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.view-all-link:hover {
+  text-decoration: underline;
+}
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-button {
+  background: none;
+  border: none;
+  color: #2c5530;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.5rem;
+  text-decoration: underline;
+}
+
+.nav-button:hover {
+  color: #1e3c21;
+}
+
+.nav-button:disabled {
+  color: #ccc;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+.nav-separator {
+  color: #ddd;
+  font-weight: 300;
 }
 
 /* Type badge styles */
@@ -42,7 +339,7 @@
   color: #2c5530;
   border: 1px solid #c8e6c9;
   text-transform: capitalize;
-  margin-left: 1.25rem;
+  margin-left: 0;
 }
 
 /* Type-specific badges */
@@ -63,4 +360,97 @@
   background-color: #f5f5f5;
   color: #6c757d;
   border: 1px solid #e0e0e0;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .plant-details-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .plant-common-name {
+    font-size: 1.8rem;
+  }
+  
+  .scientific-name {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .plant-details {
+    padding: 0.75rem;
+  }
+  
+  .plant-details-container {
+    padding: 1.5rem;
+  }
+  
+  .plant-common-name {
+    font-size: 1.5rem;
+  }
+  
+  .name-and-status {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-badge {
+    margin-left: 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .price-action-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .price-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .plant-navigation {
+    padding: 0 0.75rem;
+  }
+  
+  .nav-view-all {
+    display: none;
+  }
+  
+  .nav-group {
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .plant-details-container {
+    padding: 1rem;
+    box-shadow: none;
+    background: transparent;
+  }
+  
+  .image-thumbnails {
+    justify-content: center;
+  }
+  
+  .plant-specs {
+    padding: 1rem;
+  }
+  
+  .plant-buy {
+    width: 100%;
+  }
+  
+  .quantity-selector {
+    margin-bottom: 0.5rem;
+  }
+  
+  .price-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
 } 
