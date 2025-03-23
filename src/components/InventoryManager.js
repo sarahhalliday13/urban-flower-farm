@@ -452,7 +452,8 @@ const InventoryManager = () => {
   // Get the counts for each status
   const statusCounts = useMemo(() => getStatusCounts(), [getStatusCounts]);
 
-  const getFilteredPlants = useCallback(() => {
+  // Memoize the filtered plants to prevent unnecessary recalculations
+  const filteredPlants = React.useMemo(() => {
     let filtered = [...plants];
     
     // Apply status filter
@@ -465,12 +466,24 @@ const InventoryManager = () => {
       });
     }
     
-    // Apply search filter
+    // Apply search filter using searchTerm
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(plant => 
         plant.name.toLowerCase().includes(term) || 
         (plant.scientificName && plant.scientificName.toLowerCase().includes(term)) ||
+        String(plant.id).toLowerCase().includes(term)
+      );
+    }
+    
+    // Apply search filter using plantSearchTerm (for the inventory search box)
+    if (plantSearchTerm.trim() !== '') {
+      const term = plantSearchTerm.toLowerCase();
+      filtered = filtered.filter(plant => 
+        (plant.name && plant.name.toLowerCase().includes(term)) || 
+        (plant.scientificName && plant.scientificName.toLowerCase().includes(term)) ||
+        (plant.botanicalName && plant.botanicalName.toLowerCase().includes(term)) ||
+        (plant.category && plant.category.toLowerCase().includes(term)) ||
         String(plant.id).toLowerCase().includes(term)
       );
     }
@@ -492,10 +505,7 @@ const InventoryManager = () => {
     }
     
     return filtered;
-  }, [plants, filter, searchTerm, sortConfig]);
-
-  // Memoize the filtered plants to prevent unnecessary recalculations
-  const filteredPlants = React.useMemo(() => getFilteredPlants(), [getFilteredPlants]);
+  }, [plants, filter, searchTerm, plantSearchTerm, sortConfig]);
 
   // Force a refresh of data when the component mounts
   useEffect(() => {
@@ -1969,21 +1979,32 @@ const InventoryManager = () => {
             
             <div className="header-controls">
               {activeTab === 'inventory' && (
-                <div className="filter-controls">
-                  <label htmlFor="statusFilter">Status:</label>
-                  <select
-                    id="statusFilter"
-                    value={filter}
-                    onChange={(e) => setFilter(e.target.value)}
-                  >
-                    <option value="all">All ({statusCounts.all})</option>
-                    <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
-                    <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
-                    <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
-                    <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
-                    <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
-                  </select>
-                </div>
+                <>
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      placeholder="Search plants..."
+                      value={plantSearchTerm}
+                      onChange={(e) => setPlantSearchTerm(e.target.value)}
+                      className="search-input"
+                    />
+                  </div>
+                  <div className="filter-controls">
+                    <label htmlFor="statusFilter">Status:</label>
+                    <select
+                      id="statusFilter"
+                      value={filter}
+                      onChange={(e) => setFilter(e.target.value)}
+                    >
+                      <option value="all">All ({statusCounts.all})</option>
+                      <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
+                      <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
+                      <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
+                      <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
+                      <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
+                    </select>
+                  </div>
+                </>
               )}
             </div>
             

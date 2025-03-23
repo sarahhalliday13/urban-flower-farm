@@ -40,16 +40,44 @@
   align-items: center;
   margin: 0 1rem;
   flex-grow: 1;
+  gap: 1rem;
 }
 
-.sales-header .add-new-button, 
-.sales-header .save-btn {
-  white-space: nowrap;
+.search-container {
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: #aaa;
 }
 
 .sales-header .filter-controls {
   padding-top: 0;
   margin: 0;
+  flex: 1;
+  max-width: 300px;
+}
+
+.sales-header .add-new-button, 
+.sales-header .save-btn {
+  white-space: nowrap;
 }
 
 /* For mobile responsiveness */
@@ -63,10 +91,19 @@
   .header-controls {
     width: 100%;
     margin: 0.5rem 0;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .search-container,
+  .sales-header .filter-controls {
+    max-width: 100%;
+    width: 100%;
   }
   
   .sales-header .add-new-button {
     align-self: flex-start;
+    width: 100%;
   }
   
   .button-group {
