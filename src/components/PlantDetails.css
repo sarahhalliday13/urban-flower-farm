@@ -75,6 +75,11 @@ main {
   box-sizing: border-box;
 }
 
+.no-padding {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
 .plant-details-container {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -86,6 +91,10 @@ main {
   margin-bottom: 2rem;
   width: 100%;
   box-sizing: border-box;
+}
+
+.plant-details-container.no-padding {
+  padding: 0 !important;
 }
 
 .plant-details-gallery {
