@@ -148,6 +148,7 @@ main {
 
 .plant-info {
   width: 100%;
+  padding: 0;
 }
 
 .name-and-status {
