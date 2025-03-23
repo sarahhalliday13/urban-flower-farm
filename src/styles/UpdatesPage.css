@@ -31,81 +31,77 @@
   color: #d32f2f;
 }
 
-.updates-content {
-  position: relative;
-}
-
 /* Year styling */
-.year-section {
+.updates-year-section {
   margin-bottom: 2rem;
   position: relative;
 }
 
-.year-section:last-child {
+.updates-year-section:last-child {
   margin-bottom: 0;
 }
 
-.year-marker {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  text-align: left;
-}
-
-.year-circle {
-  width: 36px;
-  height: 36px;
-  background-color: #2c5530;
-  border-radius: 50%;
-  display: inline-block;
-  margin-right: 0.75rem;
-}
-
-.year-label {
+.year-heading {
   font-size: 1.4rem;
   font-weight: 600;
   color: #2c5530;
   text-align: left;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eaefea;
 }
 
-/* News items */
-.news-items {
-  display: flex;
-  flex-direction: column;
+/* Updates grid */
+.updates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.5rem;
 }
 
-.news-item {
+.update-card {
   background-color: white;
-  border-radius: 4px;
+  border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   padding: 1.5rem;
   position: relative;
   border-left: 3px solid #2c5530;
   text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.news-item-date {
+.update-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.update-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.update-date {
   font-size: 0.9rem;
   color: #666;
-  margin-bottom: 0.5rem;
   text-align: left;
 }
 
-.news-item-title {
+.update-title {
   color: #2c5530;
-  margin: 0 0 0.75rem 0;
+  margin: 0 0 0.5rem 0;
   font-size: 1.2rem;
   font-weight: 600;
   text-align: left;
 }
 
-.news-item-content {
+.update-content {
   color: #444;
   line-height: 1.5;
   font-size: 1rem;
   white-space: pre-line;
   text-align: left;
+  margin: 0;
 }
 
 @media (max-width: 768px) {
@@ -117,16 +113,15 @@
     font-size: 1.75rem;
   }
   
-  .year-circle {
-    width: 30px;
-    height: 30px;
-  }
-  
-  .year-label {
+  .year-heading {
     font-size: 1.25rem;
   }
   
-  .news-item {
+  .updates-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .update-card {
     padding: 1.25rem;
   }
 } 

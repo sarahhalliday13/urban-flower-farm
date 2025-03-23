@@ -1,57 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/AdminUpdates.css';
-
-// Static initial news data that matches our other components
-const initialUpdates = [
-  {
-    id: 'news-1',
-    subject: 'Welcome to Buttons Flower Farm',
-    content: 'This is where you\'ll find the latest news, plant arrivals, and seasonal offerings. Check back soon for updates!',
-    date: new Date('2025-03-23')
-  },
-  {
-    id: 'news-2',
-    subject: 'Spring Growing Season Beginning',
-    content: 'We\'re preparing our garden beds for the spring growing season. Expect lots of new plants to be available soon!',
-    date: new Date('2025-02-21')
-  },
-  {
-    id: 'news-3',
-    subject: 'Winter Workshop Success',
-    content: 'Thank you to everyone who attended our winter gardening workshop. We had a great turnout and lots of fun learning together!',
-    date: new Date('2024-12-23')
-  }
-];
-
-// Helper to save updates to localStorage
-const saveUpdatesToLocalStorage = (updates) => {
-  // Convert dates to strings for storage
-  const updatesForStorage = updates.map(update => ({
-    ...update,
-    date: update.date.toISOString()
-  }));
-  localStorage.setItem('newsUpdates', JSON.stringify(updatesForStorage));
-  
-  // Dispatch an event so other components can react
-  window.dispatchEvent(new Event('newsUpdated'));
-};
-
-// Helper to get updates from localStorage
-const getUpdatesFromLocalStorage = () => {
-  try {
-    const storedUpdates = localStorage.getItem('newsUpdates');
-    if (storedUpdates) {
-      // Parse and convert date strings back to Date objects
-      return JSON.parse(storedUpdates).map(update => ({
-        ...update,
-        date: new Date(update.date)
-      }));
-    }
-  } catch (error) {
-    console.error('Error reading news from localStorage:', error);
-  }
-  return null;
-};
+import { saveNewsItems, fetchNewsItems } from '../services/firebase';
 
 const AdminUpdates = () => {
   const [updates, setUpdates] = useState([]);
@@ -73,21 +22,41 @@ const AdminUpdates = () => {
     }
   }, [successMessage]);
 
-  // Load initial updates from localStorage or fallback to initialUpdates
+  // Fetch news from Firebase
   useEffect(() => {
-    // Simulate loading time
-    const timer = setTimeout(() => {
-      const storedUpdates = getUpdatesFromLocalStorage();
-      
-      if (storedUpdates) {
-        setUpdates(storedUpdates);
-      } else {
-        setUpdates(initialUpdates);
-        // Initialize localStorage with default data
-        saveUpdatesToLocalStorage(initialUpdates);
+    const fetchNews = async () => {
+      try {
+        setLoading(true);
+        const newsData = await fetchNewsItems();
+        
+        // Convert date strings to Date objects
+        const processedData = newsData.map(item => ({
+          ...item,
+          date: new Date(item.date)
+        }));
+        
+        setUpdates(processedData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading news:', error);
+        setError('Failed to load news. Using demo data instead.');
+        
+        // Fallback to some default news if the fetch fails
+        setUpdates([
+          {
+            id: 'news-1',
+            subject: 'Buttons Flower Farm Online Shop Now Open!',
+            content: 'Our catalog of 300+ plants is live and ready for your orders! Browse our seasonal collections, find detailed growing information, and enjoy hassle-free checkout with local pickup. Thank you for supporting our farm - happy planting!',
+            date: new Date('2025-03-23')
+          }
+        ]);
+        setLoading(false);
       }
-      
-      setLoading(false);
+    };
+
+    // Add a slight delay for smoother UX
+    const timer = setTimeout(() => {
+      fetchNews();
     }, 300);
     
     return () => clearTimeout(timer);
@@ -104,56 +73,57 @@ const AdminUpdates = () => {
     setSubmitting(true);
     setError(null);
     
-    // Simulate network delay
-    setTimeout(() => {
-      try {
-        let updatedNews;
+    try {
+      let updatedNews;
+      
+      if (editingId) {
+        // Update existing update
+        updatedNews = updates.map(update => 
+          update.id === editingId 
+            ? { 
+                ...update, 
+                subject: subject.trim(), 
+                content: content.trim(),
+                updatedAt: new Date()
+              } 
+            : update
+        );
+      } else {
+        // Create new update
+        const newId = 'news-' + (Math.floor(Math.random() * 10000) + 1);
+        const newUpdate = {
+          id: newId,
+          subject: subject.trim(),
+          content: content.trim(),
+          date: new Date()
+        };
         
-        if (editingId) {
-          // Update existing update in local state
-          updatedNews = updates.map(update => 
-            update.id === editingId 
-              ? { 
-                  ...update, 
-                  subject: subject.trim(), 
-                  content: content.trim(),
-                  updatedAt: new Date()
-                } 
-              : update
-          );
-          
-          setUpdates(updatedNews);
-          setSuccessMessage("Update successfully edited!");
-          setEditingId(null);
-        } else {
-          // Create new update in local state
-          const newId = 'news-' + (Math.floor(Math.random() * 10000) + 1);
-          const newUpdate = {
-            id: newId,
-            subject: subject.trim(),
-            content: content.trim(),
-            date: new Date(),
-            createdAt: new Date()
-          };
-          
-          updatedNews = [newUpdate, ...updates];
-          setUpdates(updatedNews);
-          setSuccessMessage("New update successfully added!");
-        }
+        updatedNews = [newUpdate, ...updates];
+      }
+      
+      // Save to Firebase
+      const result = await saveNewsItems(updatedNews);
+      
+      if (result.success) {
+        setUpdates(updatedNews);
         
-        // Save to localStorage
-        saveUpdatesToLocalStorage(updatedNews);
+        setSuccessMessage(editingId 
+          ? "Update successfully edited and saved!" 
+          : "New update successfully added!");
         
         // Clear form
         setSubject('');
         setContent('');
-      } catch (error) {
-        console.error("Error saving update:", error);
-        setError("Failed to save update. Please try again.");
-      } finally {
-        setSubmitting(false);
+        setEditingId(null);
+      } else {
+        throw new Error(result.error || 'Failed to save to Firebase');
       }
-    }, 500);
+    } catch (error) {
+      console.error("Error saving update:", error);
+      setError("Failed to save update. Please try again: " + error.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleEdit = (update) => {
@@ -168,15 +138,15 @@ const AdminUpdates = () => {
       return;
     }
     
-    // Simulate network delay
-    setTimeout(() => {
-      try {
-        // Remove from local state
-        const updatedNews = updates.filter(update => update.id !== id);
+    try {
+      // Remove from state
+      const updatedNews = updates.filter(update => update.id !== id);
+      
+      // Save to Firebase
+      const result = await saveNewsItems(updatedNews);
+      
+      if (result.success) {
         setUpdates(updatedNews);
-        
-        // Save to localStorage
-        saveUpdatesToLocalStorage(updatedNews);
         
         setSuccessMessage("Update successfully deleted!");
         
@@ -186,11 +156,13 @@ const AdminUpdates = () => {
           setContent('');
           setEditingId(null);
         }
-      } catch (error) {
-        console.error("Error deleting update:", error);
-        setError("Failed to delete update. Please try again.");
+      } else {
+        throw new Error(result.error || 'Failed to delete from Firebase');
       }
-    }, 500);
+    } catch (error) {
+      console.error("Error deleting update:", error);
+      setError("Failed to delete update: " + error.message);
+    }
   };
 
   const cancelEdit = () => {

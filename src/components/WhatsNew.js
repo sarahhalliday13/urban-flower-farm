@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/WhatsNew.css';
+import { fetchNewsItems } from '../services/firebase';
 
-// Static fallback news data in case localStorage is empty
+// Static fallback news data in case Firebase fetch fails
 const fallbackNewsData = [
   {
     id: 'news-1',
@@ -24,60 +25,48 @@ const fallbackNewsData = [
   }
 ];
 
-// Helper to get updates from localStorage
-const getUpdatesFromLocalStorage = () => {
-  try {
-    const storedUpdates = localStorage.getItem('newsUpdates');
-    if (storedUpdates) {
-      // Parse and convert date strings back to Date objects
-      return JSON.parse(storedUpdates).map(update => ({
-        ...update,
-        date: new Date(update.date)
-      }));
-    }
-  } catch (error) {
-    console.error('Error reading news from localStorage:', error);
-  }
-  return null;
-};
-
 const WhatsNew = ({ maxDisplay = 1 }) => {
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
 
-  // Load news updates from localStorage or fallback to static data
-  const loadNewsUpdates = () => {
-    const storedUpdates = getUpdatesFromLocalStorage();
-    if (storedUpdates && storedUpdates.length > 0) {
-      setUpdates(storedUpdates);
-    } else {
-      setUpdates(fallbackNewsData);
-    }
-    setLoading(false);
-  };
-
-  // Initial load of updates
+  // Load news updates from Firebase
   useEffect(() => {
-    // Simulate a brief loading period for smoother UI
+    const fetchNews = async () => {
+      try {
+        // Get news from Firebase
+        const newsData = await fetchNewsItems();
+        
+        // If we got data from Firebase, process it
+        if (newsData && newsData.length > 0) {
+          // Convert date strings to Date objects
+          const processedData = newsData.map(item => ({
+            ...item,
+            date: new Date(item.date)
+          }));
+          
+          setUpdates(processedData);
+        } else {
+          // If no data in Firebase, use fallback data
+          console.log('No news data found in Firebase, using fallback data');
+          setUpdates(fallbackNewsData);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading news from Firebase:', error);
+        // Use fallback data if Firebase fails
+        setUpdates(fallbackNewsData);
+        setLoading(false);
+      }
+    };
+
+    // Add a slight delay for smoother UX
     const timer = setTimeout(() => {
-      loadNewsUpdates();
+      fetchNews();
     }, 200);
     
     return () => clearTimeout(timer);
-  }, []);
-  
-  // Listen for news update events
-  useEffect(() => {
-    const handleNewsUpdated = () => {
-      loadNewsUpdates();
-    };
-    
-    window.addEventListener('newsUpdated', handleNewsUpdated);
-    
-    return () => {
-      window.removeEventListener('newsUpdated', handleNewsUpdated);
-    };
   }, []);
 
   const handleClose = () => {
