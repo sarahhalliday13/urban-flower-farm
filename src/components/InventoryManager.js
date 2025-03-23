@@ -491,6 +491,36 @@ const InventoryManager = () => {
     // Apply sorting
     if (sortConfig.key) {
       filtered.sort((a, b) => {
+        // Special handling for nested inventory fields and featured status
+        if (sortConfig.key === 'currentStock') {
+          const aStock = a.inventory?.currentStock || 0;
+          const bStock = b.inventory?.currentStock || 0;
+          return sortConfig.direction === 'ascending' 
+            ? aStock - bStock 
+            : bStock - aStock;
+        }
+        
+        if (sortConfig.key === 'status') {
+          const aStatus = a.inventory?.status || '';
+          const bStatus = b.inventory?.status || '';
+          if (aStatus < bStatus) {
+            return sortConfig.direction === 'ascending' ? -1 : 1;
+          }
+          if (aStatus > bStatus) {
+            return sortConfig.direction === 'ascending' ? 1 : -1;
+          }
+          return 0;
+        }
+        
+        if (sortConfig.key === 'featured') {
+          const aFeatured = a.featured || false;
+          const bFeatured = b.featured || false;
+          return sortConfig.direction === 'ascending' 
+            ? (aFeatured === bFeatured ? 0 : aFeatured ? 1 : -1)
+            : (aFeatured === bFeatured ? 0 : aFeatured ? -1 : 1);
+        }
+        
+        // Default sorting for other fields
         const aValue = a[sortConfig.key] || '';
         const bValue = b[sortConfig.key] || '';
         
@@ -2186,12 +2216,16 @@ const InventoryManager = () => {
                   <th className="sortable-header" onClick={() => handleSort('name')}>
                     Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
-                  <th>Stock</th>
-                  <th>
-                    Status
+                  <th className="sortable-header" onClick={() => handleSort('currentStock')}>
+                    Stock {sortConfig.key === 'currentStock' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th className="sortable-header" onClick={() => handleSort('status')}>
+                    Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th>Restock Date</th>
-                  <th>Featured</th>
+                  <th className="sortable-header" onClick={() => handleSort('featured')}>
+                    Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
                   <th></th>
                 </tr>
               </thead>
