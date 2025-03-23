@@ -300,157 +300,159 @@ function PlantDetails() {
 
   return (
     <main>
-      <NavigationButtons className="top" />
-      <div className="plant-details">
-        <div className="plant-details-container">
-          <div className="plant-details-gallery">
-            <div className="plant-details-image">
-              <img 
-                src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage || '/images/placeholder.jpg'} 
-                alt={plant.name} 
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-                onError={(e) => {
-                  e.target.src = '/images/placeholder.jpg';
-                }}
-              />
-              {!imagesLoaded && (
-                <div className="image-loading-overlay">
-                  <div className="loading-spinner"></div>
-                </div>
-              )}
-            </div>
-            {images.length > 1 && (
-              <div className="image-thumbnails">
-                {images.map((image, index) => (
-                  <ThumbnailImage
-                    key={index}
-                    image={image}
-                    name={plant.name}
-                    index={index}
-                    isActive={selectedImageIndex === index}
-                    onClick={(newIndex) => {
-                      setSelectedImageIndex(newIndex);
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="plant-details-info">
-            <div className="plant-info">
-              <div className="name-and-status">
-                <h1 className="plant-common-name">{plant.name}</h1>
-                {(() => {
-                  // Get the current stock
-                  const currentStock = plant.inventory?.currentStock || 0;
-                  
-                  if (currentStock <= 0) {
-                    return (
-                      <span className="status-badge sold-out">
-                        Out of Stock
-                      </span>
-                    );
-                  } else if (currentStock < 10) {
-                    return (
-                      <span className="status-badge low-stock">
-                        Low Stock ({currentStock} left)
-                      </span>
-                    );
-                  } else if (plant.inventory?.status) {
-                    return (
-                      <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`}>
-                        {plant.inventory.status}
-                      </span>
-                    );
-                  } else {
-                    return (
-                      <span className="status-badge in-stock">
-                        In Stock
-                      </span>
-                    );
-                  }
-                })()}
-              </div>
-              {(plant.scientificName || plant.latinname) && (
-                <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
-              )}
-              <div className="plant-meta">
-                {(plant.commonName || plant.commonname) && (plant.scientificName || plant.latinname) && (
-                  <p className="plant-names">
-                    {plant.commonName || plant.commonname} <span className="latin-name">({plant.scientificName || plant.latinname})</span>
-                  </p>
+      <div className="plant-details-section">
+        <NavigationButtons className="top" />
+        <div className="plant-details">
+          <div className="plant-details-container">
+            <div className="plant-details-gallery">
+              <div className="plant-details-image">
+                <img 
+                  src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage || '/images/placeholder.jpg'} 
+                  alt={plant.name} 
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  onError={(e) => {
+                    e.target.src = '/images/placeholder.jpg';
+                  }}
+                />
+                {!imagesLoaded && (
+                  <div className="image-loading-overlay">
+                    <div className="loading-spinner"></div>
+                  </div>
                 )}
               </div>
-            </div>
-            
-            <p className="description">{plant.description}</p>
-            
-            <div className="price-action-container">
-              <p className="price">${plant.price}</p>
-              <div className="price-controls">
-                <div className="quantity-selector">
-                  <button 
-                    className="quantity-button"
-                    onClick={() => handleQuantityChange(-1)}
-                    disabled={quantity <= 1 || plant.inventory?.currentStock <= 0}
-                  >-</button>
-                  <span className="quantity">{quantity}</span>
-                  <button 
-                    className="quantity-button"
-                    onClick={() => handleQuantityChange(1)}
-                    disabled={quantity >= (plant.inventory?.currentStock || 0)}
-                    title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
-                  >+</button>
+              {images.length > 1 && (
+                <div className="image-thumbnails">
+                  {images.map((image, index) => (
+                    <ThumbnailImage
+                      key={index}
+                      image={image}
+                      name={plant.name}
+                      index={index}
+                      isActive={selectedImageIndex === index}
+                      onClick={(newIndex) => {
+                        setSelectedImageIndex(newIndex);
+                      }}
+                    />
+                  ))}
                 </div>
-                <button 
-                  className="plant-buy"
-                  onClick={handleAddToCart}
-                  disabled={!plant.inventory?.currentStock || plant.inventory.currentStock <= 0}
-                >
-                  {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                </button>
-              </div>
-            </div>
-            
-            <div className="plant-specs">
-              <h3>Plant Specifications</h3>
-              {plant.plantType && (
-                <p>
-                  <strong>Type:</strong>&nbsp;&nbsp;
-                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
-                    {plant.plantType}
-                  </span>
-                </p>
               )}
-              {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
-              {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
-              {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
-              {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing.toString().includes('"') ? plant.spacing : `${plant.spacing}"`}</p>}
-              {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
-              {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
-              {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
-              {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
-              {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
-              {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
-              {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
-              {plant.featured && <p><strong>Featured:</strong> Yes</p>}
-              {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
-              {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
-              {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
-              {plant.aroma && <p><strong>Aroma:</strong> {plant.aroma}</p>}
-              {plant.gardeningTips && <p><strong>Gardening Tips:</strong> {plant.gardeningTips}</p>}
-              {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
-              {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
-              {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
+            </div>
+            <div className="plant-details-info">
+              <div className="plant-info">
+                <div className="name-and-status">
+                  <h1 className="plant-common-name">{plant.name}</h1>
+                  {(() => {
+                    // Get the current stock
+                    const currentStock = plant.inventory?.currentStock || 0;
+                    
+                    if (currentStock <= 0) {
+                      return (
+                        <span className="status-badge sold-out">
+                          Out of Stock
+                        </span>
+                      );
+                    } else if (currentStock < 10) {
+                      return (
+                        <span className="status-badge low-stock">
+                          Low Stock ({currentStock} left)
+                        </span>
+                      );
+                    } else if (plant.inventory?.status) {
+                      return (
+                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`}>
+                          {plant.inventory.status}
+                        </span>
+                      );
+                    } else {
+                      return (
+                        <span className="status-badge in-stock">
+                          In Stock
+                        </span>
+                      );
+                    }
+                  })()}
+                </div>
+                {(plant.scientificName || plant.latinname) && (
+                  <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
+                )}
+                <div className="plant-meta">
+                  {(plant.commonName || plant.commonname) && (plant.scientificName || plant.latinname) && (
+                    <p className="plant-names">
+                      {plant.commonName || plant.commonname} <span className="latin-name">({plant.scientificName || plant.latinname})</span>
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <p className="description">{plant.description}</p>
+              
+              <div className="price-action-container">
+                <p className="price">${plant.price}</p>
+                <div className="price-controls">
+                  <div className="quantity-selector">
+                    <button 
+                      className="quantity-button"
+                      onClick={() => handleQuantityChange(-1)}
+                      disabled={quantity <= 1 || plant.inventory?.currentStock <= 0}
+                    >-</button>
+                    <span className="quantity">{quantity}</span>
+                    <button 
+                      className="quantity-button"
+                      onClick={() => handleQuantityChange(1)}
+                      disabled={quantity >= (plant.inventory?.currentStock || 0)}
+                      title={quantity >= (plant.inventory?.currentStock || 0) ? "Maximum stock reached" : ""}
+                    >+</button>
+                  </div>
+                  <button 
+                    className="plant-buy"
+                    onClick={handleAddToCart}
+                    disabled={!plant.inventory?.currentStock || plant.inventory.currentStock <= 0}
+                  >
+                    {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="plant-specs">
+                <h3>Plant Specifications</h3>
+                {plant.plantType && (
+                  <p>
+                    <strong>Type:</strong>&nbsp;&nbsp;
+                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                      {plant.plantType}
+                    </span>
+                  </p>
+                )}
+                {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
+                {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
+                {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
+                {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing.toString().includes('"') ? plant.spacing : `${plant.spacing}"`}</p>}
+                {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
+                {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
+                {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
+                {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
+                {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
+                {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
+                {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
+                {plant.featured && <p><strong>Featured:</strong> Yes</p>}
+                {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
+                {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
+                {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
+                {plant.aroma && <p><strong>Aroma:</strong> {plant.aroma}</p>}
+                {plant.gardeningTips && <p><strong>Gardening Tips:</strong> {plant.gardeningTips}</p>}
+                {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
+                {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
+                {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
+              </div>
             </div>
           </div>
         </div>
+        <NavigationButtons className="bottom" />
       </div>
-      <NavigationButtons className="bottom" />
     </main>
   );
 }

@@ -36,6 +36,15 @@ main {
   align-items: center;
 }
 
+/* Add a main container to match shop-section */
+.plant-details-section {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .plant-navigation {
   width: 100%;
   max-width: 1200px;
