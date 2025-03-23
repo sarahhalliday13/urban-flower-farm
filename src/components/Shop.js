@@ -94,31 +94,50 @@ function Shop() {
       );
     }
     
+    // Filter by inventory status if selected
+    let statusFilteredPlants = filteredPlants;
+    if (sortOption === 'status-in-stock') {
+      statusFilteredPlants = filteredPlants.filter(plant => {
+        const currentStock = plant.inventory?.currentStock || 0;
+        return currentStock > 0 && (!plant.inventory?.status || plant.inventory.status === 'In Stock');
+      });
+    } else if (sortOption === 'status-coming-soon') {
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'coming soon'
+      );
+    } else if (sortOption === 'status-pre-order') {
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'pre-order'
+      );
+    } else {
+      statusFilteredPlants = filteredPlants;
+    }
+    
     switch (sortOption) {
-      case 'price-low-high':
-        return [...filteredPlants].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-      case 'price-high-low':
-        return [...filteredPlants].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
       case 'name-a-z':
-        return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'name-z-a':
-        return [...filteredPlants].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+        return [...statusFilteredPlants].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
       case 'type-annual':
-        return [...filteredPlants]
+        return [...statusFilteredPlants]
           .filter(plant => plant.plantType?.toLowerCase() === 'annual')
           .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'type-perennial':
-        return [...filteredPlants]
+        return [...statusFilteredPlants]
           .filter(plant => plant.plantType?.toLowerCase() === 'perennial')
           .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'type-a-z':
-        return [...filteredPlants].sort((a, b) => {
+        return [...statusFilteredPlants].sort((a, b) => {
           const typeA = a.plantType || '';
           const typeB = b.plantType || '';
           return typeA.localeCompare(typeB) || (a.name || '').localeCompare(b.name || '');
         });
+      case 'status-in-stock':
+      case 'status-coming-soon':
+      case 'status-pre-order':
+        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
-        return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
   }, [plants, sortOption, searchTerm]);
 
