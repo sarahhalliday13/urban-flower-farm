@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
 import PlantImage from './PlantImage';
+import WhatsNew from './WhatsNew';
 
 // Plant Card component with simplified image handling
 // 
@@ -66,7 +67,7 @@ class ErrorBoundary extends Component {
   }
 }
 
-function Home({ isFirstVisit }) {
+const Home = ({ isFirstVisit }) => {
   const [showHero, setShowHero] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [featuredPlants, setFeaturedPlants] = useState([]);
@@ -180,6 +181,7 @@ function Home({ isFirstVisit }) {
   return (
     <ErrorBoundary>
       <main className="homepage">
+        <WhatsNew maxDisplay={1} />
         {showHero && (
           <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
             <button className="hero-close" onClick={hideHero}>×</button>
@@ -191,9 +193,22 @@ function Home({ isFirstVisit }) {
         )}
 
         <section className="featured-plants" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
-          <div className="featured-plants-header" style={{ marginBottom: '0px' }}>
-            <h2>Featured</h2>
-            <Link to="/shop" className="view-all-button desktop-only" style={{ padding: '8px' }}>View All</Link>
+          <div className="featured-plants-header" style={{ 
+            display: 'flex', 
+            flexDirection: 'row', 
+            justifyContent: 'flex-start', 
+            alignItems: 'flex-end', 
+            marginBottom: '1rem',
+            paddingBottom: '0.5rem'
+          }}>
+            <h2 style={{ margin: '0', fontSize: '1.5rem', marginRight: '1rem' }}>Featured Flowers</h2>
+            <Link to="/shop" style={{ 
+              color: '#2c5530', 
+              textDecoration: 'none', 
+              fontWeight: '600', 
+              fontSize: '0.9rem',
+              marginBottom: '0.25rem'
+            }}>View All Flowers</Link>
           </div>
           
           {loading ? (
@@ -207,16 +222,10 @@ function Home({ isFirstVisit }) {
               ))}
             </div>
           )}
-          
-          {!loading && !error && (
-            <div className="featured-plants-footer" style={{ marginTop: '1rem', textAlign: 'center', padding: '32px' }}>
-              <Link to="/shop" className="view-all-button" style={{ display: 'inline-block', padding: '10px 20px', backgroundColor: '#2c5530', color: 'white', borderRadius: '4px', textDecoration: 'none' }}>View All</Link>
-            </div>
-          )}
         </section>
       </main>
     </ErrorBoundary>
   );
-}
+};
 
 export default Home; 
