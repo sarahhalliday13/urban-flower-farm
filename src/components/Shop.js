@@ -4,7 +4,7 @@ import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import PlantImage from './PlantImage';
-import { useWindowSize } from '../hooks/useWindowSize';
+import useWindowSize from '../hooks/useWindowSize';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
