@@ -26,7 +26,7 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Plant details layout styles to match Shop page */
+/* Plant details layout styles to exactly match Shop page */
 main {
   width: 100%;
   max-width: 100%;
@@ -36,23 +36,33 @@ main {
   align-items: center;
 }
 
-.plant-details {
-  width: 100%;
-  max-width: 1400px; /* Match shop-main max-width */
-  margin: 0 auto;
-  padding: 0 2rem;
-  box-sizing: border-box;
-}
-
 .plant-navigation {
   width: 100%;
-  max-width: 1400px; /* Match shop-main max-width */
-  margin: 0 auto 1rem;
-  padding: 0 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plant-navigation.top {
+  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 .plant-navigation.bottom {
   margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.plant-details {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .plant-details-container {
@@ -65,6 +75,7 @@ main {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   margin-bottom: 2rem;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .plant-details-gallery {
@@ -287,6 +298,7 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .nav-view-all {
@@ -372,7 +384,7 @@ main {
 @media (max-width: 1200px) {
   .plant-details,
   .plant-navigation {
-    padding: 0 1.5rem;
+    max-width: 1000px;
   }
 }
 
@@ -390,19 +402,9 @@ main {
     font-size: 1rem;
     margin-bottom: 1rem;
   }
-  
-  .plant-details,
-  .plant-navigation {
-    padding: 0 1rem;
-  }
 }
 
 @media (max-width: 768px) {
-  .plant-details,
-  .plant-navigation {
-    padding: 0 0.75rem;
-  }
-  
   .plant-details-container {
     padding: 1.5rem;
   }
@@ -444,8 +446,6 @@ main {
 @media (max-width: 576px) {
   .plant-details-container {
     padding: 1rem;
-    box-shadow: none;
-    background: transparent;
   }
   
   .image-thumbnails {
