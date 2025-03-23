@@ -4,27 +4,21 @@ import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import PlantImage from './PlantImage';
-import useWindowSize from '../hooks/useWindowSize';
 
 function Shop() {
   // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const { addToCart } = useCart();
-  const { width } = useWindowSize();
-  const isMobile = width < 768;
-  
-  // Initial display count based on screen size
-  const initialDisplayCount = useMemo(() => isMobile ? 12 : 24, [isMobile]);
-  
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [sortOption, setSortOption] = useState('name-a-z'); // 'name-a-z', 'name-z-a', 'type-annual', 'type-perennial', 'status-in-stock', 'status-coming-soon', 'status-pre-order'
-  const [displayCount, setDisplayCount] = useState(initialDisplayCount); // Number of plants to display initially
+  const [sortOption, setSortOption] = useState('status-in-stock'); // Changed default to status-in-stock
+  const [displayCount, setDisplayCount] = useState(12); // Number of plants to display initially
   const [hasMore, setHasMore] = useState(true); // Flag to check if there are more plants to load
   const [searchTerm, setSearchTerm] = useState(''); // Search term state
   const [isSearching, setIsSearching] = useState(false);
+  const [initialDisplayCount, setInitialDisplayCount] = useState(12);
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -75,15 +69,10 @@ function Shop() {
     loadPlants();
   }, []);
 
-  // Update display count when screen size changes between mobile and desktop
-  useEffect(() => {
-    setDisplayCount(initialDisplayCount);
-  }, [initialDisplayCount]);
-
   // Reset display count when sort option changes
   useEffect(() => {
-    setDisplayCount(initialDisplayCount);
-  }, [sortOption, initialDisplayCount]);
+    setDisplayCount(12);
+  }, [sortOption]);
 
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
@@ -103,23 +92,11 @@ function Shop() {
       );
     }
     
-    // Filter by inventory status if selected
-    if (sortOption === 'status-in-stock') {
-      filteredPlants = filteredPlants.filter(plant => {
-        const currentStock = plant.inventory?.currentStock || 0;
-        return currentStock > 0 && (!plant.inventory?.status || plant.inventory.status === 'In Stock');
-      });
-    } else if (sortOption === 'status-coming-soon') {
-      filteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'coming soon'
-      );
-    } else if (sortOption === 'status-pre-order') {
-      filteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'pre-order'
-      );
-    }
-    
     switch (sortOption) {
+      case 'price-low-high':
+        return [...filteredPlants].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      case 'price-high-low':
+        return [...filteredPlants].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
       case 'name-a-z':
         return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'name-z-a':
@@ -138,10 +115,6 @@ function Shop() {
           const typeB = b.plantType || '';
           return typeA.localeCompare(typeB) || (a.name || '').localeCompare(b.name || '');
         });
-      case 'status-in-stock':
-      case 'status-coming-soon':
-      case 'status-pre-order':
-        return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...filteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
@@ -173,10 +146,6 @@ function Shop() {
       });
       window.dispatchEvent(event);
     }
-  };
-
-  const toggleViewMode = () => {
-    setViewMode(viewMode === 'grid' ? 'list' : 'grid');
   };
 
   const handleSortChange = (e) => {
@@ -224,13 +193,13 @@ function Shop() {
                 className="sort-select"
                 aria-label="Sort plants by selected option"
               >
+                <option value="status-in-stock">Status: In Stock</option>
+                <option value="status-coming-soon">Status: Coming Soon</option>
+                <option value="status-pre-order">Status: Pre-Order</option>
                 <option value="name-a-z">Name: A to Z</option>
                 <option value="name-z-a">Name: Z to A</option>
                 <option value="type-annual">Type: Annual (A to Z)</option>
                 <option value="type-perennial">Type: Perennial (A to Z)</option>
-                <option value="status-in-stock">Status: In Stock</option>
-                <option value="status-coming-soon">Status: Coming Soon</option>
-                <option value="status-pre-order">Status: Pre-Order</option>
               </select>
             </div>
             <div className="search-bar">
@@ -256,16 +225,6 @@ function Shop() {
                 )}
               </div>
             </div>
-            <div className="view-toggle">
-              <button 
-                className={`view-button ${viewMode === 'grid' ? 'active' : ''}`} 
-                onClick={toggleViewMode}
-                title={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-                aria-label={viewMode === 'grid' ? 'Switch to list view' : 'Switch to grid view'}
-              >
-                {viewMode === 'grid' ? 'List View' : 'Grid View'}
-              </button>
-            </div>
           </div>
         </div>
         
@@ -283,162 +242,54 @@ function Shop() {
             ).map(([type, typePlants]) => (
               <div key={type} className="plant-type-group">
                 <h3 className="plant-type-heading">{type}</h3>
-                <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+                <div className="plant-grid">
                   {typePlants.map(plant => (
                     <div key={plant.id} className="plant-card" data-plant={plant.name}>
-                      {viewMode === 'grid' ? (
-                        // Grid view - link wraps the entire content except actions
-                        <>
-                          <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div className="plant-image">
-                              <PlantImage plant={plant} height={250} width="100%" />
-                            </div>
-                            <h3 className="plant-common-name">{plant.name}</h3>
-                            <p className="plant-description">
-                              {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
-                            </p>
-                            <div className="plant-info-row">
-                              <div className="badge-container">
-                                {(() => {
-                                  // Get the current stock
-                                  const currentStock = plant.inventory?.currentStock || 0;
-                                  
-                                  if (currentStock <= 0) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Out of Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (currentStock < 10) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Low Stock ({currentStock} left)
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (plant.inventory?.status) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                          {plant.inventory.status}
-                                        </span>
-                                      </div>
-                                    );
-                                  } else {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          In Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                })()}
-                                {plant.plantType && (
-                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.plantType}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="plant-price">${plant.price}</p>
-                            </div>
-                          </Link>
-                          <div className="plant-actions">
-                            <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                            <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
-                              onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
-                            >
-                              {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        // List view - separate elements with links only on title and image
-                        <>
+                      {/* Grid view only - removing conditional */}
+                      <>
+                        <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="plant-image">
-                            <Link to={`/plant/${plant.id}`} style={{ display: 'block', height: '100%' }}>
-                              <PlantImage plant={plant} height="100%" width="100%" />
-                            </Link>
+                            <PlantImage plant={plant} height={250} width="100%" />
                           </div>
-                          <div className="plant-content">
-                            <div className="name-price-row">
-                              <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                <h3 className="plant-common-name">{plant.name}</h3>
-                              </Link>
-                              <div className="plant-price">${plant.price}</div>
+                          <h3 className="plant-common-name">{plant.name}</h3>
+                          <p className="plant-description">
+                            {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                          </p>
+                          <div className="plant-info-row">
+                            <div className="badge-container">
+                              {plant.inventory?.status ? (
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                    {plant.inventory.status}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
+                                </div>
+                              )}
+                              {plant.plantType && (
+                                <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                    {plant.plantType}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            <p className="plant-description">
-                              {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
-                            </p>
-                            <div className="plant-info-row">
-                              <div className="badge-container">
-                                {(() => {
-                                  // Get the current stock
-                                  const currentStock = plant.inventory?.currentStock || 0;
-                                  
-                                  if (currentStock <= 0) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Out of Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (currentStock < 10) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Low Stock ({currentStock} left)
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (plant.inventory?.status) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                          {plant.inventory.status}
-                                        </span>
-                                      </div>
-                                    );
-                                  } else {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          In Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                })()}
-                                {plant.plantType && (
-                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.plantType}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            <p className="plant-price">${plant.price}</p>
                           </div>
-                          <div className="plant-actions">
-                            <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                            <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
-                              onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
-                            >
-                              {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                            </button>
-                          </div>
-                        </>
-                      )}
+                        </Link>
+                        <div className="plant-actions">
+                          <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
+                          <button 
+                            className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                            onClick={() => handleAddToCart(plant)}
+                            disabled={!plant.inventory?.currentStock}
+                          >
+                            {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                          </button>
+                        </div>
+                      </>
                     </div>
                   ))}
                 </div>
@@ -458,163 +309,55 @@ function Shop() {
                 <button className="reset-search" onClick={clearSearch}>Clear search</button>
               </div>
             ) : (
-              <div className={`plant-grid ${viewMode === 'list' ? 'list-view' : ''}`}>
+              <div className="plant-grid">
                 {displayedPlants.map(plant => {
                   return (
                     <div key={plant.id} className="plant-card" data-plant={plant.name}>
-                      {viewMode === 'grid' ? (
-                        // Grid view - link wraps the entire content except actions
-                        <>
-                          <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                            <div className="plant-image">
-                              <PlantImage plant={plant} height={250} width="100%" />
-                            </div>
-                            <h3 className="plant-common-name">{plant.name}</h3>
-                            <p className="plant-description">
-                              {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
-                            </p>
-                            <div className="plant-info-row">
-                              <div className="badge-container">
-                                {(() => {
-                                  // Get the current stock
-                                  const currentStock = plant.inventory?.currentStock || 0;
-                                  
-                                  if (currentStock <= 0) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Out of Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (currentStock < 10) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Low Stock ({currentStock} left)
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (plant.inventory?.status) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                          {plant.inventory.status}
-                                        </span>
-                                      </div>
-                                    );
-                                  } else {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          In Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                })()}
-                                {plant.plantType && (
-                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.plantType}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                              <p className="plant-price">${plant.price}</p>
-                            </div>
-                          </Link>
-                          <div className="plant-actions">
-                            <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                            <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
-                              onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
-                            >
-                              {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                            </button>
-                          </div>
-                        </>
-                      ) : (
-                        // List view - separate elements with links only on title and image
-                        <>
+                      {/* Grid view only - removing conditional */}
+                      <>
+                        <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div className="plant-image">
-                            <Link to={`/plant/${plant.id}`} style={{ display: 'block', height: '100%' }}>
-                              <PlantImage plant={plant} height="100%" width="100%" />
-                            </Link>
+                            <PlantImage plant={plant} height={250} width="100%" />
                           </div>
-                          <div className="plant-content">
-                            <div className="name-price-row">
-                              <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                                <h3 className="plant-common-name">{plant.name}</h3>
-                              </Link>
-                              <div className="plant-price">${plant.price}</div>
+                          <h3 className="plant-common-name">{plant.name}</h3>
+                          <p className="plant-description">
+                            {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
+                          </p>
+                          <div className="plant-info-row">
+                            <div className="badge-container">
+                              {plant.inventory?.status ? (
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                    {plant.inventory.status}
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>In Stock</span>
+                                </div>
+                              )}
+                              {plant.plantType && (
+                                <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
+                                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                                    {plant.plantType}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                            <p className="plant-description">
-                              {plant.shortDescription || (plant.description ? plant.description.substring(0, 200) + (plant.description.length > 200 ? '...' : '') : '')}
-                            </p>
-                            <div className="plant-info-row">
-                              <div className="badge-container">
-                                {(() => {
-                                  // Get the current stock
-                                  const currentStock = plant.inventory?.currentStock || 0;
-                                  
-                                  if (currentStock <= 0) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge sold-out" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Out of Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (currentStock < 10) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge low-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          Low Stock ({currentStock} left)
-                                        </span>
-                                      </div>
-                                    );
-                                  } else if (plant.inventory?.status) {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'in-stock'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                          {plant.inventory.status}
-                                        </span>
-                                      </div>
-                                    );
-                                  } else {
-                                    return (
-                                      <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                        <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
-                                          In Stock
-                                        </span>
-                                      </div>
-                                    );
-                                  }
-                                })()}
-                                {plant.plantType && (
-                                  <div className="plant-type-badge" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                                    <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                                      {plant.plantType}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            <p className="plant-price">${plant.price}</p>
                           </div>
-                          <div className="plant-actions">
-                            <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
-                            <button 
-                              className={`plant-buy ${!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0 ? 'sold-out' : ''}`}
-                              onClick={() => handleAddToCart(plant)}
-                              disabled={!plant.inventory?.currentStock || plant.inventory?.currentStock <= 0}
-                            >
-                              {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
-                            </button>
-                          </div>
-                        </>
-                      )}
+                        </Link>
+                        <div className="plant-actions">
+                          <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
+                          <button 
+                            className={`plant-buy ${!plant.inventory?.currentStock ? 'sold-out' : ''}`}
+                            onClick={() => handleAddToCart(plant)}
+                            disabled={!plant.inventory?.currentStock}
+                          >
+                            {plant.inventory?.currentStock > 0 ? 'Buy' : 'Sold Out'}
+                          </button>
+                        </div>
+                      </>
                     </div>
                   );
                 })}
