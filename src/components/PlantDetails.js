@@ -300,7 +300,7 @@ function PlantDetails() {
 
   return (
     <main>
-      <div className="plant-details-section">
+      <div className="shop-main">
         <NavigationButtons className="top" />
         <div className="plant-details">
           <div className="plant-details-container">
