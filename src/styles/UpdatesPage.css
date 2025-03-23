@@ -1,0 +1,132 @@
+.updates-page-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.updates-page-container h1 {
+  color: #2c5530;
+  margin-bottom: 1rem;
+  text-align: left;
+  font-size: 2rem;
+}
+
+.updates-intro {
+  color: #555;
+  max-width: 800px;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.updates-loading, .updates-error, .no-updates {
+  text-align: center;
+  padding: 2rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.updates-error {
+  color: #d32f2f;
+}
+
+.updates-content {
+  position: relative;
+}
+
+/* Year styling */
+.year-section {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.year-section:last-child {
+  margin-bottom: 0;
+}
+
+.year-marker {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.year-circle {
+  width: 36px;
+  height: 36px;
+  background-color: #2c5530;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 0.75rem;
+}
+
+.year-label {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2c5530;
+  text-align: left;
+}
+
+/* News items */
+.news-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.news-item {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  position: relative;
+  border-left: 3px solid #2c5530;
+  text-align: left;
+}
+
+.news-item-date {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.news-item-title {
+  color: #2c5530;
+  margin: 0 0 0.75rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.news-item-content {
+  color: #444;
+  line-height: 1.5;
+  font-size: 1rem;
+  white-space: pre-line;
+  text-align: left;
+}
+
+@media (max-width: 768px) {
+  .updates-page-container {
+    padding: 1.5rem 1rem;
+  }
+  
+  .updates-page-container h1 {
+    font-size: 1.75rem;
+  }
+  
+  .year-circle {
+    width: 30px;
+    height: 30px;
+  }
+  
+  .year-label {
+    font-size: 1.25rem;
+  }
+  
+  .news-item {
+    padding: 1.25rem;
+  }
+} 
