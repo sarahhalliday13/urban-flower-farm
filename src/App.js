@@ -143,9 +143,9 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
           <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
           {!isAuthenticated && (
             <>
-              <Link to="/about" onClick={() => setIsMenuOpen(false)}>About Us</Link>
               <Link to="/updates" onClick={() => setIsMenuOpen(false)}>News</Link>
               <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
+              <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
               {hasOrders && (
                 <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
