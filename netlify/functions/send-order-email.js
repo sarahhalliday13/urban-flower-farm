@@ -6,8 +6,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 exports.handler = async function(event, context) {
-  console.log('Netlify function triggered');
+  console.log('Netlify function triggered - Starting email process');
   console.log('API Key exists:', !!process.env.SENDGRID_API_KEY);
+  console.log('Environment:', process.env.NODE_ENV);
   
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
