@@ -4,6 +4,10 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.REACT_APP_SENDGRID_API_KEY);
 
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
+const VERIFIED_SENDER = {
+  email: 'buttonsflowerfarm@gmail.com',
+  name: 'Buttons Flower Farm'
+};
 
 exports.handler = async function(event, context) {
   console.log('Netlify function triggered - Starting email process');
@@ -22,7 +26,7 @@ exports.handler = async function(event, context) {
     // Send confirmation to customer
     const customerEmail = {
       to: order.customer.email,
-      from: BUTTONS_EMAIL,
+      from: VERIFIED_SENDER,
       subject: `Order Confirmation - ${order.id}`,
       html: generateCustomerEmailTemplate(order)
     };
@@ -30,12 +34,12 @@ exports.handler = async function(event, context) {
     // Send notification to Buttons
     const buttonsEmail = {
       to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL,
+      from: VERIFIED_SENDER,
       subject: `New Order Received - ${order.id}`,
       html: generateButtonsEmailTemplate(order)
     };
 
-    console.log('Attempting to send emails...');
+    console.log('Attempting to send emails with verified sender:', VERIFIED_SENDER);
     
     // Send both emails
     await Promise.all([
