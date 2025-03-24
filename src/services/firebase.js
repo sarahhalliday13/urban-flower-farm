@@ -35,7 +35,7 @@ const storage = getStorage(app);
 const db = getFirestore(app);
 
 // Export Firebase utilities
-export { set, get, onValue, storage, db };
+export { set, get, onValue, update, remove, storage, db };
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {
@@ -136,35 +136,38 @@ const createLocalImageUrl = (file) => {
  */
 export const fetchPlants = async () => {
   try {
-    console.log('DEBUG: fetchPlants - Starting to fetch plants from Firebase');
-    console.log('DEBUG: fetchPlants - Database URL:', process.env.REACT_APP_FIREBASE_DATABASE_URL);
+    const environment = process.env.NODE_ENV;
+    console.log(`[${environment}] fetchPlants - Starting to fetch plants from Firebase`);
+    console.log(`[${environment}] fetchPlants - Database URL:`, process.env.REACT_APP_FIREBASE_DATABASE_URL);
     
-    console.log('DEBUG: fetchPlants - Getting plants snapshot...');
+    console.log(`[${environment}] fetchPlants - Getting plants snapshot...`);
     const plantsSnapshot = await get(ref(database, 'plants'));
-    console.log('DEBUG: fetchPlants - Plants snapshot exists:', plantsSnapshot.exists());
+    console.log(`[${environment}] fetchPlants - Plants snapshot exists:`, plantsSnapshot.exists());
     
-    console.log('DEBUG: fetchPlants - Getting inventory snapshot...');
+    console.log(`[${environment}] fetchPlants - Getting inventory snapshot...`);
     const inventorySnapshot = await get(ref(database, 'inventory'));
-    console.log('DEBUG: fetchPlants - Inventory snapshot exists:', inventorySnapshot.exists());
+    console.log(`[${environment}] fetchPlants - Inventory snapshot exists:`, inventorySnapshot.exists());
     
     if (!plantsSnapshot.exists()) {
-      console.log('DEBUG: fetchPlants - No plants data found in Firebase');
+      console.log(`[${environment}] fetchPlants - No plants data found in Firebase`);
       return [];
     }
     
     const plantsData = plantsSnapshot.val();
-    console.log('DEBUG: fetchPlants - Plants data keys:', Object.keys(plantsData || {}).length);
+    console.log(`[${environment}] fetchPlants - Plants data keys:`, Object.keys(plantsData || {}).length);
     
     const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
-    console.log('DEBUG: fetchPlants - Inventory data keys:', Object.keys(inventoryData || {}).length);
+    console.log(`[${environment}] fetchPlants - Inventory data keys:`, Object.keys(inventoryData || {}).length);
     
     // Convert the object to an array and add inventory data
     const plantsArray = Object.keys(plantsData).map(key => {
       const plant = plantsData[key];
+      const plantId = plant.id || key;
+      
       return {
         ...plant,
-        id: plant.id || key, // Use the plant's ID or the Firebase key
-        inventory: inventoryData[plant.id || key] || {
+        id: plantId, // Use the plant's ID or the Firebase key
+        inventory: inventoryData[plantId] || {
           currentStock: 0,
           status: "Unknown",
           restockDate: "",
@@ -173,21 +176,21 @@ export const fetchPlants = async () => {
       };
     });
     
-    console.log(`DEBUG: fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
+    console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
     // Log a sample plant for verification
     if (plantsArray.length > 0) {
-      console.log('DEBUG: fetchPlants - Sample plant:', 
+      console.log(`[${environment}] fetchPlants - Sample plant:`, 
         {name: plantsArray[0].name, id: plantsArray[0].id, hasInventory: !!plantsArray[0].inventory});
     }
     
     return plantsArray;
   } catch (error) {
-    console.error('Error fetching plants from Firebase:', error);
-    console.error('DEBUG: fetchPlants - Detailed error:', error.stack || error.message || error);
+    console.error(`[${process.env.NODE_ENV}] Error fetching plants from Firebase:`, error);
+    console.error(`[${process.env.NODE_ENV}] Error details:`, error.code, error.message, error.stack);
     
     // Check if it's a Firebase error and log additional details
     if (error.code) {
-      console.error('DEBUG: fetchPlants - Firebase error code:', error.code);
+      console.error(`[${process.env.NODE_ENV}] Firebase error code:`, error.code);
     }
     
     throw error;
@@ -981,7 +984,9 @@ export const deletePlant = async (plantId) => {
  */
 export const saveNewsItems = async (newsItems) => {
   try {
-    console.log('Saving news items to Firebase:', newsItems);
+    const environment = process.env.NODE_ENV;
+    console.log(`[${environment}] Saving news items to Firebase:`, newsItems);
+    console.log(`Database URL being used: ${process.env.REACT_APP_FIREBASE_DATABASE_URL}`);
     
     if (!Array.isArray(newsItems) || newsItems.length === 0) {
       return {
@@ -1001,7 +1006,9 @@ export const saveNewsItems = async (newsItems) => {
     
     // Update in Firebase
     const newsRef = ref(database, 'news');
+    console.log(`Saving to Firebase path: 'news'`);
     await set(newsRef, newsData);
+    console.log(`[${environment}] News items saved successfully to Firebase`);
     
     return {
       success: true,
@@ -1023,16 +1030,21 @@ export const saveNewsItems = async (newsItems) => {
  */
 export const fetchNewsItems = async () => {
   try {
-    console.log('Fetching news items from Firebase');
+    const environment = process.env.NODE_ENV;
+    console.log(`[${environment}] Fetching news items from Firebase`);
+    console.log(`Database URL being used: ${process.env.REACT_APP_FIREBASE_DATABASE_URL}`);
     
     const newsRef = ref(database, 'news');
+    console.log(`Fetching from Firebase path: 'news'`);
     const snapshot = await get(newsRef);
     
     if (snapshot.exists()) {
       const newsData = snapshot.val();
+      console.log(`[${environment}] Found ${Array.isArray(newsData) ? newsData.length : Object.keys(newsData).length} news items`);
       return Array.isArray(newsData) ? newsData : Object.values(newsData);
     }
     
+    console.log(`[${environment}] No news items found in Firebase`);
     return [];
   } catch (error) {
     console.error('Error fetching news from Firebase:', error);
