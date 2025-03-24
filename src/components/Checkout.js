@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
 import { sendOrderConfirmationEmails } from '../services/emailService';
+import { getCustomerData, saveCustomerData } from '../services/customerService';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -63,6 +64,20 @@ const Checkout = () => {
     }
   }, [cartItems, navigate, orderComplete, location.pathname]);
 
+  // Add useEffect to load saved customer data
+  useEffect(() => {
+    const savedCustomerData = getCustomerData();
+    if (savedCustomerData) {
+      setFormData(prev => ({
+        ...prev,
+        firstName: savedCustomerData.firstName || '',
+        lastName: savedCustomerData.lastName || '',
+        email: savedCustomerData.email || '',
+        phone: savedCustomerData.phone || ''
+      }));
+    }
+  }, []);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -114,6 +129,14 @@ const Checkout = () => {
     setIsSubmitting(true);
     
     try {
+      // Save customer data for future use
+      await saveCustomerData({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone
+      });
+
       // Generate a unique order ID
       const newOrderId = `ORD-${Date.now()}`;
       
@@ -198,6 +221,16 @@ const Checkout = () => {
         ...errors,
         submit: 'There was an error processing your order. Please try again.'
       });
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      // Only prevent default for non-textarea elements
+      if (e.target.tagName.toLowerCase() !== 'textarea') {
+        e.preventDefault();
+        handleSubmit(e);
+      }
     }
   };
 
@@ -343,7 +376,7 @@ const Checkout = () => {
       <div className="checkout-content">
         <div className="checkout-form-container">
           <h2>Contact Information</h2>
-          <form onSubmit={handleSubmit} className="checkout-form">
+          <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="checkout-form">
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="firstName">First Name *</label>
