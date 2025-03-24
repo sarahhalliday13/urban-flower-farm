@@ -1,13 +1,14 @@
 const sgMail = require('@sendgrid/mail');
 
 // Initialize SendGrid with API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const apiKey = process.env.SENDGRID_API_KEY;
+sgMail.setApiKey(apiKey);
 
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 exports.handler = async function(event, context) {
   console.log('Netlify function triggered - Starting email process');
-  console.log('API Key exists:', !!process.env.SENDGRID_API_KEY);
+  console.log('API Key length:', apiKey ? apiKey.length : 0);
   console.log('Environment:', process.env.NODE_ENV);
   
   // Only allow POST requests
@@ -19,52 +20,50 @@ exports.handler = async function(event, context) {
     const order = JSON.parse(event.body);
     console.log('Order received:', order);
 
-    // Send confirmation to customer
+    // Prepare a simple test email first
+    const testEmail = {
+      to: BUTTONS_EMAIL,
+      from: BUTTONS_EMAIL, // Must be the verified sender
+      subject: 'Test Email from Netlify Function',
+      text: 'This is a test email to verify SendGrid configuration.',
+      html: '<p>This is a test email to verify SendGrid configuration.</p>'
+    };
+
+    console.log('Attempting to send test email...');
+    try {
+      const testResult = await sgMail.send(testEmail);
+      console.log('Test email sent successfully:', testResult);
+    } catch (testError) {
+      console.error('Test email failed:', {
+        message: testError.message,
+        response: testError.response?.body,
+        code: testError.code
+      });
+      throw testError;
+    }
+
+    // If test email succeeds, send the actual order emails
     const customerEmail = {
       to: order.customer.email,
-      from: {
-        email: BUTTONS_EMAIL,
-        name: 'Buttons Flower Farm'
-      },
+      from: BUTTONS_EMAIL,
       subject: `Order Confirmation - ${order.id}`,
       html: generateCustomerEmailTemplate(order)
     };
 
-    // Send notification to Buttons
     const buttonsEmail = {
       to: BUTTONS_EMAIL,
-      from: {
-        email: BUTTONS_EMAIL,
-        name: 'Buttons Flower Farm'
-      },
+      from: BUTTONS_EMAIL,
       subject: `New Order Received - ${order.id}`,
       html: generateButtonsEmailTemplate(order)
     };
 
-    console.log('Attempting to send customer email...');
-    try {
-      await sgMail.send(customerEmail);
-      console.log('Customer email sent successfully');
-    } catch (customerEmailError) {
-      console.error('Error sending customer email:', {
-        message: customerEmailError.message,
-        response: customerEmailError.response?.body
-      });
-      throw customerEmailError;
-    }
+    console.log('Sending customer and business emails...');
+    await Promise.all([
+      sgMail.send(customerEmail),
+      sgMail.send(buttonsEmail)
+    ]);
 
-    console.log('Attempting to send business notification...');
-    try {
-      await sgMail.send(buttonsEmail);
-      console.log('Business notification sent successfully');
-    } catch (businessEmailError) {
-      console.error('Error sending business email:', {
-        message: businessEmailError.message,
-        response: businessEmailError.response?.body
-      });
-      throw businessEmailError;
-    }
-
+    console.log('All emails sent successfully');
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'Emails sent successfully' })
@@ -73,6 +72,7 @@ exports.handler = async function(event, context) {
     console.error('Error details:', {
       message: error.message,
       response: error.response?.body,
+      code: error.code,
       stack: error.stack
     });
     return {
@@ -80,7 +80,8 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         error: 'Failed to send emails',
         details: error.message,
-        response: error.response?.body
+        response: error.response?.body,
+        code: error.code
       })
     };
   }
