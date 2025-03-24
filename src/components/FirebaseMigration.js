@@ -143,7 +143,7 @@ const FirebaseMigration = () => {
               </p>
               
               <div className="inventory-link-container">
-                <Link to="/inventory" className="inventory-link">
+                <Link to="/admin/inventory" className="inventory-link">
                   Go to Plant Inventory Manager
                 </Link>
               </div>
