@@ -18,7 +18,9 @@ import {
   processSyncQueue,
   repairInventoryData,
   updateInventory,
-  updatePlantData
+  updatePlantData,
+  update, // Add explicit import of update function
+  remove  // Add explicit import of remove function
 } from '../services/firebase';
 import { useAdmin } from '../context/AdminContext';
 import '../styles/InventoryManager.css';
@@ -49,8 +51,13 @@ const checkFirebaseConfig = () => {
   return true;
 };
 
+console.log('InventoryManager.js is being loaded'); // DEBUG LOG
+
 const InventoryManager = () => {
+  console.log('InventoryManager component is being initialized'); // DEBUG LOG
+  
   const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
+  console.log('useAdmin hook values:', { plantsCount: plants?.length, plantsLoading, plantsError }); // DEBUG LOG
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Loading inventory data...');
   const [error, setError] = useState(null);
