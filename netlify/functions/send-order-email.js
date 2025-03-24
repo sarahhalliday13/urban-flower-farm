@@ -6,6 +6,9 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 exports.handler = async function(event, context) {
+  console.log('Netlify function triggered');
+  console.log('API Key exists:', !!process.env.SENDGRID_API_KEY);
+  
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -13,6 +16,7 @@ exports.handler = async function(event, context) {
 
   try {
     const order = JSON.parse(event.body);
+    console.log('Order received:', order);
 
     // Send confirmation to customer
     const customerEmail = {
@@ -30,12 +34,16 @@ exports.handler = async function(event, context) {
       html: generateButtonsEmailTemplate(order)
     };
 
+    console.log('Attempting to send emails...');
+    
     // Send both emails
     await Promise.all([
       sgMail.send(customerEmail),
       sgMail.send(buttonsEmail)
     ]);
 
+    console.log('Emails sent successfully');
+    
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'Emails sent successfully' })
@@ -44,7 +52,11 @@ exports.handler = async function(event, context) {
     console.error('Error sending emails:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to send emails' })
+      body: JSON.stringify({ 
+        error: 'Failed to send emails',
+        details: error.message,
+        stack: error.stack
+      })
     };
   }
 };
