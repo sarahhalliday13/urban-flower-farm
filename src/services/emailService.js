@@ -1,11 +1,17 @@
-import sgMail from '@sendgrid/mail';
-
-// Initialize SendGrid with API key
-sgMail.setApiKey(process.env.REACT_APP_SENDGRID_API_KEY);
+// const sgMail = require('@sendgrid/mail');
 
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 export const sendOrderConfirmationEmails = async (order) => {
+  // Check explicitly for production mode
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Development mode: Simulating email send');
+    console.log('Customer email template:', generateCustomerEmailTemplate(order));
+    console.log('Business email template:', generateButtonsEmailTemplate(order));
+    return true;
+  }
+
+  // In production, use the Netlify function
   try {
     const response = await fetch('/.netlify/functions/send-order-email', {
       method: 'POST',
