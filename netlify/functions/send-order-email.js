@@ -1,7 +1,7 @@
 const sgMail = require('@sendgrid/mail');
 
 // Initialize SendGrid with API key
-sgMail.setApiKey(process.env.REACT_APP_SENDGRID_API_KEY);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 const VERIFIED_SENDER = {
@@ -11,7 +11,7 @@ const VERIFIED_SENDER = {
 
 exports.handler = async function(event, context) {
   console.log('Netlify function triggered - Starting email process');
-  console.log('API Key exists:', !!process.env.REACT_APP_SENDGRID_API_KEY);
+  console.log('API Key exists:', !!process.env.SENDGRID_API_KEY);
   console.log('Environment:', process.env.NODE_ENV);
   
   // Only allow POST requests
