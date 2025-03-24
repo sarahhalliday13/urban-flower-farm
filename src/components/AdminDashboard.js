@@ -212,7 +212,7 @@ const AdminDashboard = () => {
             </div>
           )}
           
-          <Link to="/inventory" className="admin-button">
+          <Link to="/admin/inventory" className="admin-button">
             Manage Inventory
           </Link>
         </div>
