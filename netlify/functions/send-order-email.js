@@ -4,10 +4,6 @@ const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
-const VERIFIED_SENDER = {
-  email: 'buttonsflowerfarm@gmail.com',
-  name: 'Buttons Flower Farm'
-};
 
 exports.handler = async function(event, context) {
   console.log('Netlify function triggered - Starting email process');
@@ -26,7 +22,10 @@ exports.handler = async function(event, context) {
     // Send confirmation to customer
     const customerEmail = {
       to: order.customer.email,
-      from: VERIFIED_SENDER,
+      from: {
+        email: BUTTONS_EMAIL,
+        name: 'Buttons Flower Farm'
+      },
       subject: `Order Confirmation - ${order.id}`,
       html: generateCustomerEmailTemplate(order)
     };
@@ -34,33 +33,36 @@ exports.handler = async function(event, context) {
     // Send notification to Buttons
     const buttonsEmail = {
       to: BUTTONS_EMAIL,
-      from: VERIFIED_SENDER,
+      from: {
+        email: BUTTONS_EMAIL,
+        name: 'Buttons Flower Farm'
+      },
       subject: `New Order Received - ${order.id}`,
       html: generateButtonsEmailTemplate(order)
     };
 
-    console.log('Attempting to send emails with verified sender:', VERIFIED_SENDER);
-    
+    console.log('Attempting to send customer email...');
     try {
-      // Send customer email first
-      console.log('Sending customer email...');
       await sgMail.send(customerEmail);
       console.log('Customer email sent successfully');
+    } catch (customerEmailError) {
+      console.error('Error sending customer email:', {
+        message: customerEmailError.message,
+        response: customerEmailError.response?.body
+      });
+      throw customerEmailError;
+    }
 
-      // Then send business notification
-      console.log('Sending business notification...');
+    console.log('Attempting to send business notification...');
+    try {
       await sgMail.send(buttonsEmail);
       console.log('Business notification sent successfully');
-    } catch (sendGridError) {
-      console.error('SendGrid Error Details:', {
-        message: sendGridError.message,
-        response: sendGridError.response ? {
-          body: sendGridError.response.body,
-          headers: sendGridError.response.headers,
-          status: sendGridError.response.statusCode
-        } : 'No response details'
+    } catch (businessEmailError) {
+      console.error('Error sending business email:', {
+        message: businessEmailError.message,
+        response: businessEmailError.response?.body
       });
-      throw sendGridError;
+      throw businessEmailError;
     }
 
     return {
@@ -68,14 +70,17 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ message: 'Emails sent successfully' })
     };
   } catch (error) {
-    console.error('Error sending emails:', error);
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.body,
+      stack: error.stack
+    });
     return {
       statusCode: 500,
       body: JSON.stringify({ 
         error: 'Failed to send emails',
         details: error.message,
-        response: error.response ? error.response.body : null,
-        stack: error.stack
+        response: error.response?.body
       })
     };
   }
