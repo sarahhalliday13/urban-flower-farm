@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
+import { sendOrderConfirmationEmails } from '../services/emailService';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -146,6 +147,9 @@ const Checkout = () => {
       // Save the order to Firebase and localStorage
       try {
         await saveOrder(newOrderData);
+        
+        // Send confirmation emails
+        await sendOrderConfirmationEmails(newOrderData);
         
         // Also save to localStorage for client-side access
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
