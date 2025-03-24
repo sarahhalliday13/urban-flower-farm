@@ -7,27 +7,17 @@ const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 export const sendOrderConfirmationEmails = async (order) => {
   try {
-    // Send confirmation to customer
-    const customerEmail = {
-      to: order.customer.email,
-      from: BUTTONS_EMAIL,
-      subject: `Order Confirmation - ${order.id}`,
-      html: generateCustomerEmailTemplate(order)
-    };
+    const response = await fetch('/.netlify/functions/send-order-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(order)
+    });
 
-    // Send notification to Buttons
-    const buttonsEmail = {
-      to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL,
-      subject: `New Order Received - ${order.id}`,
-      html: generateButtonsEmailTemplate(order)
-    };
-
-    // Send both emails
-    await Promise.all([
-      sgMail.send(customerEmail),
-      sgMail.send(buttonsEmail)
-    ]);
+    if (!response.ok) {
+      throw new Error('Failed to send emails');
+    }
 
     return true;
   } catch (error) {
