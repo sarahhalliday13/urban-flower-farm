@@ -41,14 +41,28 @@ exports.handler = async function(event, context) {
 
     console.log('Attempting to send emails with verified sender:', VERIFIED_SENDER);
     
-    // Send both emails
-    await Promise.all([
-      sgMail.send(customerEmail),
-      sgMail.send(buttonsEmail)
-    ]);
+    try {
+      // Send customer email first
+      console.log('Sending customer email...');
+      await sgMail.send(customerEmail);
+      console.log('Customer email sent successfully');
 
-    console.log('Emails sent successfully');
-    
+      // Then send business notification
+      console.log('Sending business notification...');
+      await sgMail.send(buttonsEmail);
+      console.log('Business notification sent successfully');
+    } catch (sendGridError) {
+      console.error('SendGrid Error Details:', {
+        message: sendGridError.message,
+        response: sendGridError.response ? {
+          body: sendGridError.response.body,
+          headers: sendGridError.response.headers,
+          status: sendGridError.response.statusCode
+        } : 'No response details'
+      });
+      throw sendGridError;
+    }
+
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'Emails sent successfully' })
@@ -60,6 +74,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         error: 'Failed to send emails',
         details: error.message,
+        response: error.response ? error.response.body : null,
         stack: error.stack
       })
     };
