@@ -478,4 +478,11 @@
 /* Also add the copy functionality to the payment instructions section */
 .payment-instructions .email-with-copy {
   display: inline-flex;
+}
+
+.spam-notice {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 0.5rem;
 } 
