@@ -192,23 +192,10 @@ const Home = ({ isFirstVisit }) => {
           </section>
         )}
 
-        <section className="featured-plants" style={{ paddingLeft: '0px', paddingRight: '0px' }}>
-          <div className="featured-plants-header" style={{ 
-            display: 'flex', 
-            flexDirection: 'row', 
-            justifyContent: 'flex-start', 
-            alignItems: 'flex-end', 
-            marginBottom: '1rem',
-            paddingBottom: '0.5rem'
-          }}>
-            <h2 style={{ margin: '0', fontSize: '1.5rem', marginRight: '1rem' }}>Featured Flowers</h2>
-            <Link to="/shop" style={{ 
-              color: '#2c5530', 
-              textDecoration: 'none', 
-              fontWeight: '600', 
-              fontSize: '0.9rem',
-              marginBottom: '0.25rem'
-            }}>View All Flowers</Link>
+        <section className="featured-plants">
+          <div className="featured-plants-header">
+            <h2>Featured Flowers</h2>
+            <Link to="/shop" className="view-all-button-sm">Shop All Flowers</Link>
           </div>
           
           {loading ? (

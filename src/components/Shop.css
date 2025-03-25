@@ -429,11 +429,6 @@
     align-items: center;
     margin-bottom: 0;
   }
-  
-  .featured-plants-header h2 {
-    font-size: inherit;
-    margin: 0;
-  }
 }
 
 /* Add styles for the view toggle button */
