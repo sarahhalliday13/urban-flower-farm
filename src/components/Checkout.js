@@ -280,6 +280,7 @@ const Checkout = () => {
           </p>
           <p>We've received your order and will be in touch soon.</p>
           <p>A confirmation has been sent to <strong>{formData.email}</strong>.</p>
+          <p className="spam-notice">Please check your spam folder if you don't see the email.</p>
           
           {inventoryUpdateStatus === 'warning' && (
             <p className="inventory-warning">
