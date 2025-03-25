@@ -10,30 +10,30 @@
   cursor: pointer;
   position: relative;
   z-index: 100;
-  height: 50px;
-  margin: 10px 0;
+  height: auto;
 }
 
 .logo-image {
   width: 200px;
   height: auto;
   max-width: 100%;
-  display: block; /* Ensures the image takes the full space and is properly clickable */
-  -webkit-touch-callout: none; /* Prevents iOS callout when tapping */
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE/Edge */
-  user-select: none; /* Non-prefixed version */
+  display: block;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
-/* Tablet specific styles */
+/* Tablet styles */
 @media (max-width: 1024px) and (min-width: 769px) {
   .logo-image {
-    width: 140px;
+    width: 180px;
   }
 }
 
-@media (max-width: 768px) {
+/* Large mobile styles */
+@media (max-width: 768px) and (min-width: 481px) {
   .logo {
     display: block;
     margin: 10px auto;
@@ -42,31 +42,17 @@
   .logo-image {
     width: 160px;
   }
-
-  .featured-plants-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 1rem 0.75rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .featured-plants-header h2 {
-    font-size: 1.5rem !important;
-    margin: 0;
-  }
-
-  .view-all-button-sm {
-    padding: 6px 12px !important;
-    font-size: 0.875rem !important;
-    white-space: nowrap;
-  }
 }
 
+/* Small mobile styles */
 @media (max-width: 480px) {
+  .logo {
+    display: block;
+    margin: 10px auto;
+  }
+  
   .logo-image {
-    width: 130px;
+    width: 140px;
   }
 }
 
@@ -101,9 +87,12 @@
   top: 0;
   z-index: 1000;
   width: 100%;
+  left: 0;
+  right: 0;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .App-header.compact {
@@ -140,6 +129,7 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .nav-links {
@@ -483,11 +473,18 @@ footer p {
 }
 
 @media (max-width: 768px) {
+  .App-header {
+    height: 80px;
+    padding: 0;
+    width: 100vw;
+    margin: 0;
+    left: 0;
+    right: 0;
+  }
+  
   .navbar {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 1rem;
+    padding: 0 1rem;
+    width: 100%;
   }
 
   .logo {

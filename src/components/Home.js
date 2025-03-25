@@ -1,8 +1,7 @@
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import { useCart } from '../context/CartContext';
-import PlantImage from './PlantImage';
 import WhatsNew from './WhatsNew';
 
 // Plant Card component with simplified image handling
@@ -34,42 +33,8 @@ const PlantCard = ({ plant }) => {
   );
 };
 
-// Add an error boundary component
-class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null, errorInfo: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    console.error("Home component error caught:", error, errorInfo);
-    this.setState({ error, errorInfo });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="error-boundary">
-          <h2>Something went wrong on the Home page.</h2>
-          <details>
-            <summary>Error Details</summary>
-            <p>{this.state.error && this.state.error.toString()}</p>
-            <p>Component Stack: {this.state.errorInfo && this.state.errorInfo.componentStack}</p>
-          </details>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 const Home = ({ isFirstVisit }) => {
   const [showHero, setShowHero] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [featuredPlants, setFeaturedPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,18 +43,6 @@ const Home = ({ isFirstVisit }) => {
   useEffect(() => {
     // Set heroHidden to true in localStorage to ensure it stays hidden across sessions
     localStorage.setItem('heroHidden', 'true');
-    
-    // Add event listener for window resize
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    
-    // Clean up
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
   }, []);
 
   // Fetch plants from Firebase with fallbacks
@@ -179,39 +132,37 @@ const Home = ({ isFirstVisit }) => {
   };
   
   return (
-    <ErrorBoundary>
-      <main className="homepage">
-        <WhatsNew maxDisplay={1} />
-        {showHero && (
-          <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
-            <button className="hero-close" onClick={hideHero}>×</button>
-            <div className="hero-content">
-              <h1>Welcome</h1>
-              <p>Discover beautiful plants for your home and garden</p>
-            </div>
-          </section>
-        )}
-
-        <section className="featured-plants">
-          <div className="featured-plants-header">
-            <h2>Featured Flowers</h2>
-            <Link to="/shop" className="view-all-button-sm">Shop All Flowers</Link>
+    <main className="homepage">
+      <WhatsNew maxDisplay={1} />
+      {showHero && (
+        <section className={`hero ${!isFirstVisit ? 'compact' : ''}`}>
+          <button className="hero-close" onClick={hideHero}>×</button>
+          <div className="hero-content">
+            <h1>Welcome</h1>
+            <p>Discover beautiful plants for your home and garden</p>
           </div>
-          
-          {loading ? (
-            <div className="loading">Loading featured plants...</div>
-          ) : error ? (
-            <div className="error">{error}</div>
-          ) : (
-            <div className="plant-grid">
-              {featuredPlants.map(plant => (
-                <PlantCard key={plant.id} plant={plant} />
-              ))}
-            </div>
-          )}
         </section>
-      </main>
-    </ErrorBoundary>
+      )}
+
+      <section className="featured-plants">
+        <div className="featured-plants-header">
+          <h2>Featured Flowers</h2>
+          <Link to="/shop" className="view-all-button-sm">Shop All Flowers</Link>
+        </div>
+        
+        {loading ? (
+          <div className="loading">Loading featured plants...</div>
+        ) : error ? (
+          <div className="error">{error}</div>
+        ) : (
+          <div className="plant-grid">
+            {featuredPlants.map(plant => (
+              <PlantCard key={plant.id} plant={plant} />
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 };
 
