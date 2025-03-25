@@ -1,10 +1,8 @@
 import './App.css';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import NewsletterModal from './components/NewsletterModal';
 import About from './components/About';
 import Shop from './components/Shop';
-import CartModal from './components/CartModal';
 import PlantDetails from './components/PlantDetails';
 import Home from './components/Home';
 import Login from './components/Login';
@@ -12,18 +10,15 @@ import Checkout from './components/Checkout';
 import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
-import ApiDebugger from './components/ApiDebugger';
-import FirebaseMigration from './components/FirebaseMigration';
-import FirebaseTest from './components/FirebaseTest';
 import ToastManager from './components/ToastManager';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
 import './cart-styles.css';
 import FAQ from './components/FAQ';
-import WhatsNew from './components/WhatsNew';
 import UpdatesPage from './components/UpdatesPage';
 import AdminUpdates from './components/AdminUpdates';
+import CartModal from './components/CartModal';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -233,27 +228,18 @@ const AdminContentWrapper = ({ children }) => {
 };
 
 function App() {
-  const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [isFirstVisit, setIsFirstVisit] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [showDebugger, setShowDebugger] = useState(false); // Set to false to hide the debugger
-  
-  useEffect(() => {
-    // Always set hasVisited to true to ensure hero panel stays hidden
-    localStorage.setItem('hasVisited', 'true');
-    
-    // Track page views
-    const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
-    localStorage.setItem('pageViews', (pageViews + 1).toString());
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
 
-    // Newsletter popup temporarily disabled
-    // Original code:
-    // if (pageViews === 2) { // Show on 3rd view (0-based counter)
-    //   setShowModal(true);
-    // }
-    setShowModal(false); // Keep popup disabled for now
+  useEffect(() => {
+    // Check if this is the first visit
+    const visited = localStorage.getItem('visited');
+    if (!visited) {
+      localStorage.setItem('visited', 'true');
+      setIsFirstVisit(true);
+    } else {
+      setIsFirstVisit(false);
+    }
   }, []);
 
   return (
@@ -262,12 +248,9 @@ function App() {
         <AdminProvider>
           <Router>
             <AppContent 
-              showModal={showModal} 
-              setShowModal={setShowModal}
               isMenuOpen={isMenuOpen}
               setIsMenuOpen={setIsMenuOpen}
               isFirstVisit={isFirstVisit}
-              showDebugger={showDebugger}
             />
           </Router>
         </AdminProvider>
@@ -277,7 +260,7 @@ function App() {
 }
 
 // Separate component for the app content that can safely use hooks within the providers
-function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirstVisit, showDebugger }) {
+function AppContent({ isMenuOpen, setIsMenuOpen, isFirstVisit }) {
   // Now useAuth is safely inside the AuthProvider
   const { isAuthenticated: isAdmin } = useAuth();
   const [hasOrders, setHasOrders] = useState(false);
@@ -334,23 +317,12 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/firebase-test" element={<FirebaseTest />} />
         <Route 
           path="/admin" 
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
                 <AdminDashboard />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/inventory" 
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <InventoryManager />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
@@ -372,14 +344,6 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
               <AdminContentWrapper>
                 <AdminOrders />
               </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/firebase-migration" 
-          element={
-            <ProtectedRoute>
-              <FirebaseMigration />
             </ProtectedRoute>
           } 
         />
@@ -414,15 +378,10 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
           {hasOrders && <Link to="/orders">My Orders</Link>}
-          <Link to={isAdmin ? "/admin" : "/inventory"}>Manage</Link>
+          <Link to={isAdmin ? "/admin" : "/admin/inventory"}>Manage</Link>
         </div>
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
-
-      <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
-      
-      {/* API Debugger component */}
-      {showDebugger && <ApiDebugger />}
       
       {/* Toast notifications */}
       <ToastManager />
