@@ -10,6 +10,8 @@
   cursor: pointer;
   position: relative;
   z-index: 100;
+  height: 50px;
+  margin: 10px 0;
 }
 
 .logo-image {
@@ -24,13 +26,41 @@
   user-select: none; /* Non-prefixed version */
 }
 
+/* Tablet specific styles */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .logo-image {
+    width: 140px;
+  }
+}
+
 @media (max-width: 768px) {
   .logo {
-    padding: 0;
+    display: block;
+    margin: 10px auto;
   }
   
   .logo-image {
     width: 160px;
+  }
+
+  .featured-plants-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .featured-plants-header h2 {
+    font-size: 1.5rem !important;
+    margin: 0;
+  }
+
+  .view-all-button-sm {
+    padding: 6px 12px !important;
+    font-size: 0.875rem !important;
+    white-space: nowrap;
   }
 }
 
@@ -222,17 +252,24 @@ main {
 .featured-plants {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 16px 2rem 2rem 2rem;
 }
 
 .featured-plants-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-  flex-wrap: wrap;
-  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+.featured-plants-header h2 {
+  font-size: 2rem !important;
+  margin: 0;
+  color: #2c5530 !important;
+  font-weight: 600 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
 .featured-plants-footer {
@@ -240,13 +277,6 @@ main {
   justify-content: center;
   margin-top: 2rem;
   padding: 0 2rem;
-}
-
-.featured-plants-header h2 {
-  margin: 0;
-  color: #333;
-  font-size: 14px;
-  font-weight: bold;
 }
 
 .view-all-button {
@@ -571,19 +601,13 @@ footer p {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
+    padding: 0 1rem 0.75rem;
     margin-bottom: 1rem;
-    padding: 0 1rem;
-    margin-bottom: 0.5rem;
-    box-sizing: border-box;
+    border-bottom: 1px solid #eee;
   }
   
   .featured-plants-header h2 {
-    font-size: 1.8rem;
-    width: 100%;
-    text-align: left;
-    margin: 0 2rem 0 0;
-    color: #2c5530;
-    font-weight: 600;
+    font-size: 1.5rem !important;
   }
 
   .plant-grid {
@@ -1763,19 +1787,16 @@ footer {
 
 @media (max-width: 768px) {
   .featured-plants-header {
-    padding: 0 1rem 0.75rem 1rem;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem 0.75rem;
     margin-bottom: 1rem;
     border-bottom: 1px solid #eee;
-    gap: 1rem;
   }
   
   .featured-plants-header h2 {
-    font-size: 1.8rem;
-    width: 100%;
-    text-align: left;
-    margin: 0 2rem 0 0;
-    color: #2c5530;
-    font-weight: 600;
+    font-size: 1.5rem !important;
   }
   
   .shop-controls {
@@ -2252,4 +2273,22 @@ footer {
   .featured-plants .plant-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.view-all-button-sm {
+  background-color: #4a7c59;
+  color: white !important;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none !important;
+  font-size: 0.9rem;
+  transition: background-color 0.3s ease;
+}
+
+.view-all-button-sm:hover {
+  background-color: #3a6347;
+  color: white !important;
+  text-decoration: none !important;
 }
