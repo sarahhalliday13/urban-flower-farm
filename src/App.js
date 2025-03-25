@@ -202,16 +202,14 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
           </>
         )}
       </div>
-      {!isAuthenticated && (
-        <button className="cart-button" onClick={toggleCart}>
-          🪴
-          {cartCount > 0 && (
-            <div className="cart-badge">
-              <span className="cart-count">{cartCount}</span>
-            </div>
-          )}
-        </button>
-      )}
+      <button className="cart-button" onClick={toggleCart}>
+        🪴
+        {cartCount > 0 && (
+          <div className="cart-badge">
+            <span className="cart-count">{cartCount}</span>
+          </div>
+        )}
+      </button>
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </nav>
   );
@@ -282,6 +280,38 @@ function App() {
 function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirstVisit, showDebugger }) {
   // Now useAuth is safely inside the AuthProvider
   const { isAuthenticated: isAdmin } = useAuth();
+  const [hasOrders, setHasOrders] = useState(false);
+  
+  // Function to check if user has orders
+  const checkForUserOrders = () => {
+    const userEmail = localStorage.getItem('userEmail');
+    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+    
+    if (userEmail && orders.length > 0) {
+      // Check if any orders belong to this user
+      const userOrders = orders.filter(
+        order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
+      );
+      setHasOrders(userOrders.length > 0);
+    } else {
+      setHasOrders(false);
+    }
+  };
+
+  // Check for orders when component mounts
+  useEffect(() => {
+    checkForUserOrders();
+  }, []);
+  
+  // Listen for the 'orderCreated' event to update the orders display
+  useEffect(() => {
+    const handleOrderCreated = () => {
+      checkForUserOrders();
+    };
+    
+    window.addEventListener('orderCreated', handleOrderCreated);
+    return () => window.removeEventListener('orderCreated', handleOrderCreated);
+  }, []);
   
   return (
     <div className="App">
@@ -377,7 +407,16 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
       </Routes>
 
       <footer>
-        <p>© 2024 Buttons Urban Flower Farm. All rights reserved. <Link to="/admin/inventory" className="admin-link footer-link">Inventory</Link></p>
+        <div className="footer-links">
+          <Link to="/shop">Shop</Link>
+          <Link to="/updates">News</Link>
+          <Link to="/faq">FAQ</Link>
+          <Link to="/about">About</Link>
+          <Link to="/contact">Contact</Link>
+          {hasOrders && <Link to="/orders">My Orders</Link>}
+          <Link to={isAdmin ? "/admin" : "/inventory"}>Manage</Link>
+        </div>
+        <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
 
       <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
