@@ -2,6 +2,29 @@
   command = "npm install react-scripts && CI=false npm run build"
   publish = "build"
 
+# Branch-specific build settings
+[context.branch-deploy]
+  command = "npm install react-scripts && CI=false npm run build"
+  environment = { NODE_ENV = "development" }
+
+[context.deploy-preview]
+  command = "npm install react-scripts && CI=false npm run build"
+  environment = { NODE_ENV = "development" }
+
 # This ensures all deployments go to your specific site
 [site]
-  id = "154b08a8-604f-4470-abe2-9044f1dc21fe" 
+  id = "154b08a8-604f-4470-abe2-9044f1dc21fe"
+
+# Basic redirects
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Basic headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff" 
