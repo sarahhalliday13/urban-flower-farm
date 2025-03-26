@@ -22,12 +22,17 @@
   margin-bottom: 2rem;
   width: 100%;
   box-sizing: border-box;
+  gap: 4rem;
+  padding-left: 15px;
 }
 
 .shop-header h2 {
-  margin: 0 2rem 0 0;
-  color: #2c5530;
-  font-size: 1.8rem;
+  font-size: 2rem !important;
+  margin: 0;
+  color: #2c5530 !important;
+  font-weight: 600 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  margin-right: 2rem;
 }
 
 .shop-controls {
@@ -35,12 +40,14 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  padding-right: 15px;
 }
 
 .sort-control {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin: 0;
 }
 
 .sort-control label {
@@ -59,7 +66,7 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 16px 2rem 2rem 2rem;
   box-sizing: border-box;
 }
 
@@ -1002,4 +1009,31 @@
   min-width: 70px;
   height: 36px;
   box-sizing: border-box;
+}
+
+.type-filters {
+  display: flex;
+  gap: 1rem;
+  margin-right: 1rem;
+}
+
+.type-filter-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  color: #2c5530;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.type-filter-btn.active {
+  background: #2c5530;
+  color: white;
+  border-color: #2c5530;
+}
+
+.type-filter-btn:hover {
+  border-color: #2c5530;
 } 

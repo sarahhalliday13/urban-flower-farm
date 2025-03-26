@@ -21,6 +21,7 @@ function Shop() {
   const [isSearching, setIsSearching] = useState(false);
   const [initialDisplayCount, setInitialDisplayCount] = useState(12);
   const { width } = useWindowSize();
+  const [typeFilter, setTypeFilter] = useState('all'); // Add this state
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -93,6 +94,13 @@ function Shop() {
         (plant.foliageColor && plant.foliageColor.toLowerCase().includes(search))
       );
     }
+
+    // Apply type filter if selected
+    if (typeFilter !== 'all') {
+      filteredPlants = filteredPlants.filter(plant => 
+        plant.plantType?.toLowerCase() === typeFilter
+      );
+    }
     
     // Filter by inventory status if selected
     let statusFilteredPlants = filteredPlants;
@@ -109,10 +117,9 @@ function Shop() {
       statusFilteredPlants = filteredPlants.filter(plant => 
         plant.inventory?.status && plant.inventory.status.toLowerCase() === 'pre-order'
       );
-    } else {
-      statusFilteredPlants = filteredPlants;
     }
     
+    // Apply sorting
     switch (sortOption) {
       case 'name-a-z':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -139,7 +146,7 @@ function Shop() {
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  }, [plants, sortOption, searchTerm]);
+  }, [plants, sortOption, searchTerm, typeFilter]);
 
   // Check if there are more plants to load after sorted plants change
   useEffect(() => {
@@ -195,6 +202,15 @@ function Shop() {
     setDisplayCount(initialDisplayCount); // Reset display count when clearing search
   };
 
+  // Update the handleTypeFilter function
+  const handleTypeFilter = (type) => {
+    if (type === typeFilter) {
+      setTypeFilter('all');
+    } else {
+      setTypeFilter(type);
+    }
+  };
+
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -205,6 +221,20 @@ function Shop() {
         <div className="shop-header">
           <h2>Shop</h2>
           <div className="shop-controls">
+            <div className="type-filters">
+              <button 
+                className={`type-filter-btn ${typeFilter === 'annual' ? 'active' : ''}`}
+                onClick={() => handleTypeFilter('annual')}
+              >
+                Annual
+              </button>
+              <button 
+                className={`type-filter-btn ${typeFilter === 'perennial' ? 'active' : ''}`}
+                onClick={() => handleTypeFilter('perennial')}
+              >
+                Perennial
+              </button>
+            </div>
             <div className="sort-control">
               <label htmlFor="sort-select">Sort by:</label>
               <select 
@@ -217,10 +247,7 @@ function Shop() {
                 <option value="status-in-stock">Status: In Stock</option>
                 <option value="status-coming-soon">Status: Coming Soon</option>
                 <option value="status-pre-order">Status: Pre-Order</option>
-                <option value="name-a-z">Name: A to Z</option>
-                <option value="name-z-a">Name: Z to A</option>
-                <option value="type-annual">Type: Annual (A to Z)</option>
-                <option value="type-perennial">Type: Perennial (A to Z)</option>
+                <option value="name-a-z">Common Name: A to Z</option>
               </select>
             </div>
             <div className="search-bar">

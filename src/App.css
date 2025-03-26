@@ -2289,3 +2289,11 @@ footer {
   color: white !important;
   text-decoration: none !important;
 }
+
+.shop-header h2 {
+  font-size: 2rem !important;
+  margin: 0;
+  color: #2c5530 !important;
+  font-weight: 600 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
