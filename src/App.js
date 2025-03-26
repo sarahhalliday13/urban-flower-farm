@@ -24,6 +24,9 @@ import FAQ from './components/FAQ';
 import WhatsNew from './components/WhatsNew';
 import UpdatesPage from './components/UpdatesPage';
 import AdminUpdates from './components/AdminUpdates';
+import NewInventory from './components/NewInventory';
+import NewAddFlower from './components/NewAddFlower';
+import EditFlower from './components/EditFlower';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -179,7 +182,14 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
                 currentPath={currentPath}
                 onClick={() => setIsMenuOpen(false)}
               >
-                Inventory
+                Old Inventory
+              </AdminNavLink>
+              <AdminNavLink 
+                to="/admin/new-inventory" 
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                New Inventory
               </AdminNavLink>
               <AdminNavLink 
                 to="/admin/updates" 
@@ -235,32 +245,21 @@ const AdminContentWrapper = ({ children }) => {
 function App() {
   const [showModal, setShowModal] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  // eslint-disable-next-line no-unused-vars
   const [isFirstVisit, setIsFirstVisit] = useState(false);
-  // eslint-disable-next-line no-unused-vars
-  const [showDebugger, setShowDebugger] = useState(false); // Set to false to hide the debugger
+  const [showDebugger, setShowDebugger] = useState(false);
   
   useEffect(() => {
-    // Always set hasVisited to true to ensure hero panel stays hidden
     localStorage.setItem('hasVisited', 'true');
-    
-    // Track page views
     const pageViews = parseInt(localStorage.getItem('pageViews') || '0');
     localStorage.setItem('pageViews', (pageViews + 1).toString());
-
-    // Newsletter popup temporarily disabled
-    // Original code:
-    // if (pageViews === 2) { // Show on 3rd view (0-based counter)
-    //   setShowModal(true);
-    // }
-    setShowModal(false); // Keep popup disabled for now
+    setShowModal(false);
   }, []);
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <AdminProvider>
-          <Router>
+    <Router>
+      <AuthProvider>
+        <CartProvider>
+          <AdminProvider>
             <AppContent 
               showModal={showModal} 
               setShowModal={setShowModal}
@@ -269,18 +268,19 @@ function App() {
               isFirstVisit={isFirstVisit}
               showDebugger={showDebugger}
             />
-          </Router>
-        </AdminProvider>
-      </CartProvider>
-    </AuthProvider>
+          </AdminProvider>
+        </CartProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
 // Separate component for the app content that can safely use hooks within the providers
 function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirstVisit, showDebugger }) {
-  // Now useAuth is safely inside the AuthProvider
   const { isAuthenticated: isAdmin } = useAuth();
   const [hasOrders, setHasOrders] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const location = useLocation();
   
   // Function to check if user has orders
   const checkForUserOrders = () => {
@@ -315,97 +315,112 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
   
   return (
     <div className="App">
-      <header className="App-header">
-        <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
-      </header>
+      <ToastManager />
+      <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />
+      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
       
-      <Routes>
-        <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/shop" element={<Shop />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/plant/:id" element={
-          <PlantDetailsWrapper>
-            <PlantDetails />
-          </PlantDetailsWrapper>
-        } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/checkout/confirmation" element={<Checkout />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/firebase-test" element={<FirebaseTest />} />
-        <Route 
-          path="/admin" 
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminDashboard />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/inventory" 
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <InventoryManager />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/inventory" 
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <InventoryManager />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/admin/orders" 
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminOrders />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/firebase-migration" 
-          element={
-            <ProtectedRoute>
-              <FirebaseMigration />
-            </ProtectedRoute>
-          } 
-        />
-        <Route
-          path="/admin/utilities"
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminUtilities />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route 
-          path="/admin/updates"
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminUpdates />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/updates" element={<UpdatesPage />} />
-      </Routes>
-
+      <main className={`main-content ${isMenuOpen ? 'menu-open' : ''}`}>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            <Route path="/admin/new-inventory" element={
+              <ProtectedRoute>
+                <NewInventory />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/add-flower" element={
+              <ProtectedRoute>
+                <NewAddFlower />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/edit-flower/:plantId" element={
+              <ProtectedRoute>
+                <EditFlower />
+              </ProtectedRoute>
+            } />
+            <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/plant/:id" element={
+              <PlantDetailsWrapper>
+                <PlantDetails />
+              </PlantDetailsWrapper>
+            } />
+            <Route path="/login" element={<Login />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/checkout/confirmation" element={<Checkout />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/firebase-test" element={<FirebaseTest />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute>
+                  <AdminContentWrapper>
+                    <AdminDashboard />
+                  </AdminContentWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/inventory" 
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div>Loading inventory manager...</div>}>
+                    <InventoryManager />
+                  </Suspense>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/orders" 
+              element={
+                <ProtectedRoute>
+                  <AdminContentWrapper>
+                    <AdminOrders />
+                  </AdminContentWrapper>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/firebase-migration" 
+              element={
+                <ProtectedRoute>
+                  <FirebaseMigration />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
+              path="/admin/utilities"
+              element={
+                <ProtectedRoute>
+                  <AdminContentWrapper>
+                    <AdminUtilities />
+                  </AdminContentWrapper>
+                </ProtectedRoute>
+              }
+            />
+            <Route 
+              path="/admin/updates"
+              element={
+                <ProtectedRoute>
+                  <AdminContentWrapper>
+                    <AdminUpdates />
+                  </AdminContentWrapper>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/updates" element={<UpdatesPage />} />
+          </Routes>
+        </Suspense>
+      </main>
+      
+      {showModal && (
+        <NewsletterModal onClose={() => setShowModal(false)} />
+      )}
+      
+      {showDebugger && <ApiDebugger />}
+      
       <footer>
         <div className="footer-links">
           <Link to="/shop">Shop</Link>
@@ -414,18 +429,10 @@ function AppContent({ showModal, setShowModal, isMenuOpen, setIsMenuOpen, isFirs
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
           {hasOrders && <Link to="/orders">My Orders</Link>}
-          <Link to={isAdmin ? "/admin" : "/inventory"}>Manage</Link>
+          <Link to={isAdmin ? "/admin" : "/login"}>Manage</Link>
         </div>
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
-
-      <NewsletterModal isOpen={showModal} onClose={() => setShowModal(false)} />
-      
-      {/* API Debugger component */}
-      {showDebugger && <ApiDebugger />}
-      
-      {/* Toast notifications */}
-      <ToastManager />
     </div>
   );
 }

@@ -1585,4 +1585,22 @@
   display: inline-block;
   margin-left: 5px;
   width: 10px;
+}
+
+.upload-button {
+  display: inline-block;
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px 0;
+}
+
+.upload-button:hover {
+  background-color: #0056b3;
+}
+
+.image-upload-section {
+  margin: 20px 0;
 } 
