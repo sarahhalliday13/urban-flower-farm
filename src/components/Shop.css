@@ -882,18 +882,26 @@
 }
 
 .search-input-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   position: relative;
-  width: 100%;
+}
+
+.search-input-container label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .search-input {
-  width: 100%;
-  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  padding: 0.4rem 0.8rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 0.9rem;
-  height: 36px;
-  box-sizing: border-box;
+  width: 250px;
+  transition: border-color 0.2s;
 }
 
 .clear-search {

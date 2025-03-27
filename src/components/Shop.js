@@ -113,12 +113,68 @@ function Shop() {
     
     // Then apply search filter
     const filteredPlants = visiblePlants.filter(plant => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        plant.name?.toLowerCase().includes(searchLower) ||
-        plant.scientificName?.toLowerCase().includes(searchLower) ||
-        plant.commonName?.toLowerCase().includes(searchLower)
+      if (!searchTerm.trim()) return true;
+      
+      // Split search terms by spaces and filter out empty strings
+      const searchTerms = searchTerm.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      
+      // Define special keywords and their corresponding filters
+      const specialKeywords = {
+        'perennial': (plant) => plant.plantType?.toLowerCase() === 'perennial',
+        'annual': (plant) => plant.plantType?.toLowerCase() === 'annual',
+        'pink': (plant) => plant.name?.toLowerCase().includes('pink') || 
+                          plant.description?.toLowerCase().includes('pink') ||
+                          plant.shortDescription?.toLowerCase().includes('pink'),
+        'red': (plant) => plant.name?.toLowerCase().includes('red') || 
+                         plant.description?.toLowerCase().includes('red') ||
+                         plant.shortDescription?.toLowerCase().includes('red'),
+        'white': (plant) => plant.name?.toLowerCase().includes('white') || 
+                           plant.description?.toLowerCase().includes('white') ||
+                           plant.shortDescription?.toLowerCase().includes('white'),
+        'purple': (plant) => plant.name?.toLowerCase().includes('purple') || 
+                            plant.description?.toLowerCase().includes('purple') ||
+                            plant.shortDescription?.toLowerCase().includes('purple'),
+        'yellow': (plant) => plant.name?.toLowerCase().includes('yellow') || 
+                            plant.description?.toLowerCase().includes('yellow') ||
+                            plant.shortDescription?.toLowerCase().includes('yellow'),
+        'blue': (plant) => plant.name?.toLowerCase().includes('blue') || 
+                          plant.description?.toLowerCase().includes('blue') ||
+                          plant.shortDescription?.toLowerCase().includes('blue')
+      };
+
+      // Separate special keywords from regular search terms
+      const specialTerms = searchTerms.filter(term => specialKeywords[term]);
+      const regularTerms = searchTerms.filter(term => !specialKeywords[term]);
+
+      // Apply special keyword filters
+      const passesSpecialFilters = specialTerms.length === 0 || 
+        specialTerms.every(term => specialKeywords[term](plant));
+
+      // If there are no regular terms, only check special filters
+      if (regularTerms.length === 0) {
+        return passesSpecialFilters;
+      }
+
+      // First try to match the entire regular search term as one phrase
+      const fullSearchTerm = regularTerms.join(' ').toLowerCase();
+      const fullMatch = 
+        plant.name?.toLowerCase().includes(fullSearchTerm) ||
+        plant.scientificName?.toLowerCase().includes(fullSearchTerm) ||
+        plant.commonName?.toLowerCase().includes(fullSearchTerm) ||
+        plant.plantType?.toLowerCase().includes(fullSearchTerm);
+
+      // If full match works, return true (and check special filters)
+      if (fullMatch) return passesSpecialFilters;
+
+      // If no full match, try matching individual terms (AND logic)
+      const passesRegularSearch = regularTerms.every(term => 
+        plant.name?.toLowerCase().includes(term) ||
+        plant.scientificName?.toLowerCase().includes(term) ||
+        plant.commonName?.toLowerCase().includes(term) ||
+        plant.plantType?.toLowerCase().includes(term)
       );
+
+      return passesRegularSearch && passesSpecialFilters;
     });
 
     // Apply status filtering
@@ -242,9 +298,11 @@ function Shop() {
             </div>
             <div className="search-bar">
               <div className="search-input-container">
+                <label htmlFor="search-input">Search:</label>
                 <input 
                   type="text" 
-                  placeholder="Search by keyword"
+                  id="search-input"
+                  placeholder="e.g. Agastache pink pop"
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="search-input"
