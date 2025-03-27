@@ -18,7 +18,34 @@ function Shop() {
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { width } = useWindowSize();
-  const [typeFilter, setTypeFilter] = useState('all');
+
+  // Add status counts calculation
+  const getStatusCounts = useMemo(() => {
+    const counts = {
+      'all': plants.length,
+      'In Stock': 0,
+      'Low Stock': 0,
+      'Sold Out': 0,
+      'Coming Soon': 0,
+      'Pre-order': 0
+    };
+    
+    // Count plants for each status
+    plants.forEach(plant => {
+      const status = plant.inventory?.status;
+      if (status === 'Pre-order' || status === 'Pre-Order') {
+        counts['Pre-order']++;
+      } else if (status && counts[status] !== undefined) {
+        counts[status]++;
+      } else if (!status && plant.inventory?.currentStock > 0) {
+        counts['In Stock']++;
+      } else if (!status) {
+        counts['Sold Out']++;
+      }
+    });
+    
+    return counts;
+  }, [plants]);
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -76,74 +103,64 @@ function Shop() {
 
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
-    if (!plants.length) return [];
+    // First filter out hidden plants
+    const visiblePlants = plants.filter(plant => 
+      plant.hidden !== true && 
+      plant.hidden !== 'true' && 
+      plant.hidden !== 1 && 
+      plant.hidden !== '1'
+    );
     
-    // First filter by search term if present
-    let filteredPlants = plants;
-    if (searchTerm.trim() !== '') {
-      const search = searchTerm.toLowerCase().trim();
-      filteredPlants = plants.filter(plant => 
-        (plant.name && plant.name.toLowerCase().includes(search)) || 
-        (plant.description && plant.description.toLowerCase().includes(search)) ||
-        (plant.plantType && plant.plantType.toLowerCase().includes(search)) ||
-        (plant.color && plant.color.toLowerCase().includes(search)) ||
-        (plant.flowerColor && plant.flowerColor.toLowerCase().includes(search)) ||
-        (plant.foliageColor && plant.foliageColor.toLowerCase().includes(search))
+    // Then apply search filter
+    const filteredPlants = visiblePlants.filter(plant => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        plant.name?.toLowerCase().includes(searchLower) ||
+        plant.scientificName?.toLowerCase().includes(searchLower) ||
+        plant.commonName?.toLowerCase().includes(searchLower)
       );
-    }
+    });
 
-    // Apply type filter if selected
-    if (typeFilter !== 'all') {
-      filteredPlants = filteredPlants.filter(plant => 
-        plant.plantType?.toLowerCase() === typeFilter
-      );
-    }
-    
-    // Filter by inventory status if selected
-    let statusFilteredPlants = filteredPlants;
+    // Apply status filtering
+    let statusFilteredPlants = [];
     if (sortOption === 'status-in-stock') {
-      statusFilteredPlants = filteredPlants.filter(plant => {
-        const currentStock = plant.inventory?.currentStock || 0;
-        return currentStock > 0 && (!plant.inventory?.status || plant.inventory.status === 'In Stock');
-      });
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status === 'In Stock'
+      );
+    } else if (sortOption === 'status-low-stock') {
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status === 'Low Stock'
+      );
+    } else if (sortOption === 'status-sold-out') {
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status === 'Sold Out' || (!plant.inventory?.status && !plant.inventory?.currentStock)
+      );
     } else if (sortOption === 'status-coming-soon') {
       statusFilteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'coming soon'
+        plant.inventory?.status === 'Coming Soon'
       );
     } else if (sortOption === 'status-pre-order') {
       statusFilteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status && plant.inventory.status.toLowerCase() === 'pre-order'
+        plant.inventory?.status === 'Pre-order' || plant.inventory?.status === 'Pre-Order'
       );
+    } else if (sortOption === 'all') {
+      statusFilteredPlants = filteredPlants;
     }
     
     // Apply sorting
     switch (sortOption) {
-      case 'name-a-z':
+      case 'all':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      case 'name-z-a':
-        return [...statusFilteredPlants].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
-      case 'type-annual':
-        return [...statusFilteredPlants]
-          .filter(plant => plant.plantType?.toLowerCase() === 'annual')
-          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      case 'type-perennial':
-        return [...statusFilteredPlants]
-          .filter(plant => plant.plantType?.toLowerCase() === 'perennial')
-          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      case 'type-a-z':
-        return [...statusFilteredPlants].sort((a, b) => {
-          const typeA = a.plantType || '';
-          const typeB = b.plantType || '';
-          return typeA.localeCompare(typeB) || (a.name || '').localeCompare(b.name || '');
-        });
       case 'status-in-stock':
+      case 'status-low-stock':
+      case 'status-sold-out':
       case 'status-coming-soon':
       case 'status-pre-order':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  }, [plants, sortOption, searchTerm, typeFilter]);
+  }, [plants, sortOption, searchTerm]);
 
   // Check if there are more plants to load after sorted plants change
   useEffect(() => {
@@ -196,15 +213,6 @@ function Shop() {
     setDisplayCount(12);
   };
 
-  // Update the handleTypeFilter function
-  const handleTypeFilter = (type) => {
-    if (type === typeFilter) {
-      setTypeFilter('all');
-    } else {
-      setTypeFilter(type);
-    }
-  };
-
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -215,20 +223,6 @@ function Shop() {
         <div className="shop-header">
           <h2>Shop</h2>
           <div className="shop-controls">
-            <div className="type-filters">
-              <button 
-                className={`type-filter-btn ${typeFilter === 'annual' ? 'active' : ''}`}
-                onClick={() => handleTypeFilter('annual')}
-              >
-                Annual
-              </button>
-              <button 
-                className={`type-filter-btn ${typeFilter === 'perennial' ? 'active' : ''}`}
-                onClick={() => handleTypeFilter('perennial')}
-              >
-                Perennial
-              </button>
-            </div>
             <div className="sort-control">
               <label htmlFor="sort-select">Sort by:</label>
               <select 
@@ -238,10 +232,12 @@ function Shop() {
                 className="sort-select"
                 aria-label="Sort plants by selected option"
               >
-                <option value="status-in-stock">Status: In Stock</option>
-                <option value="status-coming-soon">Status: Coming Soon</option>
-                <option value="status-pre-order">Status: Pre-Order</option>
-                <option value="name-a-z">Common Name: A to Z</option>
+                <option value="all">All ({getStatusCounts.all})</option>
+                <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
+                <option value="status-low-stock">Low Stock ({getStatusCounts['Low Stock']})</option>
+                <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
+                <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
+                <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
               </select>
             </div>
             <div className="search-bar">

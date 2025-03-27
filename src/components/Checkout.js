@@ -138,7 +138,17 @@ const Checkout = () => {
       });
 
       // Generate a unique order ID
-      const newOrderId = `ORD-${Date.now()}`;
+      const currentYear = new Date().getFullYear();
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const lastOrder = orders[orders.length - 1];
+      let orderNumber = 1001;
+      
+      if (lastOrder && lastOrder.id) {
+        const lastOrderNumber = parseInt(lastOrder.id.split('-')[2]);
+        orderNumber = lastOrderNumber + 1;
+      }
+      
+      const newOrderId = `ORD-${currentYear}-${orderNumber}`;
       
       // Format the order data
       const newOrderData = {

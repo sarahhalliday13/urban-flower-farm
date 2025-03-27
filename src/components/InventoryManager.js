@@ -102,6 +102,7 @@ const InventoryManager = () => {
     careTips: '',
     hardinessZone: '',
     featured: false,
+    hidden: false,
     inventory: {
       currentStock: 0,
       status: 'In Stock',
@@ -307,7 +308,8 @@ const InventoryManager = () => {
           status: plant.inventory?.status || 'Unknown',
           restockDate: plant.inventory?.restockDate || '',
           notes: plant.inventory?.notes || '',
-          featured: plant.featured === true || plant.featured === 'true'
+          featured: plant.featured === true || plant.featured === 'true',
+          hidden: plant.hidden === true || plant.hidden === 'true'
         }
       }));
     }
@@ -359,6 +361,7 @@ const InventoryManager = () => {
       const inventoryData = editValues[plantId];
       const priceValue = inventoryData.price;
       const featuredValue = inventoryData.featured;
+      const hiddenValue = inventoryData.hidden;
       
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
@@ -368,6 +371,7 @@ const InventoryManager = () => {
         ...plants.find(p => p.id === plantId),
         price: priceValue,
         featured: featuredValue,
+        hidden: hiddenValue,
         inventory: {
           ...plants.find(p => p.id === plantId)?.inventory,
           currentStock: inventoryData.currentStock,
@@ -448,8 +452,14 @@ const InventoryManager = () => {
     // Count plants for each status
     plants.forEach(plant => {
       const status = plant.inventory?.status;
-      if (status && counts[status] !== undefined) {
+      if (status === 'Pre-order' || status === 'Pre-Order') {
+        counts['Pre-order']++;
+      } else if (status && counts[status] !== undefined) {
         counts[status]++;
+      } else if (!status && plant.inventory?.currentStock > 0) {
+        counts['In Stock']++;
+      } else if (!status) {
+        counts['Sold Out']++;
       }
     });
     
@@ -468,7 +478,12 @@ const InventoryManager = () => {
       filtered = filtered.filter(plant => {
         if (!plant.inventory?.status) return false;
         
-        // Exact match on status
+        // Handle Pre-order case specially
+        if (filter === 'Pre-order') {
+          return plant.inventory.status === 'Pre-order' || plant.inventory.status === 'Pre-Order';
+        }
+        
+        // Exact match on status for other cases
         return plant.inventory.status === filter;
       });
     }
@@ -525,6 +540,14 @@ const InventoryManager = () => {
           return sortConfig.direction === 'ascending' 
             ? (aFeatured === bFeatured ? 0 : aFeatured ? 1 : -1)
             : (aFeatured === bFeatured ? 0 : aFeatured ? -1 : 1);
+        }
+        
+        if (sortConfig.key === 'hidden') {
+          const aHidden = a.hidden || false;
+          const bHidden = b.hidden || false;
+          return sortConfig.direction === 'ascending' 
+            ? (aHidden === bHidden ? 0 : aHidden ? 1 : -1)
+            : (aHidden === bHidden ? 0 : aHidden ? -1 : 1);
         }
         
         // Default sorting for other fields
@@ -1025,6 +1048,7 @@ const InventoryManager = () => {
         careTips: '',
         hardinessZone: '',
         featured: false,
+        hidden: false,
         inventory: {
           currentStock: 0,
           status: 'In Stock',
@@ -1046,42 +1070,21 @@ const InventoryManager = () => {
 
   // New function to handle edit plant button click
   const handleEditPlant = (plant) => {
-    console.log('Editing plant:', plant);
-    
-    // First set the plant edit mode to true and clear any existing view state
     setPlantEditMode(true);
-    
-    // Only after setting the edit mode, update the current plant
     setCurrentPlant(plant);
     
-    // Prepare the images array and determine the main image index
+    // Process images array
     let images = [];
     let mainImageIndex = 0;
     
-    // Add the main image if it exists
-    if (plant.mainImage) {
-      images.push(plant.mainImage);
-    }
-    
-    // Add additional images if they exist
-    if (plant.additionalImages && Array.isArray(plant.additionalImages)) {
-      images = [...images, ...plant.additionalImages];
-    }
-    
-    // If plant already has the new images array, use that instead
     if (plant.images && Array.isArray(plant.images)) {
-      images = [...plant.images];
-      // If plant has a mainImageIndex field, use that
-      if (typeof plant.mainImageIndex === 'number') {
-        mainImageIndex = plant.mainImageIndex;
-      }
-      // Otherwise try to find the main image in the array
-      else if (plant.mainImage && images.length > 0) {
-        const index = images.findIndex(img => img === plant.mainImage);
-        if (index !== -1) {
-          mainImageIndex = index;
-        }
-      }
+      images = plant.images;
+    } else if (plant.image) {
+      images = [plant.image];
+    }
+    
+    if (typeof plant.mainImageIndex === 'number') {
+      mainImageIndex = plant.mainImageIndex;
     }
     
     // Update form data
@@ -1107,6 +1110,7 @@ const InventoryManager = () => {
       careTips: plant.careTips || '',
       hardinessZone: plant.hardinessZone || '',
       featured: plant.featured === true || plant.featured === 'true',
+      hidden: plant.hidden === true || plant.hidden === 'true',
       inventory: {
         currentStock: plant.inventory?.currentStock || 0,
         status: plant.inventory?.status || 'In Stock',
@@ -2233,7 +2237,10 @@ const InventoryManager = () => {
                   <th className="sortable-header" onClick={() => handleSort('featured')}>
                     Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
-                  <th></th>
+                  <th className="sortable-header" onClick={() => handleSort('hidden')}>
+                    Hidden {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2306,6 +2313,17 @@ const InventoryManager = () => {
                                 <span>No</span>
                               )}
                             </>
+                          )}
+                        </td>
+                        <td data-label="Hidden">
+                          {isEditing ? (
+                            <input
+                              type="checkbox"
+                              checked={editValues[plant.id]?.hidden || false}
+                              onChange={(e) => handleChange(plant.id, 'hidden', e.target.checked)}
+                            />
+                          ) : (
+                            <span>{plant.hidden ? 'Yes' : 'No'}</span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
@@ -2487,6 +2505,24 @@ const InventoryManager = () => {
                   }}
                 />
                 <label htmlFor="featured">Feature on homepage</label>
+              </div>
+            </div>
+            
+            <div className="form-group">
+              <div className="checkbox-container">
+                <input
+                  type="checkbox"
+                  id="hidden"
+                  name="hidden"
+                  checked={plantFormData.hidden}
+                  onChange={(e) => {
+                    setPlantFormData(prev => ({
+                      ...prev,
+                      hidden: e.target.checked
+                    }));
+                  }}
+                />
+                <label htmlFor="hidden">Hide from shop</label>
               </div>
             </div>
             
