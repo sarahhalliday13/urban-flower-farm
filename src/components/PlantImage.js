@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 
 const PlantImage = ({ plant, height = 200, width = "100%", style }) => {
   const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
-  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     // Get a suitable image - use the first available option in order of preference
@@ -39,7 +38,6 @@ const PlantImage = ({ plant, height = 200, width = "100%", style }) => {
   
   const handleImageError = (e) => {
     // Silently handle errors since we know things are working
-    setImageError(true);
     e.target.src = '/images/placeholder.jpg';
     
     // Debug-only logging for Firebase URLs errors

@@ -13,15 +13,12 @@ function Shop() {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
-  const [sortOption, setSortOption] = useState('status-in-stock'); // Changed default to status-in-stock
-  const [displayCount, setDisplayCount] = useState(12); // Number of plants to display initially
-  const [hasMore, setHasMore] = useState(true); // Flag to check if there are more plants to load
-  const [searchTerm, setSearchTerm] = useState(''); // Search term state
-  const [isSearching, setIsSearching] = useState(false);
-  const [initialDisplayCount, setInitialDisplayCount] = useState(12);
+  const [sortOption, setSortOption] = useState('status-in-stock');
+  const [displayCount, setDisplayCount] = useState(12);
+  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { width } = useWindowSize();
-  const [typeFilter, setTypeFilter] = useState('all'); // Add this state
+  const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
     const loadPlants = async () => {
@@ -188,18 +185,15 @@ function Shop() {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     if (e.target.value === '') {
-      setIsSearching(false);
-      setDisplayCount(initialDisplayCount); // Reset display count when search is cleared
+      setDisplayCount(12);
     } else {
-      setIsSearching(true);
-      setDisplayCount(initialDisplayCount); // Reset display count when search changes
+      setDisplayCount(12);
     }
   };
 
   const clearSearch = () => {
     setSearchTerm('');
-    setIsSearching(false);
-    setDisplayCount(initialDisplayCount); // Reset display count when clearing search
+    setDisplayCount(12);
   };
 
   // Update the handleTypeFilter function
@@ -216,7 +210,7 @@ function Shop() {
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
 
   return (
-    <div className={`shop-main ${viewMode === 'list' ? 'list-view-mode' : ''}`}>
+    <div className="shop-main">
       <section className="featured-plants">
         <div className="shop-header">
           <h2>Shop</h2>

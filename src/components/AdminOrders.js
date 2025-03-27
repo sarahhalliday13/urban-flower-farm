@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { updateInventory, getOrders, updateOrderStatus as updateFirebaseOrderStatus } from '../services/firebase';
+import { getOrders, updateOrderStatus as updateFirebaseOrderStatus } from '../services/firebase';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
 
@@ -11,7 +10,6 @@ const AdminOrders = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showInvoice, setShowInvoice] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadOrders();

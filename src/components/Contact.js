@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { sendContactFormEmail } from '../services/emailService';
 import './Contact.css';
 
 function Contact() {
@@ -18,6 +19,8 @@ function Contact() {
     error: null
   });
   
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Load saved customer data
   useEffect(() => {
     const customerData = localStorage.getItem('customerData');
@@ -55,7 +58,7 @@ function Contact() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Simple validation
@@ -66,6 +69,8 @@ function Contact() {
       });
       return;
     }
+    
+    setIsSubmitting(true);
     
     // Save customer data
     try {
@@ -81,33 +86,33 @@ function Contact() {
     } catch (error) {
       console.error('Error saving customer data:', error);
     }
-    
-    // Create mailto link with form data
-    const subject = encodeURIComponent(formData.subject || 'Message from website');
-    const body = encodeURIComponent(
-      `Name: ${formData.name}\n` +
-      `Email: ${formData.email}\n` +
-      `Phone: ${formData.phone}\n\n` +
-      `Message: ${formData.message}`
-    );
-    
-    // Open default email client with pre-filled info
-    window.location.href = `mailto:Buttonsflowerfarm@gmail.com?subject=${subject}&body=${body}`;
-    
-    // Show success message
-    setFormStatus({
-      submitted: true,
-      error: null
-    });
-    
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    });
+
+    try {
+      await sendContactFormEmail(formData);
+      
+      // Show success message
+      setFormStatus({
+        submitted: true,
+        error: null
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        subject: '',
+        message: ''
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setFormStatus({
+        submitted: false,
+        error: error.message || 'Failed to send message. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCopyEmail = (e) => {
@@ -282,7 +287,13 @@ function Contact() {
                   ></textarea>
                 </div>
                 
-                <button type="submit" className="submit-button">Send Message</button>
+                <button 
+                  type="submit" 
+                  className="submit-button"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Sending...' : 'Send Message'}
+                </button>
               </form>
             )}
           </div>
