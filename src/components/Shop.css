@@ -17,49 +17,55 @@
 
 .shop-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
+  flex-wrap: nowrap;
+  margin-bottom: 20px;
   width: 100%;
-  box-sizing: border-box;
-  gap: 4rem;
-  padding-left: 15px;
+  gap: 16px;
+  justify-content: space-between;
 }
 
 .shop-header h2 {
-  font-size: 2rem !important;
   margin: 0;
-  color: #2c5530 !important;
-  font-weight: 600 !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  margin-right: 2rem;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  margin-right: 20px;
+  width: 120px;
 }
 
 .shop-controls {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding-right: 15px;
+  gap: 20px;
+  flex-wrap: nowrap;
+  flex: 1;
+  width: calc(100% - 500px);
+  min-width: 200px;
+  max-width: 500px;
 }
 
 .sort-control {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0;
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-right: 20px;
 }
 
 .sort-control label {
-  font-size: 0.9rem;
-  color: #666;
+  margin-right: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
 }
 
 .sort-select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
+  padding: 8px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 14px;
+  min-width: 160px;
 }
 
 .shop-main {
@@ -162,6 +168,7 @@
   gap: 3.5rem;
   width: 100%;
   box-sizing: border-box;
+  margin-bottom: 40px;
 }
 
 .plant-card {
@@ -643,39 +650,78 @@
   margin: 0 1rem;
 }
 
+/* Mobile layout with sort and search directly adjacent */
 @media (max-width: 768px) {
   .shop-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .shop-header h2 {
+    margin: 0;
+    width: auto;
+    font-size: 2rem;
+    margin-right: 10px;
+    text-align: left;
   }
   
   .shop-controls {
-    width: 100%;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
   }
   
-  .search-container {
+  .filter-wrapper {
+    flex-direction: row;
     width: 100%;
-    margin-right: 0;
-    margin-bottom: 0;
+    gap: 10px;
   }
   
-  .search-input {
-    width: 100%;
+  .sort-control, 
+  .search-bar {
+    min-width: 0;
+    max-width: none;
+    margin: 0;
   }
   
   .sort-control {
-    width: 100%;
-    justify-content: space-between;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
   }
   
-  .view-toggle {
-    margin-top: 0.5rem;
-    align-self: flex-end;
+  .sort-control label,
+  .search-input-container label {
+    display: none;
+  }
+  
+  .sort-select {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .search-input-container {
+    flex-direction: row;
+    align-items: center;
+    white-space: nowrap;
+  }
+}
+
+/* Fix for very small screens */
+@media (max-width: 480px) {
+  .filter-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .sort-control, 
+  .search-bar {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -875,47 +921,61 @@
 
 /* Search styles */
 .search-bar {
-  position: relative;
-  flex: 1;
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  width: auto;
+  flex-shrink: 0;
+  min-width: 300px;
   max-width: 300px;
-  min-width: 180px;
 }
 
 .search-input-container {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  position: relative;
+  gap: 8px;
+  width: 100%;
 }
 
 .search-input-container label {
-  font-size: 0.9rem;
-  color: #666;
-  font-weight: 500;
   white-space: nowrap;
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 .search-input {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #ddd;
+  padding: 8px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
-  width: 250px;
-  transition: border-color 0.2s;
+  font-size: 14px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .clear-search {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
   background: none;
   border: none;
-  color: #999;
   cursor: pointer;
-  font-size: 0.8rem;
-  padding: 0.25rem;
-  line-height: 1;
+  padding: 4px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 16px;
+  background-color: #f0f0f0;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.clear-search:hover {
+  background-color: #e0e0e0;
+  color: #333;
 }
 
 /* No results styles */
@@ -954,34 +1014,6 @@
 
 .reset-search:hover {
   background-color: #1e3c21;
-}
-
-@media (max-width: 768px) {
-  .search-bar {
-    width: 100%;
-    max-width: 100%;
-    margin-bottom: 0.75rem;
-  }
-   
-  .shop-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .search-bar,
-  .sort-control {
-    width: 100%;
-    max-width: 100%;
-  }
-  
-  .sort-select {
-    width: 100%;
-  }
-  
-  .view-toggle {
-    margin-top: 0.5rem;
-  }
 }
 
 /* Secondary button style - shared base styles */
@@ -1044,4 +1076,244 @@
 
 .type-filter-btn:hover {
   border-color: #2c5530;
+}
+
+/* Add styles for pagination */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+  width: 260px;
+  justify-content: flex-end;
+}
+
+.pagination-link {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+  text-align: center;
+  min-width: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.pagination-link.prev,
+.pagination-link.next {
+  white-space: nowrap;
+  padding: 8px 15px;
+  font-weight: 500;
+}
+
+.pagination-ellipsis {
+  padding: 0 5px;
+  color: #666;
+}
+
+.pagination-link.active {
+  background-color: #f1f7f1;
+  color: #2c5530;
+  border: 1px solid #a8c5a9;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pagination-link.disabled {
+  color: #999;
+  pointer-events: none;
+}
+
+.pagination-link:hover:not(.active):not(.disabled) {
+  background-color: #f5f5f5;
+}
+
+/* End pagination styles */
+
+/* Add highlight animation for the card that was last viewed */
+.highlight-card {
+  animation: highlight-pulse 2s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(79, 192, 141, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(79, 192, 141, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(79, 192, 141, 0);
+  }
+}
+
+/* Move pagination controls into header */
+.shop-page-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-left: auto;
+  min-width: fit-content;
+  flex: 0 0 auto;
+}
+
+/* Pagination info styling */
+.pagination-info {
+  text-align: center;
+  margin: 20px 0 10px;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+/* Add back the bottom pagination and make it always visible */
+.pagination-bottom {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  margin: 0;
+}
+
+/* Adjust back to top button to be closer to pagination */
+.back-to-top {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Hide top pagination on medium/large screens */
+@media (max-width: 991px) {
+  .shop-page-navigation {
+    display: none;
+  }
+  
+  .pagination-info {
+    margin-top: 30px;
+  }
+  
+  .shop-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .shop-header h2 {
+    margin-bottom: 8px;
+    width: 100%;
+  }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 991px) {
+  .shop-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .shop-controls {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .shop-page-navigation {
+    width: 100%;
+    justify-content: center;
+    margin-top: 15px;
+  }
+  
+  .search-bar {
+    min-width: 0;
+    max-width: none;
+    width: calc(50% - 10px);
+  }
+  
+  .sort-control {
+    width: calc(50% - 10px);
+  }
+}
+
+/* Additional adjustments for very small screens */
+@media (max-width: 600px) {
+  .shop-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .shop-header h2 {
+    flex: 0 0 100%;
+    margin-bottom: 10px;
+  }
+  
+  .shop-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+  
+  .sort-control, 
+  .search-bar {
+    width: 49%;
+    max-width: 49%;
+  }
+  
+  .shop-page-navigation {
+    width: 100%;
+    justify-content: center;
+    margin-top: 15px;
+    margin-left: 0;
+  }
+}
+
+/* Common control styles for consistent height */
+.sort-select,
+.search-input,
+.pagination-link {
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.search-input:focus {
+  outline: none;
+  border: 2px solid #2c5530;
+  box-shadow: 0 0 0 1px rgba(44, 85, 48, 0.2);
+}
+
+/* Adjustments for extra small screens */
+@media (max-width: 480px) {
+  .shop-controls {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .sort-control, 
+  .search-bar {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .search-input-container, 
+  .sort-control {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .sort-control label,
+  .search-input-container label {
+    width: 70px;
+    margin-right: 5px;
+    white-space: nowrap;
+  }
+}
+
+.filter-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
 } 
