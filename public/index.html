@@ -13,7 +13,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
     <!-- CORS policy meta tags - use more permissive policy -->
-    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; connect-src * 'self' wss://*.firebaseio.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com data:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';" />
     <meta http-equiv="Access-Control-Allow-Origin" content="*" />
     <!--
       manifest.json provides metadata used when your web app is installed on a

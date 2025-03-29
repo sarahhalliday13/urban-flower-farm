@@ -13,7 +13,7 @@
   // Add extremely permissive CSP that allows everything
   const meta = document.createElement('meta');
   meta.httpEquiv = 'Content-Security-Policy';
-  meta.content = "default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * ws: wss:; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline';";
+  meta.content = "default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; connect-src * 'self' wss://*.firebaseio.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com data:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';";
   document.head.insertBefore(meta, document.head.firstChild);
   
   // Add Access-Control-Allow-Origin meta tag
@@ -78,6 +78,15 @@
         console.log('Firebase fetch request:', { url, method: options?.method || 'GET' });
         window.FIREBASE_DEBUG.connectionAttempts++;
         window.FIREBASE_DEBUG.lastConnectionTime = new Date().toISOString();
+        
+        // Override headers to avoid CORS issues
+        if (options && options.headers) {
+          options.headers = {
+            ...options.headers,
+            'Origin': window.location.origin,
+            'Access-Control-Allow-Origin': '*'
+          };
+        }
       }
       
       return originalFetch(url, options).catch(function(error) {
@@ -110,7 +119,8 @@
               credentials: 'omit',
               headers: {
                 ...options?.headers,
-                'Origin': window.location.origin
+                'Origin': window.location.origin,
+                'Access-Control-Allow-Origin': '*'
               }
             });
           }
@@ -129,42 +139,81 @@
     return window.FIREBASE_DEBUG;
   };
   
-  // Add the Firebase script directly to the page if it's not already there
-  if (!document.querySelector('script[src*="firebase"]')) {
-    const firebaseAppScript = document.createElement('script');
-    firebaseAppScript.src = "https://www.gstatic.com/firebasejs/9.6.0/firebase-app.js";
-    document.head.appendChild(firebaseAppScript);
-    
-    const firebaseDatabaseScript = document.createElement('script');
-    firebaseDatabaseScript.src = "https://www.gstatic.com/firebasejs/9.6.0/firebase-database.js";
-    document.head.appendChild(firebaseDatabaseScript);
-    
-    const firebaseStorageScript = document.createElement('script');
-    firebaseStorageScript.src = "https://www.gstatic.com/firebasejs/9.6.0/firebase-storage.js";
-    document.head.appendChild(firebaseStorageScript);
-    
-    console.log("Added Firebase scripts dynamically");
-  }
+  // Create a direct firebase import workaround
+  window.directFirebaseImport = function() {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create script elements for Firebase SDK
+        const firebaseApp = document.createElement('script');
+        firebaseApp.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js'; 
+        firebaseApp.onload = () => {
+          console.log('Firebase App SDK loaded');
+          
+          // Load Firebase Database
+          const firebaseDatabase = document.createElement('script');
+          firebaseDatabase.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js';
+          firebaseDatabase.onload = () => {
+            console.log('Firebase Database SDK loaded');
+            
+            // Load Firebase Storage
+            const firebaseStorage = document.createElement('script');
+            firebaseStorage.src = 'https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js';
+            firebaseStorage.onload = () => {
+              console.log('Firebase Storage SDK loaded');
+              resolve(true);
+            };
+            firebaseStorage.onerror = (e) => {
+              console.error('Failed to load Firebase Storage SDK', e);
+              reject(e);
+            };
+            document.head.appendChild(firebaseStorage);
+          };
+          firebaseDatabase.onerror = (e) => {
+            console.error('Failed to load Firebase Database SDK', e);
+            reject(e);
+          };
+          document.head.appendChild(firebaseDatabase);
+        };
+        firebaseApp.onerror = (e) => {
+          console.error('Failed to load Firebase App SDK', e);
+          reject(e);
+        };
+        document.head.appendChild(firebaseApp);
+      } catch (e) {
+        console.error('Error importing Firebase directly:', e);
+        reject(e);
+      }
+    });
+  };
   
   // Get Firebase up and running with direct configuration
   window.initializeFirebaseManually = function() {
     if (window.firebase && !window.FIREBASE_DEBUG.initialized) {
       console.log("Manually initializing Firebase with hardcoded config");
       try {
-        window.firebase.initializeApp(window.FIREBASE_CONFIG);
-        window.FIREBASE_DEBUG.initialized = true;
-        console.log("Firebase manually initialized successfully");
-        
-        // Set up connection monitoring
-        if (window.firebase.database) {
-          const connectedRef = window.firebase.database().ref(".info/connected");
-          connectedRef.on("value", function(snap) {
-            if (snap.val() === true) {
-              console.log("Connected to Firebase Realtime Database");
-            } else {
-              console.log("Disconnected from Firebase Realtime Database");
+        if (!window.firebase.apps || window.firebase.apps.length === 0) {
+          window.firebase.initializeApp(window.FIREBASE_CONFIG);
+          window.FIREBASE_DEBUG.initialized = true;
+          console.log("Firebase manually initialized successfully");
+          
+          // Set up connection monitoring
+          if (window.firebase.database) {
+            try {
+              const connectedRef = window.firebase.database().ref(".info/connected");
+              connectedRef.on("value", function(snap) {
+                if (snap.val() === true) {
+                  console.log("Connected to Firebase Realtime Database");
+                } else {
+                  console.log("Disconnected from Firebase Realtime Database");
+                }
+              });
+            } catch (e) {
+              console.error("Error setting up connection monitoring", e);
             }
-          });
+          }
+        } else {
+          console.log("Firebase already initialized");
+          window.FIREBASE_DEBUG.initialized = true;
         }
       } catch (e) {
         console.error("Error manually initializing Firebase:", e);
@@ -173,11 +222,24 @@
           message: `Manual init error: ${e.message}`
         });
       }
+    } else if (!window.firebase) {
+      console.log("Firebase SDK not found, trying direct import");
+      window.directFirebaseImport().then(() => {
+        window.initializeFirebaseManually();
+      }).catch(e => {
+        console.error("Failed to import Firebase directly", e);
+      });
     }
   };
   
-  // Add the initialization to both methods
-  // 1. Wait for the SDK to load naturally
+  // Try multiple ways to load Firebase
+  
+  // 1. Immediate attempt if Firebase is already loaded
+  if (window.firebase) {
+    window.initializeFirebaseManually();
+  }
+  
+  // 2. Wait for the SDK to load naturally
   const checkForFirebase = setInterval(function() {
     if (window.firebase) {
       clearInterval(checkForFirebase);
@@ -186,13 +248,26 @@
     }
   }, 100);
   
-  // 2. Try initialization after a delay regardless
+  // 3. Try a direct import after a short delay
+  setTimeout(function() {
+    if (!window.firebase) {
+      console.log("Attempting direct Firebase import...");
+      window.directFirebaseImport().then(() => {
+        console.log("Direct import successful");
+        window.initializeFirebaseManually();
+      }).catch(e => {
+        console.error("Direct import failed", e);
+      });
+    }
+  }, 500);
+  
+  // 4. One final check after everything has loaded
   setTimeout(function() {
     if (!window.FIREBASE_DEBUG.initialized && window.firebase) {
-      console.log("Attempting delayed Firebase initialization...");
+      console.log("Final attempt at Firebase initialization...");
       window.initializeFirebaseManually();
     }
-  }, 2000);
+  }, 3000);
   
   // Output debug info
   console.log("Firebase fix combined script completed setup");
