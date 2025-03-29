@@ -1,4 +1,6 @@
-
+// This is a JavaScript file, not TypeScript
+// File: ScrollRestorationContext.js
+// React.js component for scroll restoration
 import React, { createContext, useContext, useState } from 'react';
 
 const ScrollRestorationContext = createContext(undefined);
