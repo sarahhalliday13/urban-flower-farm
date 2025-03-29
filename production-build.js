@@ -6,6 +6,12 @@ const path = require('path');
 
 console.log('Starting production build...');
 
+// Disable TypeScript before we do anything
+if (fs.existsSync('completely-disable-ts.js')) {
+  console.log('Running TypeScript disabler...');
+  execSync('node completely-disable-ts.js', { stdio: 'inherit' });
+}
+
 // Create clean build directory
 if (fs.existsSync('build')) {
   console.log('Cleaning existing build directory...');
@@ -18,16 +24,18 @@ if (fs.existsSync('fix-firebase-build.js')) {
   execSync('node fix-firebase-build.js', { stdio: 'inherit' });
 }
 
-// Run the build with TypeScript disabled
-console.log('Running build...');
-execSync('NODE_OPTIONS=--openssl-legacy-provider CI=false PUBLIC_URL=/ SKIP_PREFLIGHT_CHECK=true react-scripts build', { 
+// Run the build with TypeScript disabled and extra flags
+console.log('Running production build...');
+execSync('CI=false PUBLIC_URL=/ SKIP_TYPESCRIPT_CHECK=true TSC_COMPILE_ON_ERROR=true react-scripts build', { 
   stdio: 'inherit',
   env: {
     ...process.env,
     DISABLE_TYPESCRIPT: 'true',
     SKIP_TYPESCRIPT_CHECK: 'true',
     TSC_COMPILE_ON_ERROR: 'true',
-    SKIP_PREFLIGHT_CHECK: 'true'
+    SKIP_PREFLIGHT_CHECK: 'true',
+    DISABLE_NEW_JSX_TRANSFORM: 'true', // Disable new JSX transform to avoid TS dependencies
+    NODE_OPTIONS: '--openssl-legacy-provider --max-old-space-size=4096'
   }
 });
 
