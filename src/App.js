@@ -1,5 +1,6 @@
 import './App.css';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
 import Shop from './components/Shop';
@@ -11,14 +12,21 @@ import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
 import ToastManager from './components/ToastManager';
+// eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
+// eslint-disable-next-line no-unused-vars
 import { AuthProvider, useAuth } from './context/AuthContext';
+// eslint-disable-next-line no-unused-vars
 import { AdminProvider } from './context/AdminContext';
 import './cart-styles.css';
 import FAQ from './components/FAQ';
 import UpdatesPage from './components/UpdatesPage';
 import AdminUpdates from './components/AdminUpdates';
 import CartModal from './components/CartModal';
+// eslint-disable-next-line no-unused-vars
+import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
+import BackToTop from './components/BackToTop';
+import DatabaseDebug from './DatabaseDebug';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -198,7 +206,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
         )}
       </div>
       <button className="cart-button" onClick={toggleCart}>
-        🪴
+        <span role="img" aria-label="plant emoji">🪴</span>
         {cartCount > 0 && (
           <div className="cart-badge">
             <span className="cart-count">{cartCount}</span>
@@ -227,43 +235,13 @@ const AdminContentWrapper = ({ children }) => {
   );
 };
 
-function App() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isFirstVisit, setIsFirstVisit] = useState(true);
-
-  useEffect(() => {
-    // Check if this is the first visit
-    const visited = localStorage.getItem('visited');
-    if (!visited) {
-      localStorage.setItem('visited', 'true');
-      setIsFirstVisit(true);
-    } else {
-      setIsFirstVisit(false);
-    }
-  }, []);
-
-  return (
-    <AuthProvider>
-      <CartProvider>
-        <AdminProvider>
-          <Router>
-            <AppContent 
-              isMenuOpen={isMenuOpen}
-              setIsMenuOpen={setIsMenuOpen}
-              isFirstVisit={isFirstVisit}
-            />
-          </Router>
-        </AdminProvider>
-      </CartProvider>
-    </AuthProvider>
-  );
-}
-
 // Separate component for the app content that can safely use hooks within the providers
-function AppContent({ isMenuOpen, setIsMenuOpen, isFirstVisit }) {
+function AppContent() {
   // Now useAuth is safely inside the AuthProvider
   const { isAuthenticated: isAdmin } = useAuth();
   const [hasOrders, setHasOrders] = useState(false);
+  // Add state for mobile menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   // Function to check if user has orders
   const checkForUserOrders = () => {
@@ -303,7 +281,7 @@ function AppContent({ isMenuOpen, setIsMenuOpen, isFirstVisit }) {
       </header>
       
       <Routes>
-        <Route path="/" element={<Home isFirstVisit={isFirstVisit} />} />
+        <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/contact" element={<Contact />} />
@@ -368,7 +346,10 @@ function AppContent({ isMenuOpen, setIsMenuOpen, isFirstVisit }) {
           }
         />
         <Route path="/updates" element={<UpdatesPage />} />
+        <Route path="/debug-database" element={<DatabaseDebug />} />
       </Routes>
+
+      <BackToTop />
 
       <footer>
         <div className="footer-links">
@@ -388,5 +369,20 @@ function AppContent({ isMenuOpen, setIsMenuOpen, isFirstVisit }) {
     </div>
   );
 }
+
+// Wrap AppContent with ScrollRestorationProvider
+const App = () => (
+  <Router>
+    <ScrollRestorationProvider>
+      <AuthProvider>
+        <CartProvider>
+          <AdminProvider>
+            <AppContent />
+          </AdminProvider>
+        </CartProvider>
+      </AuthProvider>
+    </ScrollRestorationProvider>
+  </Router>
+);
 
 export default App;
