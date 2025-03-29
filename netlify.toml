@@ -1,13 +1,7 @@
 [build]
   command = "node standalone-build.js"
   publish = "build"
-  environment = { 
-    DISABLE_TYPESCRIPT = "true", 
-    SKIP_PREFLIGHT_CHECK = "true", 
-    NODE_OPTIONS = "--openssl-legacy-provider",
-    DISABLE_NEW_JSX_TRANSFORM = "true",
-    TSC_COMPILE_ON_ERROR = "true"
-  }
+  environment = { DISABLE_TYPESCRIPT = "true" SKIP_PREFLIGHT_CHECK = "true" NODE_OPTIONS = "--openssl-legacy-provider" DISABLE_NEW_JSX_TRANSFORM = "true" TSC_COMPILE_ON_ERROR = "true" }
 
 # Branch-specific build settings
 [context.branch-deploy]
