@@ -139,16 +139,26 @@ const Checkout = () => {
 
       // Generate a unique order ID
       const currentYear = new Date().getFullYear();
+      const timestamp = Date.now(); // Add timestamp to ensure uniqueness
       const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const lastOrder = orders[orders.length - 1];
-      let orderNumber = 1001;
       
-      if (lastOrder && lastOrder.id) {
-        const lastOrderNumber = parseInt(lastOrder.id.split('-')[2]);
-        orderNumber = lastOrderNumber + 1;
-      }
+      // Find the highest order number from localStorage
+      let highestOrderNumber = 1000;
+      orders.forEach(order => {
+        if (order.id && order.id.startsWith('ORD-')) {
+          const parts = order.id.split('-');
+          if (parts.length >= 3) {
+            const orderNum = parseInt(parts[2], 10);
+            if (!isNaN(orderNum) && orderNum > highestOrderNumber) {
+              highestOrderNumber = orderNum;
+            }
+          }
+        }
+      });
       
-      const newOrderId = `ORD-${currentYear}-${orderNumber}`;
+      // Create a unique order ID using timestamp and incremented order number
+      const orderNumber = highestOrderNumber + 1;
+      const newOrderId = `ORD-${currentYear}-${orderNumber}-${timestamp.toString().slice(-4)}`;
       
       // Format the order data
       const newOrderData = {

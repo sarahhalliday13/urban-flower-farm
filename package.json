@@ -7,23 +7,30 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
-    "@sendgrid/mail": "^7.7.0",
+    "@sendgrid/mail": "^8.1.4",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "dotenv": "^16.4.7",
     "firebase": "^11.4.0",
     "jsonwebtoken": "^9.0.2",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "morgan": "^1.10.0",
+    "react-dom": "^16.14.0",
     "react-router-dom": "^6.22.3",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-scripts": "^3.0.1",
+    "web-vitals": "^2.1.4",
+    "webpack": "^4.42.0",
+    "webpack-dev-server": "^3.11.0",
+    "winston": "^3.17.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:inventory": "react-scripts test src/tests/InventoryImagePreservation.test.js",
+    "test:orders": "react-scripts test src/tests/OrderIdGeneration.test.js",
+    "test:fixes": "react-scripts test src/tests/InventoryImagePreservation.test.js src/tests/OrderIdGeneration.test.js",
+    "test:simple": "react-scripts test src/tests/SimpleTests.test.js",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -46,8 +53,8 @@
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
+    "@types/react": "^19.0.12",
     "assert": "^2.1.0",
-    "babel-loader": "^10.0.0",
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "buffer-browserify": "^0.2.5",
@@ -59,17 +66,17 @@
     "http2": "^3.3.6",
     "https-browserify": "^1.0.0",
     "net": "^1.0.2",
-    "netlify-cli": "^19.0.2",
+    "netlify-cli": "^16.4.2",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "process": "^0.11.10",
+    "react": "^16.14.0",
     "source-map-loader": "^5.0.0",
     "stream-browserify": "^3.0.0",
     "stream-http": "^3.2.0",
     "tls": "^0.0.1",
+    "typescript": "^5.8.2",
     "url": "^0.11.4",
-    "util": "^0.12.5",
-    "webpack": "^5.98.0",
-    "webpack-dev-server": "^5.2.0"
+    "util": "^0.12.5"
   }
 }

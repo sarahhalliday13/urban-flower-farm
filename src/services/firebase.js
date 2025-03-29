@@ -793,9 +793,12 @@ export const loadSamplePlants = async () => {
 // Order related functions
 export const saveOrder = async (orderData) => {
   try {
+    console.log('Saving order to Firebase:', orderData.id);
+    
     // Store order by ID for direct lookup
     const orderRef = ref(database, `orders/${orderData.id}`);
     await set(orderRef, orderData);
+    
     return true;
   } catch (error) {
     console.error('Error saving order to Firebase:', error);
@@ -805,16 +808,22 @@ export const saveOrder = async (orderData) => {
 
 export const getOrders = async () => {
   try {
+    console.log('Fetching all orders from Firebase');
     const ordersRef = ref(database, 'orders');
     const snapshot = await get(ordersRef);
     
     if (snapshot.exists()) {
       const ordersData = snapshot.val();
       // Convert object to array and sort by date (newest first)
-      return Object.values(ordersData).sort((a, b) => 
+      const orderArray = Object.values(ordersData);
+      console.log(`Found ${orderArray.length} orders in Firebase`);
+      
+      return orderArray.sort((a, b) => 
         new Date(b.date) - new Date(a.date)
       );
     }
+    
+    console.log('No orders found in Firebase');
     return [];
   } catch (error) {
     console.error('Error fetching orders from Firebase:', error);

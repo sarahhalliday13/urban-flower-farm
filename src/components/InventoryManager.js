@@ -366,20 +366,31 @@ const InventoryManager = () => {
       // Call API to update inventory
       const result = await updateInventory(plantId, inventoryData);
       
-      // Update plant data in context
+      // Find the original plant to ensure we preserve all its properties
+      const originalPlant = plants.find(p => p.id === plantId);
+      
+      // Update plant data in context - only update specific fields
       const updatedPlant = {
-        ...plants.find(p => p.id === plantId),
+        ...originalPlant, // Keep ALL original properties including images
         price: priceValue,
         featured: featuredValue,
         hidden: hiddenValue,
         inventory: {
-          ...plants.find(p => p.id === plantId)?.inventory,
+          ...originalPlant?.inventory,
           currentStock: inventoryData.currentStock,
           status: inventoryData.status,
           restockDate: inventoryData.restockDate,
           notes: inventoryData.notes
         }
       };
+      
+      // Ensure image data is preserved explicitly
+      if (originalPlant) {
+        // Make sure these properties are explicitly preserved
+        updatedPlant.mainImage = originalPlant.mainImage;
+        updatedPlant.images = originalPlant.images;
+        updatedPlant.additionalImages = originalPlant.additionalImages;
+      }
       
       // Update plants state using the context's updatePlantData function
       updatePlantData(updatedPlant);
@@ -1020,7 +1031,7 @@ const InventoryManager = () => {
     }
   };
 
-  // Modify resetPlantForm to also reset image state
+  // Modify resetPlantForm to explicitly set hidden to false
   const resetPlantForm = () => {
     // First, change the tab to prevent flashing
     setActiveTab('inventory');
@@ -1048,7 +1059,7 @@ const InventoryManager = () => {
         careTips: '',
         hardinessZone: '',
         featured: false,
-        hidden: false,
+        hidden: false,  // Explicitly set to false when resetting
         inventory: {
           currentStock: 0,
           status: 'In Stock',
@@ -1060,12 +1071,9 @@ const InventoryManager = () => {
       setCurrentPlant(null);
       setPlantSaveStatus('');
       setImageFile(null);
-      // Removed setImagePreview(null);
       setAdditionalImageFiles([]);
-      // Removed setAdditionalImagePreviews([]);
-      // Clear the unsaved changes flag
       setHasUnsavedChanges(false);
-    }, 50); // A short delay to ensure the view has changed first
+    }, 50);
   };
 
   // New function to handle edit plant button click
@@ -2304,7 +2312,7 @@ const InventoryManager = () => {
                                 <>
                                   {plant.imageURL && (
                                     <div className="featured-image-container">
-                                      <img src={plant.imageURL} alt={plant.name} />
+                                      <img src={plant.imageURL} alt={`Plant ${plant.id}`} />
                                     </div>
                                   )}
                                   <span>Yes</span>
@@ -2551,7 +2559,7 @@ const InventoryManager = () => {
                           <div className="image-container">
                             <img 
                               src={imageUrl} 
-                              alt={`Plant image ${index+1}`}
+                              alt={`Plant ${index + 1}`}
                               style={{
                                 position: 'absolute',
                                 top: 0,
