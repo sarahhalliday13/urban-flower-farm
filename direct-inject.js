@@ -23,34 +23,11 @@ if (!fs.existsSync(indexPath)) {
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
 
-// Define the inline HTML with static test button
+// Define the inline HTML with static test link
 const inlineHtml = `
 <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: red; color: white; padding: 20px; z-index: 99999; font-size: 24px; text-align: center; font-weight: bold;">
-  FIREBASE TEST - CLICK THIS TEXT TO TEST CONNECTION
+  <a href="/firebase-test.html" style="color: white; text-decoration: underline;">FIREBASE TEST - CLICK HERE</a>
 </div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  var testDiv = document.querySelector('div[style*="background-color: red"]');
-  if (testDiv) {
-    testDiv.addEventListener('click', function() {
-      try {
-        var url = 'https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.json?shallow=true';
-        alert('Testing Firebase connection to: ' + url);
-        
-        fetch(url)
-          .then(function(response) {
-            alert('Firebase test succeeded with status: ' + response.status);
-          })
-          .catch(function(error) {
-            alert('Firebase test failed with error: ' + error.message);
-          });
-      } catch (e) {
-        alert('Error running test: ' + e.message);
-      }
-    });
-  }
-});
-</script>
 `;
 
 // Inject the HTML right after the opening body tag

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #ff0000;
+            color: white;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Firebase Connection Test</h1>
+        
+        <button id="testButton" class="test-button">RUN FIREBASE TEST</button>
+        
+        <div id="loading" class="loading" style="display: none;">Running tests...</div>
+        
+        <div id="results" class="results">
+            <p>Click the button above to test Firebase connectivity.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('testButton').addEventListener('click', runTests);
+
+        function runTests() {
+            const resultsDiv = document.getElementById('results');
+            const loadingDiv = document.getElementById('loading');
+            
+            // Clear previous results
+            resultsDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            
+            // Add test description
+            resultsDiv.innerHTML += '<h3>Testing Firebase Connectivity...</h3>';
+            
+            // Test 1: Direct HTTP access
+            resultsDiv.innerHTML += '<p>Test 1: Direct HTTP access to Firebase...</p>';
+            
+            fetch('https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.json?shallow=true')
+                .then(response => {
+                    if (response.ok) {
+                        resultsDiv.innerHTML += '<p class="success">✓ HTTP Access Test: SUCCESS (Status: ' + response.status + ')</p>';
+                        return response.json();
+                    } else {
+                        throw new Error('HTTP request failed with status ' + response.status);
+                    }
+                })
+                .then(data => {
+                    resultsDiv.innerHTML += '<p class="success">✓ Firebase Data Retrieved: ' + JSON.stringify(data) + '</p>';
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML += '<p class="error">✗ HTTP Access Test: FAILED - ' + error.message + '</p>';
+                })
+                .finally(() => {
+                    // Test 2: WebSocket connection (attempt)
+                    resultsDiv.innerHTML += '<p>Test 2: WebSocket connection to Firebase...</p>';
+                    
+                    try {
+                        const ws = new WebSocket('wss://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.ws?v=5');
+                        
+                        ws.onopen = function() {
+                            resultsDiv.innerHTML += '<p class="success">✓ WebSocket Connection Test: SUCCESS</p>';
+                            ws.close();
+                        };
+                        
+                        ws.onerror = function(error) {
+                            resultsDiv.innerHTML += '<p class="error">✗ WebSocket Connection Test: FAILED</p>';
+                        };
+                    } catch (error) {
+                        resultsDiv.innerHTML += '<p class="error">✗ WebSocket Creation Error: ' + error.message + '</p>';
+                    }
+                    
+                    // Test 3: Firebase domain resolution
+                    resultsDiv.innerHTML += '<p>Test 3: Checking Firebase domains...</p>';
+                    
+                    Promise.all([
+                        fetch('https://firebasestorage.googleapis.com/favicon.ico', { mode: 'no-cors' })
+                            .then(() => '<p class="success">✓ firebasestorage.googleapis.com is accessible</p>')
+                            .catch(() => '<p class="error">✗ firebasestorage.googleapis.com is NOT accessible</p>'),
+                            
+                        fetch('https://googleapis.com/favicon.ico', { mode: 'no-cors' })
+                            .then(() => '<p class="success">✓ googleapis.com is accessible</p>')
+                            .catch(() => '<p class="error">✗ googleapis.com is NOT accessible</p>'),
+                            
+                        fetch('https://firebase.io/favicon.ico', { mode: 'no-cors' })
+                            .then(() => '<p class="success">✓ firebase.io is accessible</p>')
+                            .catch(() => '<p class="error">✗ firebase.io is NOT accessible</p>')
+                    ])
+                    .then(results => {
+                        results.forEach(result => {
+                            resultsDiv.innerHTML += result;
+                        });
+                    })
+                    .finally(() => {
+                        // All tests completed
+                        resultsDiv.innerHTML += '<h3>All Tests Completed</h3>';
+                        
+                        // Add CSP debugging info
+                        resultsDiv.innerHTML += '<h3>Browser Information</h3>';
+                        resultsDiv.innerHTML += '<p>User Agent: ' + navigator.userAgent + '</p>';
+                        
+                        // Get meta tags (including CSP if set via meta tag)
+                        const metaTags = document.getElementsByTagName('meta');
+                        let cspMetaTag = 'None found';
+                        
+                        for (let i = 0; i < metaTags.length; i++) {
+                            if (metaTags[i].httpEquiv === 'Content-Security-Policy') {
+                                cspMetaTag = metaTags[i].content;
+                                break;
+                            }
+                        }
+                        
+                        resultsDiv.innerHTML += '<p>CSP Meta Tag: ' + cspMetaTag + '</p>';
+                        loadingDiv.style.display = 'none';
+                    });
+                });
+        }
+    </script>
+</body>
+</html> 
