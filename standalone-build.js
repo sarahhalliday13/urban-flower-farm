@@ -7,6 +7,7 @@ const path = require('path');
 const buildDir = path.join(__dirname, 'build');
 const redirectsFile = path.join(buildDir, '_redirects');
 const indexFile = path.join(buildDir, 'index.html');
+const srcIndexFile = path.join(__dirname, 'src', 'index.js');
 
 // Colors for output
 const colors = {
@@ -30,6 +31,53 @@ try {
   console.error(`${colors.red}Error creating build directory:${colors.reset}`, err);
 }
 
+// Check if src/index.js exists and backup it if it does
+try {
+  if (fs.existsSync(srcIndexFile)) {
+    console.log(`${colors.yellow}Backing up src/index.js...${colors.reset}`);
+    const indexContent = fs.readFileSync(srcIndexFile, 'utf8');
+    fs.writeFileSync(`${srcIndexFile}.backup`, indexContent);
+    console.log(`${colors.green}Created backup at src/index.js.backup${colors.reset}`);
+    
+    // Fix the index.js file to use React 16 syntax instead of React 18
+    console.log(`${colors.yellow}Updating index.js to use React 16 syntax...${colors.reset}`);
+    
+    // Look for React 18 import syntax (react-dom/client) and replace with React 16 syntax
+    let updatedContent = indexContent;
+    
+    // Replace any import from react-dom/client with regular react-dom
+    updatedContent = updatedContent.replace(
+      /import\s+\{\s*createRoot\s*\}\s+from\s+['"]react-dom\/client['"]/g,
+      `import ReactDOM from 'react-dom'`
+    );
+    
+    // Replace createRoot().render() with ReactDOM.render()
+    updatedContent = updatedContent.replace(
+      /const\s+root\s*=\s*createRoot\(\s*document\.getElementById\(['"]root['"]\)\s*\)[\s\S]*?root\.render\(([\s\S]*?)\);/g,
+      `ReactDOM.render($1, document.getElementById('root'));`
+    );
+    
+    // If that didn't work, look for other patterns of createRoot
+    if (updatedContent === indexContent) {
+      updatedContent = updatedContent.replace(
+        /import\s+ReactDOM\s+from\s+['"]react-dom\/client['"]/g,
+        `import ReactDOM from 'react-dom'`
+      );
+      
+      updatedContent = updatedContent.replace(
+        /ReactDOM\.createRoot\(\s*document\.getElementById\(['"]root['"]\)\s*\)\.render\(([\s\S]*?)\);/g,
+        `ReactDOM.render($1, document.getElementById('root'));`
+      );
+    }
+    
+    // Write the updated content back to index.js
+    fs.writeFileSync(srcIndexFile, updatedContent);
+    console.log(`${colors.green}Updated src/index.js to use React 16 syntax${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error updating index.js:${colors.reset}`, err);
+}
+
 // Execute build command with proper environment variables
 try {
   console.log(`${colors.yellow}Building React application...${colors.reset}`);
@@ -43,16 +91,6 @@ try {
   // First ensure all dependencies are installed
   console.log(`${colors.yellow}Installing dependencies...${colors.reset}`);
   execSync('npm ci --quiet', { 
-    stdio: 'inherit',
-    env: {
-      ...process.env,
-      NODE_OPTIONS: '--openssl-legacy-provider'
-    }
-  });
-  
-  // Add react-dom specifically since it's missing
-  console.log(`${colors.yellow}Ensuring react-dom is installed...${colors.reset}`);
-  execSync('npm install --save react-dom@16.14.0', { 
     stdio: 'inherit',
     env: {
       ...process.env,
@@ -120,6 +158,18 @@ if (fs.existsSync(staticDir)) {
   staticFiles.forEach(file => {
     console.log(`${file}`);
   });
+}
+
+// Restore the original src/index.js from backup
+try {
+  if (fs.existsSync(`${srcIndexFile}.backup`)) {
+    console.log(`${colors.yellow}Restoring original src/index.js from backup...${colors.reset}`);
+    const backupContent = fs.readFileSync(`${srcIndexFile}.backup`, 'utf8');
+    fs.writeFileSync(srcIndexFile, backupContent);
+    console.log(`${colors.green}Restored original src/index.js${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error restoring index.js:${colors.reset}`, err);
 }
 
 // Deploy to Netlify
