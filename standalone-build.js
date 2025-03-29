@@ -482,16 +482,7 @@ try {
   console.error(`${colors.red}Error restoring index.js:${colors.reset}`, err);
 }
 
-// Deploy to Netlify
-console.log(`\n${colors.bright}${colors.blue}Deploying to Netlify...${colors.reset}`);
-try {
-  const deployOutput = execSync('npx netlify deploy --prod --dir=build', { 
-    stdio: 'pipe', 
-    encoding: 'utf-8' 
-  });
-  console.log(deployOutput);
-  console.log(`${colors.green}${colors.bright}Deployment successful!${colors.reset}`);
-} catch (err) {
-  console.error(`${colors.red}Deployment failed:${colors.reset}`, err.stdout);
-  process.exit(1);
-} 
+// End of build process - don't try to deploy to Netlify
+console.log(`\n${colors.green}${colors.bright}Build process completed!${colors.reset}`);
+console.log(`${colors.yellow}The build/ directory is ready to be deployed.${colors.reset}`);
+console.log(`${colors.yellow}Netlify will automatically deploy this through CI/CD.${colors.reset}`); 
