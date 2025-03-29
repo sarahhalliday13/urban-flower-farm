@@ -27,8 +27,8 @@
   },
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider SKIP_TYPESCRIPT_CHECK=true SKIP_PREFLIGHT_CHECK=true react-scripts build && echo '/* /index.html 200' > build/_redirects",
-    "netlify:build": "NODE_OPTIONS=--openssl-legacy-provider CI=false SKIP_TYPESCRIPT_CHECK=true SKIP_PREFLIGHT_CHECK=true PUBLIC_URL=/ react-scripts build && echo '/* /index.html 200' > build/_redirects",
+    "build": "NODE_OPTIONS=--openssl-legacy-provider SKIP_TYPESCRIPT_CHECK=true SKIP_PREFLIGHT_CHECK=true react-scripts build",
+    "netlify:build": "NODE_OPTIONS=--openssl-legacy-provider CI=false SKIP_TYPESCRIPT_CHECK=true SKIP_PREFLIGHT_CHECK=true PUBLIC_URL=/ react-scripts build",
     "test": "react-scripts test",
     "test:inventory": "react-scripts test src/tests/InventoryImagePreservation.test.js",
     "test:orders": "react-scripts test src/tests/OrderIdGeneration.test.js",
