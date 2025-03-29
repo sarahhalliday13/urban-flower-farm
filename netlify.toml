@@ -1,7 +1,7 @@
 [build]
   base = "."
   publish = "build"
-  command = "chmod +x *.js && node direct-webpack-build.js"
+  command = "chmod +x *.js && node vanilla-build.js"
 
 [build.environment]
   NODE_VERSION = "18"

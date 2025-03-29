@@ -14,16 +14,16 @@ try {
   
   // Check if we need to install webpack
   const requiredDeps = [
-    'webpack', 
-    'webpack-cli', 
-    'html-webpack-plugin', 
-    'css-loader', 
-    'style-loader', 
-    'file-loader', 
-    'babel-loader',
-    '@babel/core', 
-    '@babel/preset-env', 
-    '@babel/preset-react'
+    'webpack@5.75.0', 
+    'webpack-cli@4.10.0', 
+    'html-webpack-plugin@5.5.0', 
+    'css-loader@6.7.1', 
+    'style-loader@3.3.1', 
+    'file-loader@6.2.0', 
+    'babel-loader@8.2.5',
+    '@babel/core@7.18.13', 
+    '@babel/preset-env@7.18.10', 
+    '@babel/preset-react@7.18.6'
   ];
   
   const missingDeps = requiredDeps.filter(dep => {
