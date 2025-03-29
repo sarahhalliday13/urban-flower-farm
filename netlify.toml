@@ -1,5 +1,5 @@
 [build]
-  command = "node standalone-build.js"
+  command = "./netlify-build.sh"
   publish = "build"
 
 [build.environment]

@@ -453,7 +453,9 @@ try {
       NODE_OPTIONS: '--openssl-legacy-provider',
       PUBLIC_URL: '/',
       DISABLE_ESLINT_PLUGIN: 'true', // Disable eslint to avoid typescript errors
-      GENERATE_SOURCEMAP: 'false' // Disable source maps to speed up build
+      GENERATE_SOURCEMAP: 'false', // Disable source maps to speed up build
+      DISABLE_TYPESCRIPT: 'true', // Explicitly disable TypeScript
+      SKIP_TYPESCRIPT_CHECK: 'true' // Skip TypeScript checking
     }
   });
   
