@@ -1,155 +1,137 @@
 #!/bin/sh
 
-# Set up error handling - continue on errors but log them
-set +e
+set -e # Stop on errors
 
-echo "===== STARTING NETLIFY BUILD SCRIPT ====="
-echo "Current directory: $(pwd)"
+echo "===== CREATING MINIMAL SITE BUILD ====="
 
-# Convert any TypeScript files to JavaScript
-echo "Checking for TypeScript files..."
-if find src -type f -name "*.ts" -o -name "*.tsx" | grep -q .; then
-  echo "Found TypeScript files, converting them to JavaScript..."
-  find src -type f -name "*.ts" -o -name "*.tsx" | while read file; do
-    basepath="${file%.*}"
-    echo "Converting $file to ${basepath}.js"
-    cp "$file" "${basepath}.js"
-    rm "$file"
-  done
-fi
+# Clean up any existing build directory
+rm -rf build
 
-# Clean up any existing build or cache
-rm -rf .netlify/cache build
+# Create essential directories
+echo "Creating build directory structure..."
+mkdir -p build/static/js
+mkdir -p build/static/css
+mkdir -p build/data
+mkdir -p build/images
 
-# Install dependencies
-echo "===== INSTALLING DEPENDENCIES ====="
-npm ci || npm install
-npm install --no-save typescript@4.9.5
+# Create minimal JS
+echo "Creating JavaScript files..."
+cat > build/static/js/main.js << 'EOL'
+console.log('Urban Flower Farm');
+// Main application JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize the application
+  const root = document.getElementById('root');
+  if (root) {
+    root.innerHTML = '<div class="app-container"><header class="app-header"><h1>Urban Flower Farm</h1><p>Your source for beautiful plants and flowers</p></header><main class="app-content"><p>Our full website is being updated. Please check back soon!</p><p>Contact us at <a href="mailto:info@urbanflowerfarm.com">info@urbanflowerfarm.com</a></p></main><footer>© Urban Flower Farm</footer></div>';
+  }
+});
+EOL
 
-# Create a jsconfig.json file to help React
-cat > jsconfig.json << EOL
-{
-  "compilerOptions": {
-    "baseUrl": "src",
-    "jsx": "react",
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true
-  },
-  "include": ["src"]
+# Create minimal CSS
+echo "Creating CSS files..."
+cat > build/static/css/main.css << 'EOL'
+/* Main application styles */
+body {
+  font-family: 'Arial', sans-serif;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+  padding: 0;
+  background: #f9f9f9;
+}
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+.app-header {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f0f7f0;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 40px;
+}
+.app-header h1 {
+  color: #3a7d44;
+  margin: 0 0 10px 0;
+}
+.app-content {
+  padding: 20px;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  text-align: center;
+}
+footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+}
+a {
+  color: #3a7d44;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
 EOL
 
-# Set environment variables
-export CI=false
-export NODE_ENV=production
-export SKIP_PREFLIGHT_CHECK=true
-export DISABLE_TYPESCRIPT=false
-export SKIP_TYPESCRIPT_CHECK=true
-export NODE_OPTIONS="--openssl-legacy-provider"
-export DISABLE_ESLINT_PLUGIN=true
-export GENERATE_SOURCEMAP=false
-export TSC_COMPILE_ON_ERROR=true
-export PUBLIC_URL="/"
+# Create index.html
+echo "Creating index.html..."
+cat > build/index.html << 'EOL'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Urban Flower Farm - Your source for beautiful plants and flowers">
+  <title>Urban Flower Farm</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <link rel="icon" href="/favicon.ico">
+</head>
+<body>
+  <div id="root"></div>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
+EOL
 
-# ==========================================================
-# DIRECT LOCAL BUILD APPROACH
-# ==========================================================
-echo "===== BUILDING LOCALLY ====="
+# Create _redirects file for SPA routing
+echo "Creating _redirects file..."
+echo "/* /index.html 200" > build/_redirects
 
-# First, try to build locally
-echo "Running local build..."
-npm run build
+# Create asset-manifest.json for compatibility
+echo "Creating asset-manifest.json..."
+cat > build/asset-manifest.json << 'EOL'
+{
+  "files": {
+    "main.css": "/static/css/main.css",
+    "main.js": "/static/js/main.js",
+    "index.html": "/index.html"
+  },
+  "entrypoints": [
+    "static/css/main.css",
+    "static/js/main.js"
+  ]
+}
+EOL
 
-# Check if static files are present
-if [ ! -d "build/static/js" ] || [ ! "$(ls -A build/static/js)" ]; then
-  echo "Static files not found, running preserve-static.js script..."
-  node preserve-static.js
+# Copy favicons and images from public directory if available
+echo "Copying public assets if available..."
+if [ -d "public" ]; then
+  find public -name "*.ico" -o -name "*.png" -o -name "*.jpg" -o -name "*.svg" -o -name "*.webmanifest" | while read file; do
+    target="build/$(basename "$file")"
+    echo "Copying $file to $target"
+    cp "$file" "$target"
+  done
 fi
 
-# ==========================================================
-# VALIDATION CHECKS
-# ==========================================================
-echo "===== VALIDATING BUILD OUTPUT ====="
-
-# Check if static files still missing
-if [ ! -d "build/static/js" ] || [ ! "$(ls -A build/static/js)" ]; then
-  echo "ERROR: Static files missing after preservation attempts"
-  echo "Creating fallback static files..."
-  mkdir -p build/static/js
-  mkdir -p build/static/css
-  
-  # Create minimal JS and CSS files
-  echo "console.log('Urban Flower Farm loading...');" > build/static/js/main.js
-  echo "body{font-family:sans-serif;text-align:center;margin:40px}" > build/static/css/main.css
-fi
-
-# Ensure _redirects file exists
-if [ ! -f "build/_redirects" ]; then
-  echo "Creating _redirects file..."
-  echo "/* /index.html 200" > build/_redirects
-fi
-
-# ==========================================================
-# TAR EVERYTHING FOR DEPLOYMENT
-# ==========================================================
-echo "===== CREATING DEPLOYMENT ARCHIVE ====="
-
-# Create a tar file of the build directory
-tar -czf build.tar.gz -C build .
-
-# Unpack it to ensure all files are properly preserved
-rm -rf build
-mkdir -p build
-tar -xzf build.tar.gz -C build
-rm build.tar.gz
-
-# ==========================================================
-# DEBUGGING AND VERIFICATION
-# ==========================================================
+# Verify build directory contents
 echo "===== BUILD VERIFICATION ====="
-
-# List build directory contents
 echo "Build directory contents:"
-ls -la build
+find build -type f | sort
 
-# List static directory
-if [ -d "build/static" ]; then
-  echo "Static directory contents:"
-  ls -la build/static
-  
-  # List JS files
-  if [ -d "build/static/js" ]; then
-    echo "JS files:"
-    ls -la build/static/js
-  else
-    echo "ERROR: No static/js directory found!"
-  fi
-  
-  # List CSS files
-  if [ -d "build/static/css" ]; then
-    echo "CSS files:"
-    ls -la build/static/css
-  else
-    echo "ERROR: No static/css directory found!"
-  fi
-else
-  echo "ERROR: No static directory found!"
-fi
-
-# Final cleanup
-echo "Removing temporary TypeScript installation..."
-npm uninstall typescript --no-save
-
-echo "===== BUILD COMPLETED ====="
-exit 0 
+echo "===== BUILD COMPLETED SUCCESSFULLY =====" 

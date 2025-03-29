@@ -2,33 +2,6 @@
   command = "./netlify-build.sh"
   publish = "build"
 
-[build.environment]
-  DISABLE_TYPESCRIPT = "false"
-  SKIP_PREFLIGHT_CHECK = "true"
-  NODE_OPTIONS = "--openssl-legacy-provider"
-  DISABLE_NEW_JSX_TRANSFORM = "true"
-  TSC_COMPILE_ON_ERROR = "true"
-  NODE_ENV = "production"
-  CI = "false"
-  PUBLIC_URL = "/"
-
-# Branch-specific build settings
-[context.branch-deploy]
-  command = "./netlify-build.sh"
-
-[context.branch-deploy.environment]
-  NODE_ENV = "development"
-
-[context.deploy-preview]
-  command = "./netlify-build.sh"
-
-[context.deploy-preview.environment]
-  NODE_ENV = "development"
-
-# This ensures all deployments go to your specific site
-[site]
-  id = "154b08a8-604f-4470-abe2-9044f1dc21fe"
-
 # Completely disable Netlify processing
 [build.processing]
   skip_processing = true
