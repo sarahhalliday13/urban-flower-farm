@@ -19,7 +19,7 @@
   port = 8888
   framework = "#static"
 
-# First ensure all API endpoints redirect properly
+# API endpoints redirect properly
 [[redirects]]
   from = "/api/email/contact"
   to = "/.netlify/functions/send-contact-email"
@@ -30,14 +30,7 @@
   to = "/.netlify/functions/send-order-email"
   status = 200
 
-# Direct paths to Netlify functions - ensures compatibility with fix
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
-# Then handle SPA routing - this must be last!
+# SPA routing - this must be last!
 [[redirects]]
   from = "/*"
   to = "/index.html"
