@@ -10,6 +10,7 @@ export SKIP_PREFLIGHT_CHECK=true
 export GENERATE_SOURCEMAP=false
 export NODE_ENV=production
 export PUBLIC_URL="/"
+export NODE_OPTIONS=--openssl-legacy-provider
 
 # Install dependencies with suppressed output
 echo "Installing dependencies..."
