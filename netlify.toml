@@ -3,11 +3,14 @@
   publish = "build"
 
 [build.environment]
-  DISABLE_TYPESCRIPT = "true"
+  DISABLE_TYPESCRIPT = "false"
   SKIP_PREFLIGHT_CHECK = "true"
   NODE_OPTIONS = "--openssl-legacy-provider"
   DISABLE_NEW_JSX_TRANSFORM = "true"
   TSC_COMPILE_ON_ERROR = "true"
+  NODE_ENV = "production"
+  CI = "false"
+  PUBLIC_URL = "/"
 
 # Branch-specific build settings
 [context.branch-deploy]
@@ -30,15 +33,15 @@
 [build.processing]
   skip_processing = false
 [build.processing.html]
-  pretty_urls = true
+  pretty_urls = false
 [build.processing.css]
-  bundle = true
-  minify = true
+  bundle = false
+  minify = false
 [build.processing.js]
-  bundle = true
-  minify = true
+  bundle = false
+  minify = false
 [build.processing.images]
-  compress = true
+  compress = false
 
 # SPA fallback - this needs to be before the catch-all redirect
 [[redirects]]
