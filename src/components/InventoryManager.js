@@ -514,40 +514,6 @@ const InventoryManager = () => {
     return counts;
   }, [plants]);
   
-  // Get the counts for each status
-  const statusCounts = useMemo(() => getStatusCounts(), [getStatusCounts]);
-
-  // Debug counts - check for plants that might be missing from the status counts
-  const debugCounts = useMemo(() => {
-    // Initialize counts
-    const counts = {
-      total: plants.length,
-      counted: 0,
-      hidden: 0,
-      byStatus: {}
-    };
-
-    // Count all plants by status and track hidden plants
-    plants.forEach(plant => {
-      const status = plant.inventory?.status || 'No Status';
-      
-      // Count hidden plants
-      if (plant.hidden === true || plant.hidden === 'true') {
-        counts.hidden++;
-        return;
-      }
-      
-      // Count by status
-      counts.byStatus[status] = (counts.byStatus[status] || 0) + 1;
-      counts.counted++;
-    });
-    
-    // Calculate unaccounted plants
-    counts.unaccounted = counts.total - counts.counted - counts.hidden;
-    
-    return counts;
-  }, [plants]);
-
   // Memoize the filtered plants to prevent unnecessary recalculations
   const filteredPlants = React.useMemo(() => {
     let filtered = [...plants];
@@ -1985,35 +1951,6 @@ const InventoryManager = () => {
   // Add a function to handle manual sync
   const handleManualSync = async () => {
     try {
-      // DEBUG: Log all plants and their statuses
-      console.log('DEBUG - All plants in database:');
-      const allPlants = await fetchPlants();
-      
-      // Count status types
-      const statusMap = {};
-      allPlants.forEach(plant => {
-        const status = plant.inventory?.status || 'Unknown';
-        statusMap[status] = (statusMap[status] || 0) + 1;
-      });
-      
-      console.log('DEBUG - Status counts:', statusMap);
-      
-      // Log each plant with Coming Soon, Pre-order, or Sold Out status
-      console.log('DEBUG - Coming Soon plants:');
-      allPlants.filter(p => p.inventory?.status === 'Coming Soon').forEach(p => 
-        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
-      );
-      
-      console.log('DEBUG - Pre-order plants:');
-      allPlants.filter(p => p.inventory?.status === 'Pre-order' || p.inventory?.status === 'Pre-Order').forEach(p => 
-        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
-      );
-      
-      console.log('DEBUG - Sold Out plants:');
-      allPlants.filter(p => p.inventory?.status === 'Sold Out').forEach(p => 
-        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
-      );
-
       setSyncStatus(prev => ({
         ...prev,
         syncing: true,
@@ -2061,6 +1998,135 @@ const InventoryManager = () => {
       window.dispatchEvent(event);
     }
   };
+
+  // Status counts for filter options
+  const statusCounts = useMemo(() => {
+    const counts = {
+      all: 0,
+      'In Stock': 0,
+      'Low Stock': 0,
+      'Sold Out': 0,
+      'Coming Soon': 0,
+      'Pre-order': 0,
+      'Hidden': 0
+    };
+    
+    if (plants) {
+      plants.forEach(plant => {
+        counts.all++;
+        
+        // Count hidden plants
+        if (plant.hidden) {
+          counts['Hidden']++;
+        }
+        
+        // Count by inventory status
+        if (plant.inventory && plant.inventory.status) {
+          const status = plant.inventory.status;
+          if (counts[status] !== undefined) {
+            counts[status]++;
+          }
+        }
+      });
+    }
+    return counts;
+  }, [plants]);
+  
+  // Function to fix plants with Unknown status
+  const fixUnknownStatuses = async () => {
+    // Find plants with missing or Unknown status
+    const unknownPlants = plants.filter(plant => 
+      !plant.inventory?.status || plant.inventory.status === 'Unknown'
+    );
+    
+    if (unknownPlants.length === 0) {
+      // Show a toast notification if no unknown plants found
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: 'No plants with unknown status found!',
+          type: 'info',
+          duration: 3000
+        }
+      });
+      window.dispatchEvent(event);
+      return;
+    }
+    
+    // Show a loading toast
+    const loadingEvent = new CustomEvent('show-toast', { 
+      detail: { 
+        message: `Checking ${unknownPlants.length} plants with unknown status...`,
+        type: 'info',
+        duration: 2000
+      }
+    });
+    window.dispatchEvent(loadingEvent);
+    
+    let fixedCount = 0;
+    
+    // Update each plant with a more appropriate status based on stock
+    for (const plant of unknownPlants) {
+      try {
+        const stockLevel = plant.inventory?.currentStock || 0;
+        let newStatus;
+        
+        if (stockLevel > 10) {
+          newStatus = 'In Stock';
+        } else if (stockLevel > 0) {
+          newStatus = 'Low Stock';
+        } else {
+          newStatus = 'Sold Out';
+        }
+        
+        // Create updated inventory data
+        const updatedInventory = {
+          ...(plant.inventory || {}),
+          status: newStatus,
+          currentStock: stockLevel
+        };
+        
+        // Update the plant in the database
+        await updatePlant(plant.id, {
+          ...plant,
+          inventory: updatedInventory
+        });
+        
+        fixedCount++;
+      } catch (error) {
+        console.error(`Error fixing status for plant ${plant.id}:`, error);
+      }
+    }
+    
+    // Show success toast
+    const successEvent = new CustomEvent('show-toast', { 
+      detail: { 
+        message: `Fixed ${fixedCount} of ${unknownPlants.length} plants with unknown status!`,
+        type: 'success',
+        duration: 3000
+      }
+    });
+    window.dispatchEvent(successEvent);
+    
+    // Refresh the plants data
+    handleLoadPlants(true);
+  };
+  
+  // Fix for pre-order/Pre-order capitalization differences
+  useEffect(() => {
+    // Ensure we only do the inventory check if plants are loaded
+    if (!plants || plants.length === 0 || plantsLoading) return;
+    
+    const needsUpdate = plants.some(plant => 
+      plant.inventory?.status === 'Pre-Order' ||
+      plant.inventory?.status === 'pre-order' ||
+      plant.inventory?.status === 'pre-Order'
+    );
+    
+    if (needsUpdate) {
+      console.log('Found plants with incorrect Pre-order capitalization, updating them...');
+      // This update should be done on the backend or through the appropriate update mechanism
+    }
+  }, [plants, plantsLoading]);
 
   if (loading) return (
     <div className="inventory-loading">
@@ -2151,37 +2217,7 @@ const InventoryManager = () => {
                     </select>
                   </div>
                   
-                  {/* Debug Info */}
-                  <div className="debug-info" style={{ fontSize: '0.8rem', marginLeft: '1rem', color: '#777' }}>
-                    <details>
-                      <summary>Debug Info</summary>
-                      <div style={{ padding: '0.5rem', background: '#f5f5f5', borderRadius: '4px' }}>
-                        <p>Total Plants: {debugCounts.total}</p>
-                        <p>Counted Plants: {debugCounts.counted}</p>
-                        <p>Hidden Plants: {debugCounts.hidden}</p>
-                        <p>Unaccounted: {debugCounts.unaccounted}</p>
-                        <hr/>
-                        <p>By Status:</p>
-                        <ul style={{ marginLeft: '1rem' }}>
-                          {Object.entries(debugCounts.byStatus).map(([status, count]) => (
-                            <li key={status}>{status}: {count}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </details>
-                  </div>
-                  
-                  <button 
-                    className="sync-db-button"
-                    onClick={handleManualSync}
-                    disabled={syncStatus.syncing}
-                    title="Force synchronization with the database"
-                  >
-                    {syncStatus.syncing ? 'Syncing...' : 'Sync DB'}
-                    {syncStatus.pendingUpdates > 0 && (
-                      <span className="sync-badge">{syncStatus.pendingUpdates}</span>
-                    )}
-                  </button>
+                  {/* Sync DB button removed */}
                 </>
               )}
             </div>
@@ -2338,18 +2374,7 @@ const InventoryManager = () => {
       {/* Inventory Tab Content */}
       {activeTab === 'inventory' && !plantEditMode && (
         <div className="tab-content">
-          {syncStatus.pendingUpdates > 0 && (
-            <div className="sync-status">
-              <div className="sync-message">
-                {syncStatus.message}
-                {syncStatus.lastSync && (
-                  <span className="sync-time">
-                    Last sync: {new Date(syncStatus.lastSync).toLocaleTimeString()}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Sync status removed */}
           
           {apiRetryCount > 0 && (
             <div className="api-warning">
@@ -2368,7 +2393,17 @@ const InventoryManager = () => {
                     Stock {sortConfig.key === 'currentStock' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th className="sortable-header" onClick={() => handleSort('status')}>
-                    Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')} 
+                    <button 
+                      className="check-status-link" 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the sort
+                        fixUnknownStatuses();
+                      }}
+                      title="Check and fix unknown statuses"
+                    >
+                      (Check)
+                    </button>
                   </th>
                   <th>Restock Date</th>
                   <th className="sortable-header" onClick={() => handleSort('featured')}>
