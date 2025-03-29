@@ -32,17 +32,17 @@ if (!fs.existsSync(firebaseFixPath)) {
 fs.copyFileSync(firebaseFixPath, firebaseFixDestPath);
 console.log('Copied simple Firebase fix script to build directory.');
 
-// Copy the firebase test script to the build directory
-const firebaseTestPath = path.join(__dirname, 'firebase-test.js');
-const firebaseTestDestPath = path.join(buildPath, 'firebase-test.js');
+// Copy the super visible firebase test to the build directory
+const visibleTestPath = path.join(__dirname, 'super-visible-test.js');
+const visibleTestDestPath = path.join(buildPath, 'super-visible-test.js');
 
-if (!fs.existsSync(firebaseTestPath)) {
-  console.error('firebase-test.js file not found in root directory.');
+if (!fs.existsSync(visibleTestPath)) {
+  console.error('super-visible-test.js file not found in root directory.');
   process.exit(1);
 }
 
-fs.copyFileSync(firebaseTestPath, firebaseTestDestPath);
-console.log('Copied Firebase test script to build directory.');
+fs.copyFileSync(visibleTestPath, visibleTestDestPath);
+console.log('Copied super visible test script to build directory.');
 
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
@@ -57,12 +57,12 @@ if (indexHtml.includes('firebase-fix.js')) {
 }
 
 // Check if the test script is already injected
-if (indexHtml.includes('firebase-test.js')) {
-  console.log('firebase-test.js is already included in index.html.');
+if (indexHtml.includes('super-visible-test.js')) {
+  console.log('super-visible-test.js is already included in index.html.');
 } else {
   // Inject the test script tag at the end of the body section
-  indexHtml = indexHtml.replace('</body>', '  <script src="/firebase-test.js"></script>\n</body>');
-  console.log('Injected Firebase test script into index.html.');
+  indexHtml = indexHtml.replace('</body>', '  <script src="/super-visible-test.js"></script>\n</body>');
+  console.log('Injected super visible test script into index.html.');
 }
 
 // Write the updated index.html file
