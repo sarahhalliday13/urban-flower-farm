@@ -1,5 +1,5 @@
 [build]
-  command = "./netlify-build.sh"
+  command = "node standalone-build.js"
   publish = "build"
 
 # Branch-specific build settings
@@ -29,6 +29,13 @@
 [build.processing.images]
   compress = true
 
+# SPA fallback - this needs to be before the catch-all redirect
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
+
 # API redirects for email endpoints
 [[redirects]]
   from = "/api/email/contact"
@@ -39,13 +46,6 @@
   from = "/api/email/order"
   to = "/.netlify/functions/send-order-email"
   status = 200
-
-# SPA fallback - this needs to be before the catch-all redirect
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-  force = true
 
 # Basic headers
 [[headers]]
