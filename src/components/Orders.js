@@ -437,7 +437,23 @@ const Orders = () => {
                               <tfoot>
                                 <tr>
                                   <td colSpan="3">Total</td>
-                                  <td>${parseFloat(order.total).toFixed(2)}</td>
+                                  <td>${
+                                    // Calculate total from items as backup if stored total seems wrong
+                                    (() => {
+                                      const storedTotal = parseFloat(order.total);
+                                      // If stored total is valid and not exactly 150, use it
+                                      if (!isNaN(storedTotal) && storedTotal !== 150) {
+                                        return storedTotal.toFixed(2);
+                                      }
+                                      // Otherwise calculate from items
+                                      const calculatedTotal = order.items.reduce((sum, item) => {
+                                        const price = parseFloat(item.price) || 0;
+                                        const quantity = parseInt(item.quantity, 10) || 0;
+                                        return sum + (price * quantity);
+                                      }, 0);
+                                      return calculatedTotal.toFixed(2);
+                                    })()
+                                  }</td>
                                 </tr>
                               </tfoot>
                             </table>

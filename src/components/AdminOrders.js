@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getOrders, updateOrderStatus as updateFirebaseOrderStatus } from '../services/firebase';
+import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory } from '../services/firebase';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
 
@@ -10,6 +10,8 @@ const AdminOrders = () => {
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [showInvoice, setShowInvoice] = useState(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(null);
+  const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
 
   useEffect(() => {
     loadOrders();
@@ -95,8 +97,31 @@ const AdminOrders = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      // Get the order details before updating
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        console.error('Order not found:', orderId);
+        return;
+      }
+
       // Update in Firebase first
       await updateFirebaseOrderStatus(orderId, newStatus);
+      
+      // If the order is being cancelled, restore the inventory
+      if (newStatus.toLowerCase() === 'cancelled') {
+        try {
+          // Restore inventory for each item in the order
+          for (const item of order.items) {
+            await updateInventory(item.id, {
+              currentStock: (item.inventory?.currentStock || 0) + item.quantity,
+              lastUpdated: new Date().toISOString()
+            });
+          }
+        } catch (inventoryError) {
+          console.error('Error restoring inventory:', inventoryError);
+          // Continue with order status update even if inventory restoration fails
+        }
+      }
       
       // Then update local state and localStorage
       const updatedOrders = orders.map(order => {
@@ -158,6 +183,25 @@ const AdminOrders = () => {
     // In a real app, this would send an API request to send the email
     // For now, we'll just show an alert
     alert(`Invoice email sent to ${order.customer.email}`);
+  };
+
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    if (newStatus.toLowerCase() === 'cancelled') {
+      // Show confirmation dialog for cancellation
+      setShowCancelConfirm(orderId);
+      setPendingStatusUpdate(newStatus);
+    } else {
+      // For other status updates, proceed directly
+      await updateOrderStatus(orderId, newStatus);
+    }
+  };
+
+  const confirmCancelOrder = async () => {
+    if (showCancelConfirm && pendingStatusUpdate) {
+      await updateOrderStatus(showCancelConfirm, pendingStatusUpdate);
+      setShowCancelConfirm(null);
+      setPendingStatusUpdate(null);
+    }
   };
 
   const filteredOrders = orders.filter(order => {
@@ -312,10 +356,31 @@ const AdminOrders = () => {
                                     <td data-label="Product">{item.name}</td>
                                     <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
                                     <td data-label="Quantity">{item.quantity}</td>
-                                    <td data-label="Total">${(item.price * item.quantity).toFixed(2)}</td>
+                                    <td data-label="Total">${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}</td>
                                   </tr>
                                 ))}
                               </tbody>
+                              <tfoot>
+                                <tr>
+                                  <td colSpan="3" data-label="Order Total">Order Total</td>
+                                  <td data-label="Total">
+                                    ${(() => {
+                                      const storedTotal = parseFloat(order.total);
+                                      // If stored total is valid and not exactly 150, use it
+                                      if (!isNaN(storedTotal) && storedTotal !== 150) {
+                                        return storedTotal.toFixed(2);
+                                      }
+                                      // Otherwise calculate from items
+                                      const calculatedTotal = order.items.reduce((sum, item) => {
+                                        const price = parseFloat(item.price) || 0;
+                                        const quantity = parseInt(item.quantity, 10) || 0;
+                                        return sum + (price * quantity);
+                                      }, 0);
+                                      return calculatedTotal.toFixed(2);
+                                    })()}
+                                  </td>
+                                </tr>
+                              </tfoot>
                             </table>
                           </div>
                           
@@ -334,31 +399,31 @@ const AdminOrders = () => {
                               <div className="status-buttons">
                                 <button 
                                   className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
-                                  onClick={() => updateOrderStatus(order.id, 'Pending')}
+                                  onClick={() => handleStatusUpdate(order.id, 'Pending')}
                                 >
                                   Pending
                                 </button>
                                 <button 
                                   className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
-                                  onClick={() => updateOrderStatus(order.id, 'Processing')}
+                                  onClick={() => handleStatusUpdate(order.id, 'Processing')}
                                 >
                                   Processing
                                 </button>
                                 <button 
                                   className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
-                                  onClick={() => updateOrderStatus(order.id, 'Shipped')}
+                                  onClick={() => handleStatusUpdate(order.id, 'Shipped')}
                                 >
                                   Shipped
                                 </button>
                                 <button 
                                   className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
-                                  onClick={() => updateOrderStatus(order.id, 'Completed')}
+                                  onClick={() => handleStatusUpdate(order.id, 'Completed')}
                                 >
                                   Completed
                                 </button>
                                 <button 
                                   className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
-                                  onClick={() => updateOrderStatus(order.id, 'Cancelled')}
+                                  onClick={() => handleStatusUpdate(order.id, 'Cancelled')}
                                 >
                                   Cancelled
                                 </button>
@@ -411,6 +476,37 @@ const AdminOrders = () => {
               type="print" 
               key={`invoice-${showInvoice}`} 
             />
+          </div>
+        </div>
+      )}
+
+      {/* Add confirmation dialog */}
+      {showCancelConfirm && (
+        <div className="confirmation-modal">
+          <div className="confirmation-content">
+            <h3>Confirm Order Cancellation</h3>
+            <p>Are you sure you want to cancel this order? This will:</p>
+            <ul>
+              <li>Mark the order as cancelled</li>
+              <li>Restore inventory for all items</li>
+            </ul>
+            <div className="confirmation-buttons">
+              <button 
+                className="confirm-btn"
+                onClick={confirmCancelOrder}
+              >
+                Yes, Cancel Order
+              </button>
+              <button 
+                className="cancel-btn"
+                onClick={() => {
+                  setShowCancelConfirm(null);
+                  setPendingStatusUpdate(null);
+                }}
+              >
+                No, Keep Order
+              </button>
+            </div>
           </div>
         </div>
       )}

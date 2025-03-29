@@ -180,12 +180,28 @@ const Checkout = () => {
         items: cartItems.map(item => ({
           id: item.id,
           name: item.name,
-          price: item.price,
-          quantity: item.quantity
+          price: parseFloat(item.price),
+          quantity: parseInt(item.quantity, 10)
         })),
-        total: getTotal().toFixed(2),
+        // Calculate the total directly from cart items to ensure accuracy
+        total: cartItems.reduce((sum, item) => {
+          const itemPrice = parseFloat(item.price) || 0;
+          const itemQuantity = parseInt(item.quantity, 10) || 0;
+          return sum + (itemPrice * itemQuantity);
+        }, 0).toFixed(2),
         status: 'Processing'
       };
+      
+      // Verify the calculated total matches getTotal() for debugging
+      const calculatedTotal = parseFloat(newOrderData.total);
+      const contextTotal = parseFloat(getTotal().toFixed(2));
+      if (calculatedTotal !== contextTotal) {
+        console.warn('Total mismatch:', {
+          calculatedTotal,
+          contextTotal,
+          items: cartItems
+        });
+      }
       
       // Save the order to Firebase and localStorage
       try {

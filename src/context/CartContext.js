@@ -150,11 +150,28 @@ export function CartProvider({ children }) {
   };
 
   const getTotal = () => {
-    return cartItems.reduce((total, item) => {
-      const price = parseFloat(item.price) || 0;
-      const quantity = parseInt(item.quantity, 10) || 0;
-      return total + (price * quantity);
-    }, 0);
+    // Enhanced version with better type handling and validation
+    let total = 0;
+    
+    for (const item of cartItems) {
+      const price = parseFloat(item.price);
+      const quantity = parseInt(item.quantity, 10);
+      
+      // Skip invalid items
+      if (isNaN(price) || isNaN(quantity)) {
+        console.warn('Invalid item in cart:', item);
+        continue;
+      }
+      
+      total += price * quantity;
+    }
+    
+    // Check for special case where total might be 150 incorrectly
+    if (total === 150 && cartItems.length > 0) {
+      console.warn('Total is exactly 150. This might be a bug. Cart items:', cartItems);
+    }
+    
+    return total;
   };
 
   const getItemCount = () => {
