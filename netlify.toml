@@ -42,3 +42,8 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+[[redirects]]
+  from = "/firebasetest"
+  to = "/.netlify/functions/test"
+  status = 200

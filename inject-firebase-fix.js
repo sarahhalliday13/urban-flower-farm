@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Script to inject the firebase fix and test scripts into the index.html file
+// Script to inject the firebase-fix-for-app.js script into the index.html file of the production build
 const fs = require('fs');
 const path = require('path');
 
-console.log('Injecting Firebase scripts into index.html...');
+console.log('Injecting firebase-fix-for-app.js into index.html...');
 
 const buildPath = path.join(__dirname, 'build');
 const indexPath = path.join(buildPath, 'index.html');
@@ -20,51 +20,31 @@ if (!fs.existsSync(indexPath)) {
   process.exit(1);
 }
 
-// Copy the firebase fix script to the build directory
-const firebaseFixPath = path.join(__dirname, 'firebase-fix-simple.js');
-const firebaseFixDestPath = path.join(buildPath, 'firebase-fix.js');
+// Copy the firebase-fix-for-app.js file to the build directory
+const firebaseFixPath = path.join(__dirname, 'firebase-fix-for-app.js');
+const firebaseFixDestPath = path.join(buildPath, 'firebase-fix-for-app.js');
 
 if (!fs.existsSync(firebaseFixPath)) {
-  console.error('firebase-fix-simple.js file not found in root directory.');
+  console.error('firebase-fix-for-app.js file not found.');
   process.exit(1);
 }
 
 fs.copyFileSync(firebaseFixPath, firebaseFixDestPath);
-console.log('Copied simple Firebase fix script to build directory.');
-
-// Copy the super visible firebase test to the build directory
-const visibleTestPath = path.join(__dirname, 'super-visible-test.js');
-const visibleTestDestPath = path.join(buildPath, 'super-visible-test.js');
-
-if (!fs.existsSync(visibleTestPath)) {
-  console.error('super-visible-test.js file not found in root directory.');
-  process.exit(1);
-}
-
-fs.copyFileSync(visibleTestPath, visibleTestDestPath);
-console.log('Copied super visible test script to build directory.');
+console.log('Copied firebase-fix-for-app.js to build directory.');
 
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
 
-// Check if the fix script is already injected
-if (indexHtml.includes('firebase-fix.js')) {
-  console.log('firebase-fix.js is already included in index.html.');
+// Check if the script is already injected
+if (indexHtml.includes('firebase-fix-for-app.js')) {
+  console.log('firebase-fix-for-app.js is already included in index.html.');
 } else {
-  // Inject the fix script tag at the beginning of the head section
-  indexHtml = indexHtml.replace('<head>', '<head>\n  <script src="/firebase-fix.js" defer="false" async="false"></script>');
-  console.log('Injected simple Firebase fix into index.html.');
+  // Inject the script tag at the beginning of the head section
+  indexHtml = indexHtml.replace('<head>', '<head>\n  <script src="/firebase-fix-for-app.js"></script>');
+  
+  // Write the updated index.html file
+  fs.writeFileSync(indexPath, indexHtml);
+  console.log('Injected firebase-fix-for-app.js into index.html.');
 }
 
-// Check if the test script is already injected
-if (indexHtml.includes('super-visible-test.js')) {
-  console.log('super-visible-test.js is already included in index.html.');
-} else {
-  // Inject the test script tag at the end of the body section
-  indexHtml = indexHtml.replace('</body>', '  <script src="/super-visible-test.js"></script>\n</body>');
-  console.log('Injected super visible test script into index.html.');
-}
-
-// Write the updated index.html file
-fs.writeFileSync(indexPath, indexHtml);
-console.log('Firebase scripts injection completed successfully!'); 
+console.log('Firebase fix script injection completed successfully!'); 
