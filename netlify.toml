@@ -1,17 +1,16 @@
 [build]
-  command = "./netlify-build.sh"
+  command = "node pure-build.js"
   publish = "build"
 
-# Completely disable Netlify processing
+# Completely disable all processing
 [build.processing]
   skip_processing = true
 
-# SPA fallback redirect
+# SPA redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-  force = true
 
 # API redirects for email endpoints
 [[redirects]]
