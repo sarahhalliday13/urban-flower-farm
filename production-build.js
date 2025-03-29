@@ -61,6 +61,12 @@ if (fs.existsSync('firebase-cors-proxy.js')) {
   execSync('node firebase-cors-proxy.js', { stdio: 'inherit' });
 }
 
+// Inject Firebase fix script
+console.log('Injecting Firebase fix script...');
+if (fs.existsSync('inject-firebase-fix.js')) {
+  execSync('node inject-firebase-fix.js', { stdio: 'inherit' });
+}
+
 // Preserve static files
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {

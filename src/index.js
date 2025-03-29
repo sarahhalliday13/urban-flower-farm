@@ -1,3 +1,9 @@
+// Initialize Firebase manually if needed
+if (window.initializeFirebaseManually && window.firebase && !window.FIREBASE_DEBUG?.initialized) {
+  console.log('Initializing Firebase manually from index.js');
+  window.initializeFirebaseManually();
+}
+
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
