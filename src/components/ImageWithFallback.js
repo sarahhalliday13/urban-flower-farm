@@ -45,7 +45,7 @@ const ImageWithFallback = ({
     
     // For all other URLs, use as is
     setImageSrc(src);
-  }, [src, alt]);
+  }, [src, alt, KNOWN_IMAGES]);
   
   const containerStyle = {
     position: 'relative',

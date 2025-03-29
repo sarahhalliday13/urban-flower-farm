@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
@@ -11,6 +11,8 @@ import useWindowSize from '../hooks/useWindowSize';
 
 function Shop() {
   const location = useLocation();
+  // eslint-disable-next-line no-unused-vars
+  const navigate = useNavigate();
   const { addToCart } = useCart();
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,19 +20,26 @@ function Shop() {
   const [sortOption, setSortOption] = useState('status-in-stock');
   const [itemsPerPage, setItemsPerPage] = useState(12);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { width } = useWindowSize();
   // eslint-disable-next-line no-unused-vars
   const [dataLoaded, setDataLoaded] = useState(false);
-  const viewDetailsRef = useRef(null);
+  /* eslint-disable no-unused-vars */
+  const scrollRef = useRef(null);
+  const pageRef = useRef(null);
+  const plantRefs = useRef({});
+  const lastFocusedPlantRef = useRef(null);
+  const shopRef = useRef(null);
+  /* eslint-enable no-unused-vars */
+  // eslint-disable-next-line no-unused-vars
+  const searchInputRef = useRef(null);
   
-  // Get page number from URL or default to 1
-  const getPageFromSearch = () => {
+  // Update currentPage from URL when location.search changes
+  useEffect(() => {
     const search = new URLSearchParams(location.search);
     const page = parseInt(search.get('page'), 10);
-    return isNaN(page) ? 1 : page;
-  };
-
-  const currentPage = getPageFromSearch();
+    setCurrentPage(isNaN(page) ? 1 : page);
+  }, [location.search]);
   
   // Initialize sortOption and searchTerm from URL parameters
   useEffect(() => {
@@ -364,11 +373,11 @@ function Shop() {
         );
       }
       
-      // Use pure HTML anchors with direct URLs - no JavaScript
+      // Use anchors (not buttons) to allow proper navigation from details view
       paginationItems.push(
         <a
           key={pageNumber}
-          href={`/shop?page=${pageNumber}`}
+          href={`/shop?page=${pageNumber}&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`}
           className={`pagination-link ${pageNumber === currentPage ? 'active' : ''}`}
         >
           {pageNumber}
@@ -379,7 +388,7 @@ function Shop() {
     return (
       <div className="pagination-controls">
         <a
-          href={`/shop?page=${Math.max(1, currentPage - 1)}`}
+          href={`/shop?page=${Math.max(1, currentPage - 1)}&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`}
           className={`pagination-link prev ${currentPage === 1 ? 'disabled' : ''}`}
         >
           ← Prev
@@ -388,7 +397,7 @@ function Shop() {
         {paginationItems}
         
         <a
-          href={`/shop?page=${Math.min(totalPages, currentPage + 1)}`}
+          href={`/shop?page=${Math.min(totalPages, currentPage + 1)}&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`}
           className={`pagination-link next ${currentPage === totalPages ? 'disabled' : ''}`}
         >
           Next →
@@ -415,68 +424,19 @@ function Shop() {
     }
   };
 
-  const handleSortChange = (e) => {
-    const newSortOption = e.target.value;
-    setSortOption(newSortOption);
-    
-    // Navigate to page 1 with sort parameter
-    const url = new URL(window.location);
-    url.searchParams.set('page', '1');
-    url.searchParams.set('sort', newSortOption);
-    
-    // Preserve search term if it exists
-    if (searchTerm) {
-      url.searchParams.set('search', searchTerm);
-    }
-    
-    window.location.href = url.toString();
-  };
-
-  const handleSearchChange = (e) => {
-    // Update the search term state without triggering any other changes
-    setSearchTerm(e.target.value);
-    // Don't trigger any navigation or filtering here, wait for form submission
-  };
-
-  const clearSearch = () => {
-    setSearchTerm('');
-    
-    // Navigate to page 1 preserving sort
-    const url = new URL(window.location);
-    url.searchParams.set('page', '1');
-    
-    // Remove search parameter
-    url.searchParams.delete('search');
-    
-    // Preserve sort if it exists
-    if (sortOption) {
-      url.searchParams.set('sort', sortOption);
-    }
-    
-    window.location.href = url.toString();
-  };
-
   // Render a plant card
   const renderPlantCard = (plant) => {
     return (
-      <div 
-        key={plant.id} 
-        className="plant-card"
-        id={`plant-${plant.id}`}
-        onClick={() => {
-          // Right before we navigate, ensure the current page is stored
-          localStorage.setItem('shopCurrentPage', currentPage.toString());
-          
-          // Store which plant was clicked (for anchor navigation)
-          localStorage.setItem('lastViewedPlantId', plant.id.toString());
-          console.log('Stored last viewed plant ID:', plant.id);
-          
-          window.location.href = `/plant/${plant.id}`;
-        }}
-      >
-        <div 
-          style={{ textDecoration: 'none', color: 'inherit' }}
-          onClick={(e) => e.stopPropagation()} // Prevent double navigation
+      <div key={plant.id} className="plant-card" id={`plant-${plant.id}`}>
+        <a 
+          href={`/plant/${plant.id}`}
+          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          onClick={() => {
+            // Store current page for when user comes back
+            localStorage.setItem('shopCurrentPage', currentPage.toString());
+            // Store which plant was clicked (for anchor navigation)
+            localStorage.setItem('lastViewedPlantId', plant.id.toString());
+          }}
         >
           <div className="plant-image">
             <PlantImage plant={plant} height={250} width="100%" />
@@ -508,15 +468,12 @@ function Shop() {
             </div>
             <p className="plant-price">${plant.price}</p>
           </div>
-        </div>
-        <div className="plant-actions" onClick={(e) => e.stopPropagation()}>
-          <a href={`/plant/${plant.id}`} className="plant-view" ref={viewDetailsRef}>View</a>
+        </a>
+        <div className="plant-actions">
+          <a href={`/plant/${plant.id}`} className="plant-view">View</a>
           <button 
             className={`plant-buy ${(!plant.inventory?.currentStock || (plant.inventory?.status === 'Coming Soon' && !plant.inventory?.currentStock)) ? 'sold-out' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleAddToCart(plant);
-            }}
+            onClick={() => handleAddToCart(plant)}
             disabled={!plant.inventory?.currentStock}
           >
             {plant.inventory?.status === 'Coming Soon' ? 
@@ -527,6 +484,45 @@ function Shop() {
       </div>
     );
   };
+
+  // Add useEffect to listen for popstate events (browser back/forward)
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // Parse URL parameters again when browser back/forward is used
+      const params = new URLSearchParams(window.location.search);
+      
+      // Update sort option from URL
+      const sortParam = params.get('sort');
+      if (sortParam) {
+        setSortOption(sortParam);
+      }
+      
+      // Update search term from URL
+      const searchParam = params.get('search');
+      if (searchParam !== null) {
+        setSearchTerm(searchParam);
+      } else {
+        setSearchTerm('');
+      }
+      
+      // Update page number from URL
+      const pageParam = params.get('page');
+      if (pageParam) {
+        const page = parseInt(pageParam, 10);
+        if (!isNaN(page)) {
+          setCurrentPage(page);
+        }
+      }
+    };
+    
+    // Add event listener for popstate (back/forward button)
+    window.addEventListener('popstate', handlePopState);
+    
+    // Clean up event listener on component unmount
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
@@ -542,72 +538,63 @@ function Shop() {
             <div className="filter-wrapper">
               <div className="sort-control">
                 <label htmlFor="sort-select">Sort by:</label>
-                <select 
-                  id="sort-select" 
-                  value={sortOption} 
-                  onChange={handleSortChange}
-                  className="sort-select"
-                  aria-label="Sort plants by selected option"
-                >
-                  <option value="all">All ({getStatusCounts.all})</option>
-                  <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
-                  <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
-                  <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
-                  <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
-                </select>
+                <form method="get" action="/shop" style={{ display: 'inline' }}>
+                  <select 
+                    id="sort-select" 
+                    name="sort"
+                    value={sortOption} 
+                    onChange={(e) => e.target.form.submit()}
+                    className="sort-select"
+                    aria-label="Sort plants by selected option"
+                  >
+                    <option value="all">All ({getStatusCounts.all})</option>
+                    <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
+                    <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
+                    <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
+                    <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
+                  </select>
+                  <input type="hidden" name="page" value="1" />
+                  {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
+                </form>
               </div>
               
               <div className="search-bar">
-                <form className="search-input-container" onSubmit={(e) => { 
-                  e.preventDefault(); 
-                  
-                  // Only navigate if we have a non-empty search term
-                  if (searchTerm.trim() !== '') {
-                    // Navigate to page 1 with search and sort parameters
-                    const url = new URL(window.location);
-                    url.searchParams.set('page', '1');
-                    
-                    // Add search term if not empty
-                    url.searchParams.set('search', searchTerm.trim());
-                    
-                    // Preserve sort if it exists
-                    if (sortOption) {
-                      url.searchParams.set('sort', sortOption);
-                    }
-                    
-                    window.location.href = url.toString();
-                  }
-                }}>
+                <form className="search-input-container" method="get" action="/shop">
                   <label htmlFor="search-input">Search:</label>
                   <div style={{ position: 'relative', flex: '1', minWidth: 0 }}>
                     <input 
                       type="text" 
                       id="search-input"
+                      name="search"
                       placeholder="Search plants..."
                       value={searchTerm}
-                      onChange={handleSearchChange}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                       className="search-input"
                       aria-label="Search plants"
                     />
                     {searchTerm && (
                       <button 
                         type="button" 
-                        onClick={clearSearch}
+                        onClick={() => {
+                          setSearchTerm('');
+                          window.location.href = `/shop?page=1&sort=${sortOption}`;
+                        }}
                         className="clear-search"
                         aria-label="Clear search"
-                        style={{ position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)' }}
+                        tabIndex="-1"
                       >
                         ×
                       </button>
                     )}
                   </div>
+                  <input type="hidden" name="page" value="1" />
+                  <input type="hidden" name="sort" value={sortOption} />
                   <button type="submit" style={{display: 'none'}}>Search</button>
                 </form>
               </div>
             </div>
-          </div>
-          
-          <div className="shop-page-navigation">
+            
+            {/* Top pagination moved inside shop-controls */}
             {renderPaginationControls()}
           </div>
         </div>
@@ -637,7 +624,10 @@ function Shop() {
             {sortedPlants.length === 0 && searchTerm.trim() !== '' ? (
               <div className="no-results">
                 <p>No plants found matching "<strong>{searchTerm}</strong>"</p>
-                <button className="reset-search" onClick={clearSearch}>Clear search</button>
+                <button className="reset-search" onClick={() => {
+                  setSearchTerm('');
+                  window.location.href = `/shop?page=1&sort=${sortOption}`;
+                }}>Clear search</button>
               </div>
             ) : (
               <div className="plant-grid">
@@ -657,7 +647,7 @@ function Shop() {
           </div>
         )}
         
-        {/* Bottom pagination for mobile only */}
+        {/* Bottom pagination for mobile */}
         <div className="pagination-bottom">
           {renderPaginationControls()}
         </div>

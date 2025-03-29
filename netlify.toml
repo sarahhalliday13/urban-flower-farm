@@ -1,11 +1,14 @@
 [build]
   base = "."
   publish = "build"
-  command = "node build.js"
+  command = "node purge-typescript.js && node production-build.js"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "9"
+  DISABLE_TYPESCRIPT = "true"
+  SKIP_TYPESCRIPT_CHECK = "true"
+  SKIP_PREFLIGHT_CHECK = "true"
 
 [build.processing]
   skip_processing = true

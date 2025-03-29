@@ -2297,3 +2297,27 @@ footer {
   font-weight: 600 !important;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
+
+/* Back to Top Button Styles */
+.back-to-top {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  position: relative;
+  z-index: 10;
+}
+
+.back-to-top.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.back-to-top a:hover {
+  background-color: #3da77a;
+  transform: translateY(-2px);
+  transition: all 0.2s ease;
+}
+
+.back-to-top a {
+  transition: all 0.2s ease;
+}

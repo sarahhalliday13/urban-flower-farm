@@ -175,12 +175,40 @@ function PlantDetails() {
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>
       <div className="navigation-container">
-        <button 
-          className="text-link"
-          onClick={handleBackToShop}
+        <a 
+          href="/shop"
+          onClick={(e) => {
+            e.preventDefault();
+            handleBackToShop();
+          }}
+          className="back-to-shop-button"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '8px 16px',
+            backgroundColor: '#f1f7f1',
+            color: '#2c5530',
+            textDecoration: 'none',
+            borderRadius: '4px',
+            border: '1px solid #a8c5a9',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            fontWeight: '500',
+            fontSize: '0.9rem',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#2c5530';
+            e.currentTarget.style.color = 'white';
+            e.currentTarget.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f1f7f1';
+            e.currentTarget.style.color = '#2c5530';
+            e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+          }}
         >
           Back to Shop
-        </button>
+        </a>
         <div className="nav-group">
           <button
             className="nav-button"

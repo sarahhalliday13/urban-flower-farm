@@ -16,7 +16,8 @@ function Contact() {
   
   const [formStatus, setFormStatus] = useState({
     submitted: false,
-    error: null
+    error: null,
+    message: null
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +66,8 @@ function Contact() {
     if (!formData.name || !formData.email || !formData.message) {
       setFormStatus({
         submitted: false,
-        error: 'Please fill out all required fields'
+        error: 'Please fill out all required fields',
+        message: null
       });
       return;
     }
@@ -88,12 +90,14 @@ function Contact() {
     }
 
     try {
-      await sendContactFormEmail(formData);
+      // Send the form data
+      const result = await sendContactFormEmail(formData);
       
       // Show success message
       setFormStatus({
         submitted: true,
-        error: null
+        error: null,
+        message: result.message || 'Message sent successfully'
       });
       
       // Reset form
@@ -108,7 +112,8 @@ function Contact() {
       console.error('Error sending message:', error);
       setFormStatus({
         submitted: false,
-        error: error.message || 'Failed to send message. Please try again.'
+        error: error.message || 'Failed to send message. Please try again.',
+        message: null
       });
     } finally {
       setIsSubmitting(false);
@@ -149,7 +154,9 @@ function Contact() {
           <div className="contact-info">
             <h2>Find Us</h2>
             <div className="info-item">
-              <div className="info-icon">📍</div>
+              <div className="info-icon">
+                <span role="img" aria-label="Location">📍</span>
+              </div>
               <div className="info-text">
                 <h3>Location</h3>
                 <p>Central Lonsdale Area<br />North Vancouver, BC</p>
@@ -157,7 +164,9 @@ function Contact() {
             </div>
             
             <div className="info-item">
-              <div className="info-icon">📧</div>
+              <div className="info-icon">
+                <span role="img" aria-label="Email">📧</span>
+              </div>
               <div className="info-text">
                 <h3>Email</h3>
                 <div className="email-container">
@@ -181,7 +190,9 @@ function Contact() {
             </div>
             
             <div className="info-item">
-              <div className="info-icon">🕓</div>
+              <div className="info-icon">
+                <span role="img" aria-label="Clock">🕓</span>
+              </div>
               <div className="info-text">
                 <h3>Hours</h3>
                 <p>By appointment only</p>
@@ -197,103 +208,103 @@ function Contact() {
               <div className="info-text">
                 <h3>The Socials</h3>
                 <div className="social-icons">
-                  <a 
-                    href="https://www.facebook.com/share/g/1Dn9gPpobA/" 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="social-icon facebook-icon"
-                    title="Follow us on Facebook"
-                  >
-                    Buttons Urban Flower Farm
+                  <a href="https://www.facebook.com/buttonsflowers" target="_blank" rel="noopener noreferrer">
+                    Facebook
                   </a>
                 </div>
               </div>
             </div>
           </div>
-
+          
           <div className="contact-form-container">
             <h2>Send Us a Message</h2>
+            
             {formStatus.submitted ? (
-              <div className="success-message">
-                <p>Thank you for your message! We'll get back to you soon.</p>
-                <button 
-                  className="send-another-btn"
-                  onClick={() => setFormStatus({ submitted: false, error: null })}
-                >
+              <div className="form-success">
+                <h3>Thank You!</h3>
+                <p>{formStatus.message || "Your message has been sent successfully. We'll get back to you soon!"}</p>
+                <p className="spam-notice">
+                  <strong>Please check your spam folder if you don't see our reply.</strong>
+                </p>
+                <button className="send-again-btn" onClick={() => setFormStatus({ submitted: false, error: null, message: null })}>
                   Send Another Message
                 </button>
               </div>
             ) : (
               <form className="contact-form" onSubmit={handleSubmit}>
                 {formStatus.error && (
-                  <div className="error-message">{formStatus.error}</div>
+                  <div className="form-error">
+                    {formStatus.error}
+                  </div>
                 )}
                 
                 <div className="form-group">
-                  <label htmlFor="name">Name *</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
+                  <label htmlFor="name">Name <span className="required">*</span></label>
+                  <input 
+                    type="text" 
+                    id="name" 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleChange} 
                     required
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="email">Email *</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
+                  <label htmlFor="email">Email <span className="required">*</span></label>
+                  <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleChange} 
                     required
                   />
                 </div>
                 
                 <div className="form-group">
                   <label htmlFor="phone">Phone (optional)</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
+                  <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    value={formData.phone} 
                     onChange={handleChange}
                   />
                 </div>
                 
                 <div className="form-group">
                   <label htmlFor="subject">Subject</label>
-                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
+                  <input 
+                    type="text" 
+                    id="subject" 
+                    name="subject" 
+                    value={formData.subject} 
                     onChange={handleChange}
                   />
                 </div>
                 
                 <div className="form-group">
-                  <label htmlFor="message">Message *</label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows="5"
-                    value={formData.message}
-                    onChange={handleChange}
+                  <label htmlFor="message">Message <span className="required">*</span></label>
+                  <textarea 
+                    id="message" 
+                    name="message" 
+                    value={formData.message} 
+                    onChange={handleChange} 
+                    rows="5" 
                     required
                   ></textarea>
                 </div>
                 
-                <button 
-                  type="submit" 
-                  className="submit-button"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </button>
+                <div className="form-actions">
+                  <button 
+                    type="submit" 
+                    className="submit-btn"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
+                  </button>
+                </div>
               </form>
             )}
           </div>

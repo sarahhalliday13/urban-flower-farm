@@ -260,14 +260,14 @@ const AdminUpdates = () => {
                       onClick={() => handleEdit(update)}
                       title="Edit"
                     >
-                      ✏️
+                      <span role="img" aria-label="Edit">✏️</span>
                     </button>
                     <button 
                       className="delete-button" 
                       onClick={() => handleDelete(update.id)}
                       title="Delete"
                     >
-                      🗑️
+                      <span role="img" aria-label="Delete">🗑️</span>
                     </button>
                   </div>
                 </div>
