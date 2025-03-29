@@ -1,7 +1,7 @@
 import './App.css';
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, HashRouter } from 'react-router-dom';
 import About from './components/About';
 import Shop from './components/Shop';
 import PlantDetails from './components/PlantDetails';
@@ -27,6 +27,7 @@ import CartModal from './components/CartModal';
 import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
+import RouterModeToggle from './components/RouterModeToggle';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -350,6 +351,7 @@ function AppContent() {
       </Routes>
 
       <BackToTop />
+      <RouterModeToggle />
 
       <footer>
         <div className="footer-links">
@@ -370,19 +372,42 @@ function AppContent() {
   );
 }
 
-// Wrap AppContent with ScrollRestorationProvider
-const App = () => (
-  <Router>
-    <ScrollRestorationProvider>
-      <AuthProvider>
-        <CartProvider>
-          <AdminProvider>
-            <AppContent />
-          </AdminProvider>
-        </CartProvider>
-      </AuthProvider>
-    </ScrollRestorationProvider>
-  </Router>
-);
+// Determine which router to use based on URL support
+const AppWithRouter = () => {
+  // Use HashRouter as a fallback if client-side routing isn't working properly
+  const useHashRouter = localStorage.getItem('useHashRouter') === 'true';
+  
+  // Component with either router
+  if (useHashRouter) {
+    return (
+      <HashRouter>
+        <ScrollRestorationProvider>
+          <AuthProvider>
+            <CartProvider>
+              <AdminProvider>
+                <AppContent />
+              </AdminProvider>
+            </CartProvider>
+          </AuthProvider>
+        </ScrollRestorationProvider>
+      </HashRouter>
+    );
+  }
+  
+  return (
+    <Router basename="/">
+      <ScrollRestorationProvider>
+        <AuthProvider>
+          <CartProvider>
+            <AdminProvider>
+              <AppContent />
+            </AdminProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ScrollRestorationProvider>
+    </Router>
+  );
+};
 
-export default App;
+// Using the AppWithRouter component as the default export
+export default AppWithRouter;
