@@ -4,10 +4,10 @@
   command = "node install-typescript.js && node purge-typescript.js && node production-build.js"
 
 [build.environment]
-  NODE_VERSION = "18"
-  NPM_VERSION = "9"
+  REACT_APP_PATH_PREFIX = ""
   DISABLE_TYPESCRIPT = "true"
   SKIP_TYPESCRIPT_CHECK = "true"
+  TSC_COMPILE_ON_ERROR = "true"
   SKIP_PREFLIGHT_CHECK = "true"
 
 [build.processing]
@@ -47,9 +47,11 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
+    X-Frame-Options = "SAMEORIGIN"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "no-referrer-when-downgrade"
     Content-Security-Policy = "default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; connect-src * 'self' wss://*.firebaseio.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com data:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';"
     Access-Control-Allow-Origin = "*"
+
+[[plugins]]
+  package = "@netlify/plugin-gatsby"

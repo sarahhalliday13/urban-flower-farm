@@ -23,84 +23,44 @@ if (!fs.existsSync(indexPath)) {
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
 
-// Define the inline script with the test button
-const inlineScript = `
-<style>
-@keyframes pulse {
-  0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
-  70% { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 0 15px rgba(255, 0, 0, 0); }
-  100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
-}
-#firebase-test-button {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 999999;
-  background-color: red;
-  color: white;
-  padding: 25px;
-  font-size: 30px;
-  font-weight: bold;
-  border: 5px solid black;
-  border-radius: 10px;
-  cursor: pointer;
-  animation: pulse 2s infinite;
-}
-</style>
-<div id="firebase-test-button" onclick="testFirebase()">TEST FIREBASE</div>
+// Define the inline HTML with static test button
+const inlineHtml = `
+<div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: red; color: white; padding: 20px; z-index: 99999; font-size: 24px; text-align: center; font-weight: bold;">
+  FIREBASE TEST - CLICK THIS TEXT TO TEST CONNECTION
+</div>
 <script>
-// Create test function in global scope
-function testFirebase() {
-  console.log("Running Firebase tests");
-  alert('Firebase test starting! Check console for test results.');
-  
-  // Test direct HTTP access
-  fetch('https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.json?shallow=true')
-    .then(function(response) {
-      console.log('Firebase HTTP response:', response.status);
-      return response.json();
-    })
-    .then(function(data) {
-      console.log('Firebase data via HTTP:', data);
-      alert('Firebase HTTP test successful! Status: ' + 200);
-    })
-    .catch(function(error) {
-      console.error('Firebase HTTP error:', error);
-      alert('Firebase HTTP test failed: ' + error.message);
+document.addEventListener('DOMContentLoaded', function() {
+  var testDiv = document.querySelector('div[style*="background-color: red"]');
+  if (testDiv) {
+    testDiv.addEventListener('click', function() {
+      try {
+        var url = 'https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.json?shallow=true';
+        alert('Testing Firebase connection to: ' + url);
+        
+        fetch(url)
+          .then(function(response) {
+            alert('Firebase test succeeded with status: ' + response.status);
+          })
+          .catch(function(error) {
+            alert('Firebase test failed with error: ' + error.message);
+          });
+      } catch (e) {
+        alert('Error running test: ' + e.message);
+      }
     });
-    
-  // Try WebSocket connection
-  try {
-    var ws = new WebSocket('wss://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.ws?v=5');
-    
-    ws.onopen = function() {
-      console.log('WebSocket connection successful');
-      alert('WebSocket connection successful!');
-      ws.close();
-    };
-    
-    ws.onerror = function(error) {
-      console.error('WebSocket connection failed:', error);
-      alert('WebSocket connection failed!');
-    };
-  } catch (error) {
-    console.error('WebSocket creation error:', error);
-    alert('WebSocket creation error: ' + error.message);
   }
-}
+});
 </script>
 `;
 
-// Check if the script is already injected
-if (indexHtml.includes('firebase-test-button')) {
-  console.log('Firebase test button already included in index.html.');
+// Inject the HTML right after the opening body tag
+if (indexHtml.includes('FIREBASE TEST')) {
+  console.log('Firebase test already included in index.html.');
 } else {
-  // Inject the script tag right before the closing body tag
-  indexHtml = indexHtml.replace('</body>', inlineScript + '\n</body>');
-  console.log('Injected inline Firebase test button into index.html.');
+  indexHtml = indexHtml.replace('<body>', '<body>' + inlineHtml);
+  console.log('Injected Firebase test into index.html.');
 }
 
 // Write the updated index.html file
 fs.writeFileSync(indexPath, indexHtml);
-console.log('Firebase test button direct injection completed successfully!'); 
+console.log('Firebase test direct injection completed successfully!'); 
