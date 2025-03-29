@@ -1,3 +1,8 @@
+// IMPORTS MUST COME FIRST - in correct order to avoid TypeScript errors
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 // Import firebase compatibility layer (only used in build)
 import firebaseCompat from './firebase-compat';
 
@@ -15,12 +20,6 @@ const firebase = window.firebase || firebaseCompat;
 // - "Gaillardia Pulchella Mix": Access from /images/gaillardiapulchella.jpg
 //
 // The token is necessary for authentication to access the images.
-
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getFirestore } from "firebase/firestore";
-// Import auth functions only when needed
 
 // Your web app's Firebase configuration
 // Replace these values with your actual Firebase project configuration
