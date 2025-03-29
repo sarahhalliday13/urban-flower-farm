@@ -61,6 +61,35 @@ if (fs.existsSync('direct-inject.js')) {
   execSync('node direct-inject.js', { stdio: 'inherit' });
 }
 
+// Copy the standalone test page
+console.log('Copying Firebase test page...');
+if (fs.existsSync('public/index-test.html')) {
+  if (!fs.existsSync('build/test')) {
+    fs.mkdirSync('build/test');
+  }
+  fs.copyFileSync('public/index-test.html', 'build/test/index.html');
+  console.log('Firebase test page copied to build/test/index.html');
+}
+
+// Add the test link to the navigation
+console.log('Adding test link to navigation...');
+const indexPath = path.join('build', 'index.html');
+if (fs.existsSync(indexPath)) {
+  let indexHtml = fs.readFileSync(indexPath, 'utf8');
+  
+  // Find the navigation section - look for a pattern like "Contact</a>"
+  if (indexHtml.includes('Contact</a>')) {
+    indexHtml = indexHtml.replace(
+      'Contact</a>', 
+      'Contact</a> <a href="/test/" style="color:red;font-weight:bold;margin-left:15px;">TEST</a>'
+    );
+    fs.writeFileSync(indexPath, indexHtml);
+    console.log('Test link added to navigation');
+  } else {
+    console.log('Could not find navigation pattern to inject test link');
+  }
+}
+
 // Preserve static files
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {

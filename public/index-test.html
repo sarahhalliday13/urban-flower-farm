@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        h1 { color: red; text-align: center; }
+        button { 
+            display: block; 
+            width: 100%; 
+            padding: 20px; 
+            margin: 20px 0; 
+            background-color: red; 
+            color: white; 
+            font-size: 24px; 
+            border: none; 
+            cursor: pointer; 
+        }
+        #results { 
+            border: 1px solid #ccc; 
+            padding: 20px; 
+            margin-top: 20px; 
+            background-color: #f9f9f9; 
+        }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Firebase Connection Test</h1>
+    
+    <button onclick="runTest()">RUN FIREBASE TEST</button>
+    
+    <div id="results">Click the button above to run the test.</div>
+
+    <script>
+        function runTest() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing Firebase connection...</p>';
+            
+            fetch('https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com/.json?shallow=true')
+                .then(response => {
+                    results.innerHTML += '<p class="success">✓ Connection successful (Status: ' + response.status + ')</p>';
+                    return response.json();
+                })
+                .then(data => {
+                    results.innerHTML += '<p class="success">✓ Data received: ' + JSON.stringify(data) + '</p>';
+                })
+                .catch(error => {
+                    results.innerHTML += '<p class="error">✗ Connection failed: ' + error.message + '</p>';
+                });
+        }
+    </script>
+</body>
+</html> 
