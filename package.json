@@ -27,7 +27,7 @@
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
     "build": "react-scripts build",
-    "netlify:build": "react-scripts build",
+    "netlify:build": "CI=false SKIP_PREFLIGHT_CHECK=true react-scripts build",
     "test": "react-scripts test",
     "test:inventory": "react-scripts test src/tests/InventoryImagePreservation.test.js",
     "test:orders": "react-scripts test src/tests/OrderIdGeneration.test.js",
