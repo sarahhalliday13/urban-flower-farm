@@ -15,6 +15,20 @@
 [site]
   id = "154b08a8-604f-4470-abe2-9044f1dc21fe"
 
+# SPA Settings
+[build.processing]
+  skip_processing = false
+[build.processing.html]
+  pretty_urls = true
+[build.processing.css]
+  bundle = true
+  minify = true
+[build.processing.js]
+  bundle = true
+  minify = true
+[build.processing.images]
+  compress = true
+
 # API redirects for email endpoints
 [[redirects]]
   from = "/api/email/contact"
@@ -31,6 +45,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
 
 # Basic headers
 [[headers]]
