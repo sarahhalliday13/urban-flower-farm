@@ -71,11 +71,11 @@ if (fs.existsSync('direct-inject.js')) {
 
 // Copy the standalone test page
 console.log('Copying Firebase test page...');
-if (fs.existsSync('public/index-test.html')) {
+if (fs.existsSync('public/firebase-test.html')) {
   if (!fs.existsSync('build/test')) {
     fs.mkdirSync('build/test');
   }
-  fs.copyFileSync('public/index-test.html', 'build/test/index.html');
+  fs.copyFileSync('public/firebase-test.html', 'build/test/index.html');
   console.log('Firebase test page copied to build/test/index.html');
 }
 
@@ -85,16 +85,34 @@ const indexPath = path.join('build', 'index.html');
 if (fs.existsSync(indexPath)) {
   let indexHtml = fs.readFileSync(indexPath, 'utf8');
   
-  // Find the navigation section - look for a pattern like "Contact</a>"
-  if (indexHtml.includes('Contact</a>')) {
+  // Use a more specific pattern for the navigation
+  if (indexHtml.includes('<a href="/contact">Contact</a>')) {
     indexHtml = indexHtml.replace(
-      'Contact</a>', 
-      'Contact</a> <a href="/test/" style="color:red;font-weight:bold;margin-left:15px;">TEST</a>'
+      '<a href="/contact">Contact</a>', 
+      '<a href="/contact">Contact</a> <a href="/test/" style="color:red;font-weight:bold;margin-left:15px;font-size:18px;">FIREBASE TEST</a>'
     );
     fs.writeFileSync(indexPath, indexHtml);
     console.log('Test link added to navigation');
   } else {
-    console.log('Could not find navigation pattern to inject test link');
+    // Try another common pattern
+    if (indexHtml.includes('Contact</a>')) {
+      indexHtml = indexHtml.replace(
+        'Contact</a>', 
+        'Contact</a> <a href="/test/" style="color:red;font-weight:bold;margin-left:15px;font-size:18px;">FIREBASE TEST</a>'
+      );
+      fs.writeFileSync(indexPath, indexHtml);
+      console.log('Test link added to navigation (using alternate pattern)');
+    } else {
+      console.log('Could not find navigation pattern to inject test link');
+      
+      // Just add it to the body as a direct floating button
+      indexHtml = indexHtml.replace(
+        '<body>', 
+        '<body><div style="position:fixed;top:80px;right:20px;z-index:9999;"><a href="/test/" style="display:block;padding:15px;background-color:red;color:white;font-weight:bold;text-decoration:none;border-radius:5px;">FIREBASE TEST</a></div>'
+      );
+      fs.writeFileSync(indexPath, indexHtml);
+      console.log('Added floating test button instead');
+    }
   }
 }
 
