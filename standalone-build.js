@@ -379,6 +379,14 @@ try {
     }
   });
   
+  // Remove any tsconfig.json file to avoid TypeScript issues
+  const tsconfigPath = path.join(__dirname, 'tsconfig.json');
+  if (fs.existsSync(tsconfigPath)) {
+    console.log(`${colors.yellow}Removing tsconfig.json file...${colors.reset}`);
+    fs.unlinkSync(tsconfigPath);
+    console.log(`${colors.green}Removed tsconfig.json file${colors.reset}`);
+  }
+  
   // Execute the build command
   console.log(`${colors.yellow}Running build...${colors.reset}`);
   execSync('npm run build', { 
