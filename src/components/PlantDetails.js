@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 
@@ -168,16 +169,18 @@ function PlantDetails() {
     const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     if (newIndex >= 0 && newIndex < plantIds.length) {
       navigate(`/plant/${plantIds[newIndex]}`);
-      window.scrollTo(0, 0);
     }
   };
 
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>
       <div className="navigation-container">
-        <div className="nav-view-all">
-          <a href="/shop" className="view-all-link">Back to Shop</a>
-        </div>
+        <button 
+          className="text-link"
+          onClick={handleBackToShop}
+        >
+          Back to Shop
+        </button>
         <div className="nav-group">
           <button
             className="nav-button"
@@ -199,14 +202,67 @@ function PlantDetails() {
     </div>
   );
 
-  // Clear quantity when component unmounts
-  useEffect(() => {
-    return () => {
-      if (!localStorage.getItem(`plant-${id}-quantity`)) {
-        localStorage.setItem(`plant-${id}-quantity`, '1');
+  // Back button navigation
+  const handleBackToShop = () => {
+    // Get the original page number from the URL that led to this detail page
+    const referrer = document.referrer;
+    let currentPage = '1';
+    
+    console.log('Raw referrer URL:', referrer);
+    
+    // Try to extract page from the referrer URL if it came from our shop
+    if (referrer && referrer.includes('/shop')) {
+      // First try with URLSearchParams for more reliable parsing
+      try {
+        const referrerUrl = new URL(referrer);
+        const pageParam = referrerUrl.searchParams.get('page');
+        if (pageParam) {
+          currentPage = pageParam;
+          console.log('Page extracted with URLSearchParams:', currentPage);
+        } else if (referrer.includes('page=')) {
+          // Fallback to regex if URLSearchParams doesn't work
+          const pageMatch = referrer.match(/page=(\d+)/);
+          if (pageMatch && pageMatch[1]) {
+            currentPage = pageMatch[1];
+            console.log('Page extracted with regex:', currentPage);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing referrer URL:', error);
+        // Continue with regex fallback if URL parsing fails
+        if (referrer.includes('page=')) {
+          const pageMatch = referrer.match(/page=(\d+)/);
+          if (pageMatch && pageMatch[1]) {
+            currentPage = pageMatch[1];
+            console.log('Page extracted with regex after URL parsing failed:', currentPage);
+          }
+        }
       }
-    };
-  }, [id]);
+    }
+    
+    // If we couldn't get the page from referrer, try localStorage
+    if (currentPage === '1') {
+      const storedPage = localStorage.getItem('shopCurrentPage');
+      if (storedPage) {
+        currentPage = storedPage;
+        console.log('Using page from localStorage:', currentPage);
+      }
+    }
+    
+    // Store the current plant ID to allow the shop to scroll to its position
+    if (plant && plant.id) {
+      localStorage.setItem('lastViewedPlantId', plant.id.toString());
+      console.log('Stored current plant ID for scrolling:', plant.id);
+    }
+    
+    console.log(`Navigating back to shop at page ${currentPage}`);
+    
+    // Use proper HTML navigation to ensure the page parameter is preserved
+    const origin = window.location.origin;
+    const shopPath = `${origin}/shop?page=${currentPage}`;
+    console.log('Navigating to:', shopPath);
+    window.location.href = shopPath;
+  };
 
   if (loading) return <div className="loading">Loading plant details...</div>;
   if (error) return <div className="error">{error}</div>;
