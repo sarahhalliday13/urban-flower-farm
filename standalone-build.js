@@ -12,6 +12,10 @@ const srcAppFile = path.join(__dirname, 'src', 'App.js');
 const srcDatabaseDebugFile = path.join(__dirname, 'src', 'DatabaseDebug.js');
 const componentsDir = path.join(__dirname, 'src', 'components');
 const backToTopFile = path.join(componentsDir, 'BackToTop.js');
+const hooksDir = path.join(__dirname, 'src', 'hooks');
+const scrollRestorationContextFile = path.join(hooksDir, 'ScrollRestorationContext.tsx');
+const useScrollRestorerFile = path.join(hooksDir, 'useScrollRestorer.ts');
+const useScrollSaverFile = path.join(hooksDir, 'useScrollSaver.ts');
 
 // Colors for output
 const colors = {
@@ -43,6 +47,159 @@ try {
   }
 } catch (err) {
   console.error(`${colors.red}Error creating components directory:${colors.reset}`, err);
+}
+
+// Ensure the hooks directory exists
+try {
+  if (!fs.existsSync(hooksDir)) {
+    fs.mkdirSync(hooksDir, { recursive: true });
+    console.log(`${colors.green}Created hooks directory${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error creating hooks directory:${colors.reset}`, err);
+}
+
+// Check for the presence of ScrollRestorationContext.tsx
+try {
+  if (fs.existsSync(scrollRestorationContextFile)) {
+    console.log(`${colors.green}ScrollRestorationContext.tsx exists at the correct location${colors.reset}`);
+  } else {
+    console.log(`${colors.yellow}Creating ScrollRestorationContext.tsx file...${colors.reset}`);
+    
+    // Create a simple ScrollRestorationContext component
+    const scrollRestorationContextContent = `
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+interface ScrollPosition {
+  [key: string]: number;
+}
+
+interface ScrollRestorationContextType {
+  saveScrollPosition: (key: string, position: number) => void;
+  getScrollPosition: (key: string) => number;
+}
+
+const ScrollRestorationContext = createContext<ScrollRestorationContextType | undefined>(undefined);
+
+export const useScrollRestoration = () => {
+  const context = useContext(ScrollRestorationContext);
+  if (!context) {
+    throw new Error('useScrollRestoration must be used within a ScrollRestorationProvider');
+  }
+  return context;
+};
+
+interface ScrollRestorationProviderProps {
+  children: ReactNode;
+}
+
+export const ScrollRestorationProvider = ({ children }: ScrollRestorationProviderProps) => {
+  const [scrollPositions, setScrollPositions] = useState<ScrollPosition>({});
+
+  // Save scroll position by key
+  const saveScrollPosition = (key: string, position: number) => {
+    setScrollPositions(prev => ({
+      ...prev,
+      [key]: position
+    }));
+  };
+
+  // Get scroll position by key
+  const getScrollPosition = (key: string) => {
+    return scrollPositions[key] || 0;
+  };
+
+  // Context value
+  const value = {
+    saveScrollPosition,
+    getScrollPosition
+  };
+
+  return (
+    <ScrollRestorationContext.Provider value={value}>
+      {children}
+    </ScrollRestorationContext.Provider>
+  );
+};
+`;
+    fs.writeFileSync(scrollRestorationContextFile, scrollRestorationContextContent);
+    console.log(`${colors.green}Created ScrollRestorationContext.tsx${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error handling ScrollRestorationContext.tsx:${colors.reset}`, err);
+}
+
+// Check for the presence of useScrollRestorer.ts
+try {
+  if (fs.existsSync(useScrollRestorerFile)) {
+    console.log(`${colors.green}useScrollRestorer.ts exists at the correct location${colors.reset}`);
+  } else {
+    console.log(`${colors.yellow}Creating useScrollRestorer.ts file...${colors.reset}`);
+    
+    // Create a simple useScrollRestorer hook
+    const useScrollRestorerContent = `
+import { useEffect } from 'react';
+import { useScrollRestoration } from './ScrollRestorationContext';
+
+/**
+ * Hook to restore scroll position based on a key
+ * @param key A unique key to identify the scroll position
+ */
+const useScrollRestorer = (key: string) => {
+  const { getScrollPosition } = useScrollRestoration();
+  
+  useEffect(() => {
+    // Restore scroll position
+    const position = getScrollPosition(key);
+    if (position > 0) {
+      window.scrollTo(0, position);
+    }
+  }, [key, getScrollPosition]);
+};
+
+export default useScrollRestorer;
+`;
+    fs.writeFileSync(useScrollRestorerFile, useScrollRestorerContent);
+    console.log(`${colors.green}Created useScrollRestorer.ts${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error handling useScrollRestorer.ts:${colors.reset}`, err);
+}
+
+// Check for the presence of useScrollSaver.ts
+try {
+  if (fs.existsSync(useScrollSaverFile)) {
+    console.log(`${colors.green}useScrollSaver.ts exists at the correct location${colors.reset}`);
+  } else {
+    console.log(`${colors.yellow}Creating useScrollSaver.ts file...${colors.reset}`);
+    
+    // Create a simple useScrollSaver hook
+    const useScrollSaverContent = `
+import { useEffect } from 'react';
+import { useScrollRestoration } from './ScrollRestorationContext';
+
+/**
+ * Hook to save scroll position based on a key
+ * @param key A unique key to identify the scroll position
+ */
+const useScrollSaver = (key: string) => {
+  const { saveScrollPosition } = useScrollRestoration();
+  
+  useEffect(() => {
+    // Save scroll position when component unmounts
+    return () => {
+      saveScrollPosition(key, window.scrollY);
+    };
+  }, [key, saveScrollPosition]);
+};
+
+export default useScrollSaver;
+`;
+    fs.writeFileSync(useScrollSaverFile, useScrollSaverContent);
+    console.log(`${colors.green}Created useScrollSaver.ts${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error handling useScrollSaver.ts:${colors.reset}`, err);
 }
 
 // Check for the presence of BackToTop.js
