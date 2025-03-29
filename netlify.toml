@@ -1,7 +1,7 @@
 [build]
   base = "."
   publish = "build"
-  command = "node install-typescript.js && node truly-no-typescript.js && node production-build.js"
+  command = "chmod +x *.js && node install-typescript.js && node fix-react-scripts.js && node truly-no-typescript.js && node production-build.js"
 
 [build.environment]
   NODE_VERSION = "18"
