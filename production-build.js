@@ -25,6 +25,14 @@ execSync('NODE_OPTIONS=--openssl-legacy-provider CI=false PUBLIC_URL=/ SKIP_PREF
   }
 });
 
+// Remove any _headers files (they cause Netlify deployment issues)
+console.log('Removing any _headers files to prevent Netlify deployment issues...');
+const headersPath = path.join('build', '_headers');
+if (fs.existsSync(headersPath)) {
+  fs.unlinkSync(headersPath);
+  console.log('Removed problematic _headers file from build directory');
+}
+
 // Fix paths in JavaScript files
 console.log('Fixing JavaScript paths...');
 if (fs.existsSync('fix-js-paths.js')) {
@@ -94,6 +102,13 @@ if (fs.existsSync(indexPath)) {
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {
   execSync('node preserve-static.js', { stdio: 'inherit' });
+}
+
+// Final check for _headers files - run after all scripts
+console.log('Final check for any _headers files...');
+if (fs.existsSync(path.join('build', '_headers'))) {
+  fs.unlinkSync(path.join('build', '_headers'));
+  console.log('Removed _headers file created by other scripts');
 }
 
 console.log('Build completed successfully!');
