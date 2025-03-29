@@ -49,6 +49,12 @@ if (fs.existsSync('fix-firebase-image-paths.js')) {
   execSync('node fix-firebase-image-paths.js', { stdio: 'inherit' });
 }
 
+// Fix Firebase connectivity
+console.log('Fixing Firebase connectivity...');
+if (fs.existsSync('fix-firebase-connectivity.js')) {
+  execSync('node fix-firebase-connectivity.js', { stdio: 'inherit' });
+}
+
 // Preserve static files
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {

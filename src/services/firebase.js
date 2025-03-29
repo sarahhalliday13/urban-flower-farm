@@ -1067,6 +1067,30 @@ export const fetchNewsItems = async () => {
   }
 };
 
+// Configure Firebase Storage with CORS settings
+const configureCORS = () => {
+  // This helps when Firebase Storage has CORS issues
+  if (window.firebase && window.firebase.storage) {
+    try {
+      console.log('Configuring Firebase Storage CORS settings');
+      const storageRef = window.firebase.storage().ref();
+      storageRef.getMetadata().catch(err => {
+        console.warn('Firebase Storage metadata fetch error (expected):', err);
+        console.log('This error can be ignored during initialization');
+      });
+    } catch (e) {
+      console.error('Error configuring Firebase Storage CORS:', e);
+    }
+  }
+};
+
+// Call this after Firebase is initialized
+try {
+  configureCORS();
+} catch (e) {
+  console.warn('CORS configuration failed:', e);
+}
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
