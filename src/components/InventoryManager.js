@@ -494,6 +494,11 @@ const InventoryManager = () => {
           return plant.inventory.status === 'Pre-order' || plant.inventory.status === 'Pre-Order';
         }
         
+        // Include Low Stock in In Stock filter
+        if (filter === 'In Stock') {
+          return plant.inventory.status === 'In Stock' || plant.inventory.status === 'Low Stock';
+        }
+        
         // Exact match on status for other cases
         return plant.inventory.status === filter;
       });
@@ -2046,8 +2051,7 @@ const InventoryManager = () => {
                       onChange={(e) => setFilter(e.target.value)}
                     >
                       <option value="all">All ({statusCounts.all})</option>
-                      <option value="In Stock">In Stock ({statusCounts['In Stock']})</option>
-                      <option value="Low Stock">Low Stock ({statusCounts['Low Stock']})</option>
+                      <option value="In Stock">In Stock ({statusCounts['In Stock'] + statusCounts['Low Stock']})</option>
                       <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
                       <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
                       <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
