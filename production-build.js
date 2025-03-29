@@ -31,6 +31,18 @@ if (fs.existsSync('fix-js-paths.js')) {
   execSync('node fix-js-paths.js', { stdio: 'inherit' });
 }
 
+// Fix image paths
+console.log('Fixing image paths...');
+if (fs.existsSync('fix-image-paths.js')) {
+  execSync('node fix-image-paths.js', { stdio: 'inherit' });
+}
+
+// Fix build images - ensure all required images are included
+console.log('Ensuring all images are included in build...');
+if (fs.existsSync('fix-build-images.js')) {
+  execSync('node fix-build-images.js', { stdio: 'inherit' });
+}
+
 // Preserve static files
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {
