@@ -1,14 +1,14 @@
 [build]
-  command = "npm ci --no-audit --no-fund && CI=false GENERATE_SOURCEMAP=false npm run netlify:build"
+  command = "./netlify-build.sh"
   publish = "build"
 
 # Branch-specific build settings
 [context.branch-deploy]
-  command = "npm ci --no-audit --no-fund && CI=false GENERATE_SOURCEMAP=false npm run netlify:build"
+  command = "./netlify-build.sh"
   environment = { NODE_ENV = "development" }
 
 [context.deploy-preview]
-  command = "npm ci --no-audit --no-fund && CI=false GENERATE_SOURCEMAP=false npm run netlify:build"
+  command = "./netlify-build.sh"
   environment = { NODE_ENV = "development" }
 
 # This ensures all deployments go to your specific site
