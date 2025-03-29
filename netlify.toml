@@ -1,15 +1,11 @@
 [build]
   base = "."
   publish = "build"
-  command = "node fix-typescript-detection.js && node remove-typescript.js && NODE_OPTIONS=--openssl-legacy-provider CI=false PUBLIC_URL=/ SKIP_TYPESCRIPT_CHECK=true DISABLE_TYPESCRIPT=true TSC_COMPILE_ON_ERROR=true npm run build && node fix-js-paths.js && node preserve-static.js"
+  command = "node build.js"
 
 [build.environment]
   NODE_VERSION = "18"
   NPM_VERSION = "9"
-  DISABLE_TYPESCRIPT = "true"
-  SKIP_TYPESCRIPT_CHECK = "true"
-  TSC_COMPILE_ON_ERROR = "true"
-  NETLIFY_USE_YARN = "false"
 
 [build.processing]
   skip_processing = true
