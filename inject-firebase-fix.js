@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('Injecting firebase fix script into index.html...');
+console.log('Injecting simple Firebase fix script into index.html...');
 
 const buildPath = path.join(__dirname, 'build');
 const indexPath = path.join(buildPath, 'index.html');
@@ -21,16 +21,16 @@ if (!fs.existsSync(indexPath)) {
 }
 
 // Copy the firebase fix script to the build directory
-const firebaseFixPath = path.join(__dirname, 'firebase-fix-combined.js');
+const firebaseFixPath = path.join(__dirname, 'firebase-fix-simple.js');
 const firebaseFixDestPath = path.join(buildPath, 'firebase-fix.js');
 
 if (!fs.existsSync(firebaseFixPath)) {
-  console.error('firebase-fix-combined.js file not found in root directory.');
+  console.error('firebase-fix-simple.js file not found in root directory.');
   process.exit(1);
 }
 
 fs.copyFileSync(firebaseFixPath, firebaseFixDestPath);
-console.log('Copied firebase fix script to build directory.');
+console.log('Copied simple Firebase fix script to build directory.');
 
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
@@ -44,7 +44,7 @@ if (indexHtml.includes('firebase-fix.js')) {
   
   // Write the updated index.html file
   fs.writeFileSync(indexPath, indexHtml);
-  console.log('Injected firebase-fix.js into index.html.');
+  console.log('Injected simple Firebase fix into index.html.');
 }
 
 console.log('Firebase fix script injection completed successfully!'); 
