@@ -1,21 +1,25 @@
 #!/bin/bash
 
-echo "Starting direct Netlify deployment process..."
-
-# Install dependencies
-npm ci --quiet --no-audit --no-fund || true
-
-# Build the project
-SKIP_PREFLIGHT_CHECK=true CI=false npm run build || true
-
-# Ensure _redirects file exists
-echo "/* /index.html 200" > build/_redirects
-
-# Install Netlify CLI if not already installed
+# Check if netlify CLI is installed
 if ! command -v netlify &> /dev/null; then
-  npm install -g netlify-cli
+    echo "Netlify CLI not found. Installing..."
+    npm install -g netlify-cli
 fi
 
 # Deploy to Netlify
-echo "Deploying to Netlify..."
-netlify deploy --prod --dir=build 
+echo "Building and deploying the application to Netlify..."
+
+# Set environment variables for the build
+export NODE_OPTIONS=--openssl-legacy-provider
+export CI=false
+export PUBLIC_URL=/
+
+# Run the build process with path fixing and static file preservation
+npm run build
+node fix-js-paths.js
+node preserve-static.js
+
+# Deploy to Netlify
+netlify deploy --prod --dir=build
+
+echo "Deployment completed." 

@@ -1,18 +1,22 @@
 [build]
-  command = "node pure-build.js"
+  base = "."
   publish = "build"
+  command = "NODE_OPTIONS=--openssl-legacy-provider CI=false PUBLIC_URL=/ npm run build && node fix-js-paths.js && node preserve-static.js"
 
-# Completely disable all processing
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
+
 [build.processing]
   skip_processing = true
 
-# SPA redirect
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+[dev]
+  publish = "build"
+  functions = "netlify/functions"
+  port = 8888
+  framework = "#static"
 
-# API redirects for email endpoints
+# First ensure all API endpoints redirect properly
 [[redirects]]
   from = "/api/email/contact"
   to = "/.netlify/functions/send-contact-email"
@@ -23,17 +27,18 @@
   to = "/.netlify/functions/send-order-email"
   status = 200
 
-# Basic headers
+# Then handle SPA routing - this must be last!
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Add security headers
 [[headers]]
   for = "/*"
   [headers.values]
+    X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type" 
+    Referrer-Policy = "no-referrer-when-downgrade"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://firebasestorage.googleapis.com https://*.googleapis.com https://*.firebase.io;"

@@ -300,7 +300,7 @@ const Orders = () => {
       
       {firebaseUnavailable && (
         <div className="firebase-warning">
-          <p>⚠️ Could not connect to the database. Showing locally stored orders.</p>
+          <p><span role="img" aria-label="Warning">⚠️</span> Could not connect to the database. Showing locally stored orders.</p>
         </div>
       )}
       

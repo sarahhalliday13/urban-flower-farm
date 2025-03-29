@@ -342,6 +342,8 @@ const InventoryManager = () => {
 
   // Handle form field changes
   const handleChange = useCallback((plantId, field, value) => {
+    console.log(`Changing field ${field} for plant ${plantId} to value:`, value);
+    
     setEditValues(prev => ({
       ...prev,
       [plantId]: {
@@ -2378,7 +2380,7 @@ const InventoryManager = () => {
           
           {apiRetryCount > 0 && (
             <div className="api-warning">
-              <p>⚠️ API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
+              <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
             </div>
           )}
           
@@ -2410,7 +2412,7 @@ const InventoryManager = () => {
                     Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th className="sortable-header" onClick={() => handleSort('hidden')}>
-                    Hidden {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    Hidden Status {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
                   </th>
                   <th>Actions</th>
                 </tr>
@@ -2492,10 +2494,13 @@ const InventoryManager = () => {
                             <input
                               type="checkbox"
                               checked={editValues[plant.id]?.hidden || false}
-                              onChange={(e) => handleChange(plant.id, 'hidden', e.target.checked)}
+                              onChange={(e) => {
+                                const isChecked = e.target.checked;
+                                handleChange(plant.id, 'hidden', isChecked);
+                              }}
                             />
                           ) : (
-                            <span>{plant.hidden ? 'Yes' : 'No'}</span>
+                            <span>{plant.hidden ? 'Hidden' : 'Visible'}</span>
                           )}
                         </td>
                         <td data-label="Actions" className="action-buttons">
@@ -2551,7 +2556,7 @@ const InventoryManager = () => {
           {/* Firebase Storage Permission Warning */}
           {showFirebasePermissionWarning && (
             <div className="firebase-permission-warning">
-              <h3>⚠️ Firebase Storage Permission Issue</h3>
+              <h3><span role="img" aria-label="Warning">⚠️</span> Firebase Storage Permission Issue</h3>
               <p>There's a problem with Firebase Storage permissions. Your images are being saved locally in your browser instead.</p>
               <p>These local images will work for now, but:</p>
               <ul>
@@ -2688,13 +2693,14 @@ const InventoryManager = () => {
                   name="hidden"
                   checked={plantFormData.hidden}
                   onChange={(e) => {
+                    const isChecked = e.target.checked;
                     setPlantFormData(prev => ({
                       ...prev,
-                      hidden: e.target.checked
+                      hidden: isChecked
                     }));
                   }}
                 />
-                <label htmlFor="hidden">Hide from shop</label>
+                <label htmlFor="hidden">Hide from shop (clicking this hides the item from customers)</label>
               </div>
             </div>
             
