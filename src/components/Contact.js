@@ -73,6 +73,11 @@ function Contact() {
     }
     
     setIsSubmitting(true);
+    setFormStatus({
+      submitted: false,
+      error: null,
+      message: 'Sending message...'
+    });
     
     // Save customer data
     try {
@@ -93,21 +98,26 @@ function Contact() {
       // Send the form data
       const result = await sendContactFormEmail(formData);
       
-      // Show success message
-      setFormStatus({
-        submitted: true,
-        error: null,
-        message: result.message || 'Message sent successfully'
-      });
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: '',
-        message: ''
-      });
+      if (result.success) {
+        // Show success message
+        setFormStatus({
+          submitted: true,
+          error: null,
+          message: result.message || 'Message sent successfully'
+        });
+        
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        // Handle error from the email service
+        throw new Error(result.message || 'Failed to send message');
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setFormStatus({

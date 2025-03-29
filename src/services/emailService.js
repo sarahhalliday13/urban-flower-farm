@@ -1,100 +1,93 @@
 // const sgMail = require('@sendgrid/mail');
 
-// Determine API URL based on environment
-const isProduction = process.env.NODE_ENV === 'production';
-const API_URL = isProduction 
-  ? '' // Empty prefix for production - will use relative paths directly
-  : 'http://localhost:8888'; // For local dev testing with Netlify Dev
+// Get the API URL based on environment
+const getApiUrl = () => {
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  
+  // For local development, use the netlify dev server port 8888
+  if (isLocalDev) {
+    return 'http://localhost:8888/.netlify/functions';
+  }
+  
+  // For production, use the relative path to the Netlify functions
+  return '/.netlify/functions';
+};
 
-/**
- * Displays a success message to the user based on whether we're in dev or production
- * @param {Object} responseData - The data returned from the API
- * @param {boolean} isDevelopment - Whether we're in development mode
- * @returns {string} - A user-friendly message
- */
-const getSuccessMessage = (responseData, isDevelopment = false) => {
-  if (isDevelopment && responseData.message && responseData.message.includes('DEVELOPMENT MODE')) {
-    return 'Email sending simulated successfully (development mode)';
+// Success message helper
+const getSuccessMessage = (response) => {
+  // Check if this is a development mode simulated response
+  if (response?.message && response.message.includes('DEVELOPMENT MODE')) {
+    return 'Email simulated successfully in development mode';
   }
   return 'Email sent successfully';
 };
 
-/**
- * Sends order confirmation emails to customer and business owner
- * @param {Object} order - The order object containing all order information
- * @returns {Promise<boolean>} - True if emails sent successfully
- */
-export const sendOrderConfirmationEmails = async (order) => {
+// Send order confirmation emails
+export const sendOrderConfirmationEmails = async (orderData) => {
   try {
-    const endpoint = '/api/email/order';
-    console.log(`Sending order email to: ${API_URL}${endpoint}`);
+    const apiUrl = getApiUrl();
+    console.log(`Sending order email via: ${apiUrl}/send-order-email`);
     
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${apiUrl}/send-order-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(order)
+      body: JSON.stringify(orderData),
     });
-
-    const responseData = await response.json().catch(() => ({}));
-    console.log('Email API response:', responseData);
-
+    
+    const data = await response.json();
+    console.log('Order email API response:', data);
+    
     if (!response.ok) {
-      throw new Error(responseData.error || responseData.details || `Failed to send emails: ${response.status} ${response.statusText}`);
+      throw new Error(data.error || 'Failed to send order emails');
     }
-
-    // Check if this is a development mode simulated response
-    const isDevelopment = responseData.message && responseData.message.includes('DEVELOPMENT MODE');
-    console.log(isDevelopment ? 'Development mode email simulation' : 'Production email sent');
     
     return {
       success: true,
-      message: getSuccessMessage(responseData, isDevelopment),
-      data: responseData
+      message: getSuccessMessage(data),
+      data
     };
   } catch (error) {
-    console.error('Error sending order confirmation emails:', error);
-    throw error;
+    console.error('Error sending order emails:', error);
+    return {
+      success: false,
+      message: error.message || 'Failed to send order emails',
+    };
   }
 };
 
-/**
- * Sends contact form email to business owner
- * @param {Object} formData - The contact form data
- * @returns {Promise<boolean>} - True if email sent successfully
- */
+// Send contact form email
 export const sendContactFormEmail = async (formData) => {
   try {
-    const endpoint = '/api/email/contact';
-    console.log(`Sending contact form email to: ${API_URL}${endpoint}`);
+    const apiUrl = getApiUrl();
+    console.log(`Sending contact form email via: ${apiUrl}/send-contact-email`);
     
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    const response = await fetch(`${apiUrl}/send-contact-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData)
+      body: JSON.stringify(formData),
     });
-
-    const responseData = await response.json().catch(() => ({}));
-    console.log('Email API response:', responseData);
-
+    
+    const data = await response.json();
+    console.log('Contact form API response:', data);
+    
     if (!response.ok) {
-      throw new Error(responseData.error || responseData.details || `Failed to send email: ${response.status} ${response.statusText}`);
+      throw new Error(data.error || 'Failed to send contact form email');
     }
-
-    // Check if this is a development mode simulated response
-    const isDevelopment = responseData.message && responseData.message.includes('DEVELOPMENT MODE');
-    console.log(isDevelopment ? 'Development mode email simulation' : 'Production email sent');
     
     return {
       success: true,
-      message: getSuccessMessage(responseData, isDevelopment),
-      data: responseData
+      message: getSuccessMessage(data),
+      data
     };
   } catch (error) {
     console.error('Error sending contact form email:', error);
-    throw error; // Re-throw to handle in the component
+    return {
+      success: false,
+      message: error.message || 'Failed to send contact form email',
+    };
   }
 }; 
