@@ -26,7 +26,7 @@
   to = "/.netlify/functions/send-order-email"
   status = 200
 
-# Basic redirects - this should be last
+# SPA fallback - this needs to be before the catch-all redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
