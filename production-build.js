@@ -12,6 +12,12 @@ if (fs.existsSync('build')) {
   execSync('rm -rf build');
 }
 
+// Fix Firebase build issues
+console.log('Fixing Firebase build issues...');
+if (fs.existsSync('fix-firebase-build.js')) {
+  execSync('node fix-firebase-build.js', { stdio: 'inherit' });
+}
+
 // Run the build with TypeScript disabled
 console.log('Running build...');
 execSync('NODE_OPTIONS=--openssl-legacy-provider CI=false PUBLIC_URL=/ SKIP_PREFLIGHT_CHECK=true react-scripts build', { 

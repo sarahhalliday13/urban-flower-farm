@@ -35,6 +35,7 @@
   from = "/.netlify/functions/*"
   to = "/.netlify/functions/:splat"
   status = 200
+  force = true
 
 # Then handle SPA routing - this must be last!
 [[redirects]]

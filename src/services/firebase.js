@@ -1,3 +1,9 @@
+// Import firebase compatibility layer (only used in build)
+import firebaseCompat from './firebase-compat';
+
+// Use the imported firebase compat if firebase is not defined globally
+const firebase = window.firebase || firebaseCompat;
+
 // Firebase configuration and utility functions
 // 
 // CRITICAL: This application MUST use Firebase Storage URLs for all images.
