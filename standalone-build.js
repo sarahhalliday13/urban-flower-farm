@@ -387,6 +387,26 @@ try {
     console.log(`${colors.green}Removed tsconfig.json file${colors.reset}`);
   }
   
+  // Find and remove any TypeScript files (.ts or .tsx) from the project
+  console.log(`${colors.yellow}Removing any TypeScript files from the project...${colors.reset}`);
+  try {
+    const findTsFiles = execSync('find src -name "*.ts" -o -name "*.tsx"', { encoding: 'utf8' });
+    if (findTsFiles.trim()) {
+      const tsFiles = findTsFiles.trim().split('\n');
+      tsFiles.forEach(file => {
+        if (fs.existsSync(file)) {
+          console.log(`${colors.yellow}Removing TypeScript file: ${file}${colors.reset}`);
+          fs.unlinkSync(file);
+        }
+      });
+      console.log(`${colors.green}Removed all TypeScript files${colors.reset}`);
+    } else {
+      console.log(`${colors.green}No TypeScript files found${colors.reset}`);
+    }
+  } catch (err) {
+    console.error(`${colors.red}Error finding TypeScript files:${colors.reset}`, err);
+  }
+  
   // Execute the build command
   console.log(`${colors.yellow}Running build...${colors.reset}`);
   execSync('npm run build', { 
