@@ -404,6 +404,44 @@ try {
     }
   });
   
+  // Install TypeScript dependency
+  console.log(`${colors.yellow}Installing TypeScript...${colors.reset}`);
+  execSync('npm install --save-dev typescript@4.9.5', { 
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--openssl-legacy-provider'
+    }
+  });
+  
+  // Create a basic tsconfig.json file if it doesn't exist
+  const tsconfigPath = path.join(__dirname, 'tsconfig.json');
+  if (!fs.existsSync(tsconfigPath)) {
+    console.log(`${colors.yellow}Creating basic tsconfig.json...${colors.reset}`);
+    const tsConfig = {
+      "compilerOptions": {
+        "target": "es5",
+        "lib": ["dom", "dom.iterable", "esnext"],
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "forceConsistentCasingInFileNames": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "esnext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "noEmit": true,
+        "jsx": "react-jsx"
+      },
+      "include": ["src"]
+    };
+    fs.writeFileSync(tsconfigPath, JSON.stringify(tsConfig, null, 2));
+    console.log(`${colors.green}Created tsconfig.json${colors.reset}`);
+  }
+  
   // Execute the build command
   console.log(`${colors.yellow}Running build...${colors.reset}`);
   execSync('npm run build', { 
