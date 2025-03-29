@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, useContext } from 'react';
 /* eslint-disable no-unused-vars */
 import { 
   useNavigate,
@@ -154,14 +154,6 @@ const InventoryManager = () => {
   const [isUploadingAdditional, setIsUploadingAdditional] = useState(false);
   /* eslint-disable-next-line no-unused-vars */
   const [additionalUploadProgress, setAdditionalUploadProgress] = useState(0);
-
-  // Add repairStatus state near other state declarations (around line 50-70)
-  const [repairStatus, setRepairStatus] = useState({
-    loading: false,
-    success: false,
-    error: false,
-    message: ''
-  });
 
   // eslint-disable-next-line no-unused-vars
   const [useLocalStorage, setUseLocalStorage] = useState(false);
@@ -473,28 +465,88 @@ const InventoryManager = () => {
       'Low Stock': 0,
       'Sold Out': 0,
       'Coming Soon': 0,
-      'Pre-order': 0
+      'Pre-order': 0,
+      'Hidden': 0
     };
     
     // Count plants for each status
     plants.forEach(plant => {
       const status = plant.inventory?.status;
-      if (status === 'Pre-order' || status === 'Pre-Order') {
+      
+      // Count hidden plants separately
+      if (plant.hidden === true || plant.hidden === 'true') {
+        counts['Hidden']++;
+        counts['all']--; // Reduce total count for hidden plants in main filter
+        return;
+      }
+      
+      // Log for debugging
+      console.log(`Plant ${plant.id} (${plant.name}) has status: "${status}"`);
+      
+      if (!status) {
+        // If no status but has stock, count as In Stock
+        if (plant.inventory?.currentStock > 0) {
+          counts['In Stock']++;
+        } else {
+          // If no status and no stock, count as Sold Out
+          counts['Sold Out']++;
+        }
+      }
+      // Handle Pre-order case-insensitively
+      else if (status.toLowerCase() === 'pre-order') {
         counts['Pre-order']++;
-      } else if (status && counts[status] !== undefined) {
-        counts[status]++;
-      } else if (!status && plant.inventory?.currentStock > 0) {
-        counts['In Stock']++;
-      } else if (!status) {
+      }
+      // Handle Out of Stock as Sold Out
+      else if (status === 'Out of Stock') {
         counts['Sold Out']++;
+      }
+      // Handle other statuses directly
+      else if (counts[status] !== undefined) {
+        counts[status]++;
+      }
+      // Handle unknown status
+      else {
+        console.log(`Unknown status: ${status} for plant ${plant.id} (${plant.name})`);
       }
     });
     
+    console.log('Status counts:', counts);
     return counts;
   }, [plants]);
   
   // Get the counts for each status
   const statusCounts = useMemo(() => getStatusCounts(), [getStatusCounts]);
+
+  // Debug counts - check for plants that might be missing from the status counts
+  const debugCounts = useMemo(() => {
+    // Initialize counts
+    const counts = {
+      total: plants.length,
+      counted: 0,
+      hidden: 0,
+      byStatus: {}
+    };
+
+    // Count all plants by status and track hidden plants
+    plants.forEach(plant => {
+      const status = plant.inventory?.status || 'No Status';
+      
+      // Count hidden plants
+      if (plant.hidden === true || plant.hidden === 'true') {
+        counts.hidden++;
+        return;
+      }
+      
+      // Count by status
+      counts.byStatus[status] = (counts.byStatus[status] || 0) + 1;
+      counts.counted++;
+    });
+    
+    // Calculate unaccounted plants
+    counts.unaccounted = counts.total - counts.counted - counts.hidden;
+    
+    return counts;
+  }, [plants]);
 
   // Memoize the filtered plants to prevent unnecessary recalculations
   const filteredPlants = React.useMemo(() => {
@@ -503,6 +555,16 @@ const InventoryManager = () => {
     // Apply status filter
     if (filter !== 'all') {
       filtered = filtered.filter(plant => {
+        // Special case for Hidden filter
+        if (filter === 'Hidden') {
+          return plant.hidden === true || plant.hidden === 'true';
+        }
+        
+        // For all other filters, exclude hidden plants
+        if (plant.hidden === true || plant.hidden === 'true') {
+          return false;
+        }
+        
         if (!plant.inventory?.status) return false;
         
         // Handle Pre-order case specially
@@ -513,6 +575,11 @@ const InventoryManager = () => {
         // Include Low Stock in In Stock filter
         if (filter === 'In Stock') {
           return plant.inventory.status === 'In Stock' || plant.inventory.status === 'Low Stock';
+        }
+        
+        // Include Out of Stock in Sold Out filter 
+        if (filter === 'Sold Out') {
+          return plant.inventory.status === 'Sold Out' || plant.inventory.status === 'Out of Stock';
         }
         
         // Exact match on status for other cases
@@ -1743,77 +1810,6 @@ const InventoryManager = () => {
     window.dispatchEvent(event);
   };
 
-  /**
-   * Handle the repair of inventory data
-   */
-  const handleRepairInventory = async () => {
-    setRepairStatus({
-      loading: true,
-      success: false,
-      error: false,
-      message: 'Checking inventory data...'
-    });
-    
-    try {
-      const result = await repairInventoryData();
-      
-      if (result.success) {
-        setRepairStatus({
-          loading: false,
-          success: true,
-          error: false,
-          message: result.message
-        });
-        
-        // Refresh the plant data
-        handleLoadPlants(true);
-        
-        // Auto hide success message after 5 seconds
-        setTimeout(() => {
-          setRepairStatus(prev => ({
-            ...prev,
-            success: false,
-            message: ''
-          }));
-        }, 5000);
-      } else {
-        setRepairStatus({
-          loading: false,
-          success: false,
-          error: true,
-          message: result.message || 'Failed to repair inventory data'
-        });
-      }
-    } catch (error) {
-      console.error('Error repairing inventory:', error);
-      setRepairStatus({
-        loading: false,
-        success: false,
-        error: true,
-        message: `Error: ${error.message}`
-      });
-    }
-  };
-
-  // Helper function to detect and handle local image URLs - not being used so comment out or remove
-  /*
-  const getImageSrc = (url) => {
-    if (!url) return '';
-    if (url.startsWith('local:')) {
-      return url.substring(6); // Remove the "local:" prefix
-    }
-    return url;
-  };
-  */
-
-  // Modified to handle image rendering for both remote and local images - not being used so comment out or remove
-  /*
-  const renderImage = (imageSrc, alt, className) => {
-    if (!imageSrc) return null;
-    return <ImageWithFallback src={imageSrc} alt={alt} className={className} />;
-  };
-  */
-
   // Add useEffect to set up beforeunload event listener
   useEffect(() => {
     console.log("hasUnsavedChanges state updated:", hasUnsavedChanges);
@@ -1986,6 +1982,86 @@ const InventoryManager = () => {
     };
   }, [loadPlants, loading, plantsLoading]);
 
+  // Add a function to handle manual sync
+  const handleManualSync = async () => {
+    try {
+      // DEBUG: Log all plants and their statuses
+      console.log('DEBUG - All plants in database:');
+      const allPlants = await fetchPlants();
+      
+      // Count status types
+      const statusMap = {};
+      allPlants.forEach(plant => {
+        const status = plant.inventory?.status || 'Unknown';
+        statusMap[status] = (statusMap[status] || 0) + 1;
+      });
+      
+      console.log('DEBUG - Status counts:', statusMap);
+      
+      // Log each plant with Coming Soon, Pre-order, or Sold Out status
+      console.log('DEBUG - Coming Soon plants:');
+      allPlants.filter(p => p.inventory?.status === 'Coming Soon').forEach(p => 
+        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
+      );
+      
+      console.log('DEBUG - Pre-order plants:');
+      allPlants.filter(p => p.inventory?.status === 'Pre-order' || p.inventory?.status === 'Pre-Order').forEach(p => 
+        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
+      );
+      
+      console.log('DEBUG - Sold Out plants:');
+      allPlants.filter(p => p.inventory?.status === 'Sold Out').forEach(p => 
+        console.log(`${p.id}: ${p.name} - ${p.inventory?.status}`)
+      );
+
+      setSyncStatus(prev => ({
+        ...prev,
+        syncing: true,
+        message: 'Manual sync in progress...'
+      }));
+      
+      const queueStatus = await processSyncQueue();
+      
+      setSyncStatus({
+        syncing: false,
+        pendingUpdates: queueStatus.pendingCount || 0,
+        message: queueStatus.message || 'Manual sync complete',
+        lastSync: new Date().toISOString()
+      });
+      
+      // Show a success toast
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: `Database sync complete. ${queueStatus.pendingCount || 0} items remaining.`,
+          type: 'success',
+          duration: 3000
+        }
+      });
+      window.dispatchEvent(event);
+      
+      // Refresh plant data after sync
+      handleLoadPlants(true);
+    } catch (error) {
+      console.error('Error during manual sync:', error);
+      
+      setSyncStatus(prev => ({
+        ...prev,
+        syncing: false,
+        message: `Sync error: ${error.message}`
+      }));
+      
+      // Show error toast
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: `Sync error: ${error.message}`,
+          type: 'error',
+          duration: 5000
+        }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
   if (loading) return (
     <div className="inventory-loading">
       <div className="loading-spinner"></div>
@@ -2071,68 +2147,40 @@ const InventoryManager = () => {
                       <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
                       <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
                       <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
+                      <option value="Hidden">Hidden ({statusCounts['Hidden']})</option>
                     </select>
                   </div>
-                  <button
-                    className="repair-inventory-btn"
-                    onClick={async () => {
-                      try {
-                        setRepairStatus({
-                          loading: true,
-                          success: false,
-                          error: false,
-                          message: 'Fixing inventory statuses...'
-                        });
-                        
-                        const result = await repairInventoryData();
-                        
-                        if (result.success) {
-                          setRepairStatus({
-                            loading: false,
-                            success: true,
-                            error: false,
-                            message: result.message
-                          });
-                          
-                          // Show success toast
-                          const event = new CustomEvent('show-toast', {
-                            detail: {
-                              message: `Inventory repair complete: Fixed ${result.repairCount} plants with Unknown status`,
-                              type: 'success',
-                              duration: 5000
-                            }
-                          });
-                          window.dispatchEvent(event);
-                          
-                          // Refresh plants to show updated statuses
-                          handleLoadPlants(true);
-                        } else {
-                          throw new Error(result.message || 'Unknown error during repair');
-                        }
-                      } catch (error) {
-                        console.error('Error repairing inventory:', error);
-                        
-                        setRepairStatus({
-                          loading: false,
-                          success: false,
-                          error: true,
-                          message: `Error: ${error.message}`
-                        });
-                        
-                        // Show error toast
-                        const event = new CustomEvent('show-toast', {
-                          detail: {
-                            message: `Error repairing inventory: ${error.message}`,
-                            type: 'error',
-                            duration: 5000
-                          }
-                        });
-                        window.dispatchEvent(event);
-                      }
-                    }}
-                    disabled={repairStatus.loading}
+                  
+                  {/* Debug Info */}
+                  <div className="debug-info" style={{ fontSize: '0.8rem', marginLeft: '1rem', color: '#777' }}>
+                    <details>
+                      <summary>Debug Info</summary>
+                      <div style={{ padding: '0.5rem', background: '#f5f5f5', borderRadius: '4px' }}>
+                        <p>Total Plants: {debugCounts.total}</p>
+                        <p>Counted Plants: {debugCounts.counted}</p>
+                        <p>Hidden Plants: {debugCounts.hidden}</p>
+                        <p>Unaccounted: {debugCounts.unaccounted}</p>
+                        <hr/>
+                        <p>By Status:</p>
+                        <ul style={{ marginLeft: '1rem' }}>
+                          {Object.entries(debugCounts.byStatus).map(([status, count]) => (
+                            <li key={status}>{status}: {count}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </details>
+                  </div>
+                  
+                  <button 
+                    className="sync-db-button"
+                    onClick={handleManualSync}
+                    disabled={syncStatus.syncing}
+                    title="Force synchronization with the database"
                   >
-                    {repairStatus.loading ? 'Fixing...' : 'Fix Unknown Status'}
+                    {syncStatus.syncing ? 'Syncing...' : 'Sync DB'}
+                    {syncStatus.pendingUpdates > 0 && (
+                      <span className="sync-badge">{syncStatus.pendingUpdates}</span>
+                    )}
                   </button>
                 </>
               )}

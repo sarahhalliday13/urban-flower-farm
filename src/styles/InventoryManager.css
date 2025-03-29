@@ -1628,4 +1628,55 @@
   display: flex;
   align-items: center;
   margin-right: 10px;
+}
+
+.sync-db-button {
+  background-color: #2c5530;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  margin-left: 1rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.sync-db-button:hover {
+  background-color: #1f3d22;
+}
+
+.sync-db-button:disabled {
+  background-color: #4c7850;
+  cursor: not-allowed;
+}
+
+.sync-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #e71d36;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Add responsive styles */
+@media screen and (max-width: 768px) {
+  .sync-db-button {
+    margin-top: 0.5rem;
+    margin-left: 0;
+    width: 100%;
+  }
 } 
