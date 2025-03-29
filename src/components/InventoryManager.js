@@ -300,12 +300,23 @@ const InventoryManager = () => {
     // Initialize edit values with current plant values
     const plant = plants.find(p => p.id === plantId);
     if (plant) {
+      const currentStock = plant.inventory?.currentStock || 0;
+      
+      // Determine proper status if it's unknown
+      let status = plant.inventory?.status || 'Unknown';
+      if (status === 'Unknown') {
+        // Use the same logic as getDefaultStatusFromStock
+        if (currentStock <= 0) status = "Out of Stock";
+        else if (currentStock < 5) status = "Low Stock";
+        else status = "In Stock";
+      }
+      
       setEditValues(prev => ({
         ...prev,
         [plantId]: {
           price: plant.price || 0,
-          currentStock: plant.inventory?.currentStock || 0,
-          status: plant.inventory?.status || 'Unknown',
+          currentStock: currentStock,
+          status: status,
           restockDate: plant.inventory?.restockDate || '',
           notes: plant.inventory?.notes || '',
           featured: plant.featured === true || plant.featured === 'true',
@@ -357,49 +368,63 @@ const InventoryManager = () => {
     }));
     
     try {
-      // Get the edited values
-      const inventoryData = editValues[plantId];
-      const priceValue = inventoryData.price;
-      const featuredValue = inventoryData.featured;
-      const hiddenValue = inventoryData.hidden;
+      const plant = plants.find(p => p.id === plantId);
+      const updates = editValues[plantId];
       
-      // Call API to update inventory
-      const result = await updateInventory(plantId, inventoryData);
-      
-      // Find the original plant to ensure we preserve all its properties
-      const originalPlant = plants.find(p => p.id === plantId);
-      
-      // Update plant data in context - only update specific fields
-      const updatedPlant = {
-        ...originalPlant, // Keep ALL original properties including images
-        price: priceValue,
-        featured: featuredValue,
-        hidden: hiddenValue,
-        inventory: {
-          ...originalPlant?.inventory,
-          currentStock: inventoryData.currentStock,
-          status: inventoryData.status,
-          restockDate: inventoryData.restockDate,
-          notes: inventoryData.notes
-        }
-      };
-      
-      // Ensure image data is preserved explicitly
-      if (originalPlant) {
-        // Make sure these properties are explicitly preserved
-        updatedPlant.mainImage = originalPlant.mainImage;
-        updatedPlant.images = originalPlant.images;
-        updatedPlant.additionalImages = originalPlant.additionalImages;
+      if (!plant || !updates) {
+        throw new Error('Invalid plant or update data');
       }
       
-      // Update plants state using the context's updatePlantData function
-      updatePlantData(updatedPlant);
+      // Ensure currentStock is a number
+      const currentStock = parseInt(updates.currentStock) || 0;
+      
+      // Auto-determine status based on stock if status is Unknown
+      let status = updates.status;
+      if (!status || status === 'Unknown') {
+        // Use the same logic as getDefaultStatusFromStock
+        if (currentStock <= 0) status = "Out of Stock";
+        else if (currentStock < 5) status = "Low Stock";
+        else status = "In Stock";
+      }
+      
+      // Prepare the updated data
+      const updatedInventory = {
+        currentStock,
+        status,
+        restockDate: updates.restockDate || '',
+        notes: updates.notes || '',
+        lastUpdated: new Date().toISOString()
+      };
+      
+      // Update plant price and featured status
+      const updatedPlant = {
+        ...plant,
+        price: updates.price,
+        featured: updates.featured,
+        hidden: updates.hidden,
+        inventory: updatedInventory
+      };
+      
+      // Update the plant in the database
+      await updatePlant(plantId, updatedPlant);
+      
+      // Also update in AdminContext if available
+      if (typeof updatePlantData === 'function') {
+        updatePlantData(updatedPlant);
+      }
       
       // Set success status
       setSaveStatus(prev => ({
         ...prev,
         [plantId]: 'success'
       }));
+      
+      // Exit edit mode
+      setEditMode(prev => {
+        const newState = { ...prev };
+        delete newState[plantId];
+        return newState;
+      });
       
       // Clear success message after a delay
       setTimeout(() => {
@@ -409,17 +434,8 @@ const InventoryManager = () => {
           return newState;
         });
       }, 3000);
-      
-      // Exit edit mode
-      setEditMode(prev => {
-        const newState = { ...prev };
-        delete newState[plantId];
-        return newState;
-      });
-      
-      return result;
     } catch (error) {
-      console.error('Error updating inventory:', error);
+      console.error('Error saving plant:', error);
       
       // Set error status
       setSaveStatus(prev => ({
@@ -2057,6 +2073,67 @@ const InventoryManager = () => {
                       <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
                     </select>
                   </div>
+                  <button
+                    className="repair-inventory-btn"
+                    onClick={async () => {
+                      try {
+                        setRepairStatus({
+                          loading: true,
+                          success: false,
+                          error: false,
+                          message: 'Fixing inventory statuses...'
+                        });
+                        
+                        const result = await repairInventoryData();
+                        
+                        if (result.success) {
+                          setRepairStatus({
+                            loading: false,
+                            success: true,
+                            error: false,
+                            message: result.message
+                          });
+                          
+                          // Show success toast
+                          const event = new CustomEvent('show-toast', {
+                            detail: {
+                              message: `Inventory repair complete: Fixed ${result.repairCount} plants with Unknown status`,
+                              type: 'success',
+                              duration: 5000
+                            }
+                          });
+                          window.dispatchEvent(event);
+                          
+                          // Refresh plants to show updated statuses
+                          handleLoadPlants(true);
+                        } else {
+                          throw new Error(result.message || 'Unknown error during repair');
+                        }
+                      } catch (error) {
+                        console.error('Error repairing inventory:', error);
+                        
+                        setRepairStatus({
+                          loading: false,
+                          success: false,
+                          error: true,
+                          message: `Error: ${error.message}`
+                        });
+                        
+                        // Show error toast
+                        const event = new CustomEvent('show-toast', {
+                          detail: {
+                            message: `Error repairing inventory: ${error.message}`,
+                            type: 'error',
+                            duration: 5000
+                          }
+                        });
+                        window.dispatchEvent(event);
+                      }
+                    }}
+                    disabled={repairStatus.loading}
+                  >
+                    {repairStatus.loading ? 'Fixing...' : 'Fix Unknown Status'}
+                  </button>
                 </>
               )}
             </div>
