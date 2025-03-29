@@ -52,6 +52,3 @@
     Referrer-Policy = "no-referrer-when-downgrade"
     Content-Security-Policy = "default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; connect-src * 'self' wss://*.firebaseio.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com data:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';"
     Access-Control-Allow-Origin = "*"
-
-[[plugins]]
-  package = "@netlify/plugin-gatsby"
