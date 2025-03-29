@@ -2,6 +2,83 @@
 // Add this to your page to test Firebase connectivity directly
 
 (function() {
+  // Immediately add a visible button before any other code
+  const toggleButton = document.createElement('button');
+  toggleButton.textContent = 'SHOW FIREBASE TESTS';
+  toggleButton.style.position = 'fixed';
+  toggleButton.style.top = '10px';
+  toggleButton.style.right = '10px';
+  toggleButton.style.zIndex = '10000';
+  toggleButton.style.backgroundColor = 'red';
+  toggleButton.style.color = 'white';
+  toggleButton.style.padding = '10px';
+  toggleButton.style.border = 'none';
+  toggleButton.style.borderRadius = '5px';
+  toggleButton.style.fontWeight = 'bold';
+  toggleButton.style.cursor = 'pointer';
+  
+  document.body.appendChild(toggleButton);
+  
+  // Create a very visible debug container
+  const debugContainer = document.createElement('div');
+  debugContainer.id = 'firebase-test-container';
+  debugContainer.style.position = 'fixed';
+  debugContainer.style.top = '50%';
+  debugContainer.style.left = '50%';
+  debugContainer.style.transform = 'translate(-50%, -50%)';
+  debugContainer.style.width = '80%';
+  debugContainer.style.maxHeight = '80%';
+  debugContainer.style.overflowY = 'auto';
+  debugContainer.style.backgroundColor = 'rgba(0,0,0,0.9)';
+  debugContainer.style.color = '#fff';
+  debugContainer.style.padding = '20px';
+  debugContainer.style.borderRadius = '10px';
+  debugContainer.style.fontFamily = 'monospace';
+  debugContainer.style.fontSize = '14px';
+  debugContainer.style.zIndex = '9999';
+  debugContainer.style.boxShadow = '0 0 20px 5px rgba(255,0,0,0.5)';
+  debugContainer.style.border = '3px solid red';
+  debugContainer.style.display = 'none'; // Hidden by default
+  
+  // Add a header to the debug container
+  const header = document.createElement('div');
+  header.style.fontWeight = 'bold';
+  header.style.marginBottom = '15px';
+  header.style.fontSize = '18px';
+  header.style.textAlign = 'center';
+  header.style.borderBottom = '2px solid red';
+  header.style.paddingBottom = '10px';
+  header.textContent = 'FIREBASE CONNECTIVITY TEST RESULTS';
+  debugContainer.appendChild(header);
+  
+  // Add close button
+  const closeButton = document.createElement('button');
+  closeButton.textContent = 'X';
+  closeButton.style.position = 'absolute';
+  closeButton.style.top = '10px';
+  closeButton.style.right = '10px';
+  closeButton.style.background = 'red';
+  closeButton.style.color = 'white';
+  closeButton.style.border = 'none';
+  closeButton.style.borderRadius = '50%';
+  closeButton.style.width = '30px';
+  closeButton.style.height = '30px';
+  closeButton.style.cursor = 'pointer';
+  closeButton.style.fontWeight = 'bold';
+  debugContainer.appendChild(closeButton);
+  
+  document.body.appendChild(debugContainer);
+  
+  // Toggle visibility when button is clicked
+  toggleButton.addEventListener('click', () => {
+    debugContainer.style.display = 'block';
+  });
+  
+  // Hide when close button is clicked
+  closeButton.addEventListener('click', () => {
+    debugContainer.style.display = 'none';
+  });
+  
   console.log("Firebase comprehensive test script running");
   
   // Force Firebase configuration
@@ -22,34 +99,6 @@
     warn: console.warn
   };
   
-  // Create a log container that will be visible on the page
-  const debugContainer = document.createElement('div');
-  debugContainer.style.position = 'fixed';
-  debugContainer.style.bottom = '10px';
-  debugContainer.style.right = '10px';
-  debugContainer.style.width = '400px';
-  debugContainer.style.maxHeight = '300px';
-  debugContainer.style.overflowY = 'auto';
-  debugContainer.style.backgroundColor = 'rgba(0,0,0,0.8)';
-  debugContainer.style.color = '#fff';
-  debugContainer.style.padding = '10px';
-  debugContainer.style.borderRadius = '5px';
-  debugContainer.style.fontFamily = 'monospace';
-  debugContainer.style.fontSize = '12px';
-  debugContainer.style.zIndex = '9999';
-  
-  // Add a header to the debug container
-  const header = document.createElement('div');
-  header.style.fontWeight = 'bold';
-  header.style.marginBottom = '5px';
-  header.textContent = 'Firebase Connectivity Tests';
-  debugContainer.appendChild(header);
-  
-  // Only add the container after the DOM is fully loaded
-  window.addEventListener('DOMContentLoaded', () => {
-    document.body.appendChild(debugContainer);
-  });
-  
   // Helper function to log messages to both console and container
   function logMessage(type, ...args) {
     const message = args.map(arg => 
@@ -61,12 +110,19 @@
     
     // Log to container
     const logEntry = document.createElement('div');
-    logEntry.style.marginBottom = '3px';
-    logEntry.style.borderLeft = type === 'error' ? '3px solid red' : 
-                              type === 'warn' ? '3px solid orange' : '3px solid green';
-    logEntry.style.paddingLeft = '5px';
+    logEntry.style.marginBottom = '5px';
+    logEntry.style.borderLeft = type === 'error' ? '5px solid red' : 
+                             type === 'warn' ? '5px solid orange' : '5px solid green';
+    logEntry.style.paddingLeft = '10px';
+    logEntry.style.paddingTop = '5px';
+    logEntry.style.paddingBottom = '5px';
     logEntry.textContent = message;
     debugContainer.appendChild(logEntry);
+    
+    // Show container automatically when errors occur
+    if (type === 'error') {
+      debugContainer.style.display = 'block';
+    }
   }
   
   // Override console methods to capture logs
@@ -208,6 +264,20 @@
         console.log("All Firebase connectivity tests passed!");
       } else {
         console.warn("Some Firebase connectivity tests failed.");
+        // Auto-show the results panel if there are errors
+        debugContainer.style.display = 'block';
+      }
+      
+      // Blink the button if there were errors
+      if (errorCount > 0) {
+        let isVisible = true;
+        const blinkInterval = setInterval(() => {
+          toggleButton.style.visibility = isVisible ? 'visible' : 'hidden';
+          isVisible = !isVisible;
+        }, 500);
+        
+        // Stop blinking after 10 seconds
+        setTimeout(() => clearInterval(blinkInterval), 10000);
       }
     }, 5000);
   })
@@ -218,6 +288,8 @@
     // Still show summary if script loading fails
     setTimeout(() => {
       console.log(`Tests completed: ${successCount} successful, ${errorCount} failed`);
+      // Auto-show the results panel if there are errors
+      debugContainer.style.display = 'block';
     }, 5000);
   });
   
