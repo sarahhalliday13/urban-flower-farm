@@ -1,14 +1,14 @@
 [build]
-  command = "npm install --legacy-peer-deps && CI=false npm run build"
+  command = "npm ci && CI=false npm run netlify:build"
   publish = "build"
 
 # Branch-specific build settings
 [context.branch-deploy]
-  command = "npm install --legacy-peer-deps && CI=false npm run build"
+  command = "npm ci && CI=false npm run netlify:build"
   environment = { NODE_ENV = "development" }
 
 [context.deploy-preview]
-  command = "npm install --legacy-peer-deps && CI=false npm run build"
+  command = "npm ci && CI=false npm run netlify:build"
   environment = { NODE_ENV = "development" }
 
 # This ensures all deployments go to your specific site
