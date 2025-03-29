@@ -29,21 +29,11 @@
 [site]
   id = "154b08a8-604f-4470-abe2-9044f1dc21fe"
 
-# SPA Settings
+# Completely disable Netlify processing
 [build.processing]
-  skip_processing = false
-[build.processing.html]
-  pretty_urls = false
-[build.processing.css]
-  bundle = false
-  minify = false
-[build.processing.js]
-  bundle = false
-  minify = false
-[build.processing.images]
-  compress = false
+  skip_processing = true
 
-# SPA fallback - this needs to be before the catch-all redirect
+# SPA fallback redirect
 [[redirects]]
   from = "/*"
   to = "/index.html"
