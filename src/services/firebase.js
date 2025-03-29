@@ -908,10 +908,16 @@ export const repairInventoryData = async () => {
       
       // Check if status needs repair
       const inventory = inventoryData[plantId];
-      const expectedStatus = getDefaultStatusFromStock(inventory.currentStock);
       
-      // Check if status is missing, unknown, or doesn't match expected status based on current stock
-      if (!inventory.status || inventory.status === "Unknown" || inventory.status !== expectedStatus) {
+      // Skip "Coming Soon" items - preserve their status regardless of stock
+      if (inventory.status === "Coming Soon") {
+        return;
+      }
+      
+      // Check if status is missing or Unknown - only fix Unknown status
+      if (!inventory.status || inventory.status === "Unknown") {
+        const expectedStatus = getDefaultStatusFromStock(inventory.currentStock);
+        
         // Fix the status based on stock level
         const inventoryRef = ref(database, `inventory/${plantId}`);
         
