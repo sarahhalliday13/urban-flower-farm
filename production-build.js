@@ -55,6 +55,12 @@ if (fs.existsSync('inject-firebase-fix.js')) {
   execSync('node inject-firebase-fix.js', { stdio: 'inherit' });
 }
 
+// Inject direct Firebase test button
+console.log('Injecting direct Firebase test button...');
+if (fs.existsSync('direct-inject.js')) {
+  execSync('node direct-inject.js', { stdio: 'inherit' });
+}
+
 // Preserve static files
 console.log('Preserving static files...');
 if (fs.existsSync('preserve-static.js')) {
