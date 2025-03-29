@@ -30,13 +30,6 @@
   to = "/.netlify/functions/send-order-email"
   status = 200
 
-# Direct paths to Netlify functions - ensures compatibility with fix
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  force = true
-
 # Then handle SPA routing - this must be last!
 [[redirects]]
   from = "/*"
