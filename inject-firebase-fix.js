@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Script to inject the firebase-fix.js script into the index.html file of the production build
+// Script to inject the firebase fix and test scripts into the index.html file
 const fs = require('fs');
 const path = require('path');
 
-console.log('Injecting simple Firebase fix script into index.html...');
+console.log('Injecting Firebase scripts into index.html...');
 
 const buildPath = path.join(__dirname, 'build');
 const indexPath = path.join(buildPath, 'index.html');
@@ -32,19 +32,39 @@ if (!fs.existsSync(firebaseFixPath)) {
 fs.copyFileSync(firebaseFixPath, firebaseFixDestPath);
 console.log('Copied simple Firebase fix script to build directory.');
 
+// Copy the firebase test script to the build directory
+const firebaseTestPath = path.join(__dirname, 'firebase-test.js');
+const firebaseTestDestPath = path.join(buildPath, 'firebase-test.js');
+
+if (!fs.existsSync(firebaseTestPath)) {
+  console.error('firebase-test.js file not found in root directory.');
+  process.exit(1);
+}
+
+fs.copyFileSync(firebaseTestPath, firebaseTestDestPath);
+console.log('Copied Firebase test script to build directory.');
+
 // Read the index.html file
 let indexHtml = fs.readFileSync(indexPath, 'utf8');
 
-// Check if the script is already injected
+// Check if the fix script is already injected
 if (indexHtml.includes('firebase-fix.js')) {
   console.log('firebase-fix.js is already included in index.html.');
 } else {
-  // Inject the script tag at the beginning of the head section with defer=false and async=false to ensure it runs first
+  // Inject the fix script tag at the beginning of the head section
   indexHtml = indexHtml.replace('<head>', '<head>\n  <script src="/firebase-fix.js" defer="false" async="false"></script>');
-  
-  // Write the updated index.html file
-  fs.writeFileSync(indexPath, indexHtml);
   console.log('Injected simple Firebase fix into index.html.');
 }
 
-console.log('Firebase fix script injection completed successfully!'); 
+// Check if the test script is already injected
+if (indexHtml.includes('firebase-test.js')) {
+  console.log('firebase-test.js is already included in index.html.');
+} else {
+  // Inject the test script tag at the end of the body section
+  indexHtml = indexHtml.replace('</body>', '  <script src="/firebase-test.js"></script>\n</body>');
+  console.log('Injected Firebase test script into index.html.');
+}
+
+// Write the updated index.html file
+fs.writeFileSync(indexPath, indexHtml);
+console.log('Firebase scripts injection completed successfully!'); 
