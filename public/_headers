@@ -1,0 +1,6 @@
+/*
+  Content-Security-Policy: default-src 'self' https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com wss://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebase.com https://*.firebasedatabase.app https://*.googleapis.com https://www.gstatic.com https://*.google.com data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com wss://buttonsflowerfarm-8a54d-default-rtdb.firebaseio.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebase.com https://*.googleapis.com https://*.google.com data:; script-src 'self' https://*.firebaseio.com https://*.firebase.com https://*.googleapis.com https://www.gstatic.com 'unsafe-inline' 'unsafe-eval'; frame-src 'self' https://*.firebaseio.com https://*.firebase.com; img-src 'self' https://*.firebaseio.com https://*.firebase.com data: blob:; font-src 'self' data:; style-src 'self' 'unsafe-inline';
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer-when-downgrade
+*/ 
