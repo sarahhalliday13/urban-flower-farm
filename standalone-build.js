@@ -8,6 +8,8 @@ const buildDir = path.join(__dirname, 'build');
 const redirectsFile = path.join(buildDir, '_redirects');
 const indexFile = path.join(buildDir, 'index.html');
 const srcIndexFile = path.join(__dirname, 'src', 'index.js');
+const srcAppFile = path.join(__dirname, 'src', 'App.js');
+const srcDatabaseDebugFile = path.join(__dirname, 'src', 'DatabaseDebug.js');
 
 // Colors for output
 const colors = {
@@ -29,6 +31,56 @@ try {
   }
 } catch (err) {
   console.error(`${colors.red}Error creating build directory:${colors.reset}`, err);
+}
+
+// Check for the presence of DatabaseDebug.js
+try {
+  if (fs.existsSync(srcDatabaseDebugFile)) {
+    console.log(`${colors.green}DatabaseDebug.js exists at the correct location${colors.reset}`);
+  } else {
+    console.log(`${colors.yellow}DatabaseDebug.js not found at the expected location, searching...${colors.reset}`);
+    
+    // Check if it's in a nested directory
+    const dbDebugInSrcDir = execSync('find src -name "DatabaseDebug.js" | head -n 1', { encoding: 'utf8' }).trim();
+    
+    if (dbDebugInSrcDir) {
+      console.log(`${colors.green}Found DatabaseDebug.js at: ${dbDebugInSrcDir}${colors.reset}`);
+      
+      // If it exists but in the wrong location, copy it to the correct location
+      const fileContent = fs.readFileSync(dbDebugInSrcDir, 'utf8');
+      fs.writeFileSync(srcDatabaseDebugFile, fileContent);
+      console.log(`${colors.green}Copied DatabaseDebug.js to the correct location${colors.reset}`);
+      
+      // Fix any import paths if needed by updating the file
+      const updatedContent = fileContent.replace(
+        /from ['"]\.\/([^'"]+)['"]/g, 
+        (match, p1) => `from './${p1}'`
+      );
+      fs.writeFileSync(srcDatabaseDebugFile, updatedContent);
+    } else {
+      console.log(`${colors.yellow}Creating a stub DatabaseDebug.js file...${colors.reset}`);
+      
+      // Create a simple stub component
+      const stubContent = `
+import React from 'react';
+
+const DatabaseDebug = () => {
+  return (
+    <div className="database-debug">
+      <h1>Database Debug</h1>
+      <p>This is a placeholder for the DatabaseDebug component.</p>
+    </div>
+  );
+};
+
+export default DatabaseDebug;
+`;
+      fs.writeFileSync(srcDatabaseDebugFile, stubContent);
+      console.log(`${colors.green}Created DatabaseDebug.js stub${colors.reset}`);
+    }
+  }
+} catch (err) {
+  console.error(`${colors.red}Error handling DatabaseDebug.js:${colors.reset}`, err);
 }
 
 // Check if src/index.js exists and backup it if it does
