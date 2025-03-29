@@ -387,6 +387,40 @@ try {
     console.log(`${colors.green}Removed tsconfig.json file${colors.reset}`);
   }
   
+  // Check package.json for any issues
+  console.log(`${colors.yellow}Checking package.json for potential issues...${colors.reset}`);
+  try {
+    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+    
+    // Check for React version
+    if (packageJson.dependencies && packageJson.dependencies.react) {
+      console.log(`${colors.green}React version: ${packageJson.dependencies.react}${colors.reset}`);
+    }
+    
+    // Check for TypeScript
+    if (packageJson.dependencies && packageJson.dependencies.typescript) {
+      console.log(`${colors.yellow}WARNING: TypeScript is still in dependencies: ${packageJson.dependencies.typescript}${colors.reset}`);
+    }
+    
+    // Check for @types packages
+    const typesPackages = Object.keys(packageJson.dependencies || {})
+      .concat(Object.keys(packageJson.devDependencies || {}))
+      .filter(pkg => pkg.startsWith('@types/'));
+    
+    if (typesPackages.length > 0) {
+      console.log(`${colors.yellow}WARNING: @types packages still present: ${typesPackages.join(', ')}${colors.reset}`);
+    }
+    
+    // Check if build script exists
+    if (packageJson.scripts && packageJson.scripts.build) {
+      console.log(`${colors.green}Build script: ${packageJson.scripts.build}${colors.reset}`);
+    } else {
+      console.log(`${colors.red}ERROR: No build script defined in package.json${colors.reset}`);
+    }
+  } catch (err) {
+    console.error(`${colors.red}Error checking package.json:${colors.reset}`, err);
+  }
+  
   // Find and remove any TypeScript files (.ts or .tsx) from the project
   console.log(`${colors.yellow}Removing any TypeScript files from the project...${colors.reset}`);
   try {
@@ -414,10 +448,12 @@ try {
     env: {
       ...process.env,
       CI: 'false',
+      NODE_ENV: 'production',
       SKIP_PREFLIGHT_CHECK: 'true',
       NODE_OPTIONS: '--openssl-legacy-provider',
       PUBLIC_URL: '/',
-      DISABLE_ESLINT_PLUGIN: 'true' // Disable eslint to avoid typescript errors
+      DISABLE_ESLINT_PLUGIN: 'true', // Disable eslint to avoid typescript errors
+      GENERATE_SOURCEMAP: 'false' // Disable source maps to speed up build
     }
   });
   
@@ -440,6 +476,40 @@ try {
 if (!fs.existsSync(indexFile)) {
   console.error(`${colors.red}index.html not found in build directory${colors.reset}`);
   process.exit(1);
+}
+
+// Check if index.html references JS files
+try {
+  console.log(`${colors.yellow}Checking index.html for JavaScript references...${colors.reset}`);
+  const indexHtmlContent = fs.readFileSync(indexFile, 'utf8');
+  
+  // Check for script tags referencing files in static/js
+  const scriptRegex = /<script[^>]*src="([^"]*static\/js\/[^"]*)"[^>]*>/g;
+  const scriptMatches = [...indexHtmlContent.matchAll(scriptRegex)];
+  
+  if (scriptMatches.length === 0) {
+    console.log(`${colors.red}WARNING: No references to static/js files found in index.html${colors.reset}`);
+    
+    // Look for any script tags
+    const anyScriptRegex = /<script[^>]*src="([^"]*)"[^>]*>/g;
+    const anyScriptMatches = [...indexHtmlContent.matchAll(anyScriptRegex)];
+    
+    if (anyScriptMatches.length === 0) {
+      console.log(`${colors.red}ERROR: No script tags found in index.html${colors.reset}`);
+    } else {
+      console.log(`${colors.yellow}Found script references to:${colors.reset}`);
+      anyScriptMatches.forEach(match => {
+        console.log(`  - ${match[1]}`);
+      });
+    }
+  } else {
+    console.log(`${colors.green}Found ${scriptMatches.length} references to static/js files:${colors.reset}`);
+    scriptMatches.forEach(match => {
+      console.log(`  - ${match[1]}`);
+    });
+  }
+} catch (err) {
+  console.error(`${colors.red}Error checking index.html:${colors.reset}`, err);
 }
 
 // Check if the static directory exists and has files
@@ -468,6 +538,25 @@ if (fs.existsSync(staticDir)) {
   staticFiles.forEach(file => {
     console.log(`${file}`);
   });
+  
+  // Specifically check the contents of the static/js directory
+  const jsDir = path.join(staticDir, 'js');
+  if (fs.existsSync(jsDir)) {
+    console.log(`\n${colors.bright}${colors.blue}Contents of static/js directory:${colors.reset}`);
+    const jsFiles = fs.readdirSync(jsDir);
+    
+    if (jsFiles.length === 0) {
+      console.log(`${colors.red}No JavaScript files found in static/js directory!${colors.reset}`);
+    } else {
+      jsFiles.forEach(file => {
+        const stats = fs.statSync(path.join(jsDir, file));
+        console.log(`${file} (${stats.size} bytes)`);
+      });
+      console.log(`${colors.green}Total JavaScript files: ${jsFiles.length}${colors.reset}`);
+    }
+  } else {
+    console.log(`${colors.red}static/js directory not found!${colors.reset}`);
+  }
 }
 
 // Restore the original src/index.js from backup
