@@ -9,10 +9,10 @@
     .filter(meta => meta.httpEquiv === 'Content-Security-Policy')
     .forEach(meta => meta.remove());
   
-  // Add extremely permissive CSP that allows everything
+  // Add specific CSP that allows Firebase connections
   const meta = document.createElement('meta');
   meta.httpEquiv = 'Content-Security-Policy';
-  meta.content = "default-src * ws: wss: 'unsafe-inline' 'unsafe-eval' blob: data:; script-src * 'unsafe-inline' 'unsafe-eval'; connect-src * ws: wss:; img-src * data: blob:; frame-src *; style-src * 'unsafe-inline';";
+  meta.content = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com; connect-src 'self' wss://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com https://*.firebaseio.com; img-src 'self' data: blob: https://*.firebasestorage.googleapis.com; frame-src 'self'; style-src 'self' 'unsafe-inline';";
   document.head.insertBefore(meta, document.head.firstChild);
   
   // Add Access-Control-Allow-Origin meta tag

@@ -39,8 +39,8 @@ let indexHtml = fs.readFileSync(indexPath, 'utf8');
 if (indexHtml.includes('firebase-fix.js')) {
   console.log('firebase-fix.js is already included in index.html.');
 } else {
-  // Inject the script tag at the beginning of the head section
-  indexHtml = indexHtml.replace('<head>', '<head>\n  <script src="/firebase-fix.js"></script>');
+  // Inject the script tag at the beginning of the head section with defer=false and async=false to ensure it runs first
+  indexHtml = indexHtml.replace('<head>', '<head>\n  <script src="/firebase-fix.js" defer="false" async="false"></script>');
   
   // Write the updated index.html file
   fs.writeFileSync(indexPath, indexHtml);
