@@ -134,63 +134,91 @@ const createLocalImageUrl = (file) => {
  * Fetch all plants data from Firebase
  * @returns {Promise<Array>} Array of plant objects
  */
-export const fetchPlants = async () => {
+export const fetchPlants = async (orderBy = null, filterBy = null) => {
+  console.log('[production] fetchPlants - Starting to fetch plants from Firebase');
+  
   try {
-    const environment = process.env.NODE_ENV;
-    console.log(`[${environment}] fetchPlants - Starting to fetch plants from Firebase`);
-    console.log(`[${environment}] fetchPlants - Database URL:`, process.env.REACT_APP_FIREBASE_DATABASE_URL);
+    // Log Firebase database initialization
+    console.log('[production] fetchPlants - Database URL:', 
+      firebase?.database?.()?.ref?.().toString() || 'Firebase database not initialized');
     
-    console.log(`[${environment}] fetchPlants - Getting plants snapshot...`);
-    const plantsSnapshot = await get(ref(database, 'plants'));
-    console.log(`[${environment}] fetchPlants - Plants snapshot exists:`, plantsSnapshot.exists());
-    
-    console.log(`[${environment}] fetchPlants - Getting inventory snapshot...`);
-    const inventorySnapshot = await get(ref(database, 'inventory'));
-    console.log(`[${environment}] fetchPlants - Inventory snapshot exists:`, inventorySnapshot.exists());
-    
-    if (!plantsSnapshot.exists()) {
-      console.log(`[${environment}] fetchPlants - No plants data found in Firebase`);
-      return [];
-    }
-    
-    const plantsData = plantsSnapshot.val();
-    console.log(`[${environment}] fetchPlants - Plants data keys:`, Object.keys(plantsData || {}).length);
-    
-    const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
-    console.log(`[${environment}] fetchPlants - Inventory data keys:`, Object.keys(inventoryData || {}).length);
-    
-    // Convert the object to an array and add inventory data
-    const plantsArray = Object.keys(plantsData).map(key => {
-      const plant = plantsData[key];
-      const plantId = plant.id || key;
-      
-      return {
-        ...plant,
-        id: plantId, // Use the plant's ID or the Firebase key
-        inventory: inventoryData[plantId] || {
-          currentStock: 0,
-          status: "Unknown",
-          restockDate: "",
-          notes: ""
-        }
-      };
+    // Set a timeout for the operation
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Firebase fetch timed out after 10 seconds')), 10000);
     });
     
-    console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
-    // Log a sample plant for verification
-    if (plantsArray.length > 0) {
-      console.log(`[${environment}] fetchPlants - Sample plant:`, 
-        {name: plantsArray[0].name, id: plantsArray[0].id, hasInventory: !!plantsArray[0].inventory});
+    // Debug - check if we're using the correct Firebase config
+    console.log('[production] Firebase config check:', {
+      apiKey: firebase.app().options?.apiKey ? 'Present' : 'Missing',
+      databaseURL: firebase.app().options?.databaseURL,
+      projectId: firebase.app().options?.projectId,
+    });
+    
+    let plantsData = {};
+    
+    // Try to use the Promise.race to handle timeouts better
+    await Promise.race([
+      (async () => {
+        console.log('[production] fetchPlants - Getting plants snapshot...');
+        
+        // Create a reference to the plants data
+        const plantsRef = ref(database, 'plants');
+        
+        // Debug - Log the reference information
+        console.log('[production] Plants reference:', plantsRef.toString());
+        
+        // Try to get a snapshot of the data
+        const snapshot = await get(plantsRef);
+        console.log('[production] Snapshot received, exists:', snapshot.exists());
+        
+        if (snapshot.exists()) {
+          plantsData = snapshot.val();
+          console.log(`[production] Found ${Object.keys(plantsData).length} plants in Firebase`);
+        } else {
+          console.log('[production] No plants found in Firebase');
+        }
+      })(),
+      timeoutPromise
+    ]);
+    
+    // If we got here, the Firebase request was successful
+    // Convert the plantsData object to an array for easier processing
+    let plants = Object.keys(plantsData).map(key => {
+      return { id: key, ...plantsData[key] };
+    });
+    
+    // Apply any ordering
+    if (orderBy) {
+      // Code for ordering plants...
     }
     
-    return plantsArray;
-  } catch (error) {
-    console.error(`[${process.env.NODE_ENV}] Error fetching plants from Firebase:`, error);
-    console.error(`[${process.env.NODE_ENV}] Error details:`, error.code, error.message, error.stack);
+    // Apply any filtering
+    if (filterBy) {
+      // Code for filtering plants...
+    }
     
-    // Check if it's a Firebase error and log additional details
-    if (error.code) {
-      console.error(`[${process.env.NODE_ENV}] Firebase error code:`, error.code);
+    // Return the plants array
+    return plants;
+    
+  } catch (error) {
+    console.error('[production] Error fetching plants from Firebase:', error);
+    
+    // Provide more detailed error info
+    console.error('[production] Error details:', {
+      message: error.message,
+      code: error.code,
+      stack: error.stack,
+      name: error.name
+    });
+    
+    // Try to verify Firebase connectivity
+    try {
+      const connectedRef = ref(database, '.info/connected');
+      onValue(connectedRef, (snapshot) => {
+        console.log('[production] Firebase connection status:', snapshot.val());
+      });
+    } catch (connErr) {
+      console.error('[production] Could not check Firebase connection:', connErr);
     }
     
     throw error;
