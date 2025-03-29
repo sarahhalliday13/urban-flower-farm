@@ -40,7 +40,28 @@ try {
   process.env.NODE_OPTIONS = '--openssl-legacy-provider';
   process.env.PUBLIC_URL = '/';
   
+  // First ensure all dependencies are installed
+  console.log(`${colors.yellow}Installing dependencies...${colors.reset}`);
+  execSync('npm ci --quiet', { 
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--openssl-legacy-provider'
+    }
+  });
+  
+  // Add react-dom specifically since it's missing
+  console.log(`${colors.yellow}Ensuring react-dom is installed...${colors.reset}`);
+  execSync('npm install --save react-dom@16.14.0', { 
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_OPTIONS: '--openssl-legacy-provider'
+    }
+  });
+  
   // Execute the build command
+  console.log(`${colors.yellow}Running build...${colors.reset}`);
   execSync('npm run build', { 
     stdio: 'inherit',
     env: {
