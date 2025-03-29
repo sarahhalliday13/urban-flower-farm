@@ -31,6 +31,17 @@ const createConnectivityScript = () => {
   const scriptContent = `
 // Firebase connectivity helper
 (function() {
+  console.log('Firebase connectivity helper initialized');
+  
+  // Add meta tag to disable CSP
+  const meta = document.createElement('meta');
+  meta.httpEquiv = 'Content-Security-Policy';
+  meta.content = "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src * 'unsafe-inline'";
+  document.head.appendChild(meta);
+  
+  // Override and disable CSP checks in the page
+  window.__disableCSP = true;
+  
   // Add a global error handler for Firebase connectivity issues
   window.addEventListener('error', function(e) {
     const errorMsg = e.message || '';
@@ -81,17 +92,60 @@ const createConnectivityScript = () => {
     }
   });
   
+  // Patch XMLHttpRequest to bypass CORS for Firebase domains
+  const originalXhrOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+    // Add required CORS headers for Firebase requests
+    if (typeof url === 'string' && 
+        (url.includes('firebase') || 
+         url.includes('firebaseio') || 
+         url.includes('googleapis'))) {
+      console.log('Patching XHR request for Firebase URL:', url);
+      this.withCredentials = false;
+    }
+    return originalXhrOpen.call(this, method, url, ...rest);
+  };
+  
   // Patch fetch to retry on CORS errors for Firebase Storage
   const originalFetch = window.fetch;
-  window.fetch = function(url, options) {
+  window.fetch = function(url, options = {}) {
+    if (typeof url === 'string' && 
+        (url.includes('firebase') || 
+         url.includes('firebaseio') || 
+         url.includes('googleapis'))) {
+      
+      console.log('Patching fetch request for Firebase URL:', url);
+      
+      // Ensure options has correct CORS settings
+      options = {
+        ...options,
+        mode: 'cors',
+        credentials: 'omit'
+      };
+      
+      // Add headers to bypass CORS
+      options.headers = {
+        ...options.headers,
+        'Origin': window.location.origin,
+        'Access-Control-Request-Method': options.method || 'GET',
+        'Access-Control-Request-Headers': 'Content-Type'
+      };
+    }
+    
     return originalFetch(url, options).catch(error => {
       if (
         (error.message && error.message.includes('CORS')) && 
         (url.includes('firebase') || url.includes('googleapis'))
       ) {
-        console.warn('CORS error on Firebase request, retrying with different mode:', url);
-        const newOptions = {...options, mode: 'cors', credentials: 'omit'};
-        return originalFetch(url, newOptions);
+        console.warn('CORS error on Firebase request, retrying with proxy:', url);
+        
+        // Try with a CORS proxy as last resort
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        return originalFetch(proxyUrl, {
+          ...options,
+          mode: 'cors',
+          credentials: 'omit'
+        });
       }
       throw error;
     });
