@@ -1,11 +1,18 @@
 // const sgMail = require('@sendgrid/mail');
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+// Determine API URL based on environment
+const isProduction = process.env.NODE_ENV === 'production';
+const API_URL = isProduction 
+  ? '/.netlify/functions' 
+  : (process.env.REACT_APP_SERVER_URL || 'http://localhost:3001');
 
 export const sendOrderConfirmationEmails = async (order) => {
   try {
-    // Use the backend endpoint for sending emails
-    const response = await fetch(`${API_URL}/api/email/order`, {
+    // Use the appropriate endpoint for the environment
+    const endpoint = isProduction ? '/send-order-email' : '/api/email/order';
+    console.log(`Using endpoint for order email: ${API_URL}${endpoint}`);
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,8 +34,11 @@ export const sendOrderConfirmationEmails = async (order) => {
 
 export const sendContactFormEmail = async (formData) => {
   try {
-    // Use the backend endpoint for sending emails
-    const response = await fetch(`${API_URL}/api/email/contact`, {
+    // Use the appropriate endpoint for the environment
+    const endpoint = isProduction ? '/send-contact-email' : '/api/email/contact';
+    console.log(`Using endpoint for contact email: ${API_URL}${endpoint}`);
+    
+    const response = await fetch(`${API_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
