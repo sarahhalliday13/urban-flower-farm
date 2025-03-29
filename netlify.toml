@@ -1,7 +1,7 @@
 [build]
   base = "."
   publish = "build"
-  command = "node purge-typescript.js && node production-build.js"
+  command = "node install-typescript.js && node purge-typescript.js && node production-build.js"
 
 [build.environment]
   NODE_VERSION = "18"
