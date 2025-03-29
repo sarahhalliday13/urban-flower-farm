@@ -10,6 +10,8 @@ const indexFile = path.join(buildDir, 'index.html');
 const srcIndexFile = path.join(__dirname, 'src', 'index.js');
 const srcAppFile = path.join(__dirname, 'src', 'App.js');
 const srcDatabaseDebugFile = path.join(__dirname, 'src', 'DatabaseDebug.js');
+const componentsDir = path.join(__dirname, 'src', 'components');
+const backToTopFile = path.join(componentsDir, 'BackToTop.js');
 
 // Colors for output
 const colors = {
@@ -31,6 +33,101 @@ try {
   }
 } catch (err) {
   console.error(`${colors.red}Error creating build directory:${colors.reset}`, err);
+}
+
+// Ensure the components directory exists
+try {
+  if (!fs.existsSync(componentsDir)) {
+    fs.mkdirSync(componentsDir, { recursive: true });
+    console.log(`${colors.green}Created components directory${colors.reset}`);
+  }
+} catch (err) {
+  console.error(`${colors.red}Error creating components directory:${colors.reset}`, err);
+}
+
+// Check for the presence of BackToTop.js
+try {
+  if (fs.existsSync(backToTopFile)) {
+    console.log(`${colors.green}BackToTop.js exists at the correct location${colors.reset}`);
+  } else {
+    console.log(`${colors.yellow}BackToTop.js not found at the expected location, searching...${colors.reset}`);
+    
+    // Check if it's in a nested directory
+    const backToTopInSrcDir = execSync('find src -name "BackToTop.js" | head -n 1', { encoding: 'utf8' }).trim();
+    
+    if (backToTopInSrcDir) {
+      console.log(`${colors.green}Found BackToTop.js at: ${backToTopInSrcDir}${colors.reset}`);
+      
+      // If it exists but in the wrong location, copy it to the correct location
+      const fileContent = fs.readFileSync(backToTopInSrcDir, 'utf8');
+      fs.writeFileSync(backToTopFile, fileContent);
+      console.log(`${colors.green}Copied BackToTop.js to the correct location${colors.reset}`);
+    } else {
+      console.log(`${colors.yellow}Creating a stub BackToTop.js file...${colors.reset}`);
+      
+      // Create a simple stub component
+      const stubContent = `
+import React, { useState, useEffect } from 'react';
+
+const BackToTop = ({ showAlways = false }) => {
+  const [isVisible, setIsVisible] = useState(showAlways);
+
+  useEffect(() => {
+    if (!showAlways) {
+      const toggleVisibility = () => {
+        if (window.pageYOffset > 300) {
+          setIsVisible(true);
+        } else {
+          setIsVisible(false);
+        }
+      };
+
+      window.addEventListener('scroll', toggleVisibility);
+      return () => window.removeEventListener('scroll', toggleVisibility);
+    }
+  }, [showAlways]);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  return (
+    <div 
+      className={\`back-to-top \${isVisible ? 'visible' : ''}\`}
+      onClick={scrollToTop}
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        cursor: 'pointer',
+        backgroundColor: '#388e3c',
+        color: 'white',
+        padding: '10px 15px',
+        borderRadius: '50%',
+        display: isVisible ? 'flex' : 'none',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+        zIndex: 1000,
+        transition: 'all 0.3s ease'
+      }}
+    >
+      ↑
+    </div>
+  );
+};
+
+export default BackToTop;
+`;
+      fs.writeFileSync(backToTopFile, stubContent);
+      console.log(`${colors.green}Created BackToTop.js stub${colors.reset}`);
+    }
+  }
+} catch (err) {
+  console.error(`${colors.red}Error handling BackToTop.js:${colors.reset}`, err);
 }
 
 // Check for the presence of DatabaseDebug.js
