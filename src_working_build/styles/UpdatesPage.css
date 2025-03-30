@@ -1,0 +1,127 @@
+.updates-page-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.updates-page-container h1 {
+  color: #2c5530;
+  margin-bottom: 1rem;
+  text-align: left;
+  font-size: 2rem;
+}
+
+.updates-intro {
+  color: #555;
+  max-width: 800px;
+  margin: 0 0 2rem 0;
+  line-height: 1.5;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.updates-loading, .updates-error, .no-updates {
+  text-align: center;
+  padding: 2rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.updates-error {
+  color: #d32f2f;
+}
+
+/* Year styling */
+.updates-year-section {
+  margin-bottom: 2rem;
+  position: relative;
+}
+
+.updates-year-section:last-child {
+  margin-bottom: 0;
+}
+
+.year-heading {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #2c5530;
+  text-align: left;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eaefea;
+}
+
+/* Updates grid */
+.updates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.update-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  position: relative;
+  border-left: 3px solid #2c5530;
+  text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.update-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.update-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.update-date {
+  font-size: 0.9rem;
+  color: #666;
+  text-align: left;
+}
+
+.update-title {
+  color: #2c5530;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.update-content {
+  color: #444;
+  line-height: 1.5;
+  font-size: 1rem;
+  white-space: pre-line;
+  text-align: left;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .updates-page-container {
+    padding: 1.5rem 1rem;
+  }
+  
+  .updates-page-container h1 {
+    font-size: 1.75rem;
+  }
+  
+  .year-heading {
+    font-size: 1.25rem;
+  }
+  
+  .updates-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .update-card {
+    padding: 1.25rem;
+  }
+} 
