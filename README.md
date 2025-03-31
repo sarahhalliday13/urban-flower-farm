@@ -129,3 +129,9 @@ npm run build
 ```
 
 Then deploy the contents of the `build` folder to your hosting provider.
+
+## Feature: Mobile Pagination
+
+- Adds mobile-specific pagination visible only < 991px.
+- Preserves desktop footer pagination.
+- All params and scroll behavior retained.
