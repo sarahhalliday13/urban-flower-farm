@@ -23,6 +23,14 @@ try {
     process.exit(1);
   }
 
+  // Check for fix-lazy-loading.js
+  const lazyLoadingFixPath = path.join(__dirname, 'fix-lazy-loading.js');
+  
+  if (!fs.existsSync(lazyLoadingFixPath)) {
+    console.error('fix-lazy-loading.js file not found. Please create this file first.');
+    process.exit(1);
+  }
+
   // Create clean build directory
   const buildDir = path.join(__dirname, 'build');
   if (fs.existsSync(buildDir)) {
@@ -40,11 +48,15 @@ try {
     }
   });
 
+  // Fix lazy loading module paths
+  console.log('Fixing lazy-loaded module paths...');
+  execSync('node fix-lazy-loading.js', { stdio: 'inherit' });
+
   // Inject the firebase fix
   console.log('Injecting Firebase fix...');
   execSync('node inject-firebase-fix.js', { stdio: 'inherit' });
 
-  console.log('✅ Build completed successfully with Firebase CORS fixes!');
+  console.log('✅ Build completed successfully with all fixes applied!');
 } catch (error) {
   console.error('❌ Build failed:', error);
   process.exit(1);
