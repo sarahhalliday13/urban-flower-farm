@@ -23,6 +23,14 @@ try {
     process.exit(1);
   }
 
+  // Check for fix-webpack-path.js
+  const webpackFixPath = path.join(__dirname, 'fix-webpack-path.js');
+  
+  if (!fs.existsSync(webpackFixPath)) {
+    console.error('fix-webpack-path.js file not found. Please create this file first.');
+    process.exit(1);
+  }
+
   // Create clean build directory
   const buildDir = path.join(__dirname, 'build');
   if (fs.existsSync(buildDir)) {
@@ -40,11 +48,15 @@ try {
     }
   });
 
+  // Fix webpack chunk loading paths - this is crucial for admin routes
+  console.log('Fixing webpack chunk loading paths...');
+  execSync('node fix-webpack-path.js', { stdio: 'inherit' });
+
   // Inject the firebase fix
   console.log('Injecting Firebase fix...');
   execSync('node inject-firebase-fix.js', { stdio: 'inherit' });
 
-  console.log('✅ Build completed successfully with Firebase CORS fixes!');
+  console.log('✅ Build completed successfully with all fixes applied!');
 } catch (error) {
   console.error('❌ Build failed:', error);
   process.exit(1);
