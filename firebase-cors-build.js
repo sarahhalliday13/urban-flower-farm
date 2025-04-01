@@ -23,11 +23,11 @@ try {
     process.exit(1);
   }
 
-  // Check for fix-lazy-loading.js
-  const lazyLoadingFixPath = path.join(__dirname, 'fix-lazy-loading.js');
+  // Check for fix-webpack-path.js
+  const webpackFixPath = path.join(__dirname, 'fix-webpack-path.js');
   
-  if (!fs.existsSync(lazyLoadingFixPath)) {
-    console.error('fix-lazy-loading.js file not found. Please create this file first.');
+  if (!fs.existsSync(webpackFixPath)) {
+    console.error('fix-webpack-path.js file not found. Please create this file first.');
     process.exit(1);
   }
 
@@ -48,9 +48,9 @@ try {
     }
   });
 
-  // Fix lazy loading module paths
-  console.log('Fixing lazy-loaded module paths...');
-  execSync('node fix-lazy-loading.js', { stdio: 'inherit' });
+  // Fix webpack chunk loading paths - this is crucial for admin routes
+  console.log('Fixing webpack chunk loading paths...');
+  execSync('node fix-webpack-path.js', { stdio: 'inherit' });
 
   // Inject the firebase fix
   console.log('Injecting Firebase fix...');
