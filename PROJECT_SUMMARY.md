@@ -233,6 +233,55 @@ The current fallback system using localStorage remains as a backup measure, thou
 
 ---
 
+## 📋 Known Issues & To-Do List
+
+### 🚨 Critical Issues
+1. **SendGrid API Key Configuration**
+   - **Issue**: Local emulator environment having difficulty loading SendGrid API key
+   - **Impact**: Local testing of email functions fails with "SendGrid API key is not defined" error
+   - **Workaround**: Use Firebase deployed functions for testing; email fallback system catches failed sends
+   - **To-Do**: Fix `.env` file setup for local development environment
+
+2. **GitHub Security Blocking**
+   - **Issue**: GitHub blocks pushes containing API keys in build files
+   - **Impact**: Can't push certain build folders to GitHub
+   - **Current Fix**: Updated `.gitignore` to exclude sensitive files
+   - **To-Do**: Audit codebase for any remaining API key references
+
+### 🔄 Optimization Tasks
+1. **Firebase Emulator Port Conflicts**
+   - **Issue**: Multiple instances of Firebase emulator running simultaneously
+   - **Impact**: Port conflicts when starting new emulators
+   - **To-Do**: Create consistent emulator port configuration in `firebase.json`
+
+2. **Bundle Size Optimization**
+   - **Current Size**: main bundle ~192KB gzipped
+   - **To-Do**: Analyze and reduce bundle size by lazy-loading non-critical components
+
+3. **Memory Leak Monitoring**
+   - **Issue**: While dashboard memory leaks are fixed, need ongoing monitoring
+   - **To-Do**: Implement comprehensive listener cleanup validation across all components
+
+### 🎨 UI/UX Improvements
+1. **Mobile Pagination Refinement**
+   - **Issue**: Current mobile pagination works but could be more intuitive
+   - **To-Do**: Enhance mobile pagination with smooth scrolling and better visual indicators
+
+2. **Admin Dashboard Data Refresh**
+   - **Issue**: Sales metrics now load correctly, but manual refresh UI could be improved
+   - **To-Do**: Add loading indicators and timestamp of last data refresh
+
+### 🧪 Testing Backlog
+1. **Email Function Integration Tests**
+   - **To-Do**: Create comprehensive test suite for all email functions
+   - **Priority**: Medium
+
+2. **Order Process End-to-End Test**
+   - **To-Do**: Document and implement full E2E test for the order process
+   - **Priority**: High
+
+---
+
 ## 📝 Notes
 
 - All production deployments now go through **Firebase Hosting**  
