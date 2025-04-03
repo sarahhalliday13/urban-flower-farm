@@ -4,6 +4,7 @@ import '../styles/AdminDashboard.css';
 import { useAdmin } from '../context/AdminContext';
 import { getOrders, getDatabaseRef } from '../services/firebase';
 import { onValue, off } from 'firebase/database';
+import PlantSalesTracker from './PlantSalesTracker';
 
 const AdminDashboard = () => {
   const { plants } = useAdmin();
@@ -382,6 +383,9 @@ const AdminDashboard = () => {
           </Link>
         </div>
       </div>
+      
+      {/* Plant Sales Tracking */}
+      <PlantSalesTracker />
     </div>
   );
 };

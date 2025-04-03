@@ -25,12 +25,12 @@ function Login() {
     if (DEV_MODE && location.search.includes('devMode=true')) {
       localStorage.setItem('devMode', 'true');
       // Navigate to admin dashboard
-      navigate('/admin');
+      navigate('/admin', { replace: true });
     }
   }, [location, navigate]);
   
   // Get the page the user was trying to access
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/admin';
   
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -44,8 +44,8 @@ function Login() {
     const success = login(username, password);
     
     if (success) {
-      // Redirect to the page they were trying to access, or home if none
-      navigate(from, { replace: true });
+      // Always redirect to admin dashboard regardless of where they came from
+      navigate('/admin', { replace: true });
     } else {
       setError('Invalid username or password');
     }

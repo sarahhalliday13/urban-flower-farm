@@ -359,7 +359,7 @@ function AppContent() {
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
           {hasOrders && <Link to="/orders">My Orders</Link>}
-          <Link to={isAdmin ? "/admin" : "/admin/inventory"}>Manage</Link>
+          <Link to="/admin">Manage</Link>
         </div>
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
