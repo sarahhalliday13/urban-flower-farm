@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
@@ -29,11 +29,11 @@ import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load heavy admin components
-const InventoryManager = lazy(() => import('./components/InventoryManager'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const AdminOrders = lazy(() => import('./components/AdminOrders'));
-const AdminUtilities = lazy(() => import('./components/AdminUtilities'));
+// Import admin components directly instead of lazy loading
+import InventoryManager from './components/InventoryManager';
+import AdminDashboard from './components/AdminDashboard';
+import AdminOrders from './components/AdminOrders';
+import AdminUtilities from './components/AdminUtilities';
 
 // Custom wrapper for plant details
 const PlantDetailsWrapper = ({ children }) => {
@@ -225,44 +225,86 @@ const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
   return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
 };
 
-// Create a wrapper for admin content with enhanced error handling
 const AdminContentWrapper = ({ children }) => {
-  const [hasError, setHasError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [error, setError] = useState(null);
   
-  // Error boundary functionality
-  const handleError = (error) => {
-    console.error('Error in AdminContentWrapper:', error);
-    setHasError(true);
-    setErrorMessage(error.message || 'An unexpected error occurred');
+  const handleError = (error, errorInfo) => {
+    console.error('Error in admin component:', error, errorInfo);
+    
+    // Add specifics for chunk loading errors
+    if (error && error.message && error.message.includes('Loading chunk')) {
+      console.error('Chunk loading error detected in admin component:', error.message);
+      setError({
+        title: 'Resource Loading Error',
+        message: 'The application failed to load a required component. This could be due to network issues or a temporary server problem.',
+        originalError: error
+      });
+      
+      // Report the error for monitoring
+      if (window.reportError) {
+        window.reportError('chunk_load_fail', error.message);
+      }
+    } else {
+      setError({
+        title: 'Something went wrong',
+        message: 'There was an error loading this admin section. Please try again later.',
+        originalError: error
+      });
+    }
   };
   
-  // If there's an error, show it
-  if (hasError) {
+  // If there's an error, show a custom error UI
+  if (error) {
     return (
-      <div className="admin-error" style={{ 
-        padding: '20px', 
-        margin: '20px auto',
-        maxWidth: '800px',
-        backgroundColor: '#fff',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-      }}>
-        <h2 style={{ color: '#d32f2f' }}>Error Loading Admin Content</h2>
-        <p>{errorMessage}</p>
-        <button 
-          onClick={() => setHasError(false)}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#2c5530',
-            color: 'white',
-            border: 'none',
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2 style={{ color: '#d32f2f' }}>{error.title}</h2>
+        <p>{error.message}</p>
+        
+        <div style={{ margin: '20px 0' }}>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              background: '#2c5530',
+              color: 'white',
+              border: 'none',
+              padding: '10px 15px',
+              borderRadius: '4px',
+              margin: '0 10px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+          
+          <button 
+            onClick={() => window.location.href = '/'} 
+            style={{
+              background: '#777',
+              color: 'white',
+              border: 'none',
+              padding: '10px 15px',
+              borderRadius: '4px',
+              margin: '0 10px',
+              cursor: 'pointer'
+            }}
+          >
+            Return Home
+          </button>
+        </div>
+        
+        <details style={{ marginTop: '30px', textAlign: 'left', fontSize: '0.8em', color: '#666' }}>
+          <summary>Technical Details</summary>
+          <pre style={{ 
+            whiteSpace: 'pre-wrap', 
+            backgroundColor: '#f5f5f5',
+            padding: '10px',
             borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Retry
-        </button>
+            maxHeight: '200px',
+            overflow: 'auto'
+          }}>
+            {error.originalError && (error.originalError.stack || error.originalError.message || JSON.stringify(error.originalError))}
+          </pre>
+        </details>
       </div>
     );
   }
@@ -270,30 +312,7 @@ const AdminContentWrapper = ({ children }) => {
   return (
     <div className="admin-content-area">
       <ErrorBoundary onError={handleError}>
-        <Suspense fallback={
-          <div className="admin-loading" style={{ 
-            padding: '20px', 
-            textAlign: 'center' 
-          }}>
-            <div className="loading-spinner" style={{
-              display: 'inline-block',
-              width: '30px',
-              height: '30px',
-              border: '3px solid rgba(0,0,0,0.1)',
-              borderRadius: '50%',
-              borderTopColor: '#2c5530',
-              animation: 'spin 1s linear infinite'
-            }}></div>
-            <p>Loading admin content...</p>
-            <style>{`
-              @keyframes spin {
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
-          </div>
-        }>
-          {children}
-        </Suspense>
+        {children}
       </ErrorBoundary>
     </div>
   );
