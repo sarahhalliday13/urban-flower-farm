@@ -140,52 +140,116 @@ export const fetchPlants = async () => {
     console.log(`[${environment}] fetchPlants - Starting to fetch plants from Firebase`);
     console.log(`[${environment}] fetchPlants - Database URL:`, process.env.REACT_APP_FIREBASE_DATABASE_URL);
     
-    console.log(`[${environment}] fetchPlants - Getting plants snapshot...`);
-    const plantsSnapshot = await get(ref(database, 'plants'));
-    console.log(`[${environment}] fetchPlants - Plants snapshot exists:`, plantsSnapshot.exists());
-    
-    console.log(`[${environment}] fetchPlants - Getting inventory snapshot...`);
-    const inventorySnapshot = await get(ref(database, 'inventory'));
-    console.log(`[${environment}] fetchPlants - Inventory snapshot exists:`, inventorySnapshot.exists());
-    
-    if (!plantsSnapshot.exists()) {
-      console.log(`[${environment}] fetchPlants - No plants data found in Firebase`);
-      return [];
+    // Check if we already have cached plants data
+    let useCachedData = false;
+    try {
+      const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
+      if (cachedData) {
+        const parsedCache = JSON.parse(cachedData);
+        const cacheTime = new Date(parsedCache.timestamp);
+        const now = new Date();
+        const cacheAgeMinutes = (now - cacheTime) / (1000 * 60);
+        
+        console.log(`[${environment}] fetchPlants - Found cached plants data (${cacheAgeMinutes.toFixed(1)} minutes old)`);
+        
+        // Use cache if it's less than 5 minutes old
+        if (cacheAgeMinutes < 5 && Array.isArray(parsedCache.data) && parsedCache.data.length > 0) {
+          console.log(`[${environment}] fetchPlants - Using cached plants data (${parsedCache.data.length} plants)`);
+          return parsedCache.data;
+        }
+      }
+    } catch (cacheError) {
+      console.error(`[${environment}] fetchPlants - Error reading cached plants:`, cacheError);
+      // Continue with Firebase fetch
     }
     
-    const plantsData = plantsSnapshot.val();
-    console.log(`[${environment}] fetchPlants - Plants data keys:`, Object.keys(plantsData || {}).length);
-    
-    const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
-    console.log(`[${environment}] fetchPlants - Inventory data keys:`, Object.keys(inventoryData || {}).length);
-    
-    // Convert the object to an array and add inventory data
-    const plantsArray = Object.keys(plantsData).map(key => {
-      const plant = plantsData[key];
-      const plantId = plant.id || key;
+    // Set up timeout for Firebase fetch to prevent long-running requests
+    let firebaseTimeout = false;
+    const timeoutPromise = new Promise((_, reject) => {
+      const timer = setTimeout(() => {
+        firebaseTimeout = true;
+        reject(new Error('Firebase fetch timeout - using fallback data'));
+      }, 10000); // 10 second timeout
       
-      return {
-        ...plant,
-        id: plantId, // Use the plant's ID or the Firebase key
-        inventory: inventoryData[plantId] || {
-          currentStock: 0,
-          status: "Unknown",
-          restockDate: "",
-          notes: ""
-        }
-      };
+      // Store the timer reference for cleanup
+      return () => clearTimeout(timer);
     });
     
-    console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
-    // Log a sample plant for verification
-    if (plantsArray.length > 0) {
-      console.log(`[${environment}] fetchPlants - Sample plant:`, 
-        {name: plantsArray[0].name, id: plantsArray[0].id, hasInventory: !!plantsArray[0].inventory});
-    }
+    // Try to fetch from Firebase with a timeout
+    console.log(`[${environment}] fetchPlants - Getting plants snapshot...`);
     
-    return plantsArray;
+    try {
+      const plantsPromise = get(ref(database, 'plants'));
+      const plantsSnapshot = await Promise.race([plantsPromise, timeoutPromise]);
+      
+      console.log(`[${environment}] fetchPlants - Plants snapshot exists:`, plantsSnapshot.exists());
+      
+      // If we got this far, Firebase fetch was successful
+      console.log(`[${environment}] fetchPlants - Getting inventory snapshot...`);
+      const inventorySnapshot = await get(ref(database, 'inventory'));
+      console.log(`[${environment}] fetchPlants - Inventory snapshot exists:`, inventorySnapshot.exists());
+      
+      if (!plantsSnapshot.exists()) {
+        console.log(`[${environment}] fetchPlants - No plants data found in Firebase, using sample data`);
+        return await getSamplePlantsData();
+      }
+      
+      const plantsData = plantsSnapshot.val();
+      console.log(`[${environment}] fetchPlants - Plants data keys:`, Object.keys(plantsData || {}).length);
+      
+      const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+      console.log(`[${environment}] fetchPlants - Inventory data keys:`, Object.keys(inventoryData || {}).length);
+      
+      // Convert the object to an array and add inventory data
+      const plantsArray = Object.keys(plantsData).map(key => {
+        const plant = plantsData[key];
+        const plantId = plant.id || key;
+        
+        return {
+          ...plant,
+          id: plantId, // Use the plant's ID or the Firebase key
+          inventory: inventoryData[plantId] || {
+            currentStock: 0,
+            status: "Unknown",
+            restockDate: "",
+            notes: ""
+          }
+        };
+      });
+      
+      console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
+      // Log a sample plant for verification
+      if (plantsArray.length > 0) {
+        console.log(`[${environment}] fetchPlants - Sample plant:`, 
+          {name: plantsArray[0].name, id: plantsArray[0].id, hasInventory: !!plantsArray[0].inventory});
+      }
+      
+      // Cache the fetched data
+      try {
+        localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
+          timestamp: new Date().toISOString(),
+          data: plantsArray,
+          source: 'firebase'
+        }));
+        console.log(`[${environment}] fetchPlants - Plants data cached to localStorage`);
+      } catch (cacheError) {
+        console.error(`[${environment}] fetchPlants - Error caching plants:`, cacheError);
+      }
+      
+      return plantsArray;
+    } catch (fetchError) {
+      console.error(`[${environment}] fetchPlants - Error fetching from Firebase:`, fetchError);
+      
+      if (firebaseTimeout) {
+        console.log(`[${environment}] fetchPlants - Firebase fetch timed out, using sample data`);
+      } else {
+        console.log(`[${environment}] fetchPlants - Firebase fetch failed, using sample data`);
+      }
+      
+      return await getSamplePlantsData();
+    }
   } catch (error) {
-    console.error(`[${process.env.NODE_ENV}] Error fetching plants from Firebase:`, error);
+    console.error(`[${process.env.NODE_ENV}] Error in fetchPlants:`, error);
     console.error(`[${process.env.NODE_ENV}] Error details:`, error.code, error.message, error.stack);
     
     // Check if it's a Firebase error and log additional details
@@ -193,9 +257,56 @@ export const fetchPlants = async () => {
       console.error(`[${process.env.NODE_ENV}] Firebase error code:`, error.code);
     }
     
-    throw error;
+    // Return fallback data instead of throwing
+    console.log(`[${process.env.NODE_ENV}] fetchPlants - Fatal error, using sample data as last resort`);
+    return await getSamplePlantsData();
   }
 };
+
+/**
+ * Helper function to load sample plant data when Firebase fails
+ * @returns {Promise<Array>} Array of sample plant objects
+ */
+async function getSamplePlantsData() {
+  try {
+    console.log('Using sample plants data as fallback');
+    const samplePlants = await loadSamplePlants();
+    
+    // Cache the sample data as plants data
+    try {
+      localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
+        timestamp: new Date().toISOString(),
+        data: samplePlants,
+        source: 'sample'
+      }));
+      console.log('Sample plants data cached to localStorage as regular plants data');
+    } catch (e) {
+      console.error('Error caching sample plants data:', e);
+    }
+    
+    return samplePlants;
+  } catch (error) {
+    console.error('Error loading sample plants data:', error);
+    
+    // Last resort - return minimal hardcoded data
+    const emergencyData = [
+      {
+        id: 1,
+        name: "Sample Plant (Emergency Fallback)",
+        scientificName: "Example species",
+        price: "9.99",
+        description: "This is an emergency fallback plant when all other loading methods fail.",
+        mainImage: "/images/placeholder.jpg",
+        inventory: {
+          currentStock: 10,
+          status: "In Stock"
+        }
+      }
+    ];
+    
+    return emergencyData;
+  }
+}
 
 /**
  * Add a new plant to Firebase
