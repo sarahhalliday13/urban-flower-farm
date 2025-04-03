@@ -10,6 +10,7 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+functions/.env
 
 # logs
 npm-debug.log*
@@ -19,6 +20,8 @@ yarn-error.log*
 # production build
 /build
 /dist
+/build.bak
+*.zip
 
 # IDE and editor files
 .idea/
@@ -46,3 +49,13 @@ src/config/sheets-credentials.json
 
 # Local Netlify folder
 .netlify
+
+# Sensitive files
+*-key.js
+*-api-key.js
+check-key.js
+verify-api-key.js
+setup-sendgrid.sh
+deploy-with-key.js
+captured_site/
+button_flower_farm_build.zip
