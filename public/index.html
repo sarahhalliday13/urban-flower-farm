@@ -30,6 +30,72 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Buttons Flower Farm</title>
+    
+    <!-- Script to handle chunk loading errors -->
+    <script type="text/javascript">
+      // Store which chunks failed to load
+      window.chunkLoadErrors = [];
+      
+      // Function to handle chunk load errors
+      window.handleChunkError = function(error) {
+        console.error('Chunk loading failed:', error);
+        
+        // Store the failed chunk URL
+        if (error.target && error.target.src) {
+          window.chunkLoadErrors.push(error.target.src);
+        }
+        
+        // Add this error to session storage to track across page refreshes
+        try {
+          var storedErrors = JSON.parse(sessionStorage.getItem('chunkErrors') || '[]');
+          if (error.target && error.target.src) {
+            storedErrors.push({
+              src: error.target.src,
+              time: new Date().toISOString()
+            });
+            sessionStorage.setItem('chunkErrors', JSON.stringify(storedErrors));
+          }
+        } catch (e) {
+          console.error('Error storing chunk error in sessionStorage:', e);
+        }
+        
+        // Prevent the error from bubbling up
+        error.preventDefault();
+        
+        // If we've tried to reload already, don't infinite loop
+        var reloadAttempts = parseInt(sessionStorage.getItem('reloadAttempts') || '0');
+        
+        // Cap the reload attempts to 2 to prevent reload loops
+        if (reloadAttempts < 2) {
+          console.log('Attempting to reload due to chunk error. Attempt #' + (reloadAttempts + 1));
+          sessionStorage.setItem('reloadAttempts', (reloadAttempts + 1).toString());
+          
+          // Add cache busting parameter to force a fresh load
+          window.location.href = window.location.href + 
+            (window.location.search ? '&' : '?') + 
+            'reload=' + new Date().getTime();
+        } else {
+          console.log('Max reload attempts reached. Not reloading automatically.');
+          
+          // Show a user-friendly error message if possible
+          var rootElement = document.getElementById('root');
+          if (rootElement) {
+            rootElement.innerHTML = '<div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">' +
+              '<h2 style="color: #d32f2f;">Error Loading Content</h2>' +
+              '<p>We\'re having trouble loading some resources. Please try refreshing the page.</p>' +
+              '<button onclick="window.location.reload()" style="background-color: #2c5530; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Refresh Page</button>' +
+              '</div>';
+          }
+        }
+      };
+      
+      // Listen for all script errors
+      window.addEventListener('error', function(event) {
+        if (event.target && event.target.tagName === 'SCRIPT') {
+          window.handleChunkError(event);
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
