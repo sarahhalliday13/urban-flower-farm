@@ -12,7 +12,26 @@ exports.handler = async (event, context) => {
     const data = JSON.parse(event.body);
     
     // Initialize SendGrid
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    try {
+      const apiKey = process.env.SENDGRID_API_KEY;
+      
+      if (!apiKey) {
+        console.error('SendGrid API key is missing');
+        throw new Error('SendGrid API key is missing');
+      }
+      
+      // Log sanitized key info for debugging
+      console.log('API Key validation:', {
+        keyExists: !!apiKey,
+        keyStartsWithSG: apiKey.startsWith('SG.'),
+        keyLength: apiKey.length
+      });
+      
+      sgMail.setApiKey(apiKey);
+    } catch (apiError) {
+      console.error('SendGrid API key error:', apiError.message);
+      throw new Error('Failed to initialize SendGrid: ' + apiError.message);
+    }
 
     // Handle contact form submission
     if (data.name && data.email && data.message) {
@@ -40,19 +59,32 @@ ${data.message}
         `
       };
 
-      await sgMail.send(msg);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ message: 'Contact form email sent successfully' })
-      };
+      try {
+        const result = await sgMail.send(msg);
+        console.log('Contact form email sent successfully:', result);
+        return {
+          statusCode: 200,
+          body: JSON.stringify({ message: 'Contact form email sent successfully' })
+        };
+      } catch (sendError) {
+        console.error('Error sending contact form email:', sendError);
+        if (sendError.response) {
+          console.error('SendGrid response:', sendError.response.body);
+        }
+        throw new Error('Failed to send contact form email: ' + sendError.message);
+      }
     }
     
     // Handle order confirmation emails
     if (data.orderId && data.customer) {
-      // ... existing order email logic ...
+      console.log('Received order confirmation request. Processing...');
+      // Complete implementation in functions/sendOrderEmail.js
       return {
         statusCode: 200,
-        body: JSON.stringify({ message: 'Order confirmation emails sent successfully' })
+        body: JSON.stringify({ 
+          message: 'Order confirmation request received. Redirecting to dedicated endpoint.',
+          redirectTo: '/sendOrderEmail'
+        })
       };
     }
 
@@ -61,7 +93,11 @@ ${data.message}
       body: JSON.stringify({ error: 'Invalid request data' })
     };
   } catch (error) {
-    console.error('Error sending email:', error);
+    console.error('Error in email function:', {
+      message: error.message,
+      stack: error.stack
+    });
+    
     return {
       statusCode: error.code || 500,
       body: JSON.stringify({ 

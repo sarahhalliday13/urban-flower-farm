@@ -24,6 +24,91 @@
   padding: 0.25rem 0;
 }
 
+/* Pending Emails Alert Styles */
+.pending-emails-alert {
+  background-color: #fff8e6;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pending-emails-alert h2 {
+  color: #b76e00;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.pending-emails-alert p {
+  color: #5a3900;
+  margin-bottom: 1rem;
+}
+
+.pending-emails-list {
+  background-color: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.pending-emails-list table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pending-emails-list th {
+  background-color: #f8f8f8;
+  text-align: left;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #444;
+  font-size: 0.85rem;
+}
+
+.pending-emails-list td {
+  padding: 0.75rem;
+  border-top: 1px solid #eee;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.email-action-btn {
+  display: inline-block;
+  background-color: #2c5530;
+  color: white;
+  padding: 0.4rem 0.75rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.email-action-btn:hover {
+  background-color: #1e3d22;
+}
+
+.view-all-link {
+  padding: 0.75rem;
+  text-align: center;
+  margin: 0;
+  background-color: #f8f8f8;
+  border-top: 1px solid #eee;
+}
+
+.view-all-link a {
+  color: #2c5530;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.view-all-link a:hover {
+  text-decoration: underline;
+}
+
 /* Sales Summary Styles */
 .sales-summary {
   background-color: white;
@@ -37,9 +122,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid #eee;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .sales-header h2 {
@@ -51,7 +135,8 @@
 .time-filter {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  margin-left: auto;
+  margin-right: 15px;
 }
 
 .time-filter label {
@@ -66,6 +151,29 @@
   font-size: 0.9rem;
   background-color: white;
   color: #333;
+}
+
+.refresh-button {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #e8e8e8;
+  border-color: #ccc;
+}
+
+.refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .sales-metrics {

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
 import { useAdmin } from '../context/AdminContext';
+import { getOrders, getDatabaseRef } from '../services/firebase';
+import { onValue, off } from 'firebase/database';
 
 const AdminDashboard = () => {
   const { plants } = useAdmin();
@@ -12,9 +14,81 @@ const AdminDashboard = () => {
     totalOrders: 0
   });
   const [timeFilter, setTimeFilter] = useState('lastWeek');
+  const [pendingEmails, setPendingEmails] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(true);
+  const [orders, setOrders] = useState([]);
 
+  // Setup real-time listener for orders
   useEffect(() => {
-    // Use plants data from context instead of directly from localStorage
+    let isMounted = true;
+    setIsLoadingOrders(true);
+    console.log('Setting up real-time order listener...');
+    
+    const ordersRef = getDatabaseRef('orders');
+    let ordersListener = null;
+    
+    // Create the listener
+    const handleSnapshot = (snapshot) => {
+      if (!isMounted) return;
+      
+      if (snapshot.exists()) {
+        const ordersData = snapshot.val();
+        const ordersList = Object.values(ordersData);
+        
+        console.log(`Received ${ordersList.length} orders from Firebase real-time listener`);
+        
+        // Sort by date (newest first)
+        ordersList.sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        // Update state with the orders
+        setOrders(ordersList);
+        setIsLoadingOrders(false);
+        
+        // Also update localStorage for fallback/offline usage
+        localStorage.setItem('orders', JSON.stringify(ordersList));
+      } else {
+        console.log('No orders found in Firebase database');
+        if (isMounted) {
+          setOrders([]);
+          setIsLoadingOrders(false);
+        }
+      }
+    };
+    
+    const handleError = (error) => {
+      console.error('Error in orders listener:', error);
+      
+      // Fallback to localStorage if available
+      if (isMounted) {
+        try {
+          const cachedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+          if (cachedOrders.length > 0) {
+            console.log(`Falling back to ${cachedOrders.length} cached orders from localStorage`);
+            setOrders(cachedOrders);
+          }
+        } catch (e) {
+          console.error('Error parsing cached orders:', e);
+        }
+        
+        setIsLoadingOrders(false);
+      }
+    };
+    
+    // Attach the listener
+    ordersListener = onValue(ordersRef, handleSnapshot, handleError);
+    
+    // Cleanup function to remove the listener
+    return () => {
+      console.log('Cleaning up orders listener');
+      isMounted = false;
+      if (ordersListener) {
+        off(ordersRef);
+      }
+    };
+  }, []);
+
+  // Process low stock items from plants context
+  useEffect(() => {
     if (plants.length > 0) {
       const lowStock = plants.filter(plant => 
         plant.inventory?.currentStock && 
@@ -24,24 +98,37 @@ const AdminDashboard = () => {
       setLowStockItems(lowStock);
     }
     
-    // Calculate sales data based on time filter
+    // Get pending emails from localStorage (this part can remain as is for now)
     try {
-      calculateSalesData(timeFilter);
+      const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
+      setPendingEmails(manualEmails.filter(email => email.status === 'pending'));
     } catch (error) {
-      console.error('Error calculating sales data:', error);
-      setSalesData({
-        pending: 0,
-        completed: 0,
-        totalOrders: 0
-      });
+      console.error('Error loading pending emails:', error);
+      setPendingEmails([]);
     }
-  }, [timeFilter, plants]);
+  }, [plants]);
 
-  const calculateSalesData = (filter) => {
+  // Calculate sales data when orders change or time filter changes
+  useEffect(() => {
+    if (!isLoadingOrders) {
+      calculateSalesData(orders, timeFilter);
+    }
+  }, [orders, timeFilter, isLoadingOrders]);
+
+  const calculateSalesData = (ordersList, filter) => {
     try {
-      const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-      if (orders.length === 0) return;
+      if (!ordersList || ordersList.length === 0) {
+        console.log('No orders available to calculate sales data');
+        setSalesData({
+          pending: 0,
+          completed: 0,
+          totalOrders: 0
+        });
+        return;
+      }
 
+      console.log(`Calculating sales data for ${ordersList.length} orders with filter: ${filter}`);
+      
       const now = new Date();
       let startDate;
 
@@ -69,7 +156,7 @@ const AdminDashboard = () => {
       }
 
       // Filter orders by date
-      const filteredOrders = orders.filter(order => {
+      const filteredOrders = ordersList.filter(order => {
         try {
           const orderDate = new Date(order.date);
           return orderDate >= startDate && orderDate <= now;
@@ -78,6 +165,8 @@ const AdminDashboard = () => {
           return false;
         }
       });
+
+      console.log(`Filtered to ${filteredOrders.length} orders in the selected time period`);
 
       // Calculate totals
       let pendingTotal = 0;
@@ -111,6 +200,8 @@ const AdminDashboard = () => {
         }
       });
 
+      console.log(`Sales calculation results - Pending: $${pendingTotal.toFixed(2)}, Completed: $${completedTotal.toFixed(2)}, Count: ${filteredOrders.length}`);
+      
       setSalesData({
         pending: pendingTotal.toFixed(2),
         completed: completedTotal.toFixed(2),
@@ -130,6 +221,21 @@ const AdminDashboard = () => {
     setTimeFilter(e.target.value);
   };
 
+  const handleRefresh = () => {
+    // Force a refresh from Firebase
+    setIsLoadingOrders(true);
+    getOrders()
+      .then(freshOrders => {
+        console.log(`Manually refreshed orders: ${freshOrders.length} orders loaded`);
+        setOrders(freshOrders);
+        setIsLoadingOrders(false);
+      })
+      .catch(error => {
+        console.error('Error refreshing orders:', error);
+        setIsLoadingOrders(false);
+      });
+  };
+
   const getFilterLabel = () => {
     switch (timeFilter) {
       case 'lastWeek': return 'Last 7 Days';
@@ -142,7 +248,50 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard">
-      <p className="welcome-message">Welcome Cunt! Have a great day!</p>
+      <p className="welcome-message">Welcome to Button's Admin Dashboard!</p>
+      
+      {/* Pending Emails Alert - show only if there are pending emails */}
+      {pendingEmails.length > 0 && (
+        <div className="pending-emails-alert">
+          <h2><span role="img" aria-label="Warning">⚠️</span> Pending Order Emails</h2>
+          <p>{pendingEmails.length} order confirmation {pendingEmails.length === 1 ? 'email' : 'emails'} need to be sent manually</p>
+          
+          <div className="pending-emails-list">
+            <table>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendingEmails.slice(0, 5).map((email, index) => (
+                  <tr key={index}>
+                    <td>{email.orderId}</td>
+                    <td>{email.customerName || 'Unknown'}</td>
+                    <td>{email.customerEmail}</td>
+                    <td>{new Date(email.date).toLocaleDateString()}</td>
+                    <td>
+                      <Link to="/admin/orders" className="email-action-btn">
+                        View Order
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {pendingEmails.length > 5 && (
+              <p className="view-all-link">
+                <Link to="/admin/orders">View all {pendingEmails.length} pending emails</Link>
+              </p>
+            )}
+          </div>
+        </div>
+      )}
       
       <div className="sales-summary">
         <div className="sales-header">
@@ -160,6 +309,14 @@ const AdminDashboard = () => {
               <option value="last3Months">Last 3 Months</option>
             </select>
           </div>
+          <button 
+            className="refresh-button" 
+            onClick={handleRefresh} 
+            title="Refresh Data"
+            disabled={isLoadingOrders}
+          >
+            <span role="img" aria-label="Refresh">🔄</span> Refresh
+          </button>
         </div>
         
         <div className="sales-metrics">
