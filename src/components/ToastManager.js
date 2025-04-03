@@ -34,6 +34,9 @@ export const ToastProvider = ({ children }) => {
     }, duration);
   }, []);
   
+  // Alias for compatibility with existing code
+  const addToast = showToast;
+  
   useEffect(() => {
     // Event listener for showing toasts
     const handleShowToast = (event) => {
@@ -62,7 +65,7 @@ export const ToastProvider = ({ children }) => {
   };
   
   return (
-    <ToastContext.Provider value={showToast}>
+    <ToastContext.Provider value={{ showToast, addToast }}>
       {children}
       <div className="toast-container">
         {toasts.map(toast => (
