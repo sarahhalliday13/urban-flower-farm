@@ -11,7 +11,7 @@ import Checkout from './components/Checkout';
 import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
-import ToastManager from './components/ToastManager';
+import { ToastProvider } from './components/ToastManager';
 // eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
 // eslint-disable-next-line no-unused-vars
@@ -447,20 +447,21 @@ function AppContent() {
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
       
-      {/* Toast notifications */}
-      <ToastManager />
+      {/* Toast container is now provided by the ToastProvider */}
     </div>
   );
 }
 
-// Wrap AppContent with ScrollRestorationProvider
+// Wrap AppContent with ScrollRestorationProvider and ToastProvider
 const App = () => (
   <Router>
     <ScrollRestorationProvider>
       <AuthProvider>
         <CartProvider>
           <AdminProvider>
-            <AppContent />
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
           </AdminProvider>
         </CartProvider>
       </AuthProvider>
