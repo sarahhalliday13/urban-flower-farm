@@ -698,18 +698,108 @@ export const initializeDefaultInventory = async () => {
 export const loadSamplePlants = async () => {
   try {
     console.log('DEBUG: loadSamplePlants - Starting to load sample plant data');
-    console.log('DEBUG: loadSamplePlants - Fetching from path:', '/data/sample-plants.json');
-    const response = await fetch('/data/sample-plants.json');
-    console.log('DEBUG: loadSamplePlants - Fetch response status:', response.status, response.statusText);
     
-    if (!response.ok) {
-      console.error('DEBUG: loadSamplePlants - Failed to fetch sample data:', response.status, response.statusText);
-      throw new Error(`Failed to fetch sample data: ${response.status} ${response.statusText}`);
+    // First check if we have cached sample data in localStorage
+    const cachedData = localStorage.getItem('cachedSamplePlants');
+    if (cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        // Only use cache if it's less than 1 hour old
+        const cacheTime = new Date(parsed.timestamp);
+        const now = new Date();
+        const cacheAgeHours = (now - cacheTime) / (1000 * 60 * 60);
+        
+        if (cacheAgeHours < 1 && Array.isArray(parsed.data) && parsed.data.length > 0) {
+          console.log(`DEBUG: loadSamplePlants - Using cached data (${cacheAgeHours.toFixed(2)} hours old)`);
+          return parsed.data;
+        }
+      } catch (e) {
+        console.error('DEBUG: loadSamplePlants - Error parsing cached data:', e);
+        // Continue to fetch new data
+      }
     }
     
-    const data = await response.json();
-    console.log(`DEBUG: loadSamplePlants - Successfully loaded ${data.length} sample plants`);
-    console.log('DEBUG: loadSamplePlants - First sample plant:', data[0]?.name || 'No name available');
+    // Hardcoded fallback data in case fetch fails
+    const fallbackPlants = [
+      {
+        id: 1,
+        name: "Lavender",
+        scientificName: "Lavandula angustifolia",
+        price: "12.99",
+        description: "Fragrant perennial with purple flowers, perfect for borders and containers.",
+        mainImage: "/images/placeholder.jpg",
+        colour: "Purple",
+        light: "Full Sun",
+        height: "24-36 inches",
+        bloomSeason: "Summer",
+        inventory: {
+          currentStock: 25,
+          status: "In Stock"
+        }
+      },
+      {
+        id: 2,
+        name: "Echinacea",
+        scientificName: "Echinacea purpurea",
+        price: "9.99",
+        description: "Native perennial with daisy-like flowers that attract butterflies and bees.",
+        mainImage: "/images/placeholder.jpg",
+        colour: "Pink",
+        light: "Full Sun to Part Shade",
+        height: "24-36 inches",
+        bloomSeason: "Summer to Fall",
+        inventory: {
+          currentStock: 15,
+          status: "In Stock"
+        }
+      },
+      {
+        id: 3,
+        name: "Black-Eyed Susan",
+        scientificName: "Rudbeckia hirta",
+        price: "8.99",
+        description: "Cheerful native perennial with golden-yellow flowers and dark centers.",
+        mainImage: "/images/placeholder.jpg",
+        colour: "Yellow",
+        light: "Full Sun to Part Shade",
+        height: "24-36 inches",
+        bloomSeason: "Summer to Fall",
+        inventory: {
+          currentStock: 10,
+          status: "In Stock"
+        }
+      }
+    ];
+
+    // Try with a fetch first
+    console.log('DEBUG: loadSamplePlants - Fetching from path:', '/data/sample-plants.json');
+    let data;
+    
+    try {
+      // Use a timeout promise to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Fetch timeout')), 5000)
+      );
+      
+      const fetchPromise = fetch('/data/sample-plants.json');
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      console.log('DEBUG: loadSamplePlants - Fetch response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch sample data: ${response.status} ${response.statusText}`);
+      }
+      
+      data = await response.json();
+      console.log(`DEBUG: loadSamplePlants - Successfully loaded ${data.length} sample plants`);
+      console.log('DEBUG: loadSamplePlants - First sample plant:', data[0]?.name || 'No name available');
+    } catch (fetchError) {
+      console.error('DEBUG: loadSamplePlants - Fetch error:', fetchError.message);
+      console.log('DEBUG: loadSamplePlants - Using fallback hardcoded sample data');
+      
+      // If fetch fails, use the hardcoded fallback data
+      data = fallbackPlants;
+    }
     
     // Map the image URLs to local images
     const localImageMappings = {
@@ -772,10 +862,9 @@ export const loadSamplePlants = async () => {
     
     // Cache the sample data
     try {
-      localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
+      localStorage.setItem('cachedSamplePlants', JSON.stringify({
         timestamp: new Date().toISOString(),
-        data: updatedData,
-        source: 'sample'
+        data: updatedData
       }));
       console.log('DEBUG: loadSamplePlants - Sample data cached to localStorage');
     } catch (e) {
@@ -786,7 +875,24 @@ export const loadSamplePlants = async () => {
   } catch (error) {
     console.error('Error loading sample plant data:', error);
     console.error('DEBUG: loadSamplePlants - Detailed error:', error.stack || error.message || error);
-    throw error;
+    
+    // Last resort - return a minimal set of plants as emergency fallback
+    const emergencyFallback = [
+      {
+        id: 1,
+        name: "Sample Plant",
+        scientificName: "Example species",
+        price: "9.99",
+        description: "This is a fallback plant for when all other loading methods fail.",
+        mainImage: "/images/placeholder.jpg",
+        inventory: {
+          currentStock: 10,
+          status: "In Stock"
+        }
+      }
+    ];
+    
+    return emergencyFallback;
   }
 };
 
