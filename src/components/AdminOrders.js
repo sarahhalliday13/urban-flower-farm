@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory } from '../services/firebase';
+import { sendOrderConfirmationEmails } from '../services/emailService';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
+import { useToast } from '../context/ToastContext';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -12,42 +14,38 @@ const AdminOrders = () => {
   const [showInvoice, setShowInvoice] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(null);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
+  const [emailSending, setEmailSending] = useState({});
+  const { addToast } = useToast();
 
   useEffect(() => {
     loadOrders();
+
+    // Add real-time refresh when orders are created
+    window.addEventListener('orderCreated', handleOrderCreated);
+    
+    return () => {
+      window.removeEventListener('orderCreated', handleOrderCreated);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadOrders = async () => {
+  const handleOrderCreated = () => {
+    console.log('Order created event detected, refreshing orders...');
+    loadOrders();
+  };
+  
+  const handleRefresh = () => {
+    console.log('Manually refreshing orders...');
+    // Set loading to true to show loading indicator
     setLoading(true);
-    try {
-      // First try to load from Firebase
-      const firebaseOrders = await getOrders();
-      
-      if (firebaseOrders && firebaseOrders.length > 0) {
-        // Process orders to ensure they have consistent format
+    
+    // Force a fresh fetch from Firebase
+    getOrders()
+      .then(firebaseOrders => {
+        console.log(`Refreshed ${firebaseOrders.length} orders from Firebase`);
+        
+        // Process orders for consistent format
         const processedOrders = firebaseOrders.map(order => {
-          // Create a name field for backwards compatibility with the existing code
-          if (order.customer && (order.customer.firstName || order.customer.lastName)) {
-            return {
-              ...order,
-              customer: {
-                ...order.customer,
-                // Add a name field that combines firstName and lastName
-                name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
-              }
-            };
-          }
-          return order;
-        });
-        
-        setOrders(processedOrders);
-      } else {
-        // Fallback to localStorage if no orders in Firebase
-        console.log('No orders found in Firebase, falling back to localStorage');
-        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        
-        // Process local orders as well for consistency
-        const processedLocalOrders = localOrders.map(order => {
           if (order.customer && (order.customer.firstName || order.customer.lastName)) {
             return {
               ...order,
@@ -61,15 +59,86 @@ const AdminOrders = () => {
         });
         
         // Sort by date (newest first)
-        processedLocalOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+        processedOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        setOrders(processedLocalOrders);
-      }
+        // Update state and localStorage
+        setOrders(processedOrders);
+        localStorage.setItem('orders', JSON.stringify(processedOrders));
+        addToast('Orders refreshed successfully', 'success');
+        
+        // Check for any pending orders that need emails
+        const pendingOrders = processedOrders.filter(order => 
+          order.status?.toLowerCase() === 'pending' && !order.emailSent
+        );
+        
+        if (pendingOrders.length > 0) {
+          console.log(`Found ${pendingOrders.length} pending orders without confirmation emails`);
+          pendingOrders.forEach(async (order) => {
+            try {
+              const result = await sendOrderConfirmationEmails(order);
+              
+              if (result.success) {
+                console.log(`Successfully sent confirmation email for order ${order.id}`);
+                // Mark the order as having sent an email
+                updateOrderStatus(order.id, order.status, true);
+              } else {
+                console.error(`Failed to send confirmation email for order ${order.id}:`, result.message);
+              }
+            } catch (error) {
+              console.error(`Error sending confirmation email for order ${order.id}:`, error);
+            }
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error refreshing orders:', error);
+        addToast('Failed to refresh orders', 'error');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  const loadOrders = async () => {
+    setLoading(true);
+    try {
+      // First try to load from Firebase
+      console.log('Loading orders from Firebase...');
+      const firebaseOrders = await getOrders();
+      
+      console.log(`Found ${firebaseOrders.length} orders in Firebase`);
+
+      // When Firebase load succeeds, use it as the source of truth
+      // Process orders to ensure they have consistent format
+      const processedOrders = firebaseOrders.map(order => {
+        // Create a name field for backwards compatibility with the existing code
+        if (order.customer && (order.customer.firstName || order.customer.lastName)) {
+          return {
+            ...order,
+            customer: {
+              ...order.customer,
+              // Add a name field that combines firstName and lastName
+              name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
+            }
+          };
+        }
+        return order;
+      });
+      
+      // Sort by date (newest first)
+      processedOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      setOrders(processedOrders);
+      console.log(`Successfully loaded ${processedOrders.length} total orders from Firebase`);
+      
+      // Update localStorage with the Firebase data for offline access
+      localStorage.setItem('orders', JSON.stringify(processedOrders));
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error('Error loading orders from Firebase:', error);
       
       // Fallback to localStorage if Firebase fails
       try {
+        console.log('Firebase failed, falling back to localStorage');
         const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         // Process local orders for consistency
         const processedLocalOrders = localOrders.map(order => {
@@ -87,6 +156,7 @@ const AdminOrders = () => {
         
         processedLocalOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
         setOrders(processedLocalOrders);
+        console.log(`Loaded ${processedLocalOrders.length} orders from localStorage`);
       } catch (localError) {
         console.error('Error loading orders from localStorage:', localError);
       }
@@ -95,7 +165,7 @@ const AdminOrders = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus, emailSent = false) => {
     try {
       // Get the order details before updating
       const order = orders.find(o => o.id === orderId);
@@ -104,8 +174,14 @@ const AdminOrders = () => {
         return;
       }
 
+      // Update the order object to include the emailSent flag
+      const updatedOrderData = { 
+        status: newStatus,
+        ...(emailSent ? { emailSent: true } : {})
+      };
+
       // Update in Firebase first
-      await updateFirebaseOrderStatus(orderId, newStatus);
+      await updateFirebaseOrderStatus(orderId, updatedOrderData);
       
       // If the order is being cancelled, restore the inventory
       if (newStatus.toLowerCase() === 'cancelled') {
@@ -126,7 +202,11 @@ const AdminOrders = () => {
       // Then update local state and localStorage
       const updatedOrders = orders.map(order => {
         if (order.id === orderId) {
-          return { ...order, status: newStatus };
+          return { 
+            ...order, 
+            status: newStatus,
+            ...(emailSent ? { emailSent: true } : {})
+          };
         }
         return order;
       });
@@ -137,7 +217,11 @@ const AdminOrders = () => {
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const updatedLocalOrders = localOrders.map(order => {
         if (order.id === orderId) {
-          return { ...order, status: newStatus };
+          return { 
+            ...order, 
+            status: newStatus,
+            ...(emailSent ? { emailSent: true } : {})
+          };
         }
         return order;
       });
@@ -179,10 +263,47 @@ const AdminOrders = () => {
     setShowInvoice(null);
   };
 
-  const sendInvoiceEmail = (order) => {
-    // In a real app, this would send an API request to send the email
-    // For now, we'll just show an alert
-    alert(`Invoice email sent to ${order.customer.email}`);
+  const sendOrderEmail = async (order) => {
+    if (emailSending[order.id]) return; // Prevent double-sending
+    
+    // Set sending state for this order
+    setEmailSending(prev => ({ ...prev, [order.id]: true }));
+    
+    try {
+      const result = await sendOrderConfirmationEmails(order);
+      
+      if (result.success) {
+        addToast("Email sent successfully!", "success");
+        
+        // Mark this order as having sent an email in localStorage
+        const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
+        const updatedEmails = manualEmails.map(email => {
+          if (email.orderId === order.id) {
+            return { ...email, status: 'sent', sentDate: new Date().toISOString() };
+          }
+          return email;
+        });
+        localStorage.setItem('manualEmails', JSON.stringify(updatedEmails));
+        
+        // Update orders in state to reflect email was sent
+        const updatedOrders = orders.map(o => {
+          if (o.id === order.id) {
+            return { ...o, emailSent: true };
+          }
+          return o;
+        });
+        setOrders(updatedOrders);
+        
+      } else {
+        addToast("Failed to send email: " + (result.message || "Unknown error"), "error");
+      }
+    } catch (error) {
+      console.error(`Error sending email for order ${order.id}:`, error);
+      addToast("Error sending email: " + error.message, "error");
+    } finally {
+      // Clear sending state
+      setEmailSending(prev => ({ ...prev, [order.id]: false }));
+    }
   };
 
   const handleStatusUpdate = async (orderId, newStatus) => {
@@ -269,6 +390,13 @@ const AdminOrders = () => {
               <option value="cancelled">Cancelled</option>
             </select>
           </div>
+          <button 
+            className="refresh-button" 
+            onClick={handleRefresh} 
+            title="Refresh Orders"
+          >
+            <span role="img" aria-label="Refresh">🔄</span> Refresh
+          </button>
         </div>
       </div>
       
@@ -430,6 +558,36 @@ const AdminOrders = () => {
                               </div>
                             </div>
                             
+                            <div className="email-management">
+                              <h4>Email Management</h4>
+                              <p>
+                                <strong>Email Status:</strong>{" "}
+                                {(() => {
+                                  // Check manualEmails in localStorage
+                                  const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
+                                  const orderEmail = manualEmails.find(email => email.orderId === order.id);
+                                  
+                                  if (orderEmail) {
+                                    if (orderEmail.status === 'sent') {
+                                      return <span className="email-status sent">Sent manually</span>;
+                                    } else {
+                                      return <span className="email-status pending">Pending - needs to be sent</span>;
+                                    }
+                                  }
+                                  
+                                  // If no manual email record
+                                  return <span className="email-status unknown">Unknown</span>;
+                                })()}
+                              </p>
+                              <button 
+                                className="email-send-btn"
+                                onClick={() => sendOrderEmail(order)}
+                                disabled={emailSending[order.id]}
+                              >
+                                {emailSending[order.id] ? 'Sending...' : 'Send/Resend Confirmation Email'}
+                              </button>
+                            </div>
+                            
                             {order.notes && (
                               <div className="order-notes">
                                 <h4>Order Notes</h4>
@@ -448,7 +606,7 @@ const AdminOrders = () => {
                                 </button>
                                 <button 
                                   className="email-invoice-btn"
-                                  onClick={() => sendInvoiceEmail(order)}
+                                  onClick={() => sendOrderEmail(order)}
                                   disabled={!order.customer.email || order.customer.email === 'Not provided'}
                                 >
                                   Email Invoice
@@ -508,6 +666,12 @@ const AdminOrders = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {pendingStatusUpdate && (
+        <div className="status-update-notification">
+          Updating order status...
         </div>
       )}
     </div>
