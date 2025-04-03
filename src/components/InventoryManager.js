@@ -2130,58 +2130,109 @@ const InventoryManager = () => {
     }
   }, [plants, plantsLoading]);
 
-  if (loading) return (
-    <div className="inventory-loading">
-      <div className="loading-spinner"></div>
-      <div className="loading-message">{loadingMessage}</div>
-      <p className="loading-tip">
-        If loading takes too long, Firebase might be experiencing connection issues.
-      </p>
-      <div className="loading-buttons">
+  // Check Firebase config and log detailed info
+  useEffect(() => {
+    console.log('InventoryManager mounted - checking Firebase config');
+    const configStatus = checkFirebaseConfig();
+    console.log('Firebase config status:', configStatus);
+    
+    // Check environment
+    console.log('Current environment:', process.env.NODE_ENV);
+    console.log('Firebase database URL:', process.env.REACT_APP_FIREBASE_DATABASE_URL);
+    
+    // Log initial context state
+    console.log('Initial AdminContext state:', { 
+      plantsCount: plants?.length, 
+      loading: plantsLoading,
+      error: plantsError
+    });
+    
+    // Add global error handler to catch rendering errors
+    const originalConsoleError = console.error;
+    console.error = (...args) => {
+      // Log to both console and potentially to a monitoring service in the future
+      originalConsoleError(...args);
+      
+      // Check if this is a React error
+      const errorString = args.join(' ');
+      if (errorString.includes('Error rendering component')) {
+        setError(`Rendering error in InventoryManager: ${errorString}`);
+      }
+    };
+    
+    // Try loading plants immediately to catch any issues
+    loadPlants(true).catch(err => {
+      console.error('Error during initial plants load:', err);
+      setError(`Failed to load inventory data: ${err.message}`);
+    });
+    
+    return () => {
+      // Restore original console.error
+      console.error = originalConsoleError;
+      console.log('InventoryManager unmounted');
+    };
+  }, [loadPlants, plants, plantsError, plantsLoading]);
+
+  // ADD THIS TO THE COMPONENT RENDER SECTION NEAR THE TOP:
+  // Render a fallback UI if there's an error
+  if (error || plantsError) {
+    return (
+      <div className="error-container" style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Error Loading Inventory</h2>
+        <p>{error || plantsError}</p>
+        <p>Please try refreshing the page. If the problem persists, contact support.</p>
         <button 
-          className="force-load-btn"
-          onClick={() => handleLoadPlants(true)}
+          onClick={() => {
+            setError(null);
+            loadPlants(true);
+          }}
+          style={{
+            padding: '10px 15px',
+            background: '#2c5530',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            marginTop: '15px'
+          }}
         >
-          Load Sample Data
+          Retry Loading
         </button>
-        <button 
-          className="force-load-btn secondary"
-          onClick={() => handleLoadPlants(true)}
-        >
-          Load from Local Cache
-        </button>
-      </div>
-      <p className="loading-note">
-        Note: Sample data contains demo plants for testing. Local cache will use the last saved data.
-      </p>
-    </div>
-  );
-  
-  if (error) return (
-    <div className="inventory-error">
-      <p className="error-message">{error}</p>
-      <div className="error-buttons">
-        <button 
-          className="force-load-btn"
-          onClick={() => handleLoadPlants(true)}
-        >
-          Load Sample Data
-        </button>
-        <button 
-          className="force-load-btn secondary"
-          onClick={() => handleLoadPlants(true)}
-        >
-          Load from Local Cache
-        </button>
-      </div>
-      {apiRetryCount > 0 && (
-        <div className="api-retry-info">
-          <p>API connection attempts: {apiRetryCount}</p>
-          <p>We're having trouble connecting to Firebase. You can use sample data for testing or load from local cache if you have previously saved data.</p>
+        <div style={{ marginTop: '20px', textAlign: 'left', background: '#f9f9f9', padding: '15px', borderRadius: '4px' }}>
+          <h3>Debug Information:</h3>
+          <p>Environment: {process.env.NODE_ENV}</p>
+          <p>Firebase Config Valid: {checkFirebaseConfig() ? 'Yes' : 'No'}</p>
+          <p>Plants Loaded: {plants?.length || 0}</p>
+          <p>Loading State: {loading || plantsLoading ? 'Loading' : 'Not Loading'}</p>
+          <p>Last Error: {error || plantsError || 'None'}</p>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  // Add a loading indicator
+  if (loading || plantsLoading) {
+    return (
+      <div className="loading-container" style={{ padding: '20px', textAlign: 'center' }}>
+        <h2>Loading Inventory</h2>
+        <p>{loadingMessage}</p>
+        <div className="loading-spinner" style={{ 
+          display: 'inline-block',
+          width: '30px',
+          height: '30px',
+          border: '3px solid rgba(0,0,0,0.1)',
+          borderRadius: '50%',
+          borderTopColor: '#2c5530',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="inventory-manager">

@@ -27,6 +27,7 @@ import CartModal from './components/CartModal';
 import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy load heavy admin components
 const InventoryManager = lazy(() => import('./components/InventoryManager'));
@@ -224,13 +225,76 @@ const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
   return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
 };
 
-// Create a wrapper for admin content that doesn't show a loading state
+// Create a wrapper for admin content with enhanced error handling
 const AdminContentWrapper = ({ children }) => {
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
+  // Error boundary functionality
+  const handleError = (error) => {
+    console.error('Error in AdminContentWrapper:', error);
+    setHasError(true);
+    setErrorMessage(error.message || 'An unexpected error occurred');
+  };
+  
+  // If there's an error, show it
+  if (hasError) {
+    return (
+      <div className="admin-error" style={{ 
+        padding: '20px', 
+        margin: '20px auto',
+        maxWidth: '800px',
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+      }}>
+        <h2 style={{ color: '#d32f2f' }}>Error Loading Admin Content</h2>
+        <p>{errorMessage}</p>
+        <button 
+          onClick={() => setHasError(false)}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#2c5530',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+  
   return (
     <div className="admin-content-area">
-      <Suspense fallback={<div style={{ display: 'none' }}></div>}>
-        {children}
-      </Suspense>
+      <ErrorBoundary onError={handleError}>
+        <Suspense fallback={
+          <div className="admin-loading" style={{ 
+            padding: '20px', 
+            textAlign: 'center' 
+          }}>
+            <div className="loading-spinner" style={{
+              display: 'inline-block',
+              width: '30px',
+              height: '30px',
+              border: '3px solid rgba(0,0,0,0.1)',
+              borderRadius: '50%',
+              borderTopColor: '#2c5530',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <p>Loading admin content...</p>
+            <style>{`
+              @keyframes spin {
+                to { transform: rotate(360deg); }
+              }
+            `}</style>
+          </div>
+        }>
+          {children}
+        </Suspense>
+      </ErrorBoundary>
     </div>
   );
 };
