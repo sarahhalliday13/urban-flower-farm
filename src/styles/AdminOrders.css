@@ -1191,4 +1191,224 @@ td[data-label="Total"] {
     box-sizing: border-box;
     overflow-x: hidden;
   }
+}
+
+/* Add wrapper with fixed responsive styling */
+.admin-orders-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  padding: 0 1rem;
+  position: relative;
+}
+
+/* Fix any overflow issues at various viewport sizes */
+@media (max-width: 1200px) {
+  .admin-orders-wrapper {
+    max-width: 100%;
+    overflow-x: visible;
+  }
+  
+  .admin-orders-container {
+    max-width: 100%;
+    overflow-x: visible;
+  }
+}
+
+/* Force responsive layout at medium viewport sizes */
+@media (max-width: 990px) {
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .search-box {
+    width: 100%;
+  }
+  
+  .search-box input {
+    width: 100%;
+  }
+  
+  .status-filter {
+    width: 100%;
+  }
+  
+  .status-filter select {
+    width: 100%;
+  }
+  
+  .refresh-button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Fix responsive table layout */
+@media (max-width: 768px) {
+  .orders-table {
+    border: 0;
+    display: block;
+  }
+  
+  .orders-table thead {
+    display: none;
+  }
+  
+  .orders-table tbody {
+    display: block;
+  }
+  
+  .orders-table tr {
+    border-bottom: 3px solid #ddd;
+    display: block;
+    margin-bottom: 1.5rem;
+    padding: 0;
+  }
+  
+  .orders-table td {
+    border-bottom: 1px solid #ddd;
+    display: block;
+    font-size: 0.8rem;
+    text-align: right;
+    position: relative;
+    padding: 0.75rem 0.75rem 0.75rem 50%;
+  }
+  
+  .orders-table td::before {
+    content: attr(data-label);
+    font-weight: bold;
+    position: absolute;
+    left: 0.75rem;
+    width: 45%;
+    text-align: left;
+  }
+  
+  .orders-table tr.details-row {
+    border: none;
+    margin-bottom: 0;
+  }
+  
+  .orders-table tr.details-row td {
+    padding: 0;
+    text-align: left;
+  }
+  
+  .orders-table tr.details-row td::before {
+    display: none;
+  }
+  
+  .order-details {
+    padding: 1rem;
+  }
+}
+
+/* Ensure table is always visible and accessible */
+.orders-list {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Make sure buttons are always usable on mobile */
+.view-details-btn {
+  width: auto;
+  display: inline-block;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Ensure the status buttons are visible at smaller viewports */
+@media (max-width: 576px) {
+  .status-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .status-btn {
+    width: 100%;
+    margin: 0;
+  }
+  
+  .order-info-grid {
+    display: block;
+  }
+  
+  .customer-info, 
+  .status-management,
+  .email-management,
+  .invoice-section {
+    width: 100%;
+    margin-bottom: 1.5rem;
+  }
+  
+  .items-table {
+    font-size: 0.8rem;
+  }
+}
+
+/* Style fixes for table in responsive mode */
+.order-cell, .date-cell, .customer-cell, .status-cell, .total-cell, .actions-cell {
+  vertical-align: middle;
+}
+
+/* Ensure proper styling for status indicators */
+.order-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.status-pending {
+  background-color: #fcd34d;
+  color: #92400e;
+}
+
+.status-processing {
+  background-color: #93c5fd;
+  color: #1e40af;
+}
+
+.status-shipped {
+  background-color: #a7f3d0;
+  color: #065f46;
+}
+
+.status-completed {
+  background-color: #bbf7d0;
+  color: #166534;
+}
+
+.status-cancelled {
+  background-color: #fca5a5;
+  color: #991b1b;
+}
+
+/* Add refresh button styles */
+.refresh-button {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refresh-button:hover {
+  background-color: #e0f2fe;
+  border-color: #0ea5e9;
 } 
