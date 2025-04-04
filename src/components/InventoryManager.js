@@ -27,6 +27,7 @@ import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
 import ImageWithFallback from './ImageWithFallback';
+import { useToast } from '../context/ToastContext';
 
 // Helper function to verify Firebase configuration
 const checkFirebaseConfig = () => {
@@ -161,6 +162,8 @@ const InventoryManager = () => {
 
   // Add a new state variable to track unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const { addToast } = useToast();
 
   // Check sync queue status - moved before useEffect that uses it
   const checkSyncQueue = useCallback(() => {

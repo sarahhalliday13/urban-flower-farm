@@ -361,8 +361,9 @@ const AdminOrders = () => {
     return true;
   });
 
+  // Fixed wrapper to ensure consistent display at all viewport sizes
   return (
-    <div style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+    <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
       <div className="admin-orders-container">
         <div className="admin-header">
           <h1>Order Management</h1>
@@ -639,7 +640,6 @@ const AdminOrders = () => {
           </div>
         )}
 
-        {/* Add confirmation dialog */}
         {showCancelConfirm && (
           <div className="confirmation-modal">
             <div className="confirmation-content">
