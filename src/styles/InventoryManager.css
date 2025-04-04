@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: 1rem 1rem 2rem;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .inventory-manager h1 {
@@ -1807,4 +1808,20 @@
   justify-content: center;
   min-width: 100px;
   text-align: center;
+}
+
+/* Fix for larger viewport sizes */
+@media (min-width: 1200px) {
+  .inventory-manager {
+    padding: 1rem 2rem 2rem;
+  }
+  
+  .inventory-table-container {
+    overflow-x: initial;
+  }
+  
+  .inventory-table {
+    width: 100%;
+    table-layout: fixed;
+  }
 } 

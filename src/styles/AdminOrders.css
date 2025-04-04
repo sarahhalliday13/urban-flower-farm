@@ -4,6 +4,8 @@
   padding: 2rem 1rem;
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .admin-header {
@@ -1157,4 +1159,20 @@ td[data-label="Total"] {
 
 .cancel-btn:hover {
   background-color: #7f8c8d;
+}
+
+/* Fix for larger viewport sizes */
+@media (min-width: 1200px) {
+  .admin-orders-container {
+    padding: 2rem;
+  }
+  
+  .orders-list {
+    overflow-x: initial;
+  }
+  
+  .orders-table {
+    width: 100%;
+    table-layout: fixed;
+  }
 } 
