@@ -1,13 +1,9 @@
 .admin-orders-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem 1rem;
   font-family: 'Poppins', sans-serif;
   overflow-x: hidden;
-  box-sizing: border-box;
 }
 
 .admin-header {
@@ -120,12 +116,11 @@
 .orders-list {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .orders-table {
   width: 100%;
-  min-width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
   margin-bottom: 1rem;
@@ -1162,33 +1157,4 @@ td[data-label="Total"] {
 
 .cancel-btn:hover {
   background-color: #7f8c8d;
-}
-
-/* Fix for larger viewport sizes */
-@media (min-width: 1200px) {
-  .admin-orders-container {
-    padding: 2rem;
-    flex: 1;
-  }
-  
-  .orders-list {
-    overflow-x: initial;
-  }
-  
-  .orders-table {
-    width: 100%;
-    table-layout: fixed;
-  }
-  
-  /* Ensure all nested content containers respect boundaries */
-  .order-details,
-  .order-info-grid,
-  .items-table,
-  .customer-info, 
-  .order-notes,
-  .order-actions {
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
 } 

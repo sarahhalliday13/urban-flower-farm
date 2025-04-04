@@ -1,0 +1,370 @@
+.order-confirmation-page {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.confirmation-container {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.confirmation-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.confirmation-icon {
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: center;
+}
+
+.confirmation-icon svg {
+  filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.confirmation-header h2 {
+  font-size: 1.75rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.order-status {
+  font-size: 1.1rem;
+  color: #7f8c8d;
+}
+
+.confirmation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+@media (min-width: 768px) {
+  .confirmation-details {
+    flex-direction: row;
+  }
+  
+  .order-info,
+  .confirmation-message {
+    flex: 1;
+  }
+}
+
+.order-info,
+.confirmation-message {
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.order-info h3,
+.confirmation-message h3 {
+  font-size: 1.25rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+.order-number,
+.order-date,
+.order-total {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.order-number {
+  position: relative;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #3498db;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  position: relative;
+}
+
+.copy-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.copy-tooltip {
+  position: absolute;
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+}
+
+.copy-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.spam-notice {
+  margin-top: 15px;
+  color: #e67e22;
+}
+
+.email-warning,
+.sync-warning {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: rgba(231, 76, 60, 0.1);
+  border-left: 4px solid #e74c3c;
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+.view-orders-btn,
+.continue-shopping-btn {
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: none;
+}
+
+.view-orders-btn {
+  background-color: #3498db;
+  color: white;
+}
+
+.view-orders-btn:hover {
+  background-color: #2980b9;
+}
+
+.continue-shopping-btn {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.continue-shopping-btn:hover {
+  background-color: #7f8c8d;
+}
+
+.confirmation-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.1rem;
+  color: #7f8c8d;
+}
+
+.order-notes {
+  margin: 20px 0;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-left: 4px solid #27ae60;
+  border-radius: 4px;
+}
+
+.order-notes h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.order-notes p {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+/* Order confirmation styles - old cart style */
+.order-confirmation {
+  text-align: center;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 600px;
+  margin: 40px auto;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.confirmation-icon {
+  font-size: 60px;
+  color: #4caf50;
+  margin-bottom: 20px;
+}
+
+.order-confirmation h3 {
+  color: #2c5530;
+  margin-bottom: 15px;
+  font-size: 24px;
+}
+
+.order-confirmation h4 {
+  color: #2c5530;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+
+.order-confirmation p {
+  color: #555;
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+.order-confirmation .spam-notice {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 10px 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 15px;
+  text-align: left;
+  width: 80%;
+}
+
+.email-error-notice {
+  background-color: #f8d7da;
+  border-left: 4px solid #dc3545;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+  color: #721c24;
+  font-size: 15px;
+  text-align: left;
+  width: 80%;
+}
+
+.email-error-notice p {
+  margin-bottom: 8px;
+}
+
+.email-error-notice p:last-child {
+  margin-bottom: 0;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-primary {
+  background-color: #2c5530;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #1e3d22;
+}
+
+.confirmation-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.1rem;
+  color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+  .confirmation-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-primary {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+/* Order Summary Styles */
+.order-summary {
+  width: 90%;
+  margin: 15px 0 25px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.order-number {
+  text-align: left;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 15px;
+  border-bottom: 1px dashed #ddd;
+  padding-bottom: 8px;
+}
+
+.order-items table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.order-items th {
+  background-color: #f1f1f1;
+  padding: 8px;
+  text-align: left;
+  color: #444;
+  font-weight: 600;
+}
+
+.order-items td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.order-items tfoot td {
+  padding-top: 12px;
+  border-bottom: none;
+  border-top: 2px solid #ddd;
+}
+
+@media (max-width: 600px) {
+  .order-items table {
+    font-size: 12px;
+  }
+  
+  .order-items th, 
+  .order-items td {
+    padding: 6px 4px;
+  }
+  
+  .order-summary {
+    width: 100%;
+    padding: 10px;
+  }
+} 

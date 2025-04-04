@@ -1677,33 +1677,19 @@ footer p {
 
 /* Admin content area with smooth transitions */
 .admin-content-area {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  position: relative;
   width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
   min-height: 60vh;
   transition: opacity 0.3s ease;
 }
 
 .admin-content-area > div {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
   animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@media (min-width: 900px) {
-  .admin-content-area {
-    padding: 0 15px;
-  }
 }
 
 /* Footer styles */

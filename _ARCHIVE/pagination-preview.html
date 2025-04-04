@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Pagination Preview</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+    }
+    
+    .preview-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .plant-image {
+      width: 100%;
+      height: 250px;
+      background-color: #e9f5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #2c5530;
+      font-weight: bold;
+    }
+    
+    .details-container {
+      padding: 15px;
+    }
+    
+    .mobile-pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    .mobile-page-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: white;
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      font-size: 18px;
+      color: #2c5530;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .mobile-page-btn:hover:not(.disabled) {
+      background-color: #2c5530;
+      color: white;
+      border-color: #2c5530;
+    }
+    
+    .mobile-page-btn.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .pagination-info {
+      display: flex;
+      align-items: center;
+      margin: 0 12px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .current-page {
+      font-weight: bold;
+      color: #2c5530;
+      font-size: 16px;
+    }
+    
+    .page-separator {
+      margin: 0 4px;
+      color: #999;
+    }
+    
+    .total-pages {
+      color: #999;
+    }
+    
+    .plant-name {
+      font-size: 1.5rem;
+      margin: 0.5rem 0;
+      color: #2c5530;
+    }
+    
+    .scientific-name {
+      font-style: italic;
+      color: #666;
+      margin: 0 0 1rem 0;
+      font-size: 1rem;
+    }
+    
+    .plant-description {
+      color: #444;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .swipe-indicator {
+      background-color: #fffde7;
+      border: 1px dashed #fbc02d;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 12px 0;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #f57f17;
+    }
+    
+    .swipe-icon {
+      display: inline-block;
+      animation: swipeAnimation 2s infinite ease-in-out;
+    }
+    
+    @keyframes swipeAnimation {
+      0% { transform: translateX(0); opacity: 0.7; }
+      50% { transform: translateX(10px); opacity: 1; }
+      100% { transform: translateX(0); opacity: 0.7; }
+    }
+    
+    h1 {
+      color: #2c5530;
+      margin-bottom: 1.5rem;
+    }
+    
+    .instructions {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #f0f9ff;
+      border-radius: 8px;
+      border-left: 4px solid #03a9f4;
+    }
+    
+    .code-example {
+      background-color: #f5f5f5;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      overflow-x: auto;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mobile Pagination Preview</h1>
+  
+  <div class="preview-container">
+    <div class="plant-image">Plant Image</div>
+    
+    <div class="details-container">
+      <div class="mobile-pagination">
+        <button class="mobile-page-btn prev">
+          &lt;
+        </button>
+        
+        <div class="pagination-info">
+          <span class="current-page">2</span>
+          <span class="page-separator">/</span>
+          <span class="total-pages">15</span>
+        </div>
+        
+        <button class="mobile-page-btn next">
+          &gt;
+        </button>
+      </div>
+      
+      <div class="swipe-indicator">
+        <span class="swipe-icon">👈</span> Swipe to navigate <span class="swipe-icon" style="animation-delay: 1s;">👉</span>
+      </div>
+      
+      <h2 class="plant-name">Lavender</h2>
+      <p class="scientific-name">Lavandula angustifolia</p>
+      
+      <span class="status-badge">In Stock</span>
+      
+      <p class="plant-description">
+        Beautiful fragrant herb with purple flowers, perfect for gardens and arrangements. Attracts pollinators and has a calming scent.
+      </p>
+    </div>
+  </div>
+  
+  <div class="instructions">
+    <h3>Implementation Details</h3>
+    <p>This mobile pagination provides a space-efficient way to navigate between plants with:</p>
+    <ul>
+      <li>Compact numeric indicators (2/15)</li>
+      <li>Swipe gestures for touch navigation</li>
+      <li>Round navigation buttons that require minimal space</li>
+    </ul>
+    
+    <div class="code-example">
+      // Mobile pagination component<br>
+      const MobilePagination = () => (<br>
+      &nbsp;&nbsp;&lt;div className="mobile-pagination"&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;button className="mobile-page-btn prev"&gt;&lt;&lt;/button&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;div className="pagination-info"&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;span className="current-page"&gt;{currentIndex + 1}&lt;/span&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;span className="page-separator"&gt;/&lt;/span&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;span className="total-pages"&gt;{plantIds.length}&lt;/span&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;/div&gt;<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&lt;button className="mobile-page-btn next"&gt;&gt;&lt;/button&gt;<br>
+      &nbsp;&nbsp;&lt;/div&gt;<br>
+      )
+    </div>
+  </div>
+</body>
+</html> 

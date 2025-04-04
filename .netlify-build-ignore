@@ -1,0 +1,5 @@
+
+# Ignore TypeScript files for Netlify build
+*.ts
+*.tsx
+tsconfig.json

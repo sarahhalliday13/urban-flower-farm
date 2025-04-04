@@ -4,9 +4,6 @@
   margin: 0 auto;
   padding: 1rem 1rem 2rem;
   box-sizing: border-box;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
 .inventory-manager h1 {
@@ -481,22 +478,21 @@
 .inventory-table-container {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
-  margin-bottom: 2rem;
   box-sizing: border-box;
+  overflow-x: auto;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
   border-radius: 10px;
   position: relative;
+  margin-bottom: 2rem;
   padding-bottom: 1rem;
 }
 
 /* Inventory table - fixed layout to prevent cell content overflow */
 .inventory-table {
   width: 100%;
-  min-width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-  table-layout: fixed;
+  min-width: 800px; /* Ensure table has minimum width to prevent cramping */
+  table-layout: fixed; /* Fixed layout for better control */
+  border-collapse: collapse; /* Changed from separate to collapse for cleaner lines */
   border-spacing: 0;
   background-color: white;
 }
@@ -1811,35 +1807,4 @@
   justify-content: center;
   min-width: 100px;
   text-align: center;
-}
-
-/* Fix for larger viewport sizes */
-@media (min-width: 1200px) {
-  .inventory-manager {
-    padding: 1rem 2rem 2rem;
-    flex: 1;
-  }
-  
-  .inventory-table-container {
-    overflow-x: initial;
-  }
-  
-  .inventory-table {
-    width: 100%;
-    table-layout: fixed;
-  }
-  
-  /* Make sure tabs don't cause overflow */
-  .inventory-tabs {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-  }
-  
-  /* Ensure tab content stays in bounds */
-  .tab-content {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-  }
 } 

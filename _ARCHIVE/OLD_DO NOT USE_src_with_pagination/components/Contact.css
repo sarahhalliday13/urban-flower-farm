@@ -1,0 +1,470 @@
+.contact-section {
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.contact-hero {
+  background-size: cover;
+  background-position: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  margin-bottom: 3rem;
+  position: relative;
+}
+
+.contact-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+}
+
+.contact-hero h1,
+.contact-hero p {
+  position: relative;
+  z-index: 2;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.contact-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.contact-hero p {
+  font-size: 1.2rem;
+}
+
+.contact-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.contact-content h1 {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 30px;
+}
+
+/* Contact information styles */
+.contact-info {
+  padding: 40px;
+  background-color: #f5f8f5;
+}
+
+.contact-info h2 {
+  margin-top: 0;
+  margin-bottom: 30px;
+  color: #2c5530;
+  font-size: 24px;
+}
+
+.info-item {
+  display: flex;
+  margin-bottom: 30px;
+}
+
+.info-icon {
+  margin-right: 15px;
+  font-size: 24px;
+  color: #2c5530;
+  min-width: 24px;
+  text-align: center;
+}
+
+.info-text {
+  text-align: left;
+}
+
+.info-text h3 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  color: #333;
+}
+
+.info-text p {
+  margin: 0;
+  color: #555;
+}
+
+.info-text a {
+  color: #2c5530;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.info-text a:hover {
+  color: #1f3d22;
+  text-decoration: underline;
+}
+
+.map-link {
+  display: inline-block;
+  color: #1877F2;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: color 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.map-link:hover {
+  color: #1561c8;
+  text-decoration: underline;
+}
+
+.email-container {
+  display: flex;
+  align-items: center;
+}
+
+.email-with-copy {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+.email-with-copy a {
+  color: #2c5530;
+  text-decoration: none;
+  margin-right: 8px;
+}
+
+.email-with-copy a:hover {
+  text-decoration: underline;
+}
+
+.copy-email-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  color: #666;
+  padding: 0;
+  position: relative;
+}
+
+.copy-email-btn:hover {
+  color: #2c5530;
+}
+
+.copy-text {
+  display: none;
+  font-size: 14px;
+}
+
+.copy-tooltip {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+.copy-email-btn.copied .copy-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.social-links {
+  margin-top: 2rem;
+}
+
+.social-links h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #374151;
+}
+
+.social-icons {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.social-icons a {
+  color: #2c5530;
+  text-decoration: none;
+}
+
+.social-icons a:hover {
+  text-decoration: underline;
+}
+
+.facebook-icon {
+  color: #1877F2;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+}
+
+.facebook-icon:hover {
+  text-decoration: underline;
+}
+
+/* Contact form styles */
+.contact-form-container {
+  padding: 40px;
+}
+
+.contact-form-container h2 {
+  margin-top: 0;
+  margin-bottom: 30px;
+  color: #2c5530;
+  font-size: 24px;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #333;
+}
+
+.required {
+  color: #d32f2f;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  color: #333;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #2c5530;
+  outline: none;
+}
+
+.form-error {
+  background-color: #ffebee;
+  border-left: 4px solid #d32f2f;
+  padding: 12px;
+  margin-bottom: 20px;
+  color: #d32f2f;
+}
+
+.submit-btn {
+  background-color: #2c5530;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 10px;
+  align-self: flex-start;
+}
+
+.submit-btn:hover {
+  background-color: #1e3c22;
+}
+
+.submit-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.form-success {
+  background-color: #e8f5e9;
+  border-left: 4px solid #2e7d32;
+  padding: 20px;
+  color: #2e7d32;
+}
+
+.form-success h3 {
+  margin-top: 0;
+  color: #2e7d32;
+}
+
+.form-success .spam-notice {
+  background-color: #fff3cd;
+  border-left: 4px solid #ffc107;
+  padding: 10px 15px;
+  margin: 15px 0;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 15px;
+  text-align: left;
+}
+
+.send-again-btn {
+  background-color: #2e7d32;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.2s;
+}
+
+.send-again-btn:hover {
+  background-color: #1b5e20;
+}
+
+/* Map section */
+.map-section {
+  padding: 3rem 2rem;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.map-section h2 {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.map-section p {
+  margin-bottom: 2rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.map-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure the phone input field is styled consistently with other inputs */
+.contact-form-container input[type="tel"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  margin-top: 5px;
+  transition: border-color 0.3s;
+}
+
+.contact-form-container input[type="tel"]:focus {
+  border-color: #4a6741;
+  outline: none;
+}
+
+/* Optional: Add a placeholder style for better visual consistency */
+.contact-form-container input::placeholder,
+.contact-form-container textarea::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-hero {
+    padding: 3rem 1rem;
+  }
+
+  .contact-hero h1 {
+    font-size: 2rem;
+  }
+
+  .contact-content {
+    padding: 0 1rem;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .contact-info, 
+  .contact-form-container {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-info, 
+  .contact-form-container {
+    padding: 20px;
+  }
+  
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .info-icon {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .contact-content h1 {
+    font-size: 1.75rem;
+  }
+  
+  .contact-form-container h2 {
+    font-size: 1.25rem;
+  }
+}
+
+.name-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.name-group input {
+  width: 100%;
+} 

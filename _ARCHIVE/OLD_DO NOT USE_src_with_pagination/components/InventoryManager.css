@@ -1,0 +1,19 @@
+/* Hidden status display */
+.inventory-table .hidden-status {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.inventory-table .hidden-yes {
+  background-color: #ffecec;
+  color: #d32f2f;
+  border: 1px solid #f5c2c2;
+}
+
+.inventory-table .hidden-no {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+} 
