@@ -8,6 +8,8 @@ import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
 import PlantImage from './PlantImage';
 import useWindowSize from '../hooks/useWindowSize';
+import MobilePagination from "./MobilePagination";
+
 
 function Shop() {
   const location = useLocation();
@@ -649,8 +651,24 @@ function Shop() {
         
         {/* Bottom pagination for mobile */}
         <div className="pagination-bottom">
-          {renderPaginationControls()}
-        </div>
+  {renderPaginationControls()}
+
+  {/* 👇 Add this new mobile pagination */}
+{/* 👇 Wrapper div for styling */}
+<div className="mobile-pagination-wrapper">
+  
+  {/* 👇 Self-closing component tag (no need for closing </MobilePagination>) */}
+  <MobilePagination
+    currentIndex={currentPage - 1}
+    totalItems={totalPages}
+    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+    onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+  />
+
+</div>  {/* 👈 this is the closing tag for the wrapper div */}
+</div>
+
+
       </section>
     </div>
   );

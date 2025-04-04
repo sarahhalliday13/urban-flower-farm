@@ -1233,3 +1233,22 @@
   border: 2px solid #2c5530;
   box-shadow: 0 0 0 1px rgba(44, 85, 48, 0.2);
 } 
+/* 👇 Mobile-only pagination wrapper */
+.mobile-pagination-wrapper {
+  display: none;
+  width: 100%;
+  justify-content: center;
+  margin: 1.5rem 0 2rem;
+}
+
+/* 👇 Show it only below tablet breakpoint */
+@media screen and (max-width: 768px) {
+  .mobile-pagination-wrapper {
+    display: flex;
+  }
+
+  /* Hide the regular pagination controls on mobile */
+  .pagination-controls {
+    display: none;
+  }
+}
