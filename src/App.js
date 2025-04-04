@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
@@ -11,7 +11,7 @@ import Checkout from './components/Checkout';
 import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
-import ToastManager from './components/ToastManager';
+import { ToastProvider } from './components/ToastManager';
 // eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
 // eslint-disable-next-line no-unused-vars
@@ -27,12 +27,13 @@ import CartModal from './components/CartModal';
 import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// Lazy load heavy admin components
-const InventoryManager = lazy(() => import('./components/InventoryManager'));
-const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
-const AdminOrders = lazy(() => import('./components/AdminOrders'));
-const AdminUtilities = lazy(() => import('./components/AdminUtilities'));
+// Import admin components directly instead of lazy loading
+import InventoryManager from './components/InventoryManager';
+import AdminDashboard from './components/AdminDashboard';
+import AdminOrders from './components/AdminOrders';
+import AdminUtilities from './components/AdminUtilities';
 
 // Custom wrapper for plant details
 const PlantDetailsWrapper = ({ children }) => {
@@ -224,13 +225,95 @@ const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
   return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
 };
 
-// Create a wrapper for admin content that doesn't show a loading state
 const AdminContentWrapper = ({ children }) => {
+  const [error, setError] = useState(null);
+  
+  const handleError = (error, errorInfo) => {
+    console.error('Error in admin component:', error, errorInfo);
+    
+    // Add specifics for chunk loading errors
+    if (error && error.message && error.message.includes('Loading chunk')) {
+      console.error('Chunk loading error detected in admin component:', error.message);
+      setError({
+        title: 'Resource Loading Error',
+        message: 'The application failed to load a required component. This could be due to network issues or a temporary server problem.',
+        originalError: error
+      });
+      
+      // Report the error for monitoring
+      if (window.reportError) {
+        window.reportError('chunk_load_fail', error.message);
+      }
+    } else {
+      setError({
+        title: 'Something went wrong',
+        message: 'There was an error loading this admin section. Please try again later.',
+        originalError: error
+      });
+    }
+  };
+  
+  // If there's an error, show a custom error UI
+  if (error) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <h2 style={{ color: '#d32f2f' }}>{error.title}</h2>
+        <p>{error.message}</p>
+        
+        <div style={{ margin: '20px 0' }}>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{
+              background: '#2c5530',
+              color: 'white',
+              border: 'none',
+              padding: '10px 15px',
+              borderRadius: '4px',
+              margin: '0 10px',
+              cursor: 'pointer'
+            }}
+          >
+            Refresh Page
+          </button>
+          
+          <button 
+            onClick={() => window.location.href = '/'} 
+            style={{
+              background: '#777',
+              color: 'white',
+              border: 'none',
+              padding: '10px 15px',
+              borderRadius: '4px',
+              margin: '0 10px',
+              cursor: 'pointer'
+            }}
+          >
+            Return Home
+          </button>
+        </div>
+        
+        <details style={{ marginTop: '30px', textAlign: 'left', fontSize: '0.8em', color: '#666' }}>
+          <summary>Technical Details</summary>
+          <pre style={{ 
+            whiteSpace: 'pre-wrap', 
+            backgroundColor: '#f5f5f5',
+            padding: '10px',
+            borderRadius: '4px',
+            maxHeight: '200px',
+            overflow: 'auto'
+          }}>
+            {error.originalError && (error.originalError.stack || error.originalError.message || JSON.stringify(error.originalError))}
+          </pre>
+        </details>
+      </div>
+    );
+  }
+  
   return (
     <div className="admin-content-area">
-      <Suspense fallback={<div style={{ display: 'none' }}></div>}>
+      <ErrorBoundary onError={handleError}>
         {children}
-      </Suspense>
+      </ErrorBoundary>
     </div>
   );
 };
@@ -364,20 +447,21 @@ function AppContent() {
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
       </footer>
       
-      {/* Toast notifications */}
-      <ToastManager />
+      {/* Toast container is now provided by the ToastProvider */}
     </div>
   );
 }
 
-// Wrap AppContent with ScrollRestorationProvider
+// Wrap AppContent with ScrollRestorationProvider and ToastProvider
 const App = () => (
   <Router>
     <ScrollRestorationProvider>
       <AuthProvider>
         <CartProvider>
           <AdminProvider>
-            <AppContent />
+            <ToastProvider>
+              <AppContent />
+            </ToastProvider>
           </AdminProvider>
         </CartProvider>
       </AuthProvider>
