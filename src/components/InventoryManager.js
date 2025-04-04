@@ -2184,7 +2184,7 @@ const InventoryManager = () => {
   );
 
   return (
-    <div className="inventory-wrapper" style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+    <div style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
       <div className="inventory-manager">
         {/* Hide tabs when editing a flower */}
         {!plantEditMode && (

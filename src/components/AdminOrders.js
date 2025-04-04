@@ -362,7 +362,7 @@ const AdminOrders = () => {
   });
 
   return (
-    <div className="admin-orders-wrapper" style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+    <div style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
       <div className="admin-orders-container">
         <div className="admin-header">
           <h1>Order Management</h1>
@@ -504,318 +504,178 @@ const AdminOrders = () => {
                                           const price = parseFloat(item.price) || 0;
                                           const quantity = parseInt(item.quantity, 10) || 0;
                                           return sum + (price * quantity);
-    <div className="admin-orders-container">
-      <div className="admin-header">
-        <h1>Order Management</h1>
-        <div className="header-controls">
-          <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search by name, email, or order ID"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
-          </div>
-          <div className="status-filter">
-            <span>Status:</span>
-            <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value)}
-              className="status-select"
-            >
-              <option value="all">All Orders</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="completed">Completed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          <button 
-            className="refresh-button" 
-            onClick={handleRefresh} 
-            title="Refresh Orders"
-          >
-            <span role="img" aria-label="Refresh">🔄</span> Refresh
-          </button>
-        </div>
-      </div>
-      
-      {loading ? (
-        <div className="loading">Loading orders...</div>
-      ) : filteredOrders.length === 0 ? (
-        <div className="no-orders">No orders found</div>
-      ) : (
-        <div className="orders-list">
-          <table className="orders-table">
-            <thead>
-              <tr>
-                <th>Order</th>
-                <th>Date</th>
-                <th>Customer</th>
-                <th>Status</th>
-                <th>Total</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map(order => (
-                <React.Fragment key={order.id}>
-                  <tr onClick={() => toggleOrderDetails(order.id)}>
-                    <td data-label="Order">
-                      <span className="order-id">#{order.id || 'Unknown'}</span>
-                    </td>
-                    <td data-label="Date">
-                      <span className="order-date">{order.date ? formatDate(order.date) : 'Unknown'}</span>
-                    </td>
-                    <td data-label="Customer">
-                      <span className="customer-name">
-                        {order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || 'No name provided'}
-                      </span>
-                      <span className="customer-email">{order.customer?.email || 'No email'}</span>
-                    </td>
-                    <td data-label="Status">
-                      <span className={`order-status ${getStatusClass(order.status || 'Pending')}`}>
-                        {order.status || 'Pending'}
-                      </span>
-                    </td>
-                    <td data-label="Total">
-                      <span className="order-total">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(order.total || 0).toFixed(2)}</span>
-                    </td>
-                    <td data-label="Actions">
-                      <button 
-                        className="view-details-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleOrderDetails(order.id);
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                  {activeOrder === order.id && (
-                    <tr className="details-row">
-                      <td colSpan="6" style={{ padding: 0, border: 'none' }}>
-                        <div className="order-details">
-                          <div className="order-details-header">
-                            <h3>Order Details #{order.id}</h3>
-                            <button 
-                              className="close-details-btn"
-                              onClick={() => setActiveOrder(null)}
-                            >
-                              ×
-                            </button>
-                          </div>
-                          
-                          <div className="order-items">
-                            <h4>Items</h4>
-                            <table className="items-table">
-                              <thead>
-                                <tr>
-                                  <th>Product</th>
-                                  <th>Price</th>
-                                  <th>Quantity</th>
-                                  <th>Total</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {order.items.map(item => (
-                                  <tr key={item.id}>
-                                    <td data-label="Product">{item.name}</td>
-                                    <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
-                                    <td data-label="Quantity">{item.quantity}</td>
-                                    <td data-label="Total">${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}</td>
+                                        }, 0);
+                                        return calculatedTotal.toFixed(2);
+                                      })()}
+                                    </td>
                                   </tr>
-                                ))}
-                              </tbody>
-                              <tfoot>
-                                <tr>
-                                  <td colSpan="3" data-label="Order Total">Order Total</td>
-                                  <td data-label="Total">
-                                    ${(() => {
-                                      const storedTotal = parseFloat(order.total);
-                                      // If stored total is valid and not exactly 150, use it
-                                      if (!isNaN(storedTotal) && storedTotal !== 150) {
-                                        return storedTotal.toFixed(2);
+                                </tfoot>
+                              </table>
+                            </div>
+                            
+                            <div className="order-info-grid">
+                              <div className="customer-info">
+                                <h4>Customer Information</h4>
+                                <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
+                                <p><strong>Email:</strong> <a href={`mailto:${order.customer.email}`}>{order.customer.email}</a></p>
+                                {order.customer.phone && order.customer.phone !== 'Not provided' && (
+                                  <p><strong>Phone:</strong> <a href={`tel:${order.customer.phone}`}>{order.customer.phone}</a></p>
+                                )}
+                              </div>
+                              
+                              <div className="status-management">
+                                <h4>Status Management</h4>
+                                <div className="status-buttons">
+                                  <button 
+                                    className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.id, 'Pending')}
+                                  >
+                                    Pending
+                                  </button>
+                                  <button 
+                                    className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.id, 'Processing')}
+                                  >
+                                    Processing
+                                  </button>
+                                  <button 
+                                    className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.id, 'Shipped')}
+                                  >
+                                    Shipped
+                                  </button>
+                                  <button 
+                                    className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.id, 'Completed')}
+                                  >
+                                    Completed
+                                  </button>
+                                  <button 
+                                    className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
+                                    onClick={() => handleStatusUpdate(order.id, 'Cancelled')}
+                                  >
+                                    Cancelled
+                                  </button>
+                                </div>
+                              </div>
+                              
+                              <div className="email-management">
+                                <h4>Email Management</h4>
+                                <p>
+                                  <strong>Email Status:</strong>{" "}
+                                  {(() => {
+                                    // Check manualEmails in localStorage
+                                    const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
+                                    const orderEmail = manualEmails.find(email => email.orderId === order.id);
+                                    
+                                    if (orderEmail) {
+                                      if (orderEmail.status === 'sent') {
+                                        return <span className="email-status sent">Sent manually</span>;
+                                      } else {
+                                        return <span className="email-status pending">Pending - needs to be sent</span>;
                                       }
-                                      // Otherwise calculate from items
-                                      const calculatedTotal = order.items.reduce((sum, item) => {
-                                        const price = parseFloat(item.price) || 0;
-                                        const quantity = parseInt(item.quantity, 10) || 0;
-                                        return sum + (price * quantity);
-                                      }, 0);
-                                      return calculatedTotal.toFixed(2);
-                                    })()}
-                                  </td>
-                                </tr>
-                              </tfoot>
-                            </table>
-                          </div>
-                          
-                          <div className="order-info-grid">
-                            <div className="customer-info">
-                              <h4>Customer Information</h4>
-                              <p><strong>Name:</strong> {order.customer.name || 'Not provided'}</p>
-                              <p><strong>Email:</strong> <a href={`mailto:${order.customer.email}`}>{order.customer.email}</a></p>
-                              {order.customer.phone && order.customer.phone !== 'Not provided' && (
-                                <p><strong>Phone:</strong> <a href={`tel:${order.customer.phone}`}>{order.customer.phone}</a></p>
-                              )}
-                            </div>
-                            
-                            <div className="status-management">
-                              <h4>Status Management</h4>
-                              <div className="status-buttons">
-                                <button 
-                                  className={`status-btn pending ${order.status.toLowerCase() === 'pending' ? 'active' : ''}`}
-                                  onClick={() => handleStatusUpdate(order.id, 'Pending')}
-                                >
-                                  Pending
-                                </button>
-                                <button 
-                                  className={`status-btn processing ${order.status.toLowerCase() === 'processing' ? 'active' : ''}`}
-                                  onClick={() => handleStatusUpdate(order.id, 'Processing')}
-                                >
-                                  Processing
-                                </button>
-                                <button 
-                                  className={`status-btn shipped ${order.status.toLowerCase() === 'shipped' ? 'active' : ''}`}
-                                  onClick={() => handleStatusUpdate(order.id, 'Shipped')}
-                                >
-                                  Shipped
-                                </button>
-                                <button 
-                                  className={`status-btn completed ${order.status.toLowerCase() === 'completed' ? 'active' : ''}`}
-                                  onClick={() => handleStatusUpdate(order.id, 'Completed')}
-                                >
-                                  Completed
-                                </button>
-                                <button 
-                                  className={`status-btn cancelled ${order.status.toLowerCase() === 'cancelled' ? 'active' : ''}`}
-                                  onClick={() => handleStatusUpdate(order.id, 'Cancelled')}
-                                >
-                                  Cancelled
-                                </button>
-                              </div>
-                            </div>
-                            
-                            <div className="email-management">
-                              <h4>Email Management</h4>
-                              <p>
-                                <strong>Email Status:</strong>{" "}
-                                {(() => {
-                                  // Check manualEmails in localStorage
-                                  const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
-                                  const orderEmail = manualEmails.find(email => email.orderId === order.id);
-                                  
-                                  if (orderEmail) {
-                                    if (orderEmail.status === 'sent') {
-                                      return <span className="email-status sent">Sent manually</span>;
-                                    } else {
-                                      return <span className="email-status pending">Pending - needs to be sent</span>;
                                     }
-                                  }
-                                  
-                                  // If no manual email record
-                                  return <span className="email-status unknown">Unknown</span>;
-                                })()}
-                              </p>
-                              <button 
-                                className="email-send-btn"
-                                onClick={() => sendOrderEmail(order)}
-                                disabled={emailSending[order.id]}
-                              >
-                                {emailSending[order.id] ? 'Sending...' : 'Send/Resend Confirmation Email'}
-                              </button>
-                            </div>
-                            
-                            {order.notes && (
-                              <div className="order-notes">
-                                <h4>Order Notes</h4>
-                                <p>{order.notes}</p>
-                              </div>
-                            )}
-                            
-                            <div className="invoice-section">
-                              <h4>Invoice Options</h4>
-                              <div className="invoice-buttons">
+                                    
+                                    // If no manual email record
+                                    return <span className="email-status unknown">Unknown</span>;
+                                  })()}
+                                </p>
                                 <button 
-                                  className="view-invoice-btn"
-                                  onClick={() => viewInvoice(order.id)}
-                                >
-                                  View & Print Invoice
-                                </button>
-                                <button 
-                                  className="email-invoice-btn"
+                                  className="email-send-btn"
                                   onClick={() => sendOrderEmail(order)}
-                                  disabled={!order.customer.email || order.customer.email === 'Not provided'}
+                                  disabled={emailSending[order.id]}
                                 >
-                                  Email Invoice
+                                  {emailSending[order.id] ? 'Sending...' : 'Send/Resend Confirmation Email'}
                                 </button>
+                              </div>
+                              
+                              {order.notes && (
+                                <div className="order-notes">
+                                  <h4>Order Notes</h4>
+                                  <p>{order.notes}</p>
+                                </div>
+                              )}
+                              
+                              <div className="invoice-section">
+                                <h4>Invoice Options</h4>
+                                <div className="invoice-buttons">
+                                  <button 
+                                    className="view-invoice-btn"
+                                    onClick={() => viewInvoice(order.id)}
+                                  >
+                                    View & Print Invoice
+                                  </button>
+                                  <button 
+                                    className="email-invoice-btn"
+                                    onClick={() => sendOrderEmail(order)}
+                                    disabled={!order.customer.email || order.customer.email === 'Not provided'}
+                                  >
+                                    Email Invoice
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </React.Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      
-      {showInvoice && (
-        <div className="invoice-modal">
-          <div className="invoice-modal-content">
-            <button className="close-invoice" onClick={closeInvoice}>×</button>
-            <Invoice 
-              order={orders.find(order => order.id === showInvoice)} 
-              type="print" 
-              key={`invoice-${showInvoice}`} 
-            />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
-      )}
-
-      {/* Add confirmation dialog */}
-      {showCancelConfirm && (
-        <div className="confirmation-modal">
-          <div className="confirmation-content">
-            <h3>Confirm Order Cancellation</h3>
-            <p>Are you sure you want to cancel this order? This will:</p>
-            <ul>
-              <li>Mark the order as cancelled</li>
-              <li>Restore inventory for all items</li>
-            </ul>
-            <div className="confirmation-buttons">
-              <button 
-                className="confirm-btn"
-                onClick={confirmCancelOrder}
-              >
-                Yes, Cancel Order
-              </button>
-              <button 
-                className="cancel-btn"
-                onClick={() => {
-                  setShowCancelConfirm(null);
-                  setPendingStatusUpdate(null);
-                }}
-              >
-                No, Keep Order
-              </button>
+        )}
+        
+        {showInvoice && (
+          <div className="invoice-modal">
+            <div className="invoice-modal-content">
+              <button className="close-invoice" onClick={closeInvoice}>×</button>
+              <Invoice 
+                order={orders.find(order => order.id === showInvoice)} 
+                type="print" 
+                key={`invoice-${showInvoice}`} 
+              />
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {pendingStatusUpdate && (
-        <div className="status-update-notification">
-          Updating order status...
-        </div>
-      )}
+        {/* Add confirmation dialog */}
+        {showCancelConfirm && (
+          <div className="confirmation-modal">
+            <div className="confirmation-content">
+              <h3>Confirm Order Cancellation</h3>
+              <p>Are you sure you want to cancel this order? This will:</p>
+              <ul>
+                <li>Mark the order as cancelled</li>
+                <li>Restore inventory for all items</li>
+              </ul>
+              <div className="confirmation-buttons">
+                <button 
+                  className="confirm-btn"
+                  onClick={confirmCancelOrder}
+                >
+                  Yes, Cancel Order
+                </button>
+                <button 
+                  className="cancel-btn"
+                  onClick={() => {
+                    setShowCancelConfirm(null);
+                    setPendingStatusUpdate(null);
+                  }}
+                >
+                  No, Keep Order
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {pendingStatusUpdate && (
+          <div className="status-update-notification">
+            Updating order status...
+          </div>
+        )}
+      </div>
     </div>
   );
 };
