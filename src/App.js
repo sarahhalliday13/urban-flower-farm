@@ -28,6 +28,7 @@ import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
 import ErrorBoundary from './components/ErrorBoundary';
+import AdminContentWrapper from './components/AdminContentWrapper';
 
 // Import admin components directly instead of lazy loading
 import InventoryManager from './components/InventoryManager';
@@ -223,99 +224,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
 const NavigationWithRouter = ({ isMenuOpen, setIsMenuOpen }) => {
   const location = useLocation();
   return <BaseNavigation isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} currentPath={location.pathname} />;
-};
-
-const AdminContentWrapper = ({ children }) => {
-  const [error, setError] = useState(null);
-  
-  const handleError = (error, errorInfo) => {
-    console.error('Error in admin component:', error, errorInfo);
-    
-    // Add specifics for chunk loading errors
-    if (error && error.message && error.message.includes('Loading chunk')) {
-      console.error('Chunk loading error detected in admin component:', error.message);
-      setError({
-        title: 'Resource Loading Error',
-        message: 'The application failed to load a required component. This could be due to network issues or a temporary server problem.',
-        originalError: error
-      });
-      
-      // Report the error for monitoring
-      if (window.reportError) {
-        window.reportError('chunk_load_fail', error.message);
-      }
-    } else {
-      setError({
-        title: 'Something went wrong',
-        message: 'There was an error loading this admin section. Please try again later.',
-        originalError: error
-      });
-    }
-  };
-  
-  // If there's an error, show a custom error UI
-  if (error) {
-    return (
-      <div style={{ padding: '20px', textAlign: 'center' }}>
-        <h2 style={{ color: '#d32f2f' }}>{error.title}</h2>
-        <p>{error.message}</p>
-        
-        <div style={{ margin: '20px 0' }}>
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{
-              background: '#2c5530',
-              color: 'white',
-              border: 'none',
-              padding: '10px 15px',
-              borderRadius: '4px',
-              margin: '0 10px',
-              cursor: 'pointer'
-            }}
-          >
-            Refresh Page
-          </button>
-          
-          <button 
-            onClick={() => window.location.href = '/'} 
-            style={{
-              background: '#777',
-              color: 'white',
-              border: 'none',
-              padding: '10px 15px',
-              borderRadius: '4px',
-              margin: '0 10px',
-              cursor: 'pointer'
-            }}
-          >
-            Return Home
-          </button>
-        </div>
-        
-        <details style={{ marginTop: '30px', textAlign: 'left', fontSize: '0.8em', color: '#666' }}>
-          <summary>Technical Details</summary>
-          <pre style={{ 
-            whiteSpace: 'pre-wrap', 
-            backgroundColor: '#f5f5f5',
-            padding: '10px',
-            borderRadius: '4px',
-            maxHeight: '200px',
-            overflow: 'auto'
-          }}>
-            {error.originalError && (error.originalError.stack || error.originalError.message || JSON.stringify(error.originalError))}
-          </pre>
-        </details>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="admin-content-area">
-      <ErrorBoundary onError={handleError}>
-        {children}
-      </ErrorBoundary>
-    </div>
-  );
 };
 
 // Separate component for the app content that can safely use hooks within the providers

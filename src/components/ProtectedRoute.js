@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 // Development mode flag - should match the one in AuthContext
 const DEV_MODE = true;
 
+// Add a failsafe mode for direct navigation
+const FAILSAFE_MODE = true;
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
@@ -17,8 +20,19 @@ function ProtectedRoute({ children }) {
       window.location.href = location.pathname;
     }
   }, [location]);
+
+  // Add a failsafe localStorage check for direct navigation
+  const isDirectNavAuth = () => {
+    if (FAILSAFE_MODE) {
+      // Check if we have a direct navigation auth token
+      return localStorage.getItem('devMode') === 'true' || 
+             localStorage.getItem('isAuthenticated') === 'true';
+    }
+    return false;
+  };
   
-  if (!isAuthenticated) {
+  // Use the failsafe auth if standard auth fails
+  if (!isAuthenticated && !isDirectNavAuth()) {
     // Redirect to login page, but save the location they were trying to access
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
