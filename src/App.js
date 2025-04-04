@@ -32,7 +32,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 // Import admin components directly instead of lazy loading
 import InventoryManager from './components/InventoryManager';
 import AdminDashboard from './components/AdminDashboard';
-import AdminOrdersSimple from './components/AdminOrdersSimple';
+import AdminOrders from './components/AdminOrders';
 import AdminUtilities from './components/AdminUtilities';
 
 // Custom wrapper for plant details
@@ -403,7 +403,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <AdminOrdersSimple />
+                <AdminOrders />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
