@@ -362,6 +362,148 @@ const AdminOrders = () => {
   });
 
   return (
+    <div className="admin-orders-wrapper" style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+      <div className="admin-orders-container">
+        <div className="admin-header">
+          <h1>Order Management</h1>
+          <div className="header-controls">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Search by name, email, or order ID"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <div className="status-filter">
+              <span>Status:</span>
+              <select 
+                value={filter} 
+                onChange={(e) => setFilter(e.target.value)}
+                className="status-select"
+              >
+                <option value="all">All Orders</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <button 
+              className="refresh-button" 
+              onClick={handleRefresh} 
+              title="Refresh Orders"
+            >
+              <span role="img" aria-label="Refresh">🔄</span> Refresh
+            </button>
+          </div>
+        </div>
+        
+        {loading ? (
+          <div className="loading">Loading orders...</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="no-orders">No orders found</div>
+        ) : (
+          <div className="orders-list">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>Order</th>
+                  <th>Date</th>
+                  <th>Customer</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredOrders.map(order => (
+                  <React.Fragment key={order.id}>
+                    <tr onClick={() => toggleOrderDetails(order.id)}>
+                      <td data-label="Order">
+                        <span className="order-id">#{order.id || 'Unknown'}</span>
+                      </td>
+                      <td data-label="Date">
+                        <span className="order-date">{order.date ? formatDate(order.date) : 'Unknown'}</span>
+                      </td>
+                      <td data-label="Customer">
+                        <span className="customer-name">
+                          {order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim() || 'No name provided'}
+                        </span>
+                        <span className="customer-email">{order.customer?.email || 'No email'}</span>
+                      </td>
+                      <td data-label="Status">
+                        <span className={`order-status ${getStatusClass(order.status || 'Pending')}`}>
+                          {order.status || 'Pending'}
+                        </span>
+                      </td>
+                      <td data-label="Total">
+                        <span className="order-total">${typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(order.total || 0).toFixed(2)}</span>
+                      </td>
+                      <td data-label="Actions">
+                        <button 
+                          className="view-details-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleOrderDetails(order.id);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </td>
+                    </tr>
+                    {activeOrder === order.id && (
+                      <tr className="details-row">
+                        <td colSpan="6" style={{ padding: 0, border: 'none' }}>
+                          <div className="order-details">
+                            <div className="order-details-header">
+                              <h3>Order Details #{order.id}</h3>
+                              <button 
+                                className="close-details-btn"
+                                onClick={() => setActiveOrder(null)}
+                              >
+                                ×
+                              </button>
+                            </div>
+                            
+                            <div className="order-items">
+                              <h4>Items</h4>
+                              <table className="items-table">
+                                <thead>
+                                  <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {order.items.map(item => (
+                                    <tr key={item.id}>
+                                      <td data-label="Product">{item.name}</td>
+                                      <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
+                                      <td data-label="Quantity">{item.quantity}</td>
+                                      <td data-label="Total">${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                                <tfoot>
+                                  <tr>
+                                    <td colSpan="3" data-label="Order Total">Order Total</td>
+                                    <td data-label="Total">
+                                      ${(() => {
+                                        const storedTotal = parseFloat(order.total);
+                                        // If stored total is valid and not exactly 150, use it
+                                        if (!isNaN(storedTotal) && storedTotal !== 150) {
+                                          return storedTotal.toFixed(2);
+                                        }
+                                        // Otherwise calculate from items
+                                        const calculatedTotal = order.items.reduce((sum, item) => {
+                                          const price = parseFloat(item.price) || 0;
+                                          const quantity = parseInt(item.quantity, 10) || 0;
+                                          return sum + (price * quantity);
     <div className="admin-orders-container">
       <div className="admin-header">
         <h1>Order Management</h1>

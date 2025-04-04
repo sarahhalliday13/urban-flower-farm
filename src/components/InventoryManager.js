@@ -2184,1042 +2184,1044 @@ const InventoryManager = () => {
   );
 
   return (
-    <div className="inventory-manager">
-      {/* Hide tabs when editing a flower */}
-      {!plantEditMode && (
-        <div className="inventory-header-container">
-          <div className="sales-header">
-            <h2>{activeTab === 'addPlant' ? 'Add New Flower' : 'Inventory'}</h2>
-            
-            <div className="header-controls">
-              {activeTab === 'inventory' && (
-                <>
-                  <div className="search-container">
-                    <input
-                      type="text"
-                      placeholder="Search plants..."
-                      value={plantSearchTerm}
-                      onChange={(e) => setPlantSearchTerm(e.target.value)}
-                      className="search-input"
-                    />
-                  </div>
-                  <div className="filter-controls">
-                    <label htmlFor="statusFilter">Status:</label>
-                    <select
-                      id="statusFilter"
-                      value={filter}
-                      onChange={(e) => setFilter(e.target.value)}
-                    >
-                      <option value="all">All ({statusCounts.all})</option>
-                      <option value="In Stock">In Stock ({statusCounts['In Stock'] + statusCounts['Low Stock']})</option>
-                      <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
-                      <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
-                      <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
-                      <option value="Hidden">Hidden ({statusCounts['Hidden']})</option>
-                    </select>
-                  </div>
-                  
-                  {/* Sync DB button removed */}
-                </>
-              )}
+    <div className="inventory-wrapper" style={{ maxWidth: '850px', margin: '0 auto', boxSizing: 'border-box', width: '100%' }}>
+      <div className="inventory-manager">
+        {/* Hide tabs when editing a flower */}
+        {!plantEditMode && (
+          <div className="inventory-header-container">
+            <div className="sales-header">
+              <h2>{activeTab === 'addPlant' ? 'Add New Flower' : 'Inventory'}</h2>
+              
+              <div className="header-controls">
+                {activeTab === 'inventory' && (
+                  <>
+                    <div className="search-container">
+                      <input
+                        type="text"
+                        placeholder="Search plants..."
+                        value={plantSearchTerm}
+                        onChange={(e) => setPlantSearchTerm(e.target.value)}
+                        className="search-input"
+                      />
+                    </div>
+                    <div className="filter-controls">
+                      <label htmlFor="statusFilter">Status:</label>
+                      <select
+                        id="statusFilter"
+                        value={filter}
+                        onChange={(e) => setFilter(e.target.value)}
+                      >
+                        <option value="all">All ({statusCounts.all})</option>
+                        <option value="In Stock">In Stock ({statusCounts['In Stock'] + statusCounts['Low Stock']})</option>
+                        <option value="Sold Out">Sold Out ({statusCounts['Sold Out']})</option>
+                        <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
+                        <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
+                        <option value="Hidden">Hidden ({statusCounts['Hidden']})</option>
+                      </select>
+                    </div>
+                    
+                    {/* Sync DB button removed */}
+                  </>
+                )}
+              </div>
+              
+              {activeTab === 'inventory' ? (
+                <button 
+                  className="add-new-button"
+                  onClick={() => {
+                    resetPlantForm();
+                    handleTabChange('addPlant');
+                  }}
+                >
+                  Add New
+                </button>
+              ) : activeTab === 'addPlant' ? (
+                <div className="button-group">
+                  <button 
+                    className="back-button"
+                    onClick={() => handleTabChange('inventory')}
+                  >
+                    Back to Inventory
+                  </button>
+                  <button 
+                    className="save-btn"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      // Submit the form using the form id
+                      document.getElementById('plantForm').dispatchEvent(new Event('submit', {
+                        cancelable: true,
+                        bubbles: true
+                      }));
+                    }}
+                    disabled={plantSaveStatus === 'saving'}
+                  >
+                    {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              ) : null}
             </div>
-            
-            {activeTab === 'inventory' ? (
+            {/* Hide the Import Data tab but keep all functionality */}
+            {false && (
               <button 
-                className="add-new-button"
+                className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
+                onClick={() => handleTabChange('csvMigration')}
+              >
+                Import Data
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* When in edit mode, show a page header with the plant name */}
+        {plantEditMode && (
+          <div className="page-header">
+            <h1>Update {plantFormData.name || 'Flower'}</h1>
+            <div className="button-group">
+              <button 
+                className="back-button"
                 onClick={() => {
+                  if (hasUnsavedChanges) {
+                    const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                    if (!confirmLeave) {
+                      return;
+                    }
+                    setHasUnsavedChanges(false);
+                  }
                   resetPlantForm();
-                  handleTabChange('addPlant');
+                  setPlantEditMode(false);
                 }}
               >
-                Add New
+                Back to Inventory
               </button>
-            ) : activeTab === 'addPlant' ? (
-              <div className="button-group">
-                <button 
-                  className="back-button"
-                  onClick={() => handleTabChange('inventory')}
-                >
-                  Back to Inventory
-                </button>
-                <button 
-                  className="save-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Submit the form using the form id
-                    document.getElementById('plantForm').dispatchEvent(new Event('submit', {
-                      cancelable: true,
-                      bubbles: true
-                    }));
-                  }}
-                  disabled={plantSaveStatus === 'saving'}
-                >
-                  {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            ) : null}
-          </div>
-          {/* Hide the Import Data tab but keep all functionality */}
-          {false && (
-            <button 
-              className={`tab-button ${activeTab === 'csvMigration' ? 'active' : ''}`}
-              onClick={() => handleTabChange('csvMigration')}
-            >
-              Import Data
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* When in edit mode, show a page header with the plant name */}
-      {plantEditMode && (
-        <div className="page-header">
-          <h1>Update {plantFormData.name || 'Flower'}</h1>
-          <div className="button-group">
-            <button 
-              className="back-button"
-              onClick={() => {
-                if (hasUnsavedChanges) {
-                  const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-                  if (!confirmLeave) {
-                    return;
-                  }
-                  setHasUnsavedChanges(false);
-                }
-                resetPlantForm();
-                setPlantEditMode(false);
-              }}
-            >
-              Back to Inventory
-            </button>
-            <button 
-              className="save-btn"
-              onClick={async (e) => {
-                e.preventDefault();
-                setPlantSaveStatus('saving');
-                
-                try {
-                  // Upload main image if selected
-                  let mainImageUrl = plantFormData.mainImage;
-                  
-                  if (imageFile) {
-                    const uploadedUrl = await uploadImageFile(imageFile);
-                    if (uploadedUrl) {
-                      mainImageUrl = uploadedUrl;
-                    }
-                  }
-                  
-                  // Upload additional images if selected
-                  let additionalImagesUrls = [...plantFormData.images];
-                  
-                  if (additionalImageFiles.length > 0) {
-                    const newUrls = await uploadAdditionalImages();
-                    if (newUrls && newUrls.length > 0) {
-                      additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
-                    }
-                  }
-                  
-                  // Prepare plant data
-                  const plantData = {
-                    ...plantFormData,
-                    mainImage: mainImageUrl,
-                    images: additionalImagesUrls,
-                    id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
-                  };
-                  
-                  // Update existing plant
-                  await updatePlant(currentPlant.id, plantData);
-                  setPlantSaveStatus('success');
-                  
-                  // Update plant in context if needed
-                  if (typeof updatePlantData === 'function') {
-                    updatePlantData(plantData);
-                  }
-                  
-                  // Show a toast notification
-                  const event = new CustomEvent('show-toast', { 
-                    detail: { 
-                      message: 'Plant updated successfully!',
-                      type: 'success',
-                      duration: 3000
-                    }
-                  });
-                  window.dispatchEvent(event);
-                  
-                  // Use the improved resetPlantForm function after a delay
-                  setTimeout(() => {
-                    resetPlantForm();
-                  }, 1000);
-                } catch (error) {
-                  console.error('Error saving plant:', error);
-                  setPlantSaveStatus('error');
-                  
-                  // Show an error toast
-                  const event = new CustomEvent('show-toast', { 
-                    detail: { 
-                      message: `Error: ${error.message || 'Unknown error occurred'}`,
-                      type: 'error',
-                      duration: 5000
-                    }
-                  });
-                  window.dispatchEvent(event);
-                }
-              }}
-              disabled={plantSaveStatus === 'saving'}
-            >
-              {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Inventory Tab Content */}
-      {activeTab === 'inventory' && !plantEditMode && (
-        <div className="tab-content">
-          {/* Sync status removed */}
-          
-          {apiRetryCount > 0 && (
-            <div className="api-warning">
-              <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
-            </div>
-          )}
-          
-          <div className="inventory-table-container">
-            <table className="inventory-table">
-              <thead>
-                <tr>
-                  <th className="sortable-header" onClick={() => handleSort('name')}>
-                    Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                  </th>
-                  <th className="sortable-header" onClick={() => handleSort('currentStock')}>
-                    Stock {sortConfig.key === 'currentStock' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                  </th>
-                  <th className="sortable-header" onClick={() => handleSort('status')}>
-                    Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')} 
-                    <button 
-                      className="check-status-link" 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent triggering the sort
-                        fixUnknownStatuses();
-                      }}
-                      title="Check and fix unknown statuses"
-                    >
-                      (Check)
-                    </button>
-                  </th>
-                  <th>Restock Date</th>
-                  <th className="sortable-header" onClick={() => handleSort('featured')}>
-                    Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                  </th>
-                  <th className="sortable-header" onClick={() => handleSort('hidden')}>
-                    Hidden Status {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-                  </th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPlants.length === 0 ? (
-                  <tr>
-                    <td colSpan="7" className="no-results">No plants found matching your criteria</td>
-                  </tr>
-                ) : (
-                  filteredPlants.map(plant => {
-                    const isEditing = editMode[plant.id] || false;
-                    const statusClass = plant.inventory?.status 
-                      ? plant.inventory.status.toLowerCase().replace(/\s+/g, '-') 
-                      : 'unknown';
-                    
-                    return (
-                      <tr key={plant.id} className={isEditing ? 'editing' : ''}>
-                        <td data-label="Flower Name">
-                          <span className="plant-name">{plant.name}</span>
-                        </td>
-                        <td data-label="Stock">
-                          {isEditing ? (
-                            <input
-                              type="number"
-                              min="0"
-                              value={editValues[plant.id]?.currentStock || 0}
-                              onChange={(e) => handleChange(plant.id, 'currentStock', e.target.value)}
-                            />
-                          ) : (
-                            <span>{plant.inventory?.currentStock || 0}</span>
-                          )}
-                        </td>
-                        <td data-label="Status">
-                          {isEditing ? (
-                            <select
-                              value={editValues[plant.id]?.status || 'Unknown'}
-                              onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
-                            >
-                              <option value="In Stock">In Stock</option>
-                              <option value="Low Stock">Low Stock</option>
-                              <option value="Sold Out">Sold Out</option>
-                              <option value="Coming Soon">Coming Soon</option>
-                              <option value="Pre-order">Pre-order</option>
-                            </select>
-                          ) : (
-                            <span className={`status-badge ${statusClass}`}>
-                              {plant.inventory?.status || 'Unknown'}
-                            </span>
-                          )}
-                        </td>
-                        <td data-label="Restock Date">{plant.inventory?.restockDate || 'N/A'}</td>
-                        <td data-label="Featured">
-                          {isEditing ? (
-                            <input
-                              type="checkbox"
-                              checked={editValues[plant.id]?.featured || false}
-                              onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
-                            />
-                          ) : (
-                            <>
-                              {plant.featured ? (
-                                <>
-                                  {plant.imageURL && (
-                                    <div className="featured-image-container">
-                                      <img src={plant.imageURL} alt={`Plant ${plant.id}`} />
-                                    </div>
-                                  )}
-                                  <span>Yes</span>
-                                </>
-                              ) : (
-                                <span>No</span>
-                              )}
-                            </>
-                          )}
-                        </td>
-                        <td data-label="Hidden">
-                          {isEditing ? (
-                            <input
-                              type="checkbox"
-                              checked={editValues[plant.id]?.hidden || false}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-                                handleChange(plant.id, 'hidden', isChecked);
-                              }}
-                            />
-                          ) : (
-                            <span>{plant.hidden ? 'Hidden' : 'Visible'}</span>
-                          )}
-                        </td>
-                        <td data-label="Actions" className="action-buttons">
-                          {isEditing ? (
-                            <>
-                              <button 
-                                className="save-btn"
-                                onClick={() => handleSave(plant.id)}
-                                disabled={saveStatus[plant.id] === 'saving'}
-                              >
-                                {saveStatus[plant.id] === 'saving' ? 'Saving...' : 'Save'}
-                              </button>
-                              <button 
-                                className="cancel-btn"
-                                onClick={() => handleCancel(plant.id)}
-                                disabled={saveStatus[plant.id] === 'saving'}
-                              >
-                                Cancel
-                              </button>
-                              {saveStatus[plant.id] === 'success' && (
-                                <div className="save-success">Saved!</div>
-                              )}
-                              {saveStatus[plant.id] === 'error' && (
-                                <div className="save-error">Error saving</div>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <button 
-                                className="edit-plant-btn"
-                                onClick={() => handleEditPlant(plant)}
-                              >
-                                Update
-                              </button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-      
-      {/* Add/Edit Plant Tab Content */}
-      {(activeTab === 'addPlant' || plantEditMode) && (
-        <div className="tab-content">
-          {!plantEditMode && activeTab !== 'addPlant' && <h2>Add New Flower</h2>}
-          
-          {/* Firebase Storage Permission Warning */}
-          {showFirebasePermissionWarning && (
-            <div className="firebase-permission-warning">
-              <h3><span role="img" aria-label="Warning">⚠️</span> Firebase Storage Permission Issue</h3>
-              <p>There's a problem with Firebase Storage permissions. Your images are being saved locally in your browser instead.</p>
-              <p>These local images will work for now, but:</p>
-              <ul>
-                <li>They won't be visible to other users</li>
-                <li>They'll be lost if you clear your browser data</li>
-                <li>They won't persist if you view the site on another device</li>
-              </ul>
-              <p>To fix this permanently, update your Firebase Storage security rules to allow uploads.</p>
               <button 
-                className="dismiss-warning-btn"
-                onClick={() => setShowFirebasePermissionWarning(false)}
+                className="save-btn"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setPlantSaveStatus('saving');
+                  
+                  try {
+                    // Upload main image if selected
+                    let mainImageUrl = plantFormData.mainImage;
+                    
+                    if (imageFile) {
+                      const uploadedUrl = await uploadImageFile(imageFile);
+                      if (uploadedUrl) {
+                        mainImageUrl = uploadedUrl;
+                      }
+                    }
+                    
+                    // Upload additional images if selected
+                    let additionalImagesUrls = [...plantFormData.images];
+                    
+                    if (additionalImageFiles.length > 0) {
+                      const newUrls = await uploadAdditionalImages();
+                      if (newUrls && newUrls.length > 0) {
+                        additionalImagesUrls = [...additionalImagesUrls, ...newUrls];
+                      }
+                    }
+                    
+                    // Prepare plant data
+                    const plantData = {
+                      ...plantFormData,
+                      mainImage: mainImageUrl,
+                      images: additionalImagesUrls,
+                      id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
+                    };
+                    
+                    // Update existing plant
+                    await updatePlant(currentPlant.id, plantData);
+                    setPlantSaveStatus('success');
+                    
+                    // Update plant in context if needed
+                    if (typeof updatePlantData === 'function') {
+                      updatePlantData(plantData);
+                    }
+                    
+                    // Show a toast notification
+                    const event = new CustomEvent('show-toast', { 
+                      detail: { 
+                        message: 'Plant updated successfully!',
+                        type: 'success',
+                        duration: 3000
+                      }
+                    });
+                    window.dispatchEvent(event);
+                    
+                    // Use the improved resetPlantForm function after a delay
+                    setTimeout(() => {
+                      resetPlantForm();
+                    }, 1000);
+                  } catch (error) {
+                    console.error('Error saving plant:', error);
+                    setPlantSaveStatus('error');
+                    
+                    // Show an error toast
+                    const event = new CustomEvent('show-toast', { 
+                      detail: { 
+                        message: `Error: ${error.message || 'Unknown error occurred'}`,
+                        type: 'error',
+                        duration: 5000
+                      }
+                    });
+                    window.dispatchEvent(event);
+                  }
+                }}
+                disabled={plantSaveStatus === 'saving'}
               >
-                Dismiss Warning
+                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
               </button>
             </div>
-          )}
-          
-          <form id="plantForm" className="plant-form" onSubmit={handlePlantSubmit}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="name">Plant Name</label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={plantFormData.name}
-                  onChange={handlePlantFormChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="scientificName">Latin Name</label>
-                <input
-                  type="text"
-                  id="scientificName"
-                  name="scientificName"
-                  value={plantFormData.scientificName}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
+          </div>
+        )}
+        
+        {/* Inventory Tab Content */}
+        {activeTab === 'inventory' && !plantEditMode && (
+          <div className="tab-content">
+            {/* Sync status removed */}
             
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="commonName">Common Name</label>
-                <input
-                  type="text"
-                  id="commonName"
-                  name="commonName"
-                  value={plantFormData.commonName || ''}
-                  onChange={handlePlantFormChange}
-                  placeholder="Alternative names, separated by commas"
-                />
+            {apiRetryCount > 0 && (
+              <div className="api-warning">
+                <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="price">Price</label>
-                <input
-                  type="text"
-                  id="price"
-                  name="price"
-                  value={plantFormData.price}
-                  onChange={handlePlantFormChange}
-                  required
-                />
-              </div>
-            </div>
+            )}
             
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="inventory.currentStock">Stock</label>
-                <input
-                  type="number"
-                  id="inventory.currentStock"
-                  name="inventory.currentStock"
-                  value={plantFormData.inventory.currentStock}
-                  onChange={handlePlantFormChange}
-                  min="0"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="inventory.status">Status</label>
-                <select
-                  id="inventory.status"
-                  name="inventory.status"
-                  value={plantFormData.inventory.status}
-                  onChange={handlePlantFormChange}
-                >
-                  <option value="In Stock">In Stock</option>
-                  <option value="Low Stock">Low Stock</option>
-                  <option value="Sold Out">Sold Out</option>
-                  <option value="Coming Soon">Coming Soon</option>
-                  <option value="Pre-order">Pre-order</option>
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="inventory.restockDate">Restock Date</label>
-                <input
-                  type="date"
-                  id="inventory.restockDate"
-                  name="inventory.restockDate"
-                  value={plantFormData.inventory.restockDate}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-group">
-              <div className="checkbox-container">
-                <input
-                  type="checkbox"
-                  id="featured"
-                  name="featured"
-                  checked={plantFormData.featured}
-                  onChange={(e) => {
-                    setPlantFormData(prev => ({
-                      ...prev,
-                      featured: e.target.checked
-                    }));
-                  }}
-                />
-                <label htmlFor="featured">Feature on homepage</label>
-              </div>
-            </div>
-            
-            <div className="form-group">
-              <div className="checkbox-container">
-                <input
-                  type="checkbox"
-                  id="hidden"
-                  name="hidden"
-                  checked={plantFormData.hidden}
-                  onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setPlantFormData(prev => ({
-                      ...prev,
-                      hidden: isChecked
-                    }));
-                  }}
-                />
-                <label htmlFor="hidden">Hide from shop (clicking this hides the item from customers)</label>
-              </div>
-            </div>
-            
-            {/* Unified Images Section */}
-            <div className="form-section">
-              <h3 style={{ textAlign: 'left' }}>Plant Images</h3>
-              <p className="section-description" style={{ textAlign: 'left' }}>
-                Upload and manage images for this plant. The main image will be displayed prominently in the shop.
-              </p>
-              
-              <div className="unified-images-gallery">
-                {/* Current Images Grid */}
-                {plantFormData.images && plantFormData.images.length > 0 && (
-                  <div className="images-grid">
-                    {plantFormData.images.map((image, index) => {
-                      const isMainImage = index === plantFormData.mainImageIndex;
-                      const imageUrl = image instanceof File 
-                        ? URL.createObjectURL(image) 
-                        : image;
+            <div className="inventory-table-container">
+              <table className="inventory-table">
+                <thead>
+                  <tr>
+                    <th className="sortable-header" onClick={() => handleSort('name')}>
+                      Flower Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable-header" onClick={() => handleSort('currentStock')}>
+                      Stock {sortConfig.key === 'currentStock' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable-header" onClick={() => handleSort('status')}>
+                      Status {sortConfig.key === 'status' && (sortConfig.direction === 'ascending' ? '↑' : '↓')} 
+                      <button 
+                        className="check-status-link" 
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the sort
+                          fixUnknownStatuses();
+                        }}
+                        title="Check and fix unknown statuses"
+                      >
+                        (Check)
+                      </button>
+                    </th>
+                    <th>Restock Date</th>
+                    <th className="sortable-header" onClick={() => handleSort('featured')}>
+                      Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    </th>
+                    <th className="sortable-header" onClick={() => handleSort('hidden')}>
+                      Hidden Status {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                    </th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredPlants.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="no-results">No plants found matching your criteria</td>
+                    </tr>
+                  ) : (
+                    filteredPlants.map(plant => {
+                      const isEditing = editMode[plant.id] || false;
+                      const statusClass = plant.inventory?.status 
+                        ? plant.inventory.status.toLowerCase().replace(/\s+/g, '-') 
+                        : 'unknown';
                       
                       return (
-                        <div 
-                          key={index} 
-                          className={`image-item ${isMainImage ? 'main-image' : ''}`}
-                        >
-                          <div className="image-container">
-                            <img 
-                              src={imageUrl} 
-                              alt={`Plant ${index + 1}`}
-                              style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover'
-                              }}
-                              onError={(e) => {
-                                e.target.src = '/images/placeholder.jpg';
-                              }}
-                            />
-                            {isMainImage && (
-                              <div className="main-image-badge">Main</div>
+                        <tr key={plant.id} className={isEditing ? 'editing' : ''}>
+                          <td data-label="Flower Name">
+                            <span className="plant-name">{plant.name}</span>
+                          </td>
+                          <td data-label="Stock">
+                            {isEditing ? (
+                              <input
+                                type="number"
+                                min="0"
+                                value={editValues[plant.id]?.currentStock || 0}
+                                onChange={(e) => handleChange(plant.id, 'currentStock', e.target.value)}
+                              />
+                            ) : (
+                              <span>{plant.inventory?.currentStock || 0}</span>
                             )}
-                          </div>
-                          <div className="image-actions">
-                            {!isMainImage && (
+                          </td>
+                          <td data-label="Status">
+                            {isEditing ? (
+                              <select
+                                value={editValues[plant.id]?.status || 'Unknown'}
+                                onChange={(e) => handleChange(plant.id, 'status', e.target.value)}
+                              >
+                                <option value="In Stock">In Stock</option>
+                                <option value="Low Stock">Low Stock</option>
+                                <option value="Sold Out">Sold Out</option>
+                                <option value="Coming Soon">Coming Soon</option>
+                                <option value="Pre-order">Pre-order</option>
+                              </select>
+                            ) : (
+                              <span className={`status-badge ${statusClass}`}>
+                                {plant.inventory?.status || 'Unknown'}
+                              </span>
+                            )}
+                          </td>
+                          <td data-label="Restock Date">{plant.inventory?.restockDate || 'N/A'}</td>
+                          <td data-label="Featured">
+                            {isEditing ? (
+                              <input
+                                type="checkbox"
+                                checked={editValues[plant.id]?.featured || false}
+                                onChange={(e) => handleChange(plant.id, 'featured', e.target.checked)}
+                              />
+                            ) : (
+                              <>
+                                {plant.featured ? (
+                                  <>
+                                    {plant.imageURL && (
+                                      <div className="featured-image-container">
+                                        <img src={plant.imageURL} alt={`Plant ${plant.id}`} />
+                                      </div>
+                                    )}
+                                    <span>Yes</span>
+                                  </>
+                                ) : (
+                                  <span>No</span>
+                                )}
+                              </>
+                            )}
+                          </td>
+                          <td data-label="Hidden">
+                            {isEditing ? (
+                              <input
+                                type="checkbox"
+                                checked={editValues[plant.id]?.hidden || false}
+                                onChange={(e) => {
+                                  const isChecked = e.target.checked;
+                                  handleChange(plant.id, 'hidden', isChecked);
+                                }}
+                              />
+                            ) : (
+                              <span>{plant.hidden ? 'Hidden' : 'Visible'}</span>
+                            )}
+                          </td>
+                          <td data-label="Actions" className="action-buttons">
+                            {isEditing ? (
+                              <>
+                                <button 
+                                  className="save-btn"
+                                  onClick={() => handleSave(plant.id)}
+                                  disabled={saveStatus[plant.id] === 'saving'}
+                                >
+                                  {saveStatus[plant.id] === 'saving' ? 'Saving...' : 'Save'}
+                                </button>
+                                <button 
+                                  className="cancel-btn"
+                                  onClick={() => handleCancel(plant.id)}
+                                  disabled={saveStatus[plant.id] === 'saving'}
+                                >
+                                  Cancel
+                                </button>
+                                {saveStatus[plant.id] === 'success' && (
+                                  <div className="save-success">Saved!</div>
+                                )}
+                                {saveStatus[plant.id] === 'error' && (
+                                  <div className="save-error">Error saving</div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <button 
+                                  className="edit-plant-btn"
+                                  onClick={() => handleEditPlant(plant)}
+                                >
+                                  Update
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        
+        {/* Add/Edit Plant Tab Content */}
+        {(activeTab === 'addPlant' || plantEditMode) && (
+          <div className="tab-content">
+            {!plantEditMode && activeTab !== 'addPlant' && <h2>Add New Flower</h2>}
+            
+            {/* Firebase Storage Permission Warning */}
+            {showFirebasePermissionWarning && (
+              <div className="firebase-permission-warning">
+                <h3><span role="img" aria-label="Warning">⚠️</span> Firebase Storage Permission Issue</h3>
+                <p>There's a problem with Firebase Storage permissions. Your images are being saved locally in your browser instead.</p>
+                <p>These local images will work for now, but:</p>
+                <ul>
+                  <li>They won't be visible to other users</li>
+                  <li>They'll be lost if you clear your browser data</li>
+                  <li>They won't persist if you view the site on another device</li>
+                </ul>
+                <p>To fix this permanently, update your Firebase Storage security rules to allow uploads.</p>
+                <button 
+                  className="dismiss-warning-btn"
+                  onClick={() => setShowFirebasePermissionWarning(false)}
+                >
+                  Dismiss Warning
+                </button>
+              </div>
+            )}
+            
+            <form id="plantForm" className="plant-form" onSubmit={handlePlantSubmit}>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="name">Plant Name</label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    value={plantFormData.name}
+                    onChange={handlePlantFormChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="scientificName">Latin Name</label>
+                  <input
+                    type="text"
+                    id="scientificName"
+                    name="scientificName"
+                    value={plantFormData.scientificName}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="commonName">Common Name</label>
+                  <input
+                    type="text"
+                    id="commonName"
+                    name="commonName"
+                    value={plantFormData.commonName || ''}
+                    onChange={handlePlantFormChange}
+                    placeholder="Alternative names, separated by commas"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="price">Price</label>
+                  <input
+                    type="text"
+                    id="price"
+                    name="price"
+                    value={plantFormData.price}
+                    onChange={handlePlantFormChange}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="inventory.currentStock">Stock</label>
+                  <input
+                    type="number"
+                    id="inventory.currentStock"
+                    name="inventory.currentStock"
+                    value={plantFormData.inventory.currentStock}
+                    onChange={handlePlantFormChange}
+                    min="0"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="inventory.status">Status</label>
+                  <select
+                    id="inventory.status"
+                    name="inventory.status"
+                    value={plantFormData.inventory.status}
+                    onChange={handlePlantFormChange}
+                  >
+                    <option value="In Stock">In Stock</option>
+                    <option value="Low Stock">Low Stock</option>
+                    <option value="Sold Out">Sold Out</option>
+                    <option value="Coming Soon">Coming Soon</option>
+                    <option value="Pre-order">Pre-order</option>
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="inventory.restockDate">Restock Date</label>
+                  <input
+                    type="date"
+                    id="inventory.restockDate"
+                    name="inventory.restockDate"
+                    value={plantFormData.inventory.restockDate}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <div className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="featured"
+                    name="featured"
+                    checked={plantFormData.featured}
+                    onChange={(e) => {
+                      setPlantFormData(prev => ({
+                        ...prev,
+                        featured: e.target.checked
+                      }));
+                    }}
+                  />
+                  <label htmlFor="featured">Feature on homepage</label>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <div className="checkbox-container">
+                  <input
+                    type="checkbox"
+                    id="hidden"
+                    name="hidden"
+                    checked={plantFormData.hidden}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setPlantFormData(prev => ({
+                        ...prev,
+                        hidden: isChecked
+                      }));
+                    }}
+                  />
+                  <label htmlFor="hidden">Hide from shop (clicking this hides the item from customers)</label>
+                </div>
+              </div>
+              
+              {/* Unified Images Section */}
+              <div className="form-section">
+                <h3 style={{ textAlign: 'left' }}>Plant Images</h3>
+                <p className="section-description" style={{ textAlign: 'left' }}>
+                  Upload and manage images for this plant. The main image will be displayed prominently in the shop.
+                </p>
+                
+                <div className="unified-images-gallery">
+                  {/* Current Images Grid */}
+                  {plantFormData.images && plantFormData.images.length > 0 && (
+                    <div className="images-grid">
+                      {plantFormData.images.map((image, index) => {
+                        const isMainImage = index === plantFormData.mainImageIndex;
+                        const imageUrl = image instanceof File 
+                          ? URL.createObjectURL(image) 
+                          : image;
+                        
+                        return (
+                          <div 
+                            key={index} 
+                            className={`image-item ${isMainImage ? 'main-image' : ''}`}
+                          >
+                            <div className="image-container">
+                              <img 
+                                src={imageUrl} 
+                                alt={`Plant ${index + 1}`}
+                                style={{
+                                  position: 'absolute',
+                                  top: 0,
+                                  left: 0,
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover'
+                                }}
+                                onError={(e) => {
+                                  e.target.src = '/images/placeholder.jpg';
+                                }}
+                              />
+                              {isMainImage && (
+                                <div className="main-image-badge">Main</div>
+                              )}
+                            </div>
+                            <div className="image-actions">
+                              {!isMainImage && (
+                                <button 
+                                  type="button" 
+                                  className="set-main-button"
+                                  onClick={() => handleSetAsMainImage(index)}
+                                >
+                                  Set as Main
+                                </button>
+                              )}
                               <button 
                                 type="button" 
-                                className="set-main-button"
-                                onClick={() => handleSetAsMainImage(index)}
+                                className="remove-button"
+                                onClick={() => handleRemoveImage(index)}
                               >
-                                Set as Main
+                                Remove
                               </button>
-                            )}
-                            <button 
-                              type="button" 
-                              className="remove-button"
-                              onClick={() => handleRemoveImage(index)}
-                            >
-                              Remove
-                            </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-                
-                {/* Upload New Image */}
-                <div className="image-upload-section">
-                  <div className="image-upload-buttons">
-                    <label className="edit-btn image-upload-button" htmlFor="image-upload">
-                      Add Image
-                      <input 
-                        id="image-upload"
-                        type="file" 
-                        className="image-upload"
-                        accept="image/*"
-                        onChange={handleImageSelect}
-                      />
-                    </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  
+                  {/* Upload New Image */}
+                  <div className="image-upload-section">
+                    <div className="image-upload-buttons">
+                      <label className="edit-btn image-upload-button" htmlFor="image-upload">
+                        Add Image
+                        <input 
+                          id="image-upload"
+                          type="file" 
+                          className="image-upload"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                        />
+                      </label>
+                      
+                      <label className="edit-btn image-upload-button" htmlFor="additional-images">
+                        Add Multiple Images
+                        <input 
+                          id="additional-images"
+                          type="file" 
+                          className="additional-images-input"
+                          accept="image/*"
+                          multiple
+                          onChange={handleAdditionalImagesSelect}
+                        />
+                      </label>
+                    </div>
                     
-                    <label className="edit-btn image-upload-button" htmlFor="additional-images">
-                      Add Multiple Images
-                      <input 
-                        id="additional-images"
-                        type="file" 
-                        className="additional-images-input"
-                        accept="image/*"
-                        multiple
-                        onChange={handleAdditionalImagesSelect}
-                      />
-                    </label>
+                    {/* Progress Bar (show when uploading) */}
+                    {isUploading && (
+                      <div className="upload-progress">
+                        <div className="progress-bar">
+                          <div 
+                            className="progress-bar-fill" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                        <span className="progress-text">{uploadProgress}% uploaded</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="form-group full-width">
+                <label htmlFor="description">Description</label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={plantFormData.description}
+                  onChange={handlePlantFormChange}
+                  rows="4"
+                ></textarea>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="colour">Color</label>
+                  <input
+                    type="text"
+                    id="colour"
+                    name="colour"
+                    value={plantFormData.colour}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="light">Light Requirements</label>
+                  <input
+                    type="text"
+                    id="light"
+                    name="light"
+                    value={plantFormData.light}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="height">Height</label>
+                  <input
+                    type="text"
+                    id="height"
+                    name="height"
+                    value={plantFormData.height}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="spread">Spread</label>
+                  <input
+                    type="text"
+                    id="spread"
+                    name="spread"
+                    value={plantFormData.spread}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="bloomSeason">Bloom Season</label>
+                  <input
+                    type="text"
+                    id="bloomSeason"
+                    name="bloomSeason"
+                    value={plantFormData.bloomSeason}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="plantType">Plant Type</label>
+                  <input
+                    type="text"
+                    id="plantType"
+                    name="plantType"
+                    value={plantFormData.plantType}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="specialFeatures">Special Features</label>
+                  <input
+                    type="text"
+                    id="specialFeatures"
+                    name="specialFeatures"
+                    value={plantFormData.specialFeatures}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="uses">Uses</label>
+                  <input
+                    type="text"
+                    id="uses"
+                    name="uses"
+                    value={plantFormData.uses}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="aroma">Aroma</label>
+                  <input
+                    type="text"
+                    id="aroma"
+                    name="aroma"
+                    value={plantFormData.aroma}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="gardeningTips">Gardening Tips</label>
+                  <input
+                    type="text"
+                    id="gardeningTips"
+                    name="gardeningTips"
+                    value={plantFormData.gardeningTips}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="careTips">Care Tips</label>
+                  <input
+                    type="text"
+                    id="careTips"
+                    name="careTips"
+                    value={plantFormData.careTips}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="hardinessZone">Hardiness Zone</label>
+                  <input
+                    type="text"
+                    id="hardinessZone"
+                    name="hardinessZone"
+                    value={plantFormData.hardinessZone}
+                    onChange={handlePlantFormChange}
+                  />
+                </div>
+              </div>
+              
+              <div className="form-actions">
+                <div className="button-group-left">
+                  {plantEditMode && (
+                    <button
+                      className="delete-btn"
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to delete this plant? This action cannot be undone.')) {
+                          handleDeletePlant(currentPlant.id);
+                        }
+                      }}
+                    >
+                      Delete Flower
+                    </button>
+                  )}
+                </div>
+                <div className="button-group-right">
+                  <button
+                    className="back-button"
+                    type="button"
+                    onClick={() => {
+                      if (hasUnsavedChanges) {
+                        const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                        if (!confirmLeave) {
+                          return;
+                        }
+                        setHasUnsavedChanges(false);
+                      }
+                      resetPlantForm();
+                      plantEditMode ? setPlantEditMode(false) : handleTabChange('inventory');
+                    }}
+                  >
+                    Back to Inventory
+                  </button>
+                  <button
+                    className="save-btn"
+                    type="submit"
+                    disabled={plantSaveStatus === 'saving'}
+                  >
+                    {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </form>
+            
+          </div>
+        )}
+        
+        {/* New CSV Migration Tab */}
+        {activeTab === 'csvMigration' && (
+          <div className="tab-content">
+            <h2>Data Import Options</h2>
+            
+            <div className="migration-tabs">
+              <div className="csv-migration">
+                <div className="migration-section">
+                  <h3>CSV Data Import</h3>
+                  <p>
+                    Import plants and inventory data from CSV files. This is useful for migrating data
+                    from spreadsheets to your Firebase database.
+                  </p>
+                  
+                  <div className="instructions">
+                    <h4>Instructions</h4>
+                    <ol>
+                      <li>
+                        You have two options for importing your data:
+                        <ul>
+                          <li><strong>Option 1:</strong> Upload CSV files directly from your computer</li>
+                          <li><strong>Option 2:</strong> Provide URLs to CSV files published from Google Sheets</li>
+                        </ul>
+                      </li>
+                      <li>
+                        If using Google Sheets URLs:
+                        <ol>
+                          <li>Publish your sheets to the web (File &gt; Share &gt; Publish to web)</li>
+                          <li>Select "Comma-separated values (.csv)" format</li>
+                          <li>Copy the published URLs and paste them below</li>
+                        </ol>
+                      </li>
+                    </ol>
                   </div>
                   
-                  {/* Progress Bar (show when uploading) */}
-                  {isUploading && (
-                    <div className="upload-progress">
-                      <div className="progress-bar">
-                        <div 
-                          className="progress-bar-fill" 
-                          style={{ width: `${uploadProgress}%` }}
-                        ></div>
+                  <form onSubmit={handleCsvMigration} className="migration-form">
+                    <h4>Plants Data (Required)</h4>
+                    
+                    <div className="form-section">
+                      <h5>Option 1: Upload Plants CSV File</h5>
+                      <div className="form-field">
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => setPlantsFileInput(e.target.files[0])}
+                          className="file-input"
+                        />
+                        <p className="input-help">
+                          Select a CSV file from your computer
+                        </p>
                       </div>
-                      <span className="progress-text">{uploadProgress}% uploaded</span>
+                      
+                      <h5>OR Option 2: Google Sheets CSV URL</h5>
+                      <div className="form-field">
+                        <input
+                          type="text"
+                          value={plantsCsvUrl}
+                          onChange={(e) => setPlantsCsvUrl(e.target.value)}
+                          className="text-input"
+                          placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
+                        />
+                        <p className="input-help">
+                          Paste the URL from Google Sheets "Publish to web" (CSV format)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <h4>Inventory Data (Optional)</h4>
+                    
+                    <div className="form-section">
+                      <h5>Option 1: Upload Inventory CSV File</h5>
+                      <div className="form-field">
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => setInventoryFileInput(e.target.files[0])}
+                          className="file-input"
+                        />
+                        <p className="input-help">
+                          Select a CSV file from your computer
+                        </p>
+                      </div>
+                      
+                      <h5>OR Option 2: Google Sheets CSV URL</h5>
+                      <div className="form-field">
+                        <input
+                          type="text"
+                          value={inventoryCsvUrl}
+                          onChange={(e) => setInventoryCsvUrl(e.target.value)}
+                          className="text-input"
+                          placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
+                        />
+                        <p className="input-help">
+                          Paste the URL from Google Sheets "Publish to web" (CSV format)
+                        </p>
+                      </div>
+                      
+                      <p className="note">
+                        <strong>Note:</strong> If inventory data is not provided, default inventory records will be created automatically with 0 stock.
+                      </p>
+                    </div>
+                    
+                    <button 
+                      type="submit"
+                      disabled={csvStatus.loading || (!plantsFileInput && !plantsCsvUrl)}
+                      className={`migration-button ${csvStatus.loading ? 'loading' : ''}`}
+                    >
+                      {csvStatus.loading ? 'Migrating...' : 'Start CSV Migration'}
+                    </button>
+                  </form>
+                  
+                  {csvStatus.message && (
+                    <div className={csvStatus.error ? "error-message" : csvStatus.success ? "success-message" : "info-message"}>
+                      <p>{csvStatus.message}</p>
+                    </div>
+                  )}
+                  
+                  <div className="csv-format-info">
+                    <h4>Data Format Requirements</h4>
+                    
+                    <div className="format-section">
+                      <h5>Plants CSV Format</h5>
+                      <p>Your Plants CSV should have the following columns:</p>
+                      <div className="columns-container">
+                        <ul className="format-columns">
+                          <li><strong>plant_id</strong> - Unique identifier (number)</li>
+                          <li><strong>name</strong> - Plant name</li>
+                          <li><strong>latinname</strong> - Latin/scientific name</li>
+                          <li><strong>commonname</strong> - Common name</li>
+                          <li><strong>price</strong> - Price</li>
+                          <li><strong>featured</strong> - Featured (true/false)</li>
+                          <li><strong>type</strong> - Plant type</li>
+                          <li><strong>description</strong> - Description</li>
+                          <li><strong>bloom_season</strong> - Bloom season</li>
+                          <li><strong>colour</strong> - Color</li>
+                        </ul>
+                        <ul className="format-columns">
+                          <li><strong>sunlight</strong> - Light requirements</li>
+                          <li><strong>spread_inches</strong> - Spread in inches</li>
+                          <li><strong>height_inches</strong> - Height in inches</li>
+                          <li><strong>hardiness_zones</strong> - Hardiness zones</li>
+                          <li><strong>special_features</strong> - Special features</li>
+                          <li><strong>uses</strong> - Uses</li>
+                          <li><strong>aroma</strong> - Aroma</li>
+                          <li><strong>gardening_tips</strong> - Gardening tips</li>
+                          <li><strong>care_tips</strong> - Care tips</li>
+                          <li><strong>mainimage</strong> - URL to main image</li>
+                          <li><strong>additionalimage</strong> - Additional image URLs</li>
+                        </ul>
+                      </div>
+                      <p>Note: For best results, use these exact header names with underscores in your CSV file.</p>
+                    </div>
+                    
+                    <div className="format-section">
+                      <h5>Inventory CSV Format</h5>
+                      <p>Your Inventory CSV should have the following columns:</p>
+                      <ul>
+                        <li><strong>plant_id</strong> - ID matching the plant's ID</li>
+                        <li><strong>current_stock</strong> - Current stock level</li>
+                        <li><strong>status</strong> - Status (e.g., in_stock, out_of_stock, low_stock)</li>
+                        <li><strong>restock_date</strong> - Expected restock date</li>
+                        <li><strong>notes</strong> - Additional notes</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="sample-data-section">
+                <div className="migration-option">
+                  <h3>Sample Data Import</h3>
+                  <p>
+                    Import sample plant data to Firebase. This is useful for quickly populating
+                    your database with a predefined set of plants for testing.
+                  </p>
+                  <p className="note">
+                    <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
+                    they will be updated with the sample data.
+                  </p>
+                  
+                  <button 
+                    className={`migration-button ${migrationStatus?.loading ? 'loading' : ''}`}
+                    onClick={handleMigration}
+                    disabled={migrationStatus?.loading}
+                  >
+                    {migrationStatus?.loading ? 'Importing...' : 'Import Sample Plants'}
+                  </button>
+                  
+                  {migrationStatus?.success && (
+                    <div className="success-message">
+                      <p>{migrationStatus.message}</p>
+                    </div>
+                  )}
+                  
+                  {migrationStatus?.error && (
+                    <div className="error-message">
+                      <p>{migrationStatus.message}</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-            
-            <div className="form-group full-width">
-              <label htmlFor="description">Description</label>
-              <textarea
-                id="description"
-                name="description"
-                value={plantFormData.description}
-                onChange={handlePlantFormChange}
-                rows="4"
-              ></textarea>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="colour">Color</label>
-                <input
-                  type="text"
-                  id="colour"
-                  name="colour"
-                  value={plantFormData.colour}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="light">Light Requirements</label>
-                <input
-                  type="text"
-                  id="light"
-                  name="light"
-                  value={plantFormData.light}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="height">Height</label>
-                <input
-                  type="text"
-                  id="height"
-                  name="height"
-                  value={plantFormData.height}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="spread">Spread</label>
-                <input
-                  type="text"
-                  id="spread"
-                  name="spread"
-                  value={plantFormData.spread}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="bloomSeason">Bloom Season</label>
-                <input
-                  type="text"
-                  id="bloomSeason"
-                  name="bloomSeason"
-                  value={plantFormData.bloomSeason}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="plantType">Plant Type</label>
-                <input
-                  type="text"
-                  id="plantType"
-                  name="plantType"
-                  value={plantFormData.plantType}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="specialFeatures">Special Features</label>
-                <input
-                  type="text"
-                  id="specialFeatures"
-                  name="specialFeatures"
-                  value={plantFormData.specialFeatures}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="uses">Uses</label>
-                <input
-                  type="text"
-                  id="uses"
-                  name="uses"
-                  value={plantFormData.uses}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="aroma">Aroma</label>
-                <input
-                  type="text"
-                  id="aroma"
-                  name="aroma"
-                  value={plantFormData.aroma}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="gardeningTips">Gardening Tips</label>
-                <input
-                  type="text"
-                  id="gardeningTips"
-                  name="gardeningTips"
-                  value={plantFormData.gardeningTips}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="careTips">Care Tips</label>
-                <input
-                  type="text"
-                  id="careTips"
-                  name="careTips"
-                  value={plantFormData.careTips}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="hardinessZone">Hardiness Zone</label>
-                <input
-                  type="text"
-                  id="hardinessZone"
-                  name="hardinessZone"
-                  value={plantFormData.hardinessZone}
-                  onChange={handlePlantFormChange}
-                />
-              </div>
-            </div>
-            
-            <div className="form-actions">
-              <div className="button-group-left">
-                {plantEditMode && (
-                  <button
-                    className="delete-btn"
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to delete this plant? This action cannot be undone.')) {
-                        handleDeletePlant(currentPlant.id);
-                      }
-                    }}
-                  >
-                    Delete Flower
-                  </button>
-                )}
-              </div>
-              <div className="button-group-right">
-                <button
-                  className="back-button"
-                  type="button"
-                  onClick={() => {
-                    if (hasUnsavedChanges) {
-                      const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-                      if (!confirmLeave) {
-                        return;
-                      }
-                      setHasUnsavedChanges(false);
-                    }
-                    resetPlantForm();
-                    plantEditMode ? setPlantEditMode(false) : handleTabChange('inventory');
-                  }}
-                >
-                  Back to Inventory
-                </button>
-                <button
-                  className="save-btn"
-                  type="submit"
-                  disabled={plantSaveStatus === 'saving'}
-                >
-                  {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </div>
-          </form>
-          
-        </div>
-      )}
-      
-      {/* New CSV Migration Tab */}
-      {activeTab === 'csvMigration' && (
-        <div className="tab-content">
-          <h2>Data Import Options</h2>
-          
-          <div className="migration-tabs">
-            <div className="csv-migration">
-              <div className="migration-section">
-                <h3>CSV Data Import</h3>
-                <p>
-                  Import plants and inventory data from CSV files. This is useful for migrating data
-                  from spreadsheets to your Firebase database.
-                </p>
-                
-                <div className="instructions">
-                  <h4>Instructions</h4>
-                  <ol>
-                    <li>
-                      You have two options for importing your data:
-                      <ul>
-                        <li><strong>Option 1:</strong> Upload CSV files directly from your computer</li>
-                        <li><strong>Option 2:</strong> Provide URLs to CSV files published from Google Sheets</li>
-                      </ul>
-                    </li>
-                    <li>
-                      If using Google Sheets URLs:
-                      <ol>
-                        <li>Publish your sheets to the web (File &gt; Share &gt; Publish to web)</li>
-                        <li>Select "Comma-separated values (.csv)" format</li>
-                        <li>Copy the published URLs and paste them below</li>
-                      </ol>
-                    </li>
-                  </ol>
-                </div>
-                
-                <form onSubmit={handleCsvMigration} className="migration-form">
-                  <h4>Plants Data (Required)</h4>
-                  
-                  <div className="form-section">
-                    <h5>Option 1: Upload Plants CSV File</h5>
-                    <div className="form-field">
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={(e) => setPlantsFileInput(e.target.files[0])}
-                        className="file-input"
-                      />
-                      <p className="input-help">
-                        Select a CSV file from your computer
-                      </p>
-                    </div>
-                    
-                    <h5>OR Option 2: Google Sheets CSV URL</h5>
-                    <div className="form-field">
-                      <input
-                        type="text"
-                        value={plantsCsvUrl}
-                        onChange={(e) => setPlantsCsvUrl(e.target.value)}
-                        className="text-input"
-                        placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
-                      />
-                      <p className="input-help">
-                        Paste the URL from Google Sheets "Publish to web" (CSV format)
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <h4>Inventory Data (Optional)</h4>
-                  
-                  <div className="form-section">
-                    <h5>Option 1: Upload Inventory CSV File</h5>
-                    <div className="form-field">
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={(e) => setInventoryFileInput(e.target.files[0])}
-                        className="file-input"
-                      />
-                      <p className="input-help">
-                        Select a CSV file from your computer
-                      </p>
-                    </div>
-                    
-                    <h5>OR Option 2: Google Sheets CSV URL</h5>
-                    <div className="form-field">
-                      <input
-                        type="text"
-                        value={inventoryCsvUrl}
-                        onChange={(e) => setInventoryCsvUrl(e.target.value)}
-                        className="text-input"
-                        placeholder="https://docs.google.com/spreadsheets/d/e/your-sheet-id/pub?output=csv"
-                      />
-                      <p className="input-help">
-                        Paste the URL from Google Sheets "Publish to web" (CSV format)
-                      </p>
-                    </div>
-                    
-                    <p className="note">
-                      <strong>Note:</strong> If inventory data is not provided, default inventory records will be created automatically with 0 stock.
-                    </p>
-                  </div>
-                  
-                  <button 
-                    type="submit"
-                    disabled={csvStatus.loading || (!plantsFileInput && !plantsCsvUrl)}
-                    className={`migration-button ${csvStatus.loading ? 'loading' : ''}`}
-                  >
-                    {csvStatus.loading ? 'Migrating...' : 'Start CSV Migration'}
-                  </button>
-                </form>
-                
-                {csvStatus.message && (
-                  <div className={csvStatus.error ? "error-message" : csvStatus.success ? "success-message" : "info-message"}>
-                    <p>{csvStatus.message}</p>
-                  </div>
-                )}
-                
-                <div className="csv-format-info">
-                  <h4>Data Format Requirements</h4>
-                  
-                  <div className="format-section">
-                    <h5>Plants CSV Format</h5>
-                    <p>Your Plants CSV should have the following columns:</p>
-                    <div className="columns-container">
-                      <ul className="format-columns">
-                        <li><strong>plant_id</strong> - Unique identifier (number)</li>
-                        <li><strong>name</strong> - Plant name</li>
-                        <li><strong>latinname</strong> - Latin/scientific name</li>
-                        <li><strong>commonname</strong> - Common name</li>
-                        <li><strong>price</strong> - Price</li>
-                        <li><strong>featured</strong> - Featured (true/false)</li>
-                        <li><strong>type</strong> - Plant type</li>
-                        <li><strong>description</strong> - Description</li>
-                        <li><strong>bloom_season</strong> - Bloom season</li>
-                        <li><strong>colour</strong> - Color</li>
-                      </ul>
-                      <ul className="format-columns">
-                        <li><strong>sunlight</strong> - Light requirements</li>
-                        <li><strong>spread_inches</strong> - Spread in inches</li>
-                        <li><strong>height_inches</strong> - Height in inches</li>
-                        <li><strong>hardiness_zones</strong> - Hardiness zones</li>
-                        <li><strong>special_features</strong> - Special features</li>
-                        <li><strong>uses</strong> - Uses</li>
-                        <li><strong>aroma</strong> - Aroma</li>
-                        <li><strong>gardening_tips</strong> - Gardening tips</li>
-                        <li><strong>care_tips</strong> - Care tips</li>
-                        <li><strong>mainimage</strong> - URL to main image</li>
-                        <li><strong>additionalimage</strong> - Additional image URLs</li>
-                      </ul>
-                    </div>
-                    <p>Note: For best results, use these exact header names with underscores in your CSV file.</p>
-                  </div>
-                  
-                  <div className="format-section">
-                    <h5>Inventory CSV Format</h5>
-                    <p>Your Inventory CSV should have the following columns:</p>
-                    <ul>
-                      <li><strong>plant_id</strong> - ID matching the plant's ID</li>
-                      <li><strong>current_stock</strong> - Current stock level</li>
-                      <li><strong>status</strong> - Status (e.g., in_stock, out_of_stock, low_stock)</li>
-                      <li><strong>restock_date</strong> - Expected restock date</li>
-                      <li><strong>notes</strong> - Additional notes</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="sample-data-section">
-              <div className="migration-option">
-                <h3>Sample Data Import</h3>
-                <p>
-                  Import sample plant data to Firebase. This is useful for quickly populating
-                  your database with a predefined set of plants for testing.
-                </p>
-                <p className="note">
-                  <strong>Note:</strong> This will add the sample plants to your database. If plants with the same IDs already exist,
-                  they will be updated with the sample data.
-                </p>
-                
-                <button 
-                  className={`migration-button ${migrationStatus?.loading ? 'loading' : ''}`}
-                  onClick={handleMigration}
-                  disabled={migrationStatus?.loading}
-                >
-                  {migrationStatus?.loading ? 'Importing...' : 'Import Sample Plants'}
-                </button>
-                
-                {migrationStatus?.success && (
-                  <div className="success-message">
-                    <p>{migrationStatus.message}</p>
-                  </div>
-                )}
-                
-                {migrationStatus?.error && (
-                  <div className="error-message">
-                    <p>{migrationStatus.message}</p>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
