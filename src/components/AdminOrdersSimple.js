@@ -7,25 +7,32 @@ const AdminOrdersSimple = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchOrders() {
-      setLoading(true);
-      try {
-        const orderData = await getOrders();
-        setOrders(orderData || []);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
+  async function fetchOrders() {
+    setLoading(true);
+    try {
+      const orderData = await getOrders();
+      const sortedOrders = [...(orderData || [])].sort((a, b) => 
+        new Date(b.date || 0) - new Date(a.date || 0)
+      );
+      setOrders(sortedOrders);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     fetchOrders();
   }, []);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Unknown';
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const handleRefresh = () => {
+    fetchOrders();
   };
 
   return (
@@ -35,18 +42,52 @@ const AdminOrdersSimple = () => {
       padding: '20px',
       boxSizing: 'border-box'
     }}>
-      <h1 style={{ 
-        marginBottom: '20px', 
-        fontSize: '24px',
-        textAlign: 'left' 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
       }}>
-        Order Management
-      </h1>
+        <h1 style={{ 
+          fontSize: '24px',
+          margin: 0
+        }}>
+          Order Management
+        </h1>
+        <button 
+          onClick={handleRefresh}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#f0f9ff',
+            color: '#0369a1',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: '500'
+          }}
+        >
+          Refresh Orders
+        </button>
+      </div>
 
       {loading ? (
-        <p>Loading orders...</p>
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '4px'
+        }}>
+          Loading orders...
+        </div>
       ) : orders.length === 0 ? (
-        <p>No orders found</p>
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '4px'
+        }}>
+          No orders found
+        </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
           <table style={{ 
@@ -71,8 +112,15 @@ const AdminOrdersSimple = () => {
                   <td style={tableCellStyle}>{order.id}</td>
                   <td style={tableCellStyle}>{formatDate(order.date)}</td>
                   <td style={tableCellStyle}>
-                    {order.customer?.name || 
-                     `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`}
+                    <div>
+                      {order.customer?.name || 
+                       `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`}
+                    </div>
+                    {order.customer?.email && (
+                      <div style={{ fontSize: '0.85em', color: '#666' }}>
+                        {order.customer.email}
+                      </div>
+                    )}
                   </td>
                   <td style={tableCellStyle}>
                     <span style={{
@@ -120,23 +168,24 @@ const statusStyle = {
   fontWeight: '500'
 };
 
-// Helper function to get status color
+// Helper function to get status color - matching the production colors
 const getStatusColor = (status) => {
   const statusLower = status.toLowerCase();
   
-  if (statusLower === 'pending') {
-    return { backgroundColor: '#fff3cd', color: '#856404' };
-  } else if (statusLower === 'processing') {
-    return { backgroundColor: '#d1ecf1', color: '#0c5460' };
-  } else if (statusLower === 'shipped') {
-    return { backgroundColor: '#d4edda', color: '#155724' };
-  } else if (statusLower === 'completed') {
-    return { backgroundColor: '#d4edda', color: '#155724' };
-  } else if (statusLower === 'cancelled') {
-    return { backgroundColor: '#f8d7da', color: '#721c24' };
+  switch(statusLower) {
+    case 'pending':
+      return { backgroundColor: '#fcd34d', color: '#92400e' };
+    case 'processing':
+      return { backgroundColor: '#93c5fd', color: '#1e40af' };
+    case 'shipped':
+      return { backgroundColor: '#a7f3d0', color: '#065f46' };
+    case 'completed':
+      return { backgroundColor: '#bbf7d0', color: '#166534' };
+    case 'cancelled':
+      return { backgroundColor: '#fca5a5', color: '#991b1b' };
+    default:
+      return { backgroundColor: '#e2e3e5', color: '#383d41' };
   }
-  
-  return { backgroundColor: '#e2e3e5', color: '#383d41' };
 };
 
 export default AdminOrdersSimple;
