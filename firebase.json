@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "!/@(static|manifest.json|asset-manifest.json|favicon.ico|logo192.png|logo512.png)/**",
+        "destination": "/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
