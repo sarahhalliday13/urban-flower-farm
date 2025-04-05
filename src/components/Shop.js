@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import './Shop.css';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
@@ -430,10 +430,15 @@ function Shop() {
   const renderPlantCard = (plant) => {
     return (
       <div key={plant.id} className="plant-card" id={`plant-${plant.id}`}>
-        <a 
-          href={`/plant/${plant.id}`}
-          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-          onClick={() => {
+        <Link 
+          to={`/plant/${plant.id}`}
+          className="plant-card-link"
+          onClick={(e) => {
+            // Prevent navigation if clicking on buttons
+            if (e.target.closest('.plant-actions')) {
+              e.preventDefault();
+              return;
+            }
             // Store current page for when user comes back
             localStorage.setItem('shopCurrentPage', currentPage.toString());
             // Store which plant was clicked (for anchor navigation)
@@ -470,9 +475,9 @@ function Shop() {
             </div>
             <p className="plant-price">${plant.price}</p>
           </div>
-        </a>
+        </Link>
         <div className="plant-actions">
-          <a href={`/plant/${plant.id}`} className="plant-view">View</a>
+          <Link to={`/plant/${plant.id}`} className="plant-view">View</Link>
           <button 
             className={`plant-buy ${(!plant.inventory?.currentStock || (plant.inventory?.status === 'Coming Soon' && !plant.inventory?.currentStock)) ? 'sold-out' : ''}`}
             onClick={() => handleAddToCart(plant)}

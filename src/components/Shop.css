@@ -217,7 +217,18 @@
   color: #666;
 }
 
+.plant-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+
 .plant-actions {
+  position: relative;
+  z-index: 2;
   display: flex;
   padding: 0.5rem 1rem 1rem;
   gap: 1rem;

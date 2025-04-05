@@ -8,6 +8,9 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
+    "@babel/preset-react": "^7.16.0",
     "@sendgrid/mail": "^8.1.4",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -17,13 +20,13 @@
     "firebase": "^11.4.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "npm": "^11.2.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-router-dom": "^6.22.3",
-    "react-scripts": "^3.0.1",
+    "react-scripts": "4.0.3",
+    "start": "^5.1.0",
     "web-vitals": "^2.1.4",
-    "webpack": "^4.42.0",
-    "webpack-dev-server": "^3.11.0",
     "winston": "^3.17.0"
   },
   "scripts": {
@@ -57,9 +60,8 @@
     ]
   },
   "devDependencies": {
-    "@babel/core": "^7.12.0",
     "assert": "^2.1.0",
-    "babel-loader": "^8.1.0",
+    "babel-loader": "8.1.0",
     "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "constants-browserify": "^1.0.0",
@@ -79,8 +81,5 @@
   "peerDependencies": {
     "react": "^16.14.0",
     "react-dom": "^16.14.0"
-  },
-  "overrides": {
-    "webpack": "^4.42.0"
   }
 }
