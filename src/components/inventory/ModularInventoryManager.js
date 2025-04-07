@@ -410,7 +410,7 @@ const ModularInventoryManager = () => {
         } else if (stockLevel > 0) {
           newStatus = 'Low Stock';
         } else {
-          newStatus = 'Sold Out';
+          newStatus = 'Out of Stock';
         }
         
         // Create updated inventory data
@@ -488,9 +488,15 @@ const ModularInventoryManager = () => {
           (plant.inventory?.status === 'In Stock' || plant.inventory?.status === 'Low Stock') && 
           (!plant.hidden || plant.hidden !== true)
         );
+      } else if (filter === 'Sold Out') {
+        // Include both "Sold Out" and "Out of Stock" in this filter
+        filtered = filtered.filter(plant => 
+          (plant.inventory?.status === 'Sold Out' || plant.inventory?.status === 'Out of Stock') && 
+          (!plant.hidden || plant.hidden !== true)
+        );
       } else if (filter === 'Other') {
         // For "Other", show plants with statuses not in our predefined list
-        const knownStatuses = ['In Stock', 'Low Stock', 'Sold Out', 'Coming Soon', 'Pre-order', 'Unknown'];
+        const knownStatuses = ['In Stock', 'Low Stock', 'Sold Out', 'Out of Stock', 'Coming Soon', 'Pre-order', 'Unknown'];
         filtered = filtered.filter(plant => 
           plant.inventory?.status && 
           !knownStatuses.includes(plant.inventory.status) && 
@@ -578,7 +584,11 @@ const ModularInventoryManager = () => {
         // Count by inventory status
         if (plant.inventory && plant.inventory.status) {
           const status = plant.inventory.status;
-          if (counts[status] !== undefined) {
+          
+          // Special handling for "Out of Stock" - count it as "Sold Out"
+          if (status === 'Out of Stock') {
+            counts['Sold Out']++;
+          } else if (counts[status] !== undefined) {
             counts[status]++;
           } else {
             // Count statuses that don't match our predefined categories
