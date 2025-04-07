@@ -397,6 +397,7 @@ const ModularInventoryManager = () => {
     window.dispatchEvent(loadingEvent);
     
     let fixedCount = 0;
+    const updatedPlants = [...plants];
     
     // Update each plant with a more appropriate status based on stock
     for (const plant of unknownPlants) {
@@ -425,9 +426,26 @@ const ModularInventoryManager = () => {
           inventory: updatedInventory
         });
         
+        // Also update in local state for immediate UI refresh
+        const plantIndex = updatedPlants.findIndex(p => p.id === plant.id);
+        if (plantIndex !== -1) {
+          updatedPlants[plantIndex] = {
+            ...updatedPlants[plantIndex],
+            inventory: updatedInventory
+          };
+        }
+        
         fixedCount++;
       } catch (error) {
         console.error(`Error fixing status for plant ${plant.id}:`, error);
+      }
+    }
+    
+    // Update local state immediately for UI refresh
+    if (typeof updatePlantData === 'function') {
+      // Update each plant individually to ensure context is updated
+      for (const plant of updatedPlants) {
+        updatePlantData(plant);
       }
     }
     
@@ -441,7 +459,7 @@ const ModularInventoryManager = () => {
     });
     window.dispatchEvent(successEvent);
     
-    // Refresh the plants data
+    // Also refresh the plants data from the database
     handleLoadPlants(true);
   };
 
