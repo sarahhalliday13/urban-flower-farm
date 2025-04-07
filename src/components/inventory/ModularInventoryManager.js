@@ -495,10 +495,8 @@ const ModularInventoryManager = () => {
         );
       }
     } else {
-      // For "all", exclude hidden plants
-      filtered = filtered.filter(plant => 
-        !plant.hidden && plant.hidden !== true
-      );
+      // For "all", include all plants (including hidden)
+      // No filtering needed as we want to show all plants
     }
     
     // Apply sorting
@@ -556,9 +554,8 @@ const ModularInventoryManager = () => {
     };
     
     if (plants) {
-      // First count non-hidden plants for the 'all' count
-      const visiblePlants = plants.filter(plant => !plant.hidden && plant.hidden !== 'true');
-      counts.all = visiblePlants.length;
+      // Count all plants for the 'all' count, including hidden
+      counts.all = plants.length;
       
       // Count by inventory status and hidden status
       plants.forEach(plant => {
