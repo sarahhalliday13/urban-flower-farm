@@ -17,6 +17,15 @@ const InventoryFilterControls = ({
           onChange={(e) => setSearchTerm(e.target.value)}
           className="search-input"
         />
+        {searchTerm && (
+          <button 
+            className="clear-search-btn" 
+            onClick={() => setSearchTerm('')}
+            title="Clear search"
+          >
+            ×
+          </button>
+        )}
       </div>
       <div className="filter-controls">
         <label htmlFor="statusFilter">Status:</label>

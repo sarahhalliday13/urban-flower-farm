@@ -44,28 +44,39 @@
 }
 
 .search-container {
-  flex: 1;
-  max-width: 300px;
+  position: relative;
+  margin-right: 10px;
 }
 
 .search-input {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  font-size: 0.9rem;
-  background-color: #fff;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-size: 14px;
 }
 
-.search-input:focus {
-  border-color: #4caf50;
-  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
-  outline: none;
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #6c757d;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.search-input::placeholder {
-  color: #aaa;
+.clear-search-btn:hover {
+  color: #dc3545;
 }
 
 .sales-header .filter-controls {
@@ -324,15 +335,17 @@
 }
 
 .filter-controls select {
-  padding: 6px 10px; /* Match search box input padding */
-  border: 1px solid #ddd;
+  min-width: 140px;
+  padding: 8px 30px 8px 10px;
+  border: 1px solid #ced4da;
   border-radius: 4px;
-  background-color: white;
-  min-width: 170px; /* Increased to accommodate longer text with counts */
   font-size: 14px;
-  margin: 0; /* Remove margin to match search box */
-  height: 33px; /* Set explicit height to match input */
-  box-sizing: border-box; /* Ensure padding doesn't affect height */
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 16px 12px;
+  appearance: none;
 }
 
 .admin-buttons {
@@ -1807,4 +1820,39 @@
   justify-content: center;
   min-width: 100px;
   text-align: center;
+}
+
+/* Tweak row input styles */
+.inventory-table tr.editing input[type="number"],
+.inventory-table tr.editing input[type="text"],
+.inventory-table tr.editing select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  min-height: 32px;
+  box-sizing: border-box;
+}
+
+/* Fix input widths for each column */
+.inventory-table tr.editing td:nth-child(2) input {
+  min-width: 60px;
+  width: 100%;
+}
+
+.inventory-table tr.editing td:nth-child(3) select {
+  min-width: 120px;
+  width: 100%;
+}
+
+.inventory-table tr.editing td:nth-child(4) input {
+  min-width: 120px;
+  width: 100%;
+}
+
+/* Ensure inputs don't overflow their containers */
+.inventory-table td {
+  position: relative;
+  overflow: visible;
 } 
