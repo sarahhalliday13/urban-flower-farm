@@ -885,6 +885,28 @@ const ModularInventoryManager = () => {
                 
                 <div className="form-row">
                   <div className="form-group">
+                    <label htmlFor="commonName">Common Name</label>
+                    <input
+                      type="text"
+                      id="commonName"
+                      value={plantFormData.commonName || ''}
+                      onChange={(e) => updatePlantForm('commonName', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="colour">Color</label>
+                    <input
+                      type="text"
+                      id="colour"
+                      value={plantFormData.colour || ''}
+                      onChange={(e) => updatePlantForm('colour', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
                     <label htmlFor="price">Price ($)</label>
                     <input
                       type="number"
@@ -896,12 +918,12 @@ const ModularInventoryManager = () => {
                   </div>
                   
                   <div className="form-group">
-                    <label htmlFor="inventory-stock">Current Stock</label>
+                    <label htmlFor="plantType">Plant Type</label>
                     <input
-                      type="number"
-                      id="inventory-stock"
-                      value={plantFormData.inventory.currentStock}
-                      onChange={(e) => updatePlantForm('inventory.currentStock', parseInt(e.target.value) || 0)}
+                      type="text"
+                      id="plantType"
+                      value={plantFormData.plantType || ''}
+                      onChange={(e) => updatePlantForm('plantType', e.target.value)}
                     />
                   </div>
                 </div>
@@ -919,8 +941,184 @@ const ModularInventoryManager = () => {
                 </div>
               </div>
               
-              {/* Additional form sections would go here */}
+              {/* Plant Characteristics */}
+              <div className="form-section">
+                <h3>Plant Characteristics</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="light">Light Requirements</label>
+                    <input
+                      type="text"
+                      id="light"
+                      value={plantFormData.light || ''}
+                      onChange={(e) => updatePlantForm('light', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="bloomSeason">Bloom Season</label>
+                    <input
+                      type="text"
+                      id="bloomSeason"
+                      value={plantFormData.bloomSeason || ''}
+                      onChange={(e) => updatePlantForm('bloomSeason', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="height">Height</label>
+                    <input
+                      type="text"
+                      id="height"
+                      value={plantFormData.height || ''}
+                      onChange={(e) => updatePlantForm('height', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="spread">Spread</label>
+                    <input
+                      type="text"
+                      id="spread"
+                      value={plantFormData.spread || ''}
+                      onChange={(e) => updatePlantForm('spread', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="hardinessZone">Hardiness Zone</label>
+                    <input
+                      type="text"
+                      id="hardinessZone"
+                      value={plantFormData.hardinessZone || ''}
+                      onChange={(e) => updatePlantForm('hardinessZone', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="aroma">Aroma</label>
+                    <input
+                      type="text"
+                      id="aroma"
+                      value={plantFormData.aroma || ''}
+                      onChange={(e) => updatePlantForm('aroma', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
               
+              {/* Additional Information */}
+              <div className="form-section">
+                <h3>Additional Information</h3>
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="specialFeatures">Special Features</label>
+                    <textarea
+                      id="specialFeatures"
+                      value={plantFormData.specialFeatures || ''}
+                      onChange={(e) => updatePlantForm('specialFeatures', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="uses">Uses</label>
+                    <textarea
+                      id="uses"
+                      value={plantFormData.uses || ''}
+                      onChange={(e) => updatePlantForm('uses', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="careTips">Care Tips</label>
+                    <textarea
+                      id="careTips"
+                      value={plantFormData.careTips || ''}
+                      onChange={(e) => updatePlantForm('careTips', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="gardeningTips">Gardening Tips</label>
+                    <textarea
+                      id="gardeningTips"
+                      value={plantFormData.gardeningTips || ''}
+                      onChange={(e) => updatePlantForm('gardeningTips', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Inventory Section */}
+              <div className="form-section">
+                <h3>Inventory Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="inventory-stock">Current Stock</label>
+                    <input
+                      type="number"
+                      id="inventory-stock"
+                      value={plantFormData.inventory.currentStock}
+                      onChange={(e) => updatePlantForm('inventory.currentStock', parseInt(e.target.value) || 0)}
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="inventory-status">Status</label>
+                    <select
+                      id="inventory-status"
+                      value={plantFormData.inventory.status}
+                      onChange={(e) => updatePlantForm('inventory.status', e.target.value)}
+                    >
+                      <option value="In Stock">In Stock</option>
+                      <option value="Low Stock">Low Stock</option>
+                      <option value="Out of Stock">Out of Stock</option>
+                      <option value="Coming Soon">Coming Soon</option>
+                      <option value="Pre-order">Pre-order</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="inventory-restock">Restock Date</label>
+                    <input
+                      type="date"
+                      id="inventory-restock"
+                      value={plantFormData.inventory.restockDate || ''}
+                      onChange={(e) => updatePlantForm('inventory.restockDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="inventory-notes">Inventory Notes</label>
+                    <textarea
+                      id="inventory-notes"
+                      value={plantFormData.inventory.notes || ''}
+                      onChange={(e) => updatePlantForm('inventory.notes', e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Visibility Section */}
               <div className="form-section">
                 <h3>Visibility</h3>
                 <div className="form-row">
@@ -948,6 +1146,31 @@ const ModularInventoryManager = () => {
                       Hidden from Shop
                     </label>
                     <span className="toggle-description">Hidden plants will not appear in the online shop.</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Image Section */}
+              <div className="form-section">
+                <h3>Images</h3>
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="mainImage">Main Image URL</label>
+                    <input
+                      type="text"
+                      id="mainImage"
+                      value={plantFormData.mainImage || ''}
+                      onChange={(e) => updatePlantForm('mainImage', e.target.value)}
+                    />
+                    {plantFormData.mainImage && (
+                      <div className="image-preview">
+                        <img 
+                          src={plantFormData.mainImage} 
+                          alt="Plant preview" 
+                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }} 
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
