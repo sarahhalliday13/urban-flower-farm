@@ -79,10 +79,10 @@ const InventoryTableRow = ({
           ) : (
             <>
               <button 
-                className="edit-btn"
+                className="edit-btn tweak-btn"
                 onClick={() => handleEdit(plant.id)}
               >
-                Tweak In-Line
+                Tweak
               </button>
               <button 
                 className="edit-plant-btn"
