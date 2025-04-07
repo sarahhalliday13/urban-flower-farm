@@ -30,7 +30,8 @@ import DatabaseDebug from './DatabaseDebug';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Import admin components directly instead of lazy loading
-import InventoryManager from './components/InventoryManager';
+// import InventoryManager from './components/InventoryManager';
+import ModularInventoryManager from './components/inventory/ModularInventoryManager';
 import AdminDashboard from './components/AdminDashboard';
 import AdminOrders from './components/AdminOrders';
 import AdminUtilities from './components/AdminUtilities';
@@ -393,7 +394,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <InventoryManager />
+                <ModularInventoryManager />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
