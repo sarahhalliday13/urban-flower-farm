@@ -969,27 +969,29 @@ const ModularInventoryManager = () => {
                 {/* Visibility Section - moved here and condensed */}
                 <div className="form-row">
                   <div className="form-group" style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
-                    <div className="toggle-group" style={{ marginRight: '20px' }}>
-                      <label>
+                    <div className="toggle-group" style={{ marginRight: '20px', display: 'flex', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
                         <input
                           type="checkbox"
                           checked={plantFormData.featured}
                           onChange={(e) => updatePlantForm('featured', e.target.checked)}
+                          style={{ marginRight: '8px' }}
                         />
                         Featured
                       </label>
-                      <span className="toggle-description">Featured plants appear on the homepage carousel.</span>
+                      <span className="toggle-description" style={{ marginLeft: '8px' }}>Featured plants appear on the homepage carousel.</span>
                     </div>
-                    <div className="toggle-group">
-                      <label>
+                    <div className="toggle-group" style={{ display: 'flex', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center' }}>
                         <input
                           type="checkbox"
                           checked={plantFormData.hidden}
                           onChange={(e) => updatePlantForm('hidden', e.target.checked)}
+                          style={{ marginRight: '8px' }}
                         />
                         Hidden from Shop
                       </label>
-                      <span className="toggle-description">Hidden plants will not appear in the online shop.</span>
+                      <span className="toggle-description" style={{ marginLeft: '8px' }}>Hidden plants will not appear in the online shop.</span>
                     </div>
                   </div>
                 </div>
@@ -1172,6 +1174,87 @@ const ModularInventoryManager = () => {
                 </div>
               </div>
             </form>
+            
+            {/* Form Bottom Buttons */}
+            <div className="form-footer" style={{ marginTop: '30px', display: 'flex', justifyContent: 'flex-end', gap: '15px' }}>
+              <button 
+                className="back-button"
+                onClick={() => {
+                  if (hasUnsavedChanges) {
+                    const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                    if (!confirmLeave) {
+                      return;
+                    }
+                    setHasUnsavedChanges(false);
+                  }
+                  resetPlantForm();
+                  setActiveTab('inventory');
+                }}
+                style={{ height: '40px', minWidth: '120px' }}
+              >
+                Back to Inventory
+              </button>
+              <button 
+                className="save-btn"
+                onClick={async () => {
+                  try {
+                    setPlantSaveStatus('saving');
+                    
+                    // ID handling - use existing ID or create new one
+                    const plantId = currentPlant ? currentPlant.id : Date.now().toString();
+                    const plantData = {
+                      ...plantFormData,
+                      id: plantId
+                    };
+                    
+                    // Use the correct function based on whether we're adding or editing
+                    if (currentPlant) {
+                      await updatePlant(plantId, plantData);
+                    } else {
+                      await addPlant(plantData);
+                    }
+                    
+                    // Update the plant in context
+                    if (typeof updatePlantData === 'function') {
+                      updatePlantData(plantData);
+                    }
+                    
+                    setPlantSaveStatus('success');
+                    
+                    // Show success toast
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: {
+                        message: currentPlant ? 'Plant updated successfully!' : 'Plant added successfully!',
+                        type: 'success',
+                        duration: 3000
+                      }
+                    }));
+                    
+                    // Reset form and go back to inventory after a delay
+                    setTimeout(() => {
+                      resetPlantForm();
+                      setActiveTab('inventory');
+                    }, 1000);
+                  } catch (error) {
+                    console.error('Error saving plant:', error);
+                    setPlantSaveStatus('error');
+                    
+                    // Show error toast
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: {
+                        message: `Error: ${error.message || 'Unknown error'}`,
+                        type: 'error',
+                        duration: 5000
+                      }
+                    }));
+                  }
+                }}
+                disabled={plantSaveStatus === 'saving'}
+                style={{ height: '40px', minWidth: '120px' }}
+              >
+                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+              </button>
+            </div>
           </div>
         </div>
       )}
