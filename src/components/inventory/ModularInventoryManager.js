@@ -717,22 +717,24 @@ const ModularInventoryManager = () => {
 
   return (
     <div className="inventory-manager">
-      {/* Page Header */}
-      <div className="page-header">
-        <h1>Flower Inventory</h1>
-        <div className="button-group">
-          <button 
-            className="add-new-button"
-            onClick={() => {
-              resetPlantForm();
-              setPlantEditMode(true);
-              setActiveTab('addPlant');
-            }}
-          >
-            Add New Plant
-          </button>
+      {/* Page Header - only show when not in edit mode */}
+      {!plantEditMode && (
+        <div className="page-header">
+          <h1>Flower Inventory</h1>
+          <div className="button-group">
+            <button 
+              className="add-new-button"
+              onClick={() => {
+                resetPlantForm();
+                setPlantEditMode(true);
+                setActiveTab('addPlant');
+              }}
+            >
+              Add New Plant
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {!plantEditMode ? (
         <>
@@ -790,6 +792,7 @@ const ModularInventoryManager = () => {
                   resetPlantForm();
                   setActiveTab('inventory');
                 }}
+                style={{ height: '40px', minWidth: '120px' }}
               >
                 Back to Inventory
               </button>
@@ -849,6 +852,7 @@ const ModularInventoryManager = () => {
                   }
                 }}
                 disabled={plantSaveStatus === 'saving'}
+                style={{ height: '40px', minWidth: '120px' }}
               >
                 {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
               </button>
@@ -937,6 +941,56 @@ const ModularInventoryManager = () => {
                       onChange={(e) => updatePlantForm('description', e.target.value)}
                       rows={4}
                     />
+                  </div>
+                </div>
+                
+                {/* Image Section - moved here */}
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="mainImage">Main Image URL</label>
+                    <input
+                      type="text"
+                      id="mainImage"
+                      value={plantFormData.mainImage || ''}
+                      onChange={(e) => updatePlantForm('mainImage', e.target.value)}
+                    />
+                    {plantFormData.mainImage && (
+                      <div className="image-preview">
+                        <img 
+                          src={plantFormData.mainImage} 
+                          alt="Plant preview" 
+                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Visibility Section - moved here and condensed */}
+                <div className="form-row">
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'row', gap: '20px' }}>
+                    <div className="toggle-group" style={{ marginRight: '20px' }}>
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={plantFormData.featured}
+                          onChange={(e) => updatePlantForm('featured', e.target.checked)}
+                        />
+                        Featured
+                      </label>
+                      <span className="toggle-description">Featured plants appear on the homepage carousel.</span>
+                    </div>
+                    <div className="toggle-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={plantFormData.hidden}
+                          onChange={(e) => updatePlantForm('hidden', e.target.checked)}
+                        />
+                        Hidden from Shop
+                      </label>
+                      <span className="toggle-description">Hidden plants will not appear in the online shop.</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1114,63 +1168,6 @@ const ModularInventoryManager = () => {
                       onChange={(e) => updatePlantForm('inventory.notes', e.target.value)}
                       rows={3}
                     />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Visibility Section */}
-              <div className="form-section">
-                <h3>Visibility</h3>
-                <div className="form-row">
-                  <div className="form-group toggle-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={plantFormData.featured}
-                        onChange={(e) => updatePlantForm('featured', e.target.checked)}
-                      />
-                      Featured
-                    </label>
-                    <span className="toggle-description">Featured plants appear on the homepage carousel.</span>
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group toggle-group">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={plantFormData.hidden}
-                        onChange={(e) => updatePlantForm('hidden', e.target.checked)}
-                      />
-                      Hidden from Shop
-                    </label>
-                    <span className="toggle-description">Hidden plants will not appear in the online shop.</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Image Section */}
-              <div className="form-section">
-                <h3>Images</h3>
-                <div className="form-row">
-                  <div className="form-group wide">
-                    <label htmlFor="mainImage">Main Image URL</label>
-                    <input
-                      type="text"
-                      id="mainImage"
-                      value={plantFormData.mainImage || ''}
-                      onChange={(e) => updatePlantForm('mainImage', e.target.value)}
-                    />
-                    {plantFormData.mainImage && (
-                      <div className="image-preview">
-                        <img 
-                          src={plantFormData.mainImage} 
-                          alt="Plant preview" 
-                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }} 
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
