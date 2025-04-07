@@ -14,67 +14,40 @@ import InventoryHeader from './InventoryHeader';
 import InventoryTable from './InventoryTable';
 import '../../styles/InventoryManager.css';
 import '../../styles/PlantManagement.css';
+import { useNavigate } from 'react-router-dom';
 
 const ModularInventoryManager = () => {
   // State from AdminContext
   const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
 
+  // Main component state
+  const [activeTab, setActiveTab] = useState('inventory');
+  const [filter, setFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [editMode, setEditMode] = useState({});
+  const [editValues, setEditValues] = useState({});
+  const [saveStatus, setSaveStatus] = useState('idle');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+  const [plantSearchTerm, setPlantSearchTerm] = useState('');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [searchTimeout, setSearchTimeout] = useState(null);
+  
+  const navigate = useNavigate();
+  
+  // Use refs for timers to prevent memory leaks
+  const saveTimerRef = useRef(null);
+  const searchTimerRef = useRef(null);
+  
+  // Get plants context and other data
+  const { plants: plantsContext, updatePlantData: plantsUpdatePlantData, apiRetryCount } = useAdmin();
+
   // Local state for inventory management
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Loading inventory data...');
   const [error, setError] = useState(null);
-  const [editMode, setEditMode] = useState({});
-  const [editValues, setEditValues] = useState({});
-  const [saveStatus, setSaveStatus] = useState({});
-  const [filter, setFilter] = useState('all');
-  // eslint-disable-next-line no-unused-vars
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
-  // eslint-disable-next-line no-unused-vars
-  const [apiRetryCount, setApiRetryCount] = useState(0);
+  const [saveStatusPlants, setSaveStatusPlants] = useState({});
+  const [sortConfigPlants, setSortConfigPlants] = useState({ key: 'name', direction: 'ascending' });
   
-  // New state for tabbed interface
-  const [activeTab, setActiveTab] = useState('inventory');
-  
-  // New state for plant management
-  const [plantEditMode, setPlantEditMode] = useState(false);
-  const [currentPlant, setCurrentPlant] = useState(null);
-  const [plantFormData, setPlantFormData] = useState({
-    name: '',
-    scientificName: '',
-    commonName: '',
-    price: '',
-    description: '',
-    images: [],
-    mainImageIndex: 0,
-    colour: '',
-    light: '',
-    height: '',
-    spread: '',
-    bloomSeason: '',
-    plantType: '',
-    specialFeatures: '',
-    uses: '',
-    aroma: '',
-    gardeningTips: '',
-    careTips: '',
-    hardinessZone: '',
-    featured: false,
-    hidden: false,
-    inventory: {
-      currentStock: 0,
-      status: 'In Stock',
-      restockDate: '',
-      notes: ''
-    }
-  });
-  const [plantSaveStatus, setPlantSaveStatus] = useState('');
-  const [plantSearchTerm, setPlantSearchTerm] = useState('');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
-  // Use refs for timers to prevent memory leaks
-  const refreshTimerRef = useRef(null);
-
   // Modify loadPlants to use context loadPlants
   const handleLoadPlants = useCallback((forceRefresh = false) => {
     setLoading(true);
@@ -280,43 +253,6 @@ const ModularInventoryManager = () => {
     setSortConfig({ key, direction });
   };
   
-  // Reset plant form
-  const resetPlantForm = useCallback(() => {
-    setPlantFormData({
-      name: '',
-      scientificName: '',
-      commonName: '',
-      price: '',
-      description: '',
-      images: [],
-      mainImageIndex: 0,
-      colour: '',
-      light: '',
-      height: '',
-      spread: '',
-      bloomSeason: '',
-      plantType: '',
-      specialFeatures: '',
-      uses: '',
-      aroma: '',
-      gardeningTips: '',
-      careTips: '',
-      hardinessZone: '',
-      featured: false,
-      hidden: false,
-      inventory: {
-        currentStock: 0,
-        status: 'In Stock',
-        restockDate: '',
-        notes: ''
-      }
-    });
-    setCurrentPlant(null);
-    setPlantEditMode(false);
-    setPlantSaveStatus('');
-    setHasUnsavedChanges(false);
-  }, []);
-
   // Handle tab change
   const handleTabChange = useCallback((tab) => {
     if (hasUnsavedChanges) {
@@ -331,40 +267,8 @@ const ModularInventoryManager = () => {
 
   // Handle edit plant click
   const handleEditPlant = useCallback((plant) => {
-    setCurrentPlant(plant);
-    setPlantFormData({
-      id: plant.id,
-      name: plant.name || '',
-      scientificName: plant.scientificName || '',
-      commonName: plant.commonName || '',
-      price: plant.price || '',
-      description: plant.description || '',
-      mainImage: plant.mainImage || '',
-      images: plant.images || [],
-      mainImageIndex: 0,
-      colour: plant.colour || '',
-      light: plant.light || '',
-      height: plant.height || '',
-      spread: plant.spread || '',
-      bloomSeason: plant.bloomSeason || '',
-      plantType: plant.plantType || '',
-      specialFeatures: plant.specialFeatures || '',
-      uses: plant.uses || '',
-      aroma: plant.aroma || '',
-      gardeningTips: plant.gardeningTips || '',
-      careTips: plant.careTips || '',
-      hardinessZone: plant.hardinessZone || '',
-      featured: plant.featured === true || plant.featured === 'true',
-      hidden: plant.hidden === true || plant.hidden === 'true',
-      inventory: {
-        currentStock: plant.inventory?.currentStock || 0,
-        status: plant.inventory?.status || 'In Stock',
-        restockDate: plant.inventory?.restockDate || '',
-        notes: plant.inventory?.notes || ''
-      }
-    });
-    setPlantEditMode(true);
-  }, []);
+    navigate(`/admin/editplant/${plant.id}`);
+  }, [navigate]);
 
   // Function to fix plants with Unknown status
   const fixUnknownStatuses = async () => {
@@ -616,7 +520,7 @@ const ModularInventoryManager = () => {
     }, 5 * 60 * 1000);
     
     // Store references to timers for cleanup
-    refreshTimerRef.current = refreshTimer;
+    searchTimerRef.current = refreshTimer;
     
     // Cleanup function for unmount
     return () => {
@@ -626,7 +530,7 @@ const ModularInventoryManager = () => {
       }
       
       // Clean up all timers using the copied refs
-      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
+      if (searchTimerRef.current) clearInterval(searchTimerRef.current);
     };
   }, [handleLoadPlants, checkSyncQueue]);
 
@@ -683,126 +587,54 @@ const ModularInventoryManager = () => {
   }
 
   return (
-    <div className="inventory-manager">
-      {/* Hide tabs when editing a flower */}
-      {!plantEditMode && (
-        <InventoryHeader
-          activeTab={activeTab}
-          handleTabChange={handleTabChange}
-          filter={filter}
-          setFilter={setFilter}
-          searchTerm={plantSearchTerm}
-          setSearchTerm={setPlantSearchTerm}
-          statusCounts={statusCounts}
-          resetPlantForm={resetPlantForm}
-        />
-      )}
+    <div className="inventory-container">
+      {/* Page Header */}
+      <div className="page-header">
+        <h1>Flower Inventory</h1>
+        <div className="button-group">
+          <button 
+            className="export-inventory-btn"
+            onClick={async () => exportInventory(plants)}
+          >
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Inventory Header */}
+      <InventoryHeader
+        activeTab={activeTab}
+        handleTabChange={handleTabChange}
+        filter={filter}
+        setFilter={setFilter}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusCounts={statusCounts}
+      />
 
       {/* Inventory Tab Content */}
-      {activeTab === 'inventory' && !plantEditMode && (
-        <div className="tab-content">
-          {apiRetryCount > 0 && (
-            <div className="api-warning">
-              <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
-            </div>
-          )}
-          
-          <InventoryTable
-            filteredPlants={filteredPlants}
-            editMode={editMode}
-            editValues={editValues}
-            sortConfig={sortConfig}
-            handleSort={handleSort}
-            handleChange={handleChange}
-            handleEdit={handleEdit}
-            handleSave={handleSave}
-            handleCancel={handleCancel}
-            saveStatus={saveStatus}
-            onEditPlant={handleEditPlant}
-            fixUnknownStatuses={fixUnknownStatuses}
-          />
-        </div>
-      )}
-
-      {/* Plant Edit Mode */}
-      {plantEditMode && (
-        <div className="page-header">
-          <h1>Update {plantFormData.name || 'Flower'}</h1>
-          <div className="button-group">
-            <button 
-              className="back-button"
-              onClick={() => {
-                if (hasUnsavedChanges) {
-                  const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
-                  if (!confirmLeave) {
-                    return;
-                  }
-                  setHasUnsavedChanges(false);
-                }
-                resetPlantForm();
-                setPlantEditMode(false);
-              }}
-            >
-              Back to Inventory
-            </button>
-            <button 
-              className="save-btn"
-              onClick={async (e) => {
-                e.preventDefault();
-                setPlantSaveStatus('saving');
-                
-                try {
-                  // Prepare plant data
-                  const plantData = {
-                    ...plantFormData,
-                    id: currentPlant ? currentPlant.id : Math.max(0, ...plants.map(p => parseInt(p.id) || 0)) + 1
-                  };
-                  
-                  // Update existing plant
-                  await updatePlant(currentPlant.id, plantData);
-                  setPlantSaveStatus('success');
-                  
-                  // Update plant in context if needed
-                  if (typeof updatePlantData === 'function') {
-                    updatePlantData(plantData);
-                  }
-                  
-                  // Show a toast notification
-                  const event = new CustomEvent('show-toast', { 
-                    detail: { 
-                      message: 'Plant updated successfully!',
-                      type: 'success',
-                      duration: 3000
-                    }
-                  });
-                  window.dispatchEvent(event);
-                  
-                  // Reset plant form after a delay
-                  setTimeout(() => {
-                    resetPlantForm();
-                  }, 1000);
-                } catch (error) {
-                  console.error('Error saving plant:', error);
-                  setPlantSaveStatus('error');
-                  
-                  // Show an error toast
-                  const event = new CustomEvent('show-toast', { 
-                    detail: { 
-                      message: `Error: ${error.message || 'Unknown error occurred'}`,
-                      type: 'error',
-                      duration: 5000
-                    }
-                  });
-                  window.dispatchEvent(event);
-                }
-              }}
-              disabled={plantSaveStatus === 'saving'}
-            >
-              {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
-            </button>
+      <div className="tab-content">
+        {apiRetryCount > 0 && (
+          <div className="api-warning">
+            <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
           </div>
-        </div>
-      )}
+        )}
+        
+        <InventoryTable
+          filteredPlants={filteredPlants}
+          editMode={editMode}
+          editValues={editValues}
+          sortConfig={sortConfig}
+          handleSort={handleSort}
+          handleChange={handleChange}
+          handleEdit={handleEdit}
+          handleSave={handleSave}
+          handleCancel={handleCancel}
+          saveStatus={saveStatus}
+          onEditPlant={handleEditPlant}
+          fixUnknownStatuses={fixUnknownStatuses}
+        />
+      </div>
     </div>
   );
 };

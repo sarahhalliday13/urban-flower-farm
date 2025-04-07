@@ -35,6 +35,7 @@ import ModularInventoryManager from './components/inventory/ModularInventoryMana
 import AdminDashboard from './components/AdminDashboard';
 import AdminOrders from './components/AdminOrders';
 import AdminUtilities from './components/AdminUtilities';
+import { ModularPlantEditor } from './components/plant-editor';
 
 // Custom wrapper for plant details
 const PlantDetailsWrapper = ({ children }) => {
@@ -395,6 +396,26 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <ModularInventoryManager />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/editplant/:id" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <ModularPlantEditor />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/addplant" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <ModularPlantEditor />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
