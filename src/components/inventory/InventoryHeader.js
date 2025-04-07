@@ -23,13 +23,6 @@ const InventoryHeader = ({
           setSearchTerm={setSearchTerm}
           statusCounts={statusCounts}
         />
-        
-        <button 
-          className="add-new-button"
-          onClick={() => navigate('/admin/addplant')}
-        >
-          Add New
-        </button>
       </div>
     </div>
   );

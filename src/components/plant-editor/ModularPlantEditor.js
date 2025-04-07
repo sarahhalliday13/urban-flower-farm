@@ -254,7 +254,7 @@ const ModularPlantEditor = () => {
       }
 
       // Navigate back to inventory
-      navigate('/admin/new-inventory');
+      navigate('/admin/inventory');
     } catch (err) {
       console.error('Error saving plant:', err);
       setError(`Failed to save plant: ${err.message}`);
@@ -285,7 +285,7 @@ const ModularPlantEditor = () => {
     <div className="plant-editor-container">
       <div className="plant-editor-header">
         <h1>{isAddMode ? 'Add New Plant' : `Edit ${flowerData.name}`}</h1>
-        <Link to="/admin/new-inventory" className="back-button">Back to Inventory</Link>
+        <Link to="/admin/inventory" className="back-button">Back to Inventory</Link>
       </div>
 
       {error && (
@@ -355,7 +355,7 @@ const ModularPlantEditor = () => {
         {/* Form Actions */}
         <div className="form-actions">
           <Link 
-            to="/admin/new-inventory"
+            to="/admin/inventory"
             className="cancel-button"
           >
             Cancel
