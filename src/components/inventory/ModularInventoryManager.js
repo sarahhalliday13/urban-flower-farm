@@ -468,8 +468,8 @@ const ModularInventoryManager = () => {
     let filtered = [...plants];
     
     // Apply search filter first
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
+    if (plantSearchTerm) {
+      const lowerSearch = plantSearchTerm.toLowerCase();
       filtered = filtered.filter(plant => 
         plant.name?.toLowerCase().includes(lowerSearch) || 
         plant.scientificName?.toLowerCase().includes(lowerSearch) ||
@@ -540,7 +540,7 @@ const ModularInventoryManager = () => {
     }
     
     return filtered;
-  }, [plants, filter, searchTerm, sortConfig]);
+  }, [plants, filter, plantSearchTerm, sortConfig]);
 
   // Status counts for filter options
   const statusCounts = useMemo(() => {
@@ -551,16 +551,22 @@ const ModularInventoryManager = () => {
       'Sold Out': 0,
       'Coming Soon': 0,
       'Pre-order': 0,
+      'Unknown': 0,
       'Hidden': 0
     };
     
     if (plants) {
+      // First count non-hidden plants for the 'all' count
+      const visiblePlants = plants.filter(plant => !plant.hidden && plant.hidden !== 'true');
+      counts.all = visiblePlants.length;
+      
+      // Count by inventory status and hidden status
       plants.forEach(plant => {
-        counts.all++;
-        
         // Count hidden plants
-        if (plant.hidden) {
+        if (plant.hidden === true || plant.hidden === 'true') {
           counts['Hidden']++;
+          // Skip counting other statuses for hidden plants
+          return;
         }
         
         // Count by inventory status
@@ -569,6 +575,9 @@ const ModularInventoryManager = () => {
           if (counts[status] !== undefined) {
             counts[status]++;
           }
+        } else {
+          // Count unknown status plants
+          counts['Unknown']++;
         }
       });
     }

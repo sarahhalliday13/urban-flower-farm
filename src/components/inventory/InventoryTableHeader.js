@@ -15,6 +15,7 @@ const InventoryTableHeader = ({ sortConfig, handleSort, fixUnknownStatuses }) =>
           <button 
             className="check-status-link" 
             onClick={(e) => {
+              e.preventDefault(); // Prevent default to avoid any navigation
               e.stopPropagation(); // Prevent triggering the sort
               fixUnknownStatuses();
             }}
@@ -28,7 +29,7 @@ const InventoryTableHeader = ({ sortConfig, handleSort, fixUnknownStatuses }) =>
           Featured {sortConfig.key === 'featured' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
         </th>
         <th className="sortable-header" onClick={() => handleSort('hidden')}>
-          Hidden Status {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+          Hidden {sortConfig.key === 'hidden' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
         </th>
         <th>Actions</th>
       </tr>
