@@ -3,7 +3,8 @@ import { useAdmin } from '../../context/AdminContext';
 import { 
   // eslint-disable-next-line no-unused-vars
   fetchPlants, 
-  updatePlant, 
+  updatePlant,
+  addPlant,
   subscribeToInventory, 
   // eslint-disable-next-line no-unused-vars
   processSyncQueue,
