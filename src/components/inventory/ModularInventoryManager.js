@@ -264,6 +264,8 @@ const ModularInventoryManager = () => {
 
   // Handle edit plant click
   const handleEditPlant = useCallback((plant) => {
+    console.log("handleEditPlant called with plant:", plant);
+    console.log("Navigating to:", `/admin/editplant/${plant.id}`);
     navigate(`/admin/editplant/${plant.id}`);
   }, [navigate]);
 

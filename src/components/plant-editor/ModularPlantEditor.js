@@ -19,6 +19,9 @@ const ModularPlantEditor = () => {
   const navigate = useNavigate();
   const isAddMode = !plantId;
   
+  console.log("ModularPlantEditor - plantId:", plantId);
+  console.log("ModularPlantEditor - isAddMode:", isAddMode);
+  
   // State
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -47,6 +50,8 @@ const ModularPlantEditor = () => {
 
   // Load plant data if in edit mode
   useEffect(() => {
+    console.log("Loading plant data, plantId:", plantId, "isAddMode:", isAddMode);
+    
     if (isAddMode) {
       setLoading(false);
       return;
@@ -56,9 +61,13 @@ const ModularPlantEditor = () => {
       try {
         setError(null);
         const plants = await fetchPlants();
+        console.log("Fetched plants:", plants);
+        
         const plant = plants.find(p => String(p.id) === String(plantId));
+        console.log("Found plant:", plant);
         
         if (!plant) {
+          console.error("Plant not found with ID:", plantId);
           setError('Plant not found');
           setLoading(false);
           return;
