@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { 
+  // eslint-disable-next-line no-unused-vars
   fetchPlants, 
   updatePlant, 
   subscribeToInventory, 
+  // eslint-disable-next-line no-unused-vars
   processSyncQueue,
+  // eslint-disable-next-line no-unused-vars
   uploadImageToFirebase
 } from '../../services/firebase';
 import InventoryHeader from './InventoryHeader';
@@ -24,8 +27,10 @@ const ModularInventoryManager = () => {
   const [editValues, setEditValues] = useState({});
   const [saveStatus, setSaveStatus] = useState({});
   const [filter, setFilter] = useState('all');
+  // eslint-disable-next-line no-unused-vars
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'ascending' });
+  // eslint-disable-next-line no-unused-vars
   const [apiRetryCount, setApiRetryCount] = useState(0);
   
   // New state for tabbed interface
