@@ -17,8 +17,8 @@ import '../../styles/PlantManagement.css';
 import { useNavigate } from 'react-router-dom';
 
 const ModularInventoryManager = () => {
-  // State from AdminContext
-  const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData } = useAdmin();
+  // Get admin context
+  const { plants, loading: plantsLoading, error: plantsError, loadPlants, updatePlantData, apiRetryCount } = useAdmin();
 
   // Main component state
   const [activeTab, setActiveTab] = useState('inventory');
@@ -38,9 +38,6 @@ const ModularInventoryManager = () => {
   const saveTimerRef = useRef(null);
   const searchTimerRef = useRef(null);
   
-  // Get plants context and other data
-  const { plants: plantsContext, updatePlantData: plantsUpdatePlantData, apiRetryCount } = useAdmin();
-
   // Local state for inventory management
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('Loading inventory data...');
@@ -592,12 +589,6 @@ const ModularInventoryManager = () => {
       <div className="page-header">
         <h1>Flower Inventory</h1>
         <div className="button-group">
-          <button 
-            className="export-inventory-btn"
-            onClick={async () => exportInventory(plants)}
-          >
-            Export CSV
-          </button>
           <button 
             className="add-new-button"
             onClick={() => navigate('/admin/addplant')}
