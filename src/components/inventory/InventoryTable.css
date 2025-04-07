@@ -96,6 +96,12 @@
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s, transform 0.1s;
+  height: 32px;
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .edit-btn:hover, .edit-plant-btn:hover, .save-btn:hover, .cancel-btn:hover {
