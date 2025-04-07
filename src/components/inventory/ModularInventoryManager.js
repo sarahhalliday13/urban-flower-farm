@@ -32,6 +32,39 @@ const ModularInventoryManager = () => {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   
+  // Plant editor state
+  const [plantEditMode, setPlantEditMode] = useState(false);
+  const [currentPlant, setCurrentPlant] = useState(null);
+  const [plantFormData, setPlantFormData] = useState({
+    name: '',
+    scientificName: '',
+    price: '',
+    description: '',
+    images: [],
+    mainImage: '',
+    colour: '',
+    light: '',
+    height: '',
+    spread: '',
+    bloomSeason: '',
+    plantType: '',
+    specialFeatures: '',
+    uses: '',
+    aroma: '',
+    gardeningTips: '',
+    careTips: '',
+    hardinessZone: '',
+    featured: false,
+    hidden: false,
+    inventory: {
+      currentStock: 0,
+      status: 'In Stock',
+      restockDate: '',
+      notes: ''
+    }
+  });
+  const [plantSaveStatus, setPlantSaveStatus] = useState('idle');
+  
   const navigate = useNavigate();
   
   // Use refs for timers to prevent memory leaks
@@ -71,6 +104,41 @@ const ModularInventoryManager = () => {
     } catch (e) {
       console.error('Error checking sync queue:', e);
     }
+  }, []);
+  
+  // Reset plant form state
+  const resetPlantForm = useCallback(() => {
+    setPlantFormData({
+      name: '',
+      scientificName: '',
+      price: '',
+      description: '',
+      images: [],
+      mainImage: '',
+      colour: '',
+      light: '',
+      height: '',
+      spread: '',
+      bloomSeason: '',
+      plantType: '',
+      specialFeatures: '',
+      uses: '',
+      aroma: '',
+      gardeningTips: '',
+      careTips: '',
+      hardinessZone: '',
+      featured: false,
+      hidden: false,
+      inventory: {
+        currentStock: 0,
+        status: 'In Stock',
+        restockDate: '',
+        notes: ''
+      }
+    });
+    setCurrentPlant(null);
+    setPlantEditMode(false);
+    setPlantSaveStatus('idle');
   }, []);
   
   // Handle form field changes
@@ -265,9 +333,40 @@ const ModularInventoryManager = () => {
   // Handle edit plant click
   const handleEditPlant = useCallback((plant) => {
     console.log("handleEditPlant called with plant:", plant);
-    console.log("Navigating to:", `/admin/editplant/${plant.id}`);
-    navigate(`/admin/editplant/${plant.id}`);
-  }, [navigate]);
+    // Instead of navigating to a different URL, we'll set up edit mode with this plant's data
+    setCurrentPlant(plant);
+    setPlantFormData({
+      id: plant.id,
+      name: plant.name || '',
+      scientificName: plant.scientificName || '',
+      price: plant.price || '',
+      description: plant.description || '',
+      images: plant.images || [],
+      mainImage: plant.mainImage || '',
+      colour: plant.colour || '',
+      light: plant.light || '',
+      height: plant.height || '',
+      spread: plant.spread || '',
+      bloomSeason: plant.bloomSeason || '',
+      plantType: plant.plantType || '',
+      specialFeatures: plant.specialFeatures || '',
+      uses: plant.uses || '',
+      aroma: plant.aroma || '',
+      gardeningTips: plant.gardeningTips || '',
+      careTips: plant.careTips || '',
+      hardinessZone: plant.hardinessZone || '',
+      featured: plant.featured === true || plant.featured === 'true',
+      hidden: plant.hidden === true || plant.hidden === 'true',
+      inventory: {
+        currentStock: plant.inventory?.currentStock || 0,
+        status: plant.inventory?.status || 'In Stock',
+        restockDate: plant.inventory?.restockDate || '',
+        notes: plant.inventory?.notes || ''
+      }
+    });
+    setPlantEditMode(true);
+    setActiveTab('addPlant');
+  }, []);
 
   // Function to fix plants with Unknown status
   const fixUnknownStatuses = async () => {
@@ -593,47 +692,244 @@ const ModularInventoryManager = () => {
         <div className="button-group">
           <button 
             className="add-new-button"
-            onClick={() => navigate('/admin/addplant')}
+            onClick={() => {
+              resetPlantForm();
+              setPlantEditMode(true);
+              setActiveTab('addPlant');
+            }}
           >
             Add New Plant
           </button>
         </div>
       </div>
 
-      {/* Inventory Header */}
-      <InventoryHeader
-        activeTab={activeTab}
-        handleTabChange={handleTabChange}
-        filter={filter}
-        setFilter={setFilter}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusCounts={statusCounts}
-      />
+      {!plantEditMode ? (
+        <>
+          {/* Inventory Header */}
+          <InventoryHeader
+            activeTab={activeTab}
+            handleTabChange={handleTabChange}
+            filter={filter}
+            setFilter={setFilter}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusCounts={statusCounts}
+          />
 
-      {/* Inventory Tab Content */}
-      <div className="tab-content">
-        {apiRetryCount > 0 && (
-          <div className="api-warning">
-            <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
+          {/* Inventory Tab Content */}
+          <div className="tab-content">
+            {apiRetryCount > 0 && (
+              <div className="api-warning">
+                <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
+              </div>
+            )}
+            
+            <InventoryTable
+              filteredPlants={filteredPlants}
+              editMode={editMode}
+              editValues={editValues}
+              sortConfig={sortConfig}
+              handleSort={handleSort}
+              handleChange={handleChange}
+              handleEdit={handleEdit}
+              handleSave={handleSave}
+              handleCancel={handleCancel}
+              saveStatus={saveStatus}
+              onEditPlant={handleEditPlant}
+              fixUnknownStatuses={fixUnknownStatuses}
+            />
           </div>
-        )}
-        
-        <InventoryTable
-          filteredPlants={filteredPlants}
-          editMode={editMode}
-          editValues={editValues}
-          sortConfig={sortConfig}
-          handleSort={handleSort}
-          handleChange={handleChange}
-          handleEdit={handleEdit}
-          handleSave={handleSave}
-          handleCancel={handleCancel}
-          saveStatus={saveStatus}
-          onEditPlant={handleEditPlant}
-          fixUnknownStatuses={fixUnknownStatuses}
-        />
-      </div>
+        </>
+      ) : (
+        /* Plant Edit Mode */
+        <div className="plant-editor">
+          <div className="page-header">
+            <h1>{currentPlant ? `Edit ${plantFormData.name}` : 'Add New Plant'}</h1>
+            <div className="button-group">
+              <button 
+                className="back-button"
+                onClick={() => {
+                  if (hasUnsavedChanges) {
+                    const confirmLeave = window.confirm('You have unsaved changes. Are you sure you want to leave?');
+                    if (!confirmLeave) {
+                      return;
+                    }
+                    setHasUnsavedChanges(false);
+                  }
+                  resetPlantForm();
+                  setActiveTab('inventory');
+                }}
+              >
+                Back to Inventory
+              </button>
+              <button 
+                className="save-btn"
+                onClick={async () => {
+                  try {
+                    setPlantSaveStatus('saving');
+                    
+                    // ID handling - use existing ID or create new one
+                    const plantId = currentPlant ? currentPlant.id : Date.now().toString();
+                    const plantData = {
+                      ...plantFormData,
+                      id: plantId
+                    };
+                    
+                    // Use the correct function based on whether we're adding or editing
+                    if (currentPlant) {
+                      await updatePlant(plantId, plantData);
+                    } else {
+                      await addPlant(plantData);
+                    }
+                    
+                    // Update the plant in context
+                    if (typeof updatePlantData === 'function') {
+                      updatePlantData(plantData);
+                    }
+                    
+                    setPlantSaveStatus('success');
+                    
+                    // Show success toast
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: {
+                        message: currentPlant ? 'Plant updated successfully!' : 'Plant added successfully!',
+                        type: 'success',
+                        duration: 3000
+                      }
+                    }));
+                    
+                    // Reset form and go back to inventory after a delay
+                    setTimeout(() => {
+                      resetPlantForm();
+                      setActiveTab('inventory');
+                    }, 1000);
+                  } catch (error) {
+                    console.error('Error saving plant:', error);
+                    setPlantSaveStatus('error');
+                    
+                    // Show error toast
+                    window.dispatchEvent(new CustomEvent('show-toast', {
+                      detail: {
+                        message: `Error: ${error.message || 'Unknown error'}`,
+                        type: 'error',
+                        duration: 5000
+                      }
+                    }));
+                  }
+                }}
+                disabled={plantSaveStatus === 'saving'}
+              >
+                {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+          
+          {/* Plant Form */}
+          <div className="plant-form-container">
+            <form id="plantForm" className="plant-form">
+              <div className="form-section">
+                <h3>Basic Information</h3>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="name">Flower Name</label>
+                    <input
+                      type="text"
+                      id="name"
+                      value={plantFormData.name}
+                      onChange={(e) => setPlantFormData({...plantFormData, name: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="scientificName">Scientific Name</label>
+                    <input
+                      type="text"
+                      id="scientificName"
+                      value={plantFormData.scientificName}
+                      onChange={(e) => setPlantFormData({...plantFormData, scientificName: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="price">Price ($)</label>
+                    <input
+                      type="number"
+                      id="price"
+                      value={plantFormData.price}
+                      onChange={(e) => setPlantFormData({...plantFormData, price: e.target.value})}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="inventory-stock">Current Stock</label>
+                    <input
+                      type="number"
+                      id="inventory-stock"
+                      value={plantFormData.inventory.currentStock}
+                      onChange={(e) => setPlantFormData({
+                        ...plantFormData, 
+                        inventory: {
+                          ...plantFormData.inventory,
+                          currentStock: parseInt(e.target.value) || 0
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="description">Description</label>
+                    <textarea
+                      id="description"
+                      value={plantFormData.description}
+                      onChange={(e) => setPlantFormData({...plantFormData, description: e.target.value})}
+                      rows={4}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Additional form sections would go here */}
+              
+              <div className="form-section">
+                <h3>Visibility</h3>
+                <div className="form-row">
+                  <div className="form-group toggle-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={plantFormData.featured}
+                        onChange={(e) => setPlantFormData({...plantFormData, featured: e.target.checked})}
+                      />
+                      Featured
+                    </label>
+                    <span className="toggle-description">Featured plants appear on the homepage carousel.</span>
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group toggle-group">
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={plantFormData.hidden}
+                        onChange={(e) => setPlantFormData({...plantFormData, hidden: e.target.checked})}
+                      />
+                      Hidden from Shop
+                    </label>
+                    <span className="toggle-description">Hidden plants will not appear in the online shop.</span>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import InventoryFilterControls from './InventoryFilterControls';
 
 const InventoryHeader = ({
@@ -9,8 +8,6 @@ const InventoryHeader = ({
   setSearchTerm,
   statusCounts
 }) => {
-  const navigate = useNavigate();
-  
   return (
     <div className="inventory-header-container">
       <div className="sales-header">
