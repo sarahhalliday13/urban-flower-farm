@@ -598,6 +598,12 @@ const ModularInventoryManager = () => {
           >
             Export CSV
           </button>
+          <button 
+            className="add-new-button"
+            onClick={() => navigate('/admin/addplant')}
+          >
+            Add New Plant
+          </button>
         </div>
       </div>
 
