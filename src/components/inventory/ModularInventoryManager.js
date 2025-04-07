@@ -494,14 +494,6 @@ const ModularInventoryManager = () => {
           (plant.inventory?.status === 'Sold Out' || plant.inventory?.status === 'Out of Stock') && 
           (!plant.hidden || plant.hidden !== true)
         );
-      } else if (filter === 'Other') {
-        // For "Other", show plants with statuses not in our predefined list
-        const knownStatuses = ['In Stock', 'Low Stock', 'Sold Out', 'Out of Stock', 'Coming Soon', 'Pre-order', 'Unknown'];
-        filtered = filtered.filter(plant => 
-          plant.inventory?.status && 
-          !knownStatuses.includes(plant.inventory.status) && 
-          (!plant.hidden || plant.hidden !== true)
-        );
       } else {
         filtered = filtered.filter(plant => 
           plant.inventory?.status === filter && 
@@ -564,8 +556,7 @@ const ModularInventoryManager = () => {
       'Coming Soon': 0,
       'Pre-order': 0,
       'Unknown': 0,
-      'Hidden': 0,
-      'Other': 0  // Add a category for statuses that don't match predefined ones
+      'Hidden': 0
     };
     
     if (plants) {
@@ -591,9 +582,9 @@ const ModularInventoryManager = () => {
           } else if (counts[status] !== undefined) {
             counts[status]++;
           } else {
-            // Count statuses that don't match our predefined categories
-            counts['Other']++;
+            // Count non-standard statuses as Unknown
             console.log(`Found plant with non-standard status: ${status}`);
+            counts['Unknown']++;
           }
         } else {
           // Count unknown status plants
@@ -601,12 +592,6 @@ const ModularInventoryManager = () => {
         }
       });
     }
-    
-    // Log the counts for debugging
-    console.log('Status counts:', counts);
-    console.log('Total visible plants:', (Object.entries(counts)
-      .filter(([key]) => key !== 'all' && key !== 'Hidden')
-      .reduce((sum, [, count]) => sum + count, 0) + counts['Hidden']));
     
     return counts;
   }, [plants]);
