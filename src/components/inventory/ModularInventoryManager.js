@@ -584,7 +584,7 @@ const ModularInventoryManager = () => {
   }
 
   return (
-    <div className="inventory-container">
+    <div className="inventory-manager">
       {/* Page Header */}
       <div className="page-header">
         <h1>Flower Inventory</h1>

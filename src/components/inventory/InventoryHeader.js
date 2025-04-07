@@ -3,14 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import InventoryFilterControls from './InventoryFilterControls';
 
 const InventoryHeader = ({
-  activeTab,
-  handleTabChange,
   filter,
   setFilter,
   searchTerm,
   setSearchTerm,
-  statusCounts,
-  resetPlantForm
+  statusCounts
 }) => {
   const navigate = useNavigate();
   
