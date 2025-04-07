@@ -488,6 +488,14 @@ const ModularInventoryManager = () => {
           (plant.inventory?.status === 'In Stock' || plant.inventory?.status === 'Low Stock') && 
           (!plant.hidden || plant.hidden !== true)
         );
+      } else if (filter === 'Other') {
+        // For "Other", show plants with statuses not in our predefined list
+        const knownStatuses = ['In Stock', 'Low Stock', 'Sold Out', 'Coming Soon', 'Pre-order', 'Unknown'];
+        filtered = filtered.filter(plant => 
+          plant.inventory?.status && 
+          !knownStatuses.includes(plant.inventory.status) && 
+          (!plant.hidden || plant.hidden !== true)
+        );
       } else {
         filtered = filtered.filter(plant => 
           plant.inventory?.status === filter && 
@@ -550,7 +558,8 @@ const ModularInventoryManager = () => {
       'Coming Soon': 0,
       'Pre-order': 0,
       'Unknown': 0,
-      'Hidden': 0
+      'Hidden': 0,
+      'Other': 0  // Add a category for statuses that don't match predefined ones
     };
     
     if (plants) {
@@ -571,6 +580,10 @@ const ModularInventoryManager = () => {
           const status = plant.inventory.status;
           if (counts[status] !== undefined) {
             counts[status]++;
+          } else {
+            // Count statuses that don't match our predefined categories
+            counts['Other']++;
+            console.log(`Found plant with non-standard status: ${status}`);
           }
         } else {
           // Count unknown status plants
@@ -578,6 +591,13 @@ const ModularInventoryManager = () => {
         }
       });
     }
+    
+    // Log the counts for debugging
+    console.log('Status counts:', counts);
+    console.log('Total visible plants:', (Object.entries(counts)
+      .filter(([key]) => key !== 'all' && key !== 'Hidden')
+      .reduce((sum, [, count]) => sum + count, 0) + counts['Hidden']));
+    
     return counts;
   }, [plants]);
 

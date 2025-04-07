@@ -32,6 +32,7 @@ const InventoryFilterControls = ({
           <option value="Coming Soon">Coming Soon ({statusCounts['Coming Soon']})</option>
           <option value="Pre-order">Pre-order ({statusCounts['Pre-order']})</option>
           <option value="Unknown">Unknown ({statusCounts['Unknown']})</option>
+          <option value="Other">Other ({statusCounts['Other']})</option>
           <option value="Hidden">Hidden ({statusCounts['Hidden']})</option>
         </select>
       </div>
