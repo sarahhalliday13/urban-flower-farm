@@ -142,6 +142,32 @@ const ModularInventoryManager = () => {
     setPlantSaveStatus('idle');
   }, []);
   
+  // Helper function to update plant form data including nested fields
+  const updatePlantForm = useCallback((field, value) => {
+    setPlantFormData(prev => {
+      // Handle nested inventory fields
+      if (field.startsWith('inventory.')) {
+        const inventoryField = field.split('.')[1];
+        return {
+          ...prev,
+          inventory: {
+            ...prev.inventory,
+            [inventoryField]: value
+          }
+        };
+      }
+      
+      // Handle regular fields
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+    
+    // Mark as having unsaved changes
+    setHasUnsavedChanges(true);
+  }, []);
+
   // Handle form field changes
   const handleChange = useCallback((plantId, field, value) => {
     setEditValues(prev => ({
@@ -336,13 +362,16 @@ const ModularInventoryManager = () => {
     console.log("handleEditPlant called with plant:", plant);
     // Instead of navigating to a different URL, we'll set up edit mode with this plant's data
     setCurrentPlant(plant);
+    
     setPlantFormData({
-      id: plant.id,
+      id: plant.id || '',
       name: plant.name || '',
       scientificName: plant.scientificName || '',
+      commonName: plant.commonName || '',
       price: plant.price || '',
       description: plant.description || '',
       images: plant.images || [],
+      mainImageIndex: plant.mainImageIndex || 0,
       mainImage: plant.mainImage || '',
       colour: plant.colour || '',
       light: plant.light || '',
@@ -365,6 +394,7 @@ const ModularInventoryManager = () => {
         notes: plant.inventory?.notes || ''
       }
     });
+    
     setPlantEditMode(true);
     setActiveTab('addPlant');
   }, []);
@@ -837,7 +867,7 @@ const ModularInventoryManager = () => {
                       type="text"
                       id="name"
                       value={plantFormData.name}
-                      onChange={(e) => setPlantFormData({...plantFormData, name: e.target.value})}
+                      onChange={(e) => updatePlantForm('name', e.target.value)}
                       required
                     />
                   </div>
@@ -848,7 +878,7 @@ const ModularInventoryManager = () => {
                       type="text"
                       id="scientificName"
                       value={plantFormData.scientificName}
-                      onChange={(e) => setPlantFormData({...plantFormData, scientificName: e.target.value})}
+                      onChange={(e) => updatePlantForm('scientificName', e.target.value)}
                     />
                   </div>
                 </div>
@@ -860,7 +890,7 @@ const ModularInventoryManager = () => {
                       type="number"
                       id="price"
                       value={plantFormData.price}
-                      onChange={(e) => setPlantFormData({...plantFormData, price: e.target.value})}
+                      onChange={(e) => updatePlantForm('price', e.target.value)}
                       required
                     />
                   </div>
@@ -871,13 +901,7 @@ const ModularInventoryManager = () => {
                       type="number"
                       id="inventory-stock"
                       value={plantFormData.inventory.currentStock}
-                      onChange={(e) => setPlantFormData({
-                        ...plantFormData, 
-                        inventory: {
-                          ...plantFormData.inventory,
-                          currentStock: parseInt(e.target.value) || 0
-                        }
-                      })}
+                      onChange={(e) => updatePlantForm('inventory.currentStock', parseInt(e.target.value) || 0)}
                     />
                   </div>
                 </div>
@@ -888,7 +912,7 @@ const ModularInventoryManager = () => {
                     <textarea
                       id="description"
                       value={plantFormData.description}
-                      onChange={(e) => setPlantFormData({...plantFormData, description: e.target.value})}
+                      onChange={(e) => updatePlantForm('description', e.target.value)}
                       rows={4}
                     />
                   </div>
@@ -905,7 +929,7 @@ const ModularInventoryManager = () => {
                       <input
                         type="checkbox"
                         checked={plantFormData.featured}
-                        onChange={(e) => setPlantFormData({...plantFormData, featured: e.target.checked})}
+                        onChange={(e) => updatePlantForm('featured', e.target.checked)}
                       />
                       Featured
                     </label>
@@ -919,7 +943,7 @@ const ModularInventoryManager = () => {
                       <input
                         type="checkbox"
                         checked={plantFormData.hidden}
-                        onChange={(e) => setPlantFormData({...plantFormData, hidden: e.target.checked})}
+                        onChange={(e) => updatePlantForm('hidden', e.target.checked)}
                       />
                       Hidden from Shop
                     </label>
