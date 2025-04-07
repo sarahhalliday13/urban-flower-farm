@@ -230,7 +230,10 @@ const ModularPlantEditor = () => {
       if (isAddMode) {
         // Generate a new ID or let Firebase do it
         const newId = Date.now().toString();
-        await addPlant(newId, finalData);
+        await addPlant({
+          ...finalData,
+          id: newId
+        });
         
         // Show success toast
         window.dispatchEvent(new CustomEvent('show-toast', {
