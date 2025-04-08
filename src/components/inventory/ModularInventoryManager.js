@@ -13,6 +13,7 @@ import {
 } from '../../services/firebase';
 import InventoryHeader from './InventoryHeader';
 import InventoryTable from './InventoryTable';
+import ImageUploader from '../plant-editor/sections/ImageUploader';
 import '../../styles/InventoryManager.css';
 import '../../styles/PlantManagement.css';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +43,7 @@ const ModularInventoryManager = () => {
     price: '',
     description: '',
     images: [],
+    mainImageIndex: 0,
     mainImage: '',
     colour: '',
     light: '',
@@ -115,6 +117,7 @@ const ModularInventoryManager = () => {
       price: '',
       description: '',
       images: [],
+      mainImageIndex: 0,
       mainImage: '',
       colour: '',
       light: '',
@@ -944,25 +947,44 @@ const ModularInventoryManager = () => {
                   </div>
                 </div>
                 
-                {/* Image Section - moved here */}
+                {/* Image Section - replaced with new ImageUploader component */}
                 <div className="form-row">
                   <div className="form-group wide">
-                    <label htmlFor="mainImage">Main Image URL</label>
-                    <input
-                      type="text"
-                      id="mainImage"
-                      value={plantFormData.mainImage || ''}
-                      onChange={(e) => updatePlantForm('mainImage', e.target.value)}
+                    <label>Plant Images</label>
+                    <ImageUploader 
+                      images={plantFormData.images || []}
+                      mainImageIndex={plantFormData.mainImageIndex || 0}
+                      onUpload={(newImages) => updatePlantForm('images', newImages)}
+                      onMainSelect={(index) => {
+                        updatePlantForm('mainImageIndex', index);
+                        // Also update mainImage for backward compatibility
+                        if (plantFormData.images && plantFormData.images[index]) {
+                          updatePlantForm('mainImage', plantFormData.images[index]);
+                        }
+                      }}
+                      onRemoveImage={(index) => {
+                        const updatedImages = [...plantFormData.images];
+                        updatedImages.splice(index, 1);
+                        updatePlantForm('images', updatedImages);
+                        
+                        // If we removed the main image, update mainImageIndex
+                        if (index === plantFormData.mainImageIndex) {
+                          const newMainIndex = updatedImages.length > 0 ? 0 : null;
+                          updatePlantForm('mainImageIndex', newMainIndex);
+                          
+                          // Also update mainImage for backward compatibility
+                          if (newMainIndex !== null && updatedImages[newMainIndex]) {
+                            updatePlantForm('mainImage', updatedImages[newMainIndex]);
+                          } else {
+                            updatePlantForm('mainImage', '');
+                          }
+                        }
+                        // If we removed an image before the mainImageIndex, decrement it
+                        else if (index < plantFormData.mainImageIndex) {
+                          updatePlantForm('mainImageIndex', plantFormData.mainImageIndex - 1);
+                        }
+                      }}
                     />
-                    {plantFormData.mainImage && (
-                      <div className="image-preview">
-                        <img 
-                          src={plantFormData.mainImage} 
-                          alt="Plant preview" 
-                          style={{ maxWidth: '200px', maxHeight: '200px', marginTop: '10px' }} 
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
                 
@@ -981,7 +1003,7 @@ const ModularInventoryManager = () => {
                       </label>
                     </div>
                     <div className="toggle-group" style={{ display: 'flex', alignItems: 'center' }}>
-                      <label style={{ display: 'flex', alignItems: 'center' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                         <input
                           type="checkbox"
                           checked={plantFormData.hidden}

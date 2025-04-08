@@ -1,0 +1,159 @@
+.image-uploader {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.upload-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #f9f9f9;
+  margin-bottom: 15px;
+}
+
+.upload-zone:hover {
+  border-color: #2c5530;
+  background-color: #f0f7f1;
+}
+
+.upload-zone.dragging {
+  border-color: #2c5530;
+  background-color: #e8f4e9;
+}
+
+.upload-instructions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-icon {
+  margin-bottom: 10px;
+  color: #2c5530;
+}
+
+.upload-instructions p {
+  margin: 5px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.upload-format {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+}
+
+.upload-progress {
+  margin: 15px 0;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #2c5530;
+  transition: width 0.2s ease;
+}
+
+.upload-error {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 10px;
+  border-radius: 4px;
+  margin: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.upload-error button {
+  background: none;
+  border: none;
+  color: #c62828;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.image-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.image-preview-item {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.image-preview-item.main-image {
+  border-color: #2c5530;
+  box-shadow: 0 0 0 2px rgba(44, 85, 48, 0.3);
+}
+
+.image-thumbnail {
+  width: 100%;
+  height: 120px;
+  overflow: hidden;
+}
+
+.image-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.image-preview-item:hover .image-thumbnail img {
+  transform: scale(1.05);
+}
+
+.image-controls {
+  padding: 8px;
+  background-color: #f5f5f5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-image-toggle {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.main-image-toggle input {
+  margin-right: 5px;
+}
+
+.remove-image-btn {
+  background: none;
+  border: none;
+  color: #c62828;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.remove-image-btn:hover {
+  background-color: rgba(198, 40, 40, 0.1);
+} 
