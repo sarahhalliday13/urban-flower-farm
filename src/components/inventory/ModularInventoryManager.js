@@ -979,7 +979,6 @@ const ModularInventoryManager = () => {
                         />
                         Featured
                       </label>
-                      <span className="toggle-description" style={{ marginLeft: '8px' }}>Featured plants appear on the homepage carousel.</span>
                     </div>
                     <div className="toggle-group" style={{ display: 'flex', alignItems: 'center' }}>
                       <label style={{ display: 'flex', alignItems: 'center' }}>
@@ -991,7 +990,6 @@ const ModularInventoryManager = () => {
                         />
                         Hidden from Shop
                       </label>
-                      <span className="toggle-description" style={{ marginLeft: '8px' }}>Hidden plants will not appear in the online shop.</span>
                     </div>
                   </div>
                 </div>
