@@ -6,8 +6,17 @@ import React from 'react';
  * @param {Object} props - Component props
  * @param {Array} props.items - Array of items in the order
  * @param {number|string} props.total - Order total
+ * @param {boolean} props.editable - Whether the items can be edited
+ * @param {function} props.onUpdateQuantity - Function to update item quantity
+ * @param {function} props.onRemoveItem - Function to remove an item
  */
-const OrderItemsTable = ({ items, total }) => {
+const OrderItemsTable = ({ 
+  items, 
+  total, 
+  editable = false,
+  onUpdateQuantity = () => {},
+  onRemoveItem = () => {}
+}) => {
   // Calculate the total if needed
   const calculateTotal = () => {
     const storedTotal = parseFloat(total);
@@ -27,9 +36,18 @@ const OrderItemsTable = ({ items, total }) => {
     return calculatedTotal.toFixed(2);
   };
 
+  // Handle quantity change in editable mode
+  const handleQuantityChange = (itemId, newQuantity) => {
+    // Ensure quantity is valid
+    const quantity = parseInt(newQuantity, 10);
+    if (isNaN(quantity) || quantity < 0) return;
+    
+    onUpdateQuantity(itemId, quantity);
+  };
+
   return (
     <div className="order-items">
-      <h4>Items</h4>
+      <h4>Items {editable && <span className="edit-mode-indicator">(Edit Mode)</span>}</h4>
       <table className="invoice-style-table">
         <thead>
           <tr>
@@ -37,23 +55,47 @@ const OrderItemsTable = ({ items, total }) => {
             <th className="quantity-col">Quantity</th>
             <th className="price-col">Price</th>
             <th className="total-col">Total</th>
+            {editable && <th className="actions-col">Actions</th>}
           </tr>
         </thead>
         <tbody>
           {items.map(item => (
             <tr key={item.id}>
               <td className="product-col">{item.name}</td>
-              <td className="quantity-col">{item.quantity}</td>
+              <td className="quantity-col">
+                {editable ? (
+                  <input 
+                    type="number" 
+                    min="0" 
+                    value={item.quantity} 
+                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                    className="quantity-input"
+                  />
+                ) : (
+                  item.quantity
+                )}
+              </td>
               <td className="price-col">${parseFloat(item.price).toFixed(2)}</td>
               <td className="total-col">
                 ${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}
               </td>
+              {editable && (
+                <td className="actions-col">
+                  <button 
+                    className="remove-item-link" 
+                    onClick={() => onRemoveItem(item.id)}
+                    aria-label={`Remove ${item.name}`}
+                  >
+                    Delete
+                  </button>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan="3" className="order-total-label">Order Total</td>
+            <td colSpan={editable ? "4" : "3"} className="order-total-label">Order Total</td>
             <td className="order-total-value">
               ${calculateTotal()}
             </td>

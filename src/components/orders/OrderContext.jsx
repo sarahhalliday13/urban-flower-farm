@@ -267,30 +267,251 @@ export const OrderProvider = ({ children }) => {
    * @param {Object} discountData - The discount data (amount, reason, type)
    */
   const updateOrderDiscount = useCallback(async (orderId, discountData) => {
+    if (!orderId) {
+      console.error('Invalid order ID');
+      addToast('Error updating discount: Invalid order ID', 'error');
+      return false;
+    }
+    
     try {
-      // Validate discount data
-      if (typeof discountData.amount !== 'number' || discountData.amount < 0) {
-        console.error('Invalid discount amount:', discountData.amount);
-        addToast("Invalid discount amount", "error");
-        return false;
-      }
-
-      // Update in Firebase first
-      const success = await updateOrder(orderId, { 
-        discount: discountData
+      // Update in Firebase 
+      await updateOrder(orderId, { discount: discountData });
+      
+      // Update in local state
+      const updatedOrders = orders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, discount: discountData };
+        }
+        return order;
       });
       
-      if (!success) {
-        addToast("Failed to update discount in Firebase", "error");
+      setOrders(updatedOrders);
+      
+      // Update in localStorage
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const updatedLocalOrders = localOrders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, discount: discountData };
+        }
+        return order;
+      });
+      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
+      
+      addToast('Discount updated successfully', 'success');
+      return true;
+    } catch (error) {
+      console.error('Error updating discount:', error);
+      addToast('Error updating discount', 'error');
+      return false;
+    }
+  }, [orders, addToast]);
+  
+  /**
+   * Update the payment method for an order
+   * @param {string} orderId - The ID of the order to update
+   * @param {Object} paymentData - The payment data (method, timing, updatedAt)
+   */
+  const updateOrderPayment = useCallback(async (orderId, paymentData) => {
+    if (!orderId) {
+      console.error('Invalid order ID');
+      addToast('Error updating payment: Invalid order ID', 'error');
+      return false;
+    }
+    
+    // Validate payment data
+    if (!paymentData || !paymentData.method) {
+      console.error('Invalid payment data');
+      addToast('Please select a payment method', 'error');
+      return false;
+    }
+    
+    try {
+      // Update in Firebase 
+      await updateOrder(orderId, { payment: paymentData });
+      
+      // Update in local state
+      const updatedOrders = orders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, payment: paymentData };
+        }
+        return order;
+      });
+      
+      setOrders(updatedOrders);
+      
+      // Update in localStorage
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const updatedLocalOrders = localOrders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, payment: paymentData };
+        }
+        return order;
+      });
+      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
+      
+      addToast('Payment information updated successfully', 'success');
+      return true;
+    } catch (error) {
+      console.error('Error updating payment information:', error);
+      addToast('Error updating payment information', 'error');
+      return false;
+    }
+  }, [orders, addToast]);
+
+  /**
+   * Update order items and maintain version history
+   * @param {string} orderId - The ID of the order to update
+   * @param {Array} newItems - The new array of order items
+   * @param {boolean} finalize - Whether to mark this update as a final version
+   * @returns {Promise<boolean>} - Whether the update was successful
+   */
+  const updateOrderItems = useCallback(async (orderId, newItems, finalize = false) => {
+    console.log("updateOrderItems called with:", { orderId, itemsCount: newItems.length, finalize });
+    
+    if (!orderId) {
+      console.error('Invalid order ID');
+      addToast('Error updating order: Invalid order ID', 'error');
+      return false;
+    }
+    
+    // Validate items data
+    if (!Array.isArray(newItems) || newItems.length === 0) {
+      console.error('Invalid items data');
+      addToast('Order must contain at least one item', 'error');
+      return false;
+    }
+    
+    try {
+      // Find the existing order
+      const existingOrder = orders.find(order => order.id === orderId);
+      if (!existingOrder) {
+        console.error('Order not found:', orderId);
+        addToast('Error: Order not found', 'error');
         return false;
       }
       
-      // Then update local state
+      console.log("Existing order found:", existingOrder.id);
+      
+      // Calculate new order total
+      const newTotal = newItems.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0);
+      
+      // Create version history array if it doesn't exist
+      const orderVersions = existingOrder.versions || [];
+      
+      // Add current version to history if this is the first edit
+      if (orderVersions.length === 0) {
+        orderVersions.push({
+          items: [...existingOrder.items],
+          total: existingOrder.total,
+          versionNumber: 1,
+          timestamp: existingOrder.date || new Date().toISOString(),
+          isPreliminary: true,
+          changeReason: 'Initial order'
+        });
+      }
+      
+      // Add new version
+      orderVersions.push({
+        items: [...newItems],
+        total: newTotal,
+        versionNumber: orderVersions.length + 1,
+        timestamp: new Date().toISOString(),
+        isPreliminary: !finalize,
+        changeReason: finalize ? 'Final order' : 'Order updated at pickup'
+      });
+      
+      // Prepare update data
+      const updateData = {
+        items: newItems,
+        total: newTotal,
+        versions: orderVersions,
+        isFinalized: finalize,
+        lastModified: new Date().toISOString()
+      };
+      
+      console.log("Updating order with data:", updateData);
+      
+      // Update in Firebase 
+      await updateOrder(orderId, updateData);
+      
+      // Update in local state
+      const updatedOrders = orders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, ...updateData };
+        }
+        return order;
+      });
+      
+      setOrders(updatedOrders);
+      
+      // Update in localStorage
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      const updatedLocalOrders = localOrders.map(order => {
+        if (order.id === orderId) {
+          return { ...order, ...updateData };
+        }
+        return order;
+      });
+      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
+      
+      addToast(finalize ? 'Order finalized successfully' : 'Order items updated successfully', 'success');
+      console.log("Order update completed successfully");
+      return true;
+    } catch (error) {
+      console.error('Error updating order items:', error);
+      addToast('Error updating order items', 'error');
+      return false;
+    }
+  }, [orders, addToast]);
+  
+  /**
+   * Finalize an order after editing
+   * @param {string} orderId - The ID of the order to finalize
+   * @returns {Promise<boolean>} - Whether the finalization was successful
+   */
+  const finalizeOrder = useCallback(async (orderId) => {
+    console.log("finalizeOrder called with orderId:", orderId);
+    
+    if (!orderId) {
+      console.error('Invalid order ID');
+      addToast('Error finalizing order: Invalid order ID', 'error');
+      return false;
+    }
+    
+    try {
+      // Find the existing order
+      const existingOrder = orders.find(order => order.id === orderId);
+      if (!existingOrder) {
+        console.error('Order not found:', orderId);
+        addToast('Error: Order not found', 'error');
+        return false;
+      }
+      
+      // If order is already finalized, do nothing
+      if (existingOrder.isFinalized) {
+        addToast('Order is already finalized', 'info');
+        return true;
+      }
+      
+      console.log("Finalizing order:", existingOrder.id);
+      
+      // Update finalized status in Firebase
+      await updateOrder(orderId, { 
+        isFinalized: true,
+        finalizedAt: new Date().toISOString()
+      });
+      
+      // Update in local state
       const updatedOrders = orders.map(order => {
         if (order.id === orderId) {
           return { 
             ...order, 
-            discount: discountData
+            isFinalized: true,
+            finalizedAt: new Date().toISOString()
           };
         }
         return order;
@@ -298,24 +519,26 @@ export const OrderProvider = ({ children }) => {
       
       setOrders(updatedOrders);
       
-      // Also update localStorage for fallback
+      // Update in localStorage
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const updatedLocalOrders = localOrders.map(order => {
         if (order.id === orderId) {
           return { 
             ...order, 
-            discount: discountData
+            isFinalized: true,
+            finalizedAt: new Date().toISOString()
           };
         }
         return order;
       });
       localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
       
-      addToast("Discount updated successfully", "success");
+      addToast('Order finalized successfully', 'success');
+      console.log("Order finalization completed successfully");
       return true;
     } catch (error) {
-      console.error('Error updating order discount:', error);
-      addToast("Error updating discount: " + error.message, "error");
+      console.error('Error finalizing order:', error);
+      addToast('Error finalizing order', 'error');
       return false;
     }
   }, [orders, addToast]);
@@ -477,8 +700,17 @@ export const OrderProvider = ({ children }) => {
     formatDate,
     getStatusClass,
     updateOrderDiscount,
+    updateOrderPayment,
+    updateOrderItems: updateOrderItems,
+    finalizeOrder: finalizeOrder,
     statusToLowerCase,
   };
+
+  console.log("OrderContext providing:", {
+    updateOrderItemsType: typeof updateOrderItems, 
+    finalizeOrderType: typeof finalizeOrder,
+    ordersCount: orders.length
+  });
 
   return (
     <OrderContext.Provider value={contextValue}>

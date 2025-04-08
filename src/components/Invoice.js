@@ -1,7 +1,14 @@
 import React from 'react';
 import '../styles/Invoice.css';
 
-const Invoice = ({ order, type = 'print' }) => {
+/**
+ * Invoice component that displays order details in a printable format
+ * @param {Object} props - The component props
+ * @param {Object} props.order - The order object to display
+ * @param {string} props.type - The type of invoice display ('print' or other)
+ * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
+ */
+const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -10,9 +17,39 @@ const Invoice = ({ order, type = 'print' }) => {
   const formatCurrency = (amount) => {
     return parseFloat(amount).toFixed(2);
   };
+  
+  // Determine if we should show a preliminary watermark
+  const isPreliminary = invoiceType === 'preliminary' || 
+    (order.versions && order.versions.length > 0 && !order.isFinalized);
+
+  // Get the appropriate version of the order for this invoice
+  const getOrderVersion = () => {
+    // If this is a final invoice or there are no versions, use current data
+    if (!order.versions || order.versions.length === 0 || invoiceType === 'final') {
+      return order;
+    }
+    
+    // For preliminary invoice, use the latest version
+    const latestVersion = order.versions[order.versions.length - 1];
+    return {
+      ...order,
+      items: latestVersion.items,
+      total: latestVersion.total,
+      versionNumber: latestVersion.versionNumber,
+      versionDate: latestVersion.timestamp
+    };
+  };
+  
+  const orderVersion = getOrderVersion();
 
   return (
-    <div className={`invoice-container ${type}`}>
+    <div className={`invoice-container ${type} ${isPreliminary ? 'preliminary' : 'final'}`}>
+      {isPreliminary && (
+        <div className="preliminary-mark">
+          PRELIMINARY INVOICE - Subject to Change
+        </div>
+      )}
+      
       <div className="invoice-header">
         <div className="invoice-logo">
           <h1>Buttons Urban Flower Farm</h1>
@@ -22,6 +59,14 @@ const Invoice = ({ order, type = 'print' }) => {
           <p><strong>Order #:</strong> {order.id}</p>
           <p><strong>Date:</strong> {formatDate(order.date)}</p>
           <p><strong>Status:</strong> {order.status}</p>
+          {orderVersion.versionNumber && (
+            <p><strong>Version:</strong> {orderVersion.versionNumber}</p>
+          )}
+          {isPreliminary && (
+            <p className="invoice-preliminary-note">
+              This is a preliminary invoice. Final items and totals may change at pickup.
+            </p>
+          )}
         </div>
       </div>
 
@@ -52,7 +97,7 @@ const Invoice = ({ order, type = 'print' }) => {
             </tr>
           </thead>
           <tbody>
-            {order.items.map((item, index) => (
+            {orderVersion.items.map((item, index) => (
               <tr key={index}>
                 <td>{item.name}</td>
                 <td>{item.quantity}</td>
@@ -63,8 +108,24 @@ const Invoice = ({ order, type = 'print' }) => {
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="3" className="total-label">Total</td>
-              <td className="total-amount">${formatCurrency(order.total)}</td>
+              <td colSpan="3" className="total-label">Subtotal</td>
+              <td className="total-amount">${formatCurrency(orderVersion.total)}</td>
+            </tr>
+            {order.discount && parseFloat(order.discount.amount) > 0 && (
+              <tr>
+                <td colSpan="3" className="discount-label">Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
+                <td className="discount-amount">-${formatCurrency(order.discount.amount)}</td>
+              </tr>
+            )}
+            <tr>
+              <td colSpan="3" className="final-total-label">Total</td>
+              <td className="final-total-amount">
+                ${formatCurrency(
+                  order.discount && parseFloat(order.discount.amount) > 0
+                    ? Math.max(0, orderVersion.total - parseFloat(order.discount.amount))
+                    : orderVersion.total
+                )}
+              </td>
             </tr>
           </tfoot>
         </table>
@@ -79,12 +140,27 @@ const Invoice = ({ order, type = 'print' }) => {
 
       <div className="invoice-payment">
         <h3>Payment Information</h3>
-        <p>Please complete your payment using one of the following methods:</p>
-        <ul>
-          <li><strong>Cash:</strong> Available for in-person pickup</li>
-          <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
-        </ul>
-        <p>Please include your order number ({order.id}) in the payment notes.</p>
+        {order.payment && order.payment.method ? (
+          <div className="payment-details">
+            <p><strong>Payment Method:</strong> {order.payment.method.split('-').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ')}</p>
+            {order.payment.timing && (
+              <p><strong>Payment Timing:</strong> {order.payment.timing.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')}</p>
+            )}
+          </div>
+        ) : (
+          <>
+            <p>Please complete your payment using one of the following methods:</p>
+            <ul>
+              <li><strong>Cash:</strong> Available for in-person pickup</li>
+              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
+            </ul>
+            <p>Please include your order number ({order.id}) in the payment notes.</p>
+          </>
+        )}
       </div>
 
       {type === 'print' && (
@@ -105,11 +181,26 @@ const Invoice = ({ order, type = 'print' }) => {
                   <style>
                     body { margin: 0; padding: 0.5in; font-family: Arial, sans-serif; }
                     .invoice-container { max-width: 7.5in; margin: 0 auto; }
+                    .preliminary-mark { 
+                      position: absolute;
+                      top: 40%;
+                      left: 0;
+                      width: 100%;
+                      text-align: center;
+                      font-size: 3rem;
+                      transform: rotate(-45deg);
+                      color: rgba(220, 53, 69, 0.2);
+                      font-weight: bold;
+                      text-transform: uppercase;
+                      pointer-events: none;
+                      z-index: 100;
+                    }
                     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
                     .invoice-logo h1 { color: #2c5530; margin: 0; font-size: 1.8rem; }
                     .invoice-info { text-align: right; }
                     .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
                     .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
+                    .invoice-preliminary-note { color: #dc3545; font-style: italic; margin-top: 0.5rem !important; }
                     .invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 2rem; }
                     .invoice-from, .invoice-to { width: 48%; }
                     .invoice-from h3, .invoice-to h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
@@ -120,8 +211,9 @@ const Invoice = ({ order, type = 'print' }) => {
                     .invoice-items td { padding: 0.75rem; border-bottom: 1px solid #eee; font-size: 0.9rem; text-align: left; }
                     .invoice-items td:nth-child(2), .invoice-items td:nth-child(3), .invoice-items td:nth-child(4) { text-align: right; }
                     .invoice-items tfoot td { border-top: 2px solid #ddd; font-weight: bold; }
-                    .total-label { text-align: right; font-weight: bold; }
-                    .total-amount { font-weight: bold; color: #2c5530; }
+                    .total-label, .discount-label, .final-total-label { text-align: right; font-weight: bold; }
+                    .discount-label, .discount-amount { color: #28a745; }
+                    .final-total-label, .final-total-amount { font-size: 1.1rem; color: #2c5530; }
                     .invoice-notes { margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
                     .invoice-notes h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
                     .invoice-notes p { margin: 0; font-size: 0.9rem; font-style: italic; }
@@ -130,6 +222,7 @@ const Invoice = ({ order, type = 'print' }) => {
                     .invoice-payment p { margin: 0.5rem 0; font-size: 0.9rem; }
                     .invoice-payment ul { margin: 0.5rem 0; padding-left: 0; list-style-type: none; }
                     .invoice-payment li { margin: 0.25rem 0; font-size: 0.9rem; }
+                    .payment-details { font-size: 0.9rem; }
                   </style>
                 </head>
                 <body>

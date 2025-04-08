@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
 import Invoice from '../Invoice';
+import OrderEditor from './OrderEditor';
 
 /**
  * OrderDetails - Expanded view for selected order
@@ -23,13 +24,24 @@ const OrderDetails = () => {
     confirmCancelOrder,
     sendOrderEmail,
     emailSending,
-    updateOrderDiscount
+    updateOrderDiscount,
+    updateOrderPayment,
+    updateOrderItems,
+    finalizeOrder
   } = useOrders();
   
   // State for discount editing
   const [discountAmount, setDiscountAmount] = useState('');
   const [discountReason, setDiscountReason] = useState('');
   const [isEditingDiscount, setIsEditingDiscount] = useState(false);
+  
+  // State for payment method editing
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentTiming, setPaymentTiming] = useState('');
+  const [isEditingPayment, setIsEditingPayment] = useState(false);
+  
+  // State for order editing
+  const [isEditingOrder, setIsEditingOrder] = useState(false);
   
   // Find the active order details
   const orderDetails = activeOrder ? orders.find(order => order.id === activeOrder) : null;
@@ -44,7 +56,20 @@ const OrderDetails = () => {
       setDiscountReason('');
     }
     setIsEditingDiscount(false);
-  }, [orderDetails?.id, orderDetails?.discount]);
+    
+    // Initialize payment method state
+    if (orderDetails?.payment) {
+      setPaymentMethod(orderDetails.payment.method || '');
+      setPaymentTiming(orderDetails.payment.timing || '');
+    } else {
+      setPaymentMethod('');
+      setPaymentTiming('');
+    }
+    setIsEditingPayment(false);
+    
+    // Reset editing state when changing orders
+    setIsEditingOrder(false);
+  }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
   
   // If no active order, don't render anything
   if (!activeOrder) return null;
@@ -71,6 +96,22 @@ const OrderDetails = () => {
     });
     
     setIsEditingDiscount(false);
+  };
+  
+  // Handle saving the payment method
+  const handleSavePayment = () => {
+    if (!paymentMethod) {
+      alert('Please select a payment method');
+      return;
+    }
+
+    updateOrderPayment(orderDetails.id, {
+      method: paymentMethod,
+      timing: paymentTiming,
+      updatedAt: new Date().toISOString()
+    });
+    
+    setIsEditingPayment(false);
   };
 
   // Calculate subtotal from items
@@ -102,6 +143,25 @@ const OrderDetails = () => {
     return Math.max(0, subtotal - discount);
   };
   
+  // Helper to format payment method for display
+  const formatPaymentMethod = (method) => {
+    if (!method) return 'Not specified';
+    
+    // Capitalize first letter of each word
+    return method.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+  
+  // Helper to format payment timing for display
+  const formatPaymentTiming = (timing) => {
+    if (!timing) return '';
+    
+    return timing.split('-').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   // Get email status with date if available
   const getEmailStatus = () => {
     try {
@@ -122,8 +182,6 @@ const OrderDetails = () => {
       if (orderDetails.emailSent) {
         return <span className="email-status sent">✅ Email sent</span>;
       }
-
-      
       
       // If no manual email record
       return <span className="email-status unknown">❌ No email sent</span>;
@@ -177,208 +235,338 @@ const OrderDetails = () => {
     <div className="order-details-container">
       <button className="close-details-btn" onClick={() => setActiveOrder(null)}>×</button>
       
-      <div className="order-details-grid">
-        {/* Left Column */}
-        <div className="order-details-left">
-          <OrderItemsTable 
-            items={Array.isArray(orderDetails.items) ? orderDetails.items : []} 
-            total={orderDetails.total || 0} 
-          />
-          
-          <div className="customer-info-compact">
-            <h3>Customer Information</h3>
-            <p><strong>Name:</strong> {orderDetails.customer.name}</p>
-            <p><strong>Email:</strong> {orderDetails.customer.email}</p>
-            <p><strong>Phone:</strong> {orderDetails.customer.phone}</p>
-            
-            <div className="order-notes">
-              <h4>Order Notes:</h4>
-              <p dangerouslySetInnerHTML={{ __html: formatNotes(orderDetails.notes) }}></p>
-            </div>
-          </div>
-          
-          <div className="email-summary">
-            <h3>Email Status</h3>
-            <div className="email-status-display">
-              {getEmailStatus()}
+      {isEditingOrder ? (
+        <OrderEditor 
+          orderId={activeOrder} 
+          onClose={() => setIsEditingOrder(false)} 
+        />
+      ) : (
+        <div className="order-details-grid">
+          {/* Left Column */}
+          <div className="order-details-left">
+            {/* Items header with edit button */}
+            <div className="items-header">
+              <h3>Items</h3>
               <button 
-                className="email-invoice-btn"
-                onClick={() => sendOrderEmail(orderDetails)}
-                disabled={emailSending[orderDetails.id] || !orderDetails.customer.email || orderDetails.customer.email === 'Not provided'}
+                className="edit-order-btn"
+                onClick={() => setIsEditingOrder(true)}
               >
-                {emailSending[orderDetails.id] ? 'Sending...' : 'Send/Resend Email'}
+                Edit Order
               </button>
             </div>
-          </div>
-        </div>
-        
-        {/* Right Column */}
-        <div className="order-details-right">
-          <div className="status-management-visual">
-            <h3>Order Status</h3>
-            <div className="status-progress-bar">
-              <div className={`status-step ${getStatusClass('pending')}`}>
-                <div className="status-indicator"></div>
-                <button 
-                  className="status-label"
-                  onClick={() => handleStatusUpdate(orderDetails.id, 'Pending')}
-                  disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
-                >
-                  Pending
-                </button>
-              </div>
-              
-              <div className={`status-step ${getStatusClass('processing')}`}>
-                <div className="status-indicator"></div>
-                <button 
-                  className="status-label"
-                  onClick={() => handleStatusUpdate(orderDetails.id, 'Processing')}
-                  disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
-                >
-                  Processing
-                </button>
-              </div>
-              
-              <div className={`status-step ${getStatusClass('shipped')}`}>
-                <div className="status-indicator"></div>
-                <button 
-                  className="status-label"
-                  onClick={() => handleStatusUpdate(orderDetails.id, 'Shipped')}
-                  disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
-                >
-                  Shipped
-                </button>
-              </div>
-              
-              <div className={`status-step ${getStatusClass('completed')}`}>
-                <div className="status-indicator"></div>
-                <button 
-                  className="status-label"
-                  onClick={() => handleStatusUpdate(orderDetails.id, 'Completed')}
-                  disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
-                >
-                  Completed
-                </button>
-              </div>
-            </div>
             
-            {/* Only show cancel button when not already cancelled */}
-            {statusToLowerCase(orderDetails.status) !== 'cancelled' && (
-              <button 
-                className="cancel-order-btn"
-                onClick={() => handleStatusUpdate(orderDetails.id, 'Cancelled')}
-              >
-                Cancel Order
-              </button>
-            )}
-          </div>
-
-          {/* Discount Section */}
-          <div className="discount-section">
-            <h3>Order Totals</h3>
-            <div className="totals-breakdown">
-              <div className="subtotal-row">
-                <span>Subtotal:</span>
-                <span>${formatCurrency(calculateSubtotal())}</span>
-              </div>
-              
-              {/* Discount Row */}
-              <div className="discount-row">
-                <span>Discount:</span>
-                <div className="discount-value">
-                  {isEditingDiscount ? (
-                    <div className="discount-edit-form">
-                      <div className="discount-amount-input">
-                        <span>$</span>
-                        <input 
-                          type="number" 
-                          min="0" 
-                          step="0.01"
-                          value={discountAmount}
-                          onChange={(e) => setDiscountAmount(e.target.value)}
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <input 
-                        type="text"
-                        className="discount-reason-input"
-                        value={discountReason}
-                        onChange={(e) => setDiscountReason(e.target.value)}
-                        placeholder="Reason for discount (optional)"
-                      />
-                      <div className="discount-edit-actions">
-                        <button 
-                          className="save-discount-btn"
-                          onClick={handleSaveDiscount}
-                        >
-                          Save
-                        </button>
-                        <button 
-                          className="cancel-edit-btn"
-                          onClick={() => setIsEditingDiscount(false)}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      <div className="discount-preview">
-                        <em>Preview: ${formatCurrency(calculateSubtotal())} - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="discount-display">
-                      <span>
-                        {getDiscountAmount() > 0 ? 
-                          `-$${formatCurrency(getDiscountAmount())}` : 
-                          '$0.00'}
-                      </span>
-                      {orderDetails.discount?.reason && (
-                        <span className="discount-reason">
-                          ({orderDetails.discount.reason})
-                        </span>
-                      )}
-                      <button 
-                        className="edit-discount-btn"
-                        onClick={() => setIsEditingDiscount(true)}
-                      >
-                        Edit
-                      </button>
-                    </div>
+            <OrderItemsTable 
+              items={Array.isArray(orderDetails.items) ? orderDetails.items : []} 
+              total={orderDetails.total || 0} 
+            />
+            
+            {/* Version info if order has been edited */}
+            {orderDetails.versions && orderDetails.versions.length > 0 && (
+              <div className="version-info">
+                <h4>Order History</h4>
+                <p>
+                  {orderDetails.isFinalized 
+                    ? 'This order has been finalized.' 
+                    : 'This order can still be edited.'}
+                </p>
+                <p>
+                  Version: {orderDetails.versions.length}
+                  {orderDetails.lastModified && (
+                    <span className="version-date">
+                      {' '}(Last modified: {new Date(orderDetails.lastModified).toLocaleDateString()})
+                    </span>
                   )}
+                </p>
+              </div>
+            )}
+            
+            <div className="customer-info-compact">
+              <h3>Customer Information</h3>
+              <p><strong>Name:</strong> {orderDetails.customer.name}</p>
+              <p><strong>Email:</strong> {orderDetails.customer.email}</p>
+              <p><strong>Phone:</strong> {orderDetails.customer.phone}</p>
+              
+              <div className="order-notes">
+                <h4>Order Notes:</h4>
+                <p dangerouslySetInnerHTML={{ __html: formatNotes(orderDetails.notes) }}></p>
+              </div>
+            </div>
+            
+            <div className="email-summary">
+              <h3>Email Status</h3>
+              <div className="email-status-display">
+                {getEmailStatus()}
+                <button 
+                  className="email-invoice-btn"
+                  onClick={() => sendOrderEmail(orderDetails)}
+                  disabled={emailSending[orderDetails.id] || !orderDetails.customer.email || orderDetails.customer.email === 'Not provided'}
+                >
+                  {emailSending[orderDetails.id] ? 'Sending...' : 'Send/Resend Email'}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right Column */}
+          <div className="order-details-right">
+            <div className="status-management-visual">
+              <h3>Order Status</h3>
+              <div className="status-progress-bar">
+                <div className={`status-step ${getStatusClass('pending')}`}>
+                  <div className="status-indicator"></div>
+                  <button 
+                    className="status-label"
+                    onClick={() => handleStatusUpdate(orderDetails.id, 'Pending')}
+                    disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
+                  >
+                    Pending
+                  </button>
+                </div>
+                
+                <div className={`status-step ${getStatusClass('processing')}`}>
+                  <div className="status-indicator"></div>
+                  <button 
+                    className="status-label"
+                    onClick={() => handleStatusUpdate(orderDetails.id, 'Processing')}
+                    disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
+                  >
+                    Processing
+                  </button>
+                </div>
+                
+                <div className={`status-step ${getStatusClass('shipped')}`}>
+                  <div className="status-indicator"></div>
+                  <button 
+                    className="status-label"
+                    onClick={() => handleStatusUpdate(orderDetails.id, 'Shipped')}
+                    disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
+                  >
+                    Shipped
+                  </button>
+                </div>
+                
+                <div className={`status-step ${getStatusClass('completed')}`}>
+                  <div className="status-indicator"></div>
+                  <button 
+                    className="status-label"
+                    onClick={() => handleStatusUpdate(orderDetails.id, 'Completed')}
+                    disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
+                  >
+                    Completed
+                  </button>
                 </div>
               </div>
               
-              {/* Final Total */}
-              <div className="final-total-row">
-                <span>Total:</span>
-                <span>${formatCurrency(getFinalTotal())}</span>
+              {/* Only show cancel button when not already cancelled */}
+              {statusToLowerCase(orderDetails.status) !== 'cancelled' && (
+                <button 
+                  className="cancel-order-btn"
+                  onClick={() => handleStatusUpdate(orderDetails.id, 'Cancelled')}
+                >
+                  Cancel Order
+                </button>
+              )}
+            </div>
+
+            {/* Payment Method Section */}
+            <div className="payment-section">
+              <h3>Payment Details</h3>
+              <div className="payment-details">
+                {isEditingPayment ? (
+                  <div className="payment-edit-form">
+                    <div className="form-group">
+                      <label htmlFor="payment-method">Payment Method:</label>
+                      <select 
+                        id="payment-method"
+                        value={paymentMethod} 
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        className="payment-select"
+                      >
+                        <option value="">Select payment method</option>
+                        <option value="cash">Cash</option>
+                        <option value="e-transfer">E-transfer</option>
+                        <option value="prepaid">Prepaid (online)</option>
+                      </select>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="payment-timing">Payment Timing:</label>
+                      <select 
+                        id="payment-timing"
+                        value={paymentTiming} 
+                        onChange={(e) => setPaymentTiming(e.target.value)}
+                        className="payment-select"
+                      >
+                        <option value="">Select timing (optional)</option>
+                        <option value="paid-in-advance">Paid in Advance</option>
+                        <option value="paid-on-pickup">Paid on Pickup</option>
+                        <option value="pending-payment">Pending Payment</option>
+                      </select>
+                    </div>
+                    
+                    <div className="payment-edit-actions">
+                      <button 
+                        className="save-payment-btn"
+                        onClick={handleSavePayment}
+                      >
+                        Save
+                      </button>
+                      <button 
+                        className="cancel-edit-btn"
+                        onClick={() => setIsEditingPayment(false)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="payment-display">
+                    <p>
+                      <strong>Method:</strong> {formatPaymentMethod(orderDetails.payment?.method)}
+                      {orderDetails.payment?.timing && (
+                        <span className="payment-timing">
+                          ({formatPaymentTiming(orderDetails.payment.timing)})
+                        </span>
+                      )}
+                    </p>
+                    {orderDetails.payment?.updatedAt && (
+                      <p className="payment-updated">
+                        Last updated: {new Date(orderDetails.payment.updatedAt).toLocaleDateString()}
+                      </p>
+                    )}
+                    <button 
+                      className="edit-payment-btn"
+                      onClick={() => setIsEditingPayment(true)}
+                    >
+                      Edit Payment Details
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-          
-          <div className="invoice-actions">
-            <h3>Invoice</h3>
-            <div className="invoice-buttons">
+
+            {/* Discount Section */}
+            <div className="discount-section">
+              <h3>Order Totals</h3>
+              <div className="totals-breakdown">
+                <div className="subtotal-row">
+                  <span>Subtotal:</span>
+                  <span>${formatCurrency(calculateSubtotal())}</span>
+                </div>
+                
+                {/* Discount Row */}
+                <div className="discount-row">
+                  <span>Discount:</span>
+                  <div className="discount-value">
+                    {isEditingDiscount ? (
+                      <div className="discount-edit-form">
+                        <div className="discount-amount-input">
+                          <span>$</span>
+                          <input 
+                            type="number" 
+                            min="0" 
+                            step="0.01"
+                            value={discountAmount}
+                            onChange={(e) => setDiscountAmount(e.target.value)}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <input 
+                          type="text"
+                          className="discount-reason-input"
+                          value={discountReason}
+                          onChange={(e) => setDiscountReason(e.target.value)}
+                          placeholder="Reason for discount (optional)"
+                        />
+                        <div className="discount-edit-actions">
+                          <button 
+                            className="save-discount-btn"
+                            onClick={handleSaveDiscount}
+                          >
+                            Save
+                          </button>
+                          <button 
+                            className="cancel-edit-btn"
+                            onClick={() => setIsEditingDiscount(false)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="discount-preview">
+                          <em>Preview: ${formatCurrency(calculateSubtotal())} - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="discount-display">
+                        <span>
+                          {getDiscountAmount() > 0 ? 
+                            `-$${formatCurrency(getDiscountAmount())}` : 
+                            '$0.00'}
+                        </span>
+                        {orderDetails.discount?.reason && (
+                          <span className="discount-reason">
+                            ({orderDetails.discount.reason})
+                          </span>
+                        )}
+                        <button 
+                          className="edit-discount-btn"
+                          onClick={() => setIsEditingDiscount(true)}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Final Total */}
+                <div className="final-total-row">
+                  <span>Total:</span>
+                  <span>${formatCurrency(getFinalTotal())}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="invoice-actions">
+              <h3>Invoice</h3>
               <button 
-                className="view-invoice-btn"
-                onClick={() => setShowInvoice(orderDetails.id)}
+                className="generate-invoice-btn" 
+                onClick={() => setShowInvoice('preliminary')}
               >
-                View & Print Invoice
+                {orderDetails.versions && orderDetails.versions.length > 0 && !orderDetails.isFinalized
+                  ? 'Generate Preliminary Invoice'
+                  : 'Generate Invoice'
+                }
               </button>
+              
+              {orderDetails.versions && orderDetails.versions.length > 0 && !orderDetails.isFinalized && (
+                <p className="invoice-note">
+                  Note: This will be marked as a preliminary invoice since the order has not been finalized.
+                </p>
+              )}
+              
+              {orderDetails.versions && orderDetails.versions.length > 0 && orderDetails.isFinalized && (
+                <button 
+                  className="generate-invoice-btn final-invoice" 
+                  onClick={() => setShowInvoice('final')}
+                >
+                  Generate Final Invoice
+                </button>
+              )}
             </div>
           </div>
-          
         </div>
-      </div>
+      )}
 
       {/* Invoice Modal */}
       {showInvoice && (
         <div className="invoice-modal">
           <div className="invoice-modal-content">
-            <button className="close-invoice" onClick={closeInvoice}>×</button>
+            <button className="close-invoice-btn" onClick={closeInvoice}>×</button>
             <Invoice 
-              order={orders.find(order => order.id === showInvoice)} 
+              order={orderDetails} 
               type="print" 
-              key={`invoice-${showInvoice}`} 
+              invoiceType={showInvoice} 
             />
           </div>
         </div>
