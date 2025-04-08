@@ -30,7 +30,6 @@ const ModularInventoryManager = () => {
   const [editValues, setEditValues] = useState({});
   const [saveStatus, setSaveStatus] = useState('idle');
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
-  const [plantSearchTerm, setPlantSearchTerm] = useState('');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [searchTimeout, setSearchTimeout] = useState(null);
   
@@ -504,8 +503,8 @@ const ModularInventoryManager = () => {
     let filtered = [...plants];
     
     // Apply search filter first
-    if (plantSearchTerm) {
-      const lowerSearch = plantSearchTerm.toLowerCase();
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(plant => 
         plant.name?.toLowerCase().includes(lowerSearch) || 
         plant.scientificName?.toLowerCase().includes(lowerSearch) ||
@@ -580,7 +579,7 @@ const ModularInventoryManager = () => {
     }
     
     return filtered;
-  }, [plants, filter, plantSearchTerm, sortConfig]);
+  }, [plants, filter, searchTerm, sortConfig]);
 
   // Status counts for filter options
   const statusCounts = useMemo(() => {
