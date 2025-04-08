@@ -1,63 +1,47 @@
-✅ Maintain current **data structure**, **Firebase logic**, and **frontend bindings**.
+# Admin Pages Refactor – Developer Guide
+
+This refactor includes three key admin views:
+- `/admin/orders`
+- `/admin/inventory`
+- `/admin/editaddplant`
+
+**Do not begin refactoring all pages at once. Please follow this sequence:**
+
+1. Start with `/admin/orders` – it’s the most complex, and its functionality is tied to inventory  
+2. Once Orders is complete and verified, move to `/admin/inventory`  
+3. Refactor `/admin/editaddplant` last (it feeds into both Orders and Inventory, and benefits from their updates)
+
+➤ Refer to `admin-refactor.md` for complete specs and business logic  
+➤ Do not modify customer-facing views or logic  
+➤ Login must redirect to `/admin/dashboard` and remain protected  
+➤ Preserve existing integrations with checkout, invoice generation, and frontend plant data
 
 ---
 
-## 🔐 Firebase Usage Guidelines
+## `/admin/orders` Refactor – Developer Task List
 
-- Use service helpers only:
-  - `getAllPlants`, `getPlant`, `addPlant`, `updatePlant`, `deletePlant`, `getOrders`
-- Do **not** use `getDatabaseRef()` or raw `onValue()` listeners unless absolutely necessary
-- All read/write operations must be abstracted through service files
+### Core Feature Preservation
+- [ ] Preserve order number format `ORD-YYYY-XXXX` (starts at 1017 for 2025)
+- [ ] Ensure checkout still updates inventory and reflects in dashboard
+- [ ] Maintain printable invoice layout and content (business/customer info, item table, payment instructions)
 
----
+### Feature Enhancements
+- [ ] Add Notes field (customer comments) to order detail view
+- [ ] Enable editing of existing orders (pricing, quantity, add/remove flowers)
+- [ ] Add manual **dollar-value** discount field (no percentage discounts)
+- [ ] Add payment method field (Cash, E-transfer, Prepaid)
+- [ ] Add payment timing field (e.g. Paid on Pickup)
+- [ ] Add preliminary invoice support (generate, edit, finalize)
 
-## 🧭 Environment & Branching Rules
+### UI/Code Improvements
+- [ ] Refactor filters + search into a separate component
+- [ ] Extract status + invoice logic into helper/service layer
+- [ ] Replace render block with a compact, modular row component
+- [ ] Reduce padding/whitespace for better readability on mobile/tablet
 
-- ✅ All dev work happens on the `development` branch or its feature branches
-- 🚫 Never push to `main`
-- ✅ Final build merges go into `working-build` (used for production deployment)
-- 🚫 Firebase emulators are no longer used
-- ✅ Always connect to **live Firebase instance**
-
----
-
-## ✅ Phase Progress Checklist
-
-### `/admin/inventory`
-- [x] Firebase reads/writes switched to service helpers
-- [x] `ModularInventoryManager` component implemented
-- [x] Subcomponents created: `InventoryTableRow`, `EditableStatusCell`, `InventoryHeader`, etc.
-- [x] Live data integration tested
-- [x] UI refactor complete: sorting, filtering, editing, tab switching
-- [x] `App.js` safely updated to mount new modular component
-- [x] `inventory/index.js` barrel export created for cleaner imports
-- [x] UI verified across major screen sizes
-- [x] Real-time Firebase syncing confirmed
-
-### `/admin/orders`
-- [ ] Create `ModularOrdersManager` component
-- [ ] Break out reusable components (OrderRow, OrderNotes, StatusDropdown)
-- [ ] Review/update context and fetch logic
-- [ ] Modularize layout and sidebar filters
-- [ ] Add loading/error states and sort behavior
-- [ ] Confirm all order updates sync with Firebase + Inventory
-
-### `/admin/editaddplant`
-- [ ] Create subcomponents for form sections (BasicInfo, MediaUpload, VisibilityToggles, etc.)
-- [ ] Ensure image upload and toggle logic uses latest Firebase helpers
-- [ ] Wire up existing data prefill/edit experience
-- [ ] Validate form inputs and submission
-- [ ] Add toast feedback + inline form validation
+### Validation
+- [ ] Ensure all edits correctly update totals and recreate invoices
+- [ ] Validate consistent behavior between staging and production
 
 ---
 
-## 🛡️ Next Up
-- [ ] Verify button + navigation interactivity across `/admin` routes
-- [ ] Phase 2: Refactor `/admin/orders`
-- [ ] Phase 3: Refactor `/admin/editaddplant`
-- [ ] Final QA: UI/UX testing and browser compatibility
-- [ ] Add PR review checklist per admin section
-
----
-
-> 🔁 This plan is meant to support structured progress, maintain frontend stability, and enable rapid rollback if needed. Always test against live Firebase with real data.

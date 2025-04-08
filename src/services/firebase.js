@@ -1062,6 +1062,25 @@ export const updateOrderStatus = async (orderId, newStatus) => {
 };
 
 /**
+ * Update an order in Firebase with new data
+ * @param {string} orderId - The ID of the order to update
+ * @param {Object} orderData - The data to update (partial update)
+ * @returns {Promise<boolean>} Success status
+ */
+export const updateOrder = async (orderId, orderData) => {
+  try {
+    console.log(`Updating order ${orderId} with data:`, orderData);
+    const orderRef = ref(database, `orders/${orderId}`);
+    await update(orderRef, orderData);
+    console.log(`Order ${orderId} updated successfully`);
+    return true;
+  } catch (error) {
+    console.error('Error updating order in Firebase:', error);
+    return false;
+  }
+};
+
+/**
  * Get the default status for a plant based on current stock
  * @param {number} currentStock - The current stock level
  * @returns {string} The appropriate status

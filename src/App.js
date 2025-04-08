@@ -33,7 +33,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 // import InventoryManager from './components/InventoryManager';
 import ModularInventoryManager from './components/inventory/ModularInventoryManager';
 import AdminDashboard from './components/AdminDashboard';
-import AdminOrders from './components/AdminOrders';
+// import AdminOrders from './components/AdminOrders';
+import { ModularOrderManager } from './components/orders/index';
 import AdminUtilities from './components/AdminUtilities';
 import { ModularPlantEditor } from './components/plant-editor';
 
@@ -425,7 +426,7 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <AdminOrders />
+                <ModularOrderManager />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
