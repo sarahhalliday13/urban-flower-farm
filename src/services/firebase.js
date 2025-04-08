@@ -66,8 +66,10 @@ export const uploadImageToFirebase = async (file, path) => {
       throw new Error('Firebase storage not initialized');
     }
     
-    const fileRef = storageRef(storage, path);
-    console.log('Created storage reference:', path);
+    // Use plants folder structure with file name if no path is provided
+    const storagePath = path || `plants/${file.name}`;
+    const fileRef = storageRef(storage, storagePath);
+    console.log('Created storage reference:', storagePath);
     
     console.log('Uploading bytes to Firebase...');
     await uploadBytes(fileRef, file);

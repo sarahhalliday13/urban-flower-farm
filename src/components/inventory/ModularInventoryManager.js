@@ -953,6 +953,7 @@ const ModularInventoryManager = () => {
                     <ImageUploader 
                       images={plantFormData.images || []}
                       mainImageIndex={plantFormData.mainImageIndex || 0}
+                      plantId={plantFormData.id}
                       onUpload={(newImages) => updatePlantForm('images', newImages)}
                       onMainSelect={(index) => {
                         updatePlantForm('mainImageIndex', index);

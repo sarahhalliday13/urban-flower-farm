@@ -7,7 +7,8 @@ const ImageUploader = ({
   mainImageIndex = 0, 
   onUpload, 
   onMainSelect, 
-  onRemoveImage 
+  onRemoveImage,
+  plantId = null
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -52,8 +53,18 @@ const ImageUploader = ({
           // Update progress
           setUploadProgress(((index) / validFiles.length) * 100);
           
-          // Upload to Firebase
-          const imageUrl = await uploadImageToFirebase(file);
+          // Create a unique filename with timestamp
+          const timestamp = Date.now();
+          const fileExtension = file.name.split('.').pop();
+          const fileName = `${timestamp}_${index}.${fileExtension}`;
+          
+          // Use plant ID in path if available
+          const storagePath = plantId 
+            ? `plants/${plantId}/${fileName}`
+            : `plants/${fileName}`;
+          
+          // Upload to Firebase with path
+          const imageUrl = await uploadImageToFirebase(file, storagePath);
           return imageUrl;
         } catch (err) {
           console.error(`Error uploading ${file.name}:`, err);
