@@ -36,6 +36,14 @@ function Shop() {
   // eslint-disable-next-line no-unused-vars
   const searchInputRef = useRef(null);
   
+  // New state for predictive search
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  // Add a new state for the displayed search term (used for filtering)
+  const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
+  
   // Update currentPage from URL when location.search changes
   useEffect(() => {
     const search = new URLSearchParams(location.search);
@@ -57,6 +65,7 @@ function Shop() {
     const searchParam = params.get('search');
     if (searchParam) {
       setSearchTerm(searchParam);
+      setDisplayedSearchTerm(searchParam); // Also set the displayed search term
     }
   }, [location.search]);
   
@@ -165,35 +174,58 @@ function Shop() {
     
     console.log('Total visible plants (not hidden):', visiblePlants.length);
     
-    // Then apply search filter
+    // Then apply search filter - USING displayedSearchTerm INSTEAD OF searchTerm
     const filteredPlants = visiblePlants.filter(plant => {
-      if (!searchTerm.trim()) return true;
+      if (!displayedSearchTerm.trim()) return true;
       
       // Split search terms by spaces and filter out empty strings
-      const searchTerms = searchTerm.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      const searchTerms = displayedSearchTerm.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       
       // Define special keywords and their corresponding filters
       const specialKeywords = {
         'perennial': (plant) => plant.plantType?.toLowerCase() === 'perennial',
         'annual': (plant) => plant.plantType?.toLowerCase() === 'annual',
-        'pink': (plant) => plant.name?.toLowerCase().includes('pink') || 
-                          plant.description?.toLowerCase().includes('pink') ||
-                          plant.shortDescription?.toLowerCase().includes('pink'),
-        'red': (plant) => plant.name?.toLowerCase().includes('red') || 
-                         plant.description?.toLowerCase().includes('red') ||
-                         plant.shortDescription?.toLowerCase().includes('red'),
-        'white': (plant) => plant.name?.toLowerCase().includes('white') || 
-                           plant.description?.toLowerCase().includes('white') ||
-                           plant.shortDescription?.toLowerCase().includes('white'),
-        'purple': (plant) => plant.name?.toLowerCase().includes('purple') || 
-                            plant.description?.toLowerCase().includes('purple') ||
-                            plant.shortDescription?.toLowerCase().includes('purple'),
-        'yellow': (plant) => plant.name?.toLowerCase().includes('yellow') || 
-                            plant.description?.toLowerCase().includes('yellow') ||
-                            plant.shortDescription?.toLowerCase().includes('yellow'),
-        'blue': (plant) => plant.name?.toLowerCase().includes('blue') || 
-                          plant.description?.toLowerCase().includes('blue') ||
-                          plant.shortDescription?.toLowerCase().includes('blue')
+        // Color matching - check both dedicated color field and text mentions
+        'pink': (plant) => 
+          plant.color?.toLowerCase().includes('pink') ||
+          plant.name?.toLowerCase().includes('pink') || 
+          plant.description?.toLowerCase().includes('pink') ||
+          plant.shortDescription?.toLowerCase().includes('pink'),
+        'red': (plant) => 
+          plant.color?.toLowerCase().includes('red') ||
+          plant.name?.toLowerCase().includes('red') || 
+          plant.description?.toLowerCase().includes('red') ||
+          plant.shortDescription?.toLowerCase().includes('red'),
+        'white': (plant) => 
+          plant.color?.toLowerCase().includes('white') ||
+          plant.name?.toLowerCase().includes('white') || 
+          plant.description?.toLowerCase().includes('white') ||
+          plant.shortDescription?.toLowerCase().includes('white'),
+        'purple': (plant) => 
+          plant.color?.toLowerCase().includes('purple') ||
+          plant.name?.toLowerCase().includes('purple') || 
+          plant.description?.toLowerCase().includes('purple') ||
+          plant.shortDescription?.toLowerCase().includes('purple'),
+        'yellow': (plant) => 
+          plant.color?.toLowerCase().includes('yellow') ||
+          plant.name?.toLowerCase().includes('yellow') || 
+          plant.description?.toLowerCase().includes('yellow') ||
+          plant.shortDescription?.toLowerCase().includes('yellow'),
+        'blue': (plant) => 
+          plant.color?.toLowerCase().includes('blue') ||
+          plant.name?.toLowerCase().includes('blue') || 
+          plant.description?.toLowerCase().includes('blue') ||
+          plant.shortDescription?.toLowerCase().includes('blue'),
+        'orange': (plant) => 
+          plant.color?.toLowerCase().includes('orange') ||
+          plant.name?.toLowerCase().includes('orange') || 
+          plant.description?.toLowerCase().includes('orange') ||
+          plant.shortDescription?.toLowerCase().includes('orange'),
+        'green': (plant) => 
+          plant.color?.toLowerCase().includes('green') ||
+          plant.name?.toLowerCase().includes('green') || 
+          plant.description?.toLowerCase().includes('green') ||
+          plant.shortDescription?.toLowerCase().includes('green')
       };
 
       // Separate special keywords from regular search terms
@@ -215,6 +247,7 @@ function Shop() {
         plant.name?.toLowerCase().includes(fullSearchTerm) ||
         plant.scientificName?.toLowerCase().includes(fullSearchTerm) ||
         plant.commonName?.toLowerCase().includes(fullSearchTerm) ||
+        plant.color?.toLowerCase().includes(fullSearchTerm) ||
         plant.plantType?.toLowerCase().includes(fullSearchTerm);
 
       // If full match works, return true (and check special filters)
@@ -225,6 +258,7 @@ function Shop() {
         plant.name?.toLowerCase().includes(term) ||
         plant.scientificName?.toLowerCase().includes(term) ||
         plant.commonName?.toLowerCase().includes(term) ||
+        plant.color?.toLowerCase().includes(term) ||
         plant.plantType?.toLowerCase().includes(term)
       );
 
@@ -271,7 +305,7 @@ function Shop() {
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  }, [plants, sortOption, searchTerm]);
+  }, [plants, sortOption, displayedSearchTerm]);
 
   // Calculate items per page based on screen width
   useEffect(() => {
@@ -342,7 +376,10 @@ function Shop() {
 
   // Generate pagination controls
   const renderPaginationControls = () => {
-    if (totalPages <= 1) return null;
+    if (totalPages <= 1) {
+      // Return empty container to maintain layout
+      return <div className="pagination-controls"></div>;
+    }
 
     const pageNumbers = [];
     
@@ -508,8 +545,10 @@ function Shop() {
       const searchParam = params.get('search');
       if (searchParam !== null) {
         setSearchTerm(searchParam);
+        setDisplayedSearchTerm(searchParam); // Also update displayed search term
       } else {
         setSearchTerm('');
+        setDisplayedSearchTerm(''); // Also update displayed search term
       }
       
       // Update page number from URL
@@ -531,6 +570,124 @@ function Shop() {
     };
   }, []);
 
+  // Generate search suggestions based on plants data and search term
+  useEffect(() => {
+    if (!searchTerm.trim() || searchTerm.length < 2) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Collect matches from various plant properties
+    const nameMatches = plants.filter(plant => 
+      plant.name?.toLowerCase().includes(searchLower)
+    ).slice(0, 3).map(plant => ({
+      text: plant.name,
+      category: 'Plant Name',
+      type: 'plant',
+      id: plant.id
+    }));
+    
+    const scientificMatches = plants.filter(plant => 
+      plant.scientificName?.toLowerCase().includes(searchLower)
+    ).slice(0, 2).map(plant => ({
+      text: plant.scientificName,
+      category: 'Scientific Name',
+      type: 'scientific',
+      id: plant.id
+    }));
+    
+    const commonMatches = plants.filter(plant => 
+      plant.commonName?.toLowerCase().includes(searchLower) && 
+      plant.commonName?.toLowerCase() !== plant.name?.toLowerCase()
+    ).slice(0, 2).map(plant => ({
+      text: plant.commonName,
+      category: 'Common Name',
+      type: 'common',
+      id: plant.id
+    }));
+    
+    // Collect color suggestions
+    const colorTerms = ['red', 'blue', 'purple', 'pink', 'white', 'yellow', 'orange', 'green'];
+    const colorMatches = colorTerms
+      .filter(color => color.includes(searchLower))
+      .map(color => ({
+        text: color.charAt(0).toUpperCase() + color.slice(1),
+        category: 'Color',
+        type: 'color'
+      }));
+    
+    // Collect plant type suggestions
+    const typeTerms = ['annual', 'perennial', 'biennial', 'shrub', 'tree', 'bulb'];
+    const typeMatches = typeTerms
+      .filter(type => type.includes(searchLower))
+      .map(type => ({
+        text: type.charAt(0).toUpperCase() + type.slice(1),
+        category: 'Plant Type',
+        type: 'plantType'
+      }));
+    
+    // Combine all matches and remove duplicates
+    const allSuggestions = [
+      ...nameMatches, 
+      ...scientificMatches,
+      ...commonMatches,
+      ...colorMatches,
+      ...typeMatches
+    ].slice(0, 8); // Limit to 8 total suggestions
+    
+    setSearchSuggestions(allSuggestions);
+    setShowSuggestions(allSuggestions.length > 0);
+  }, [searchTerm, plants]);
+
+  // Handle clicking outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Handle search suggestion selection
+  const handleSuggestionClick = (suggestion) => {
+    if (suggestion.type === 'plant' || suggestion.type === 'scientific' || suggestion.type === 'common') {
+      // Navigate to plant detail if it's a specific plant
+      localStorage.setItem('lastViewedPlantId', suggestion.id.toString());
+      navigate(`/plant/${suggestion.id}`);
+    } else {
+      // Set search term for colors or plant types
+      setSearchTerm(suggestion.text.toLowerCase());
+      setShowSuggestions(false);
+      // Update URL and navigate to page 1
+      navigate(`/shop?page=1&sort=${sortOption}&search=${suggestion.text.toLowerCase()}`);
+    }
+  };
+
+  // Add a function to keep focus on the search input after form submission
+  const keepSearchFocus = () => {
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  // Handle form submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setDisplayedSearchTerm(searchTerm); // Update the displayed search term with the value from the input
+    // Update the URL and navigate
+    navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
+    // Focus back on search input after a moment
+    setTimeout(keepSearchFocus, 100);
+  };
+
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -539,69 +696,110 @@ function Shop() {
     <div className="shop-main">
       <section className="featured-plants">
         <div className="shop-header">
-          <h2>Shop</h2>
-          
-          <div className="shop-controls">
-            <div className="filter-wrapper">
-              <div className="sort-control">
-                <label htmlFor="sort-select">Sort by:</label>
-                <form method="get" action="/shop" style={{ display: 'inline' }}>
-                  <select 
-                    id="sort-select" 
-                    name="sort"
-                    value={sortOption} 
-                    onChange={(e) => e.target.form.submit()}
-                    className="sort-select"
-                    aria-label="Sort plants by selected option"
-                  >
-                    <option value="all">All ({getStatusCounts.all})</option>
-                    <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
-                    <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
-                    <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
-                    <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
-                  </select>
-                  <input type="hidden" name="page" value="1" />
-                  {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
-                </form>
-              </div>
-              
-              <div className="search-bar">
-                <form className="search-input-container" method="get" action="/shop">
-                  <label htmlFor="search-input">Search:</label>
-                  <div style={{ position: 'relative', flex: '1', minWidth: 0 }}>
-                    <input 
-                      type="text" 
-                      id="search-input"
-                      name="search"
-                      placeholder="Search plants..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="search-input"
-                      aria-label="Search plants"
-                    />
-                    {searchTerm && (
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          setSearchTerm('');
-                          window.location.href = `/shop?page=1&sort=${sortOption}`;
+          <div className="shop-header-left">
+            <h2>Shop</h2>
+            <div className="shop-controls">
+              <div className="filter-wrapper">
+                <div className="sort-control">
+                  <label htmlFor="sort-select">Sort by:</label>
+                  <form method="get" action="/shop" style={{ display: 'inline' }}>
+                    <select 
+                      id="sort-select" 
+                      name="sort"
+                      value={sortOption} 
+                      onChange={(e) => e.target.form.submit()}
+                      className="sort-select"
+                      aria-label="Sort plants by selected option"
+                    >
+                      <option value="all">All ({getStatusCounts.all})</option>
+                      <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
+                      <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
+                      <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
+                      <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
+                    </select>
+                    <input type="hidden" name="page" value="1" />
+                    {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
+                  </form>
+                </div>
+                
+                <div className="search-bar">
+                  <form className="search-input-container" method="get" action="/shop" onSubmit={handleSearchSubmit} style={{ marginBottom: "0px" }}>
+                    <label htmlFor="search-input">
+                      Search:
+                    </label>
+                    <div className="search-wrapper" ref={dropdownRef}>
+                      <input 
+                        type="text" 
+                        id="search-input"
+                        name="search"
+                        placeholder="Search plants..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={() => {
+                          if (searchSuggestions.length > 0) {
+                            setShowSuggestions(true);
+                          }
                         }}
-                        className="clear-search"
-                        aria-label="Clear search"
-                        tabIndex="-1"
+                        className="search-input"
+                        aria-label="Search plants"
+                        ref={searchInputRef}
+                      />
+                      {searchTerm && (
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setSearchTerm('');
+                            setDisplayedSearchTerm(''); // Also update displayed search term
+                            setShowSuggestions(false);
+                            window.location.href = `/shop?page=1&sort=${sortOption}`;
+                          }}
+                          className="clear-search"
+                          aria-label="Clear search"
+                          tabIndex="-1"
+                        >
+                          ×
+                        </button>
+                      )}
+                      <button 
+                        type="submit" 
+                        className="search-go-button"
+                        aria-label="Search"
                       >
-                        ×
+                        Go
                       </button>
-                    )}
-                  </div>
-                  <input type="hidden" name="page" value="1" />
-                  <input type="hidden" name="sort" value={sortOption} />
-                  <button type="submit" style={{display: 'none'}}>Search</button>
-                </form>
+                      
+                      {/* Predictive search dropdown */}
+                      {showSuggestions && (
+                        <div className={`search-dropdown ${showSuggestions ? 'active' : ''}`}>
+                          {searchSuggestions.map((suggestion, index) => (
+                            <div 
+                              key={index} 
+                              className="search-dropdown-item"
+                              onClick={() => handleSuggestionClick(suggestion)}
+                            >
+                              <span className="search-icon">🔍</span>
+                              <span className="search-text">{suggestion.text}</span>
+                              <span className="search-category">{suggestion.category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="search-help-icon">
+                      ?
+                      <div className="search-help-tooltip">
+                        Search by plant name, scientific name, common name, or color (e.g., "purple", "red", "pink")
+                      </div>
+                    </div>
+                    <input type="hidden" name="page" value="1" />
+                    <input type="hidden" name="sort" value={sortOption} />
+                  </form>
+                </div>
               </div>
             </div>
-            
-            {/* Top pagination moved inside shop-controls */}
+          </div>
+          
+          <div className="shop-header-right">
             {renderPaginationControls()}
           </div>
         </div>
