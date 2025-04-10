@@ -29,10 +29,14 @@
   display: flex;
   align-items: center;
   gap: 20px;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .shop-header-right {
   flex-shrink: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .shop-header h2 {
@@ -53,8 +57,9 @@
 .filter-wrapper {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
   min-height: 36px;
+  max-width: 100%;
 }
 
 .sort-control {
@@ -180,6 +185,7 @@
   width: 100%;
   box-sizing: border-box;
   margin-bottom: 40px;
+  padding: 0;
 }
 
 .plant-card {
@@ -674,6 +680,18 @@
 
 /* Mobile layout adjustments */
 @media (max-width: 768px) {
+  /* Container alignment */
+  .shop-header,
+  .shop-header-left,
+  .filter-wrapper,
+  .plant-grid {
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+  
+  /* Mobile layout structure */
   .shop-header {
     flex-direction: column;
     align-items: flex-start;
@@ -693,14 +711,32 @@
     justify-content: center;
   }
   
-  .filter-wrapper {
-    flex-direction: column;
-    align-items: stretch;
+  /* Filter controls for mobile */
+  .shop-header-left .filter-wrapper {
+    flex-direction: row;
+    align-items: center;
     width: 100%;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
   
-  .sort-control, 
+  .sort-control {
+    width: 48%;
+    min-width: 130px;
+  }
+  
   .search-bar {
+    width: 48%;
+    flex-grow: 1;
+  }
+  
+  .sort-control label,
+  .search-input-container label {
+    display: none;
+  }
+  
+  .sort-select {
     width: 100%;
   }
 }
@@ -1537,5 +1573,43 @@
   .search-bar {
     width: 100%;
     max-width: 100%;
+  }
+}
+
+/* Ensure consistent container alignment */
+.shop-header-left, .shop-header-right {
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Featured plants section */
+.featured-plants {
+  width: 100%;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Additional mobile alignment fixes */
+@media (max-width: 768px) {
+  .shop-main {
+    padding: 16px 1rem 2rem 1rem;
+  }
+  
+  .shop-header,
+  .filter-wrapper,
+  .plant-grid {
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+}
+
+/* Even smaller screens */
+@media (max-width: 480px) {
+  .shop-header,
+  .filter-wrapper,
+  .plant-grid {
+    padding: 0;
   }
 }

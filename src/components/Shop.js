@@ -682,6 +682,7 @@ function Shop() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     setDisplayedSearchTerm(searchTerm); // Update the displayed search term with the value from the input
+    setShowSuggestions(false); // Hide the search dropdown when submitting
     // Update the URL and navigate
     navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
     // Focus back on search input after a moment

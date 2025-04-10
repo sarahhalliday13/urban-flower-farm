@@ -42,7 +42,15 @@ import { ModularPlantEditor } from './components/plant-editor';
 const PlantDetailsWrapper = ({ children }) => {
   return (
     <div className="plant-details-section">
-      {children}
+      <div className="shop-main" style={{ 
+        width: "100%", 
+        maxWidth: "1200px", 
+        margin: "0 auto", 
+        padding: "16px 1rem 2rem 1rem",
+        boxSizing: "border-box" 
+      }}>
+        {children}
+      </div>
     </div>
   );
 };

@@ -174,7 +174,7 @@ function PlantDetails() {
 
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>
-      <div className="navigation-container">
+      <div className="navigation-container" style={{ padding: 0, margin: 0 }}>
         <a 
           href="/shop"
           onClick={(e) => {
@@ -214,16 +214,55 @@ function PlantDetails() {
             className="nav-button"
             onClick={() => handleNavigation('prev')}
             disabled={!hasPrevious}
+            style={{
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              color: '#333',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              textDecoration: 'none',
+              minWidth: '12px',
+              height: '36px',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              whiteSpace: 'nowrap'
+            }}
           >
-            Previous
+            ← Previous
           </button>
-          <span className="nav-separator">|</span>
           <button
             className="nav-button"
             onClick={() => handleNavigation('next')}
             disabled={!hasNext}
+            style={{
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              color: '#333',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              textDecoration: 'none',
+              minWidth: '12px',
+              height: '36px',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              whiteSpace: 'nowrap'
+            }}
           >
-            Next
+            Next →
           </button>
         </div>
       </div>
@@ -424,34 +463,43 @@ function PlantDetails() {
           )}
         </div>
         <div className="plant-details-info">
-          <div className="plant-info">
+          <div className="plant-info" style={{ padding: 0, margin: 0, paddingLeft: 0, paddingRight: 0 }}>
             <div className="name-and-status">
               <h1 className="plant-common-name">{plant.name}</h1>
               {(() => {
                 // Get the current stock
                 const currentStock = plant.inventory?.currentStock || 0;
                 
+                // Common inline styles for all status badges
+                const statusBadgeStyle = {
+                  paddingBottom: 0,
+                  marginBottom: 0,
+                  alignSelf: 'flex-start',
+                  position: 'relative',
+                  top: '0.4rem'
+                };
+                
                 if (currentStock <= 0) {
                   return (
-                    <span className="status-badge sold-out">
+                    <span className="status-badge sold-out" style={statusBadgeStyle}>
                       Out of Stock
                     </span>
                   );
                 } else if (currentStock < 10) {
                   return (
-                    <span className="status-badge low-stock">
+                    <span className="status-badge low-stock" style={statusBadgeStyle}>
                       Low Stock ({currentStock} left)
                     </span>
                   );
                 } else if (plant.inventory?.status) {
                   return (
-                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`}>
+                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`} style={statusBadgeStyle}>
                       {plant.inventory.status}
                     </span>
                   );
                 } else {
                   return (
-                    <span className="status-badge in-stock">
+                    <span className="status-badge in-stock" style={statusBadgeStyle}>
                       In Stock
                     </span>
                   );
@@ -461,13 +509,6 @@ function PlantDetails() {
             {(plant.scientificName || plant.latinname) && (
               <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
             )}
-            <div className="plant-meta">
-              {(plant.commonName || plant.commonname) && (plant.scientificName || plant.latinname) && (
-                <p className="plant-names">
-                  {plant.commonName || plant.commonname} <span className="latin-name">({plant.scientificName || plant.latinname})</span>
-                </p>
-              )}
-            </div>
           </div>
           
           <p className="description">{plant.description}</p>
