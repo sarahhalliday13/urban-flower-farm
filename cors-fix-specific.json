@@ -1,0 +1,1 @@
+[{"origin":["https://urban-flower-farm-staging.web.app","http://localhost:3000"],"method":["GET","PUT","POST","DELETE","HEAD","OPTIONS"],"maxAgeSeconds":3600,"responseHeader":["Content-Type","Access-Control-Allow-Origin","Access-Control-Allow-Methods","Access-Control-Allow-Headers","X-Requested-With","Authorization","X-Firebase-Storage-Bucket","Content-Length"]}]

@@ -33,13 +33,24 @@ const OrderFilterControls = () => {
         </select>
       </div>
       <div className="orders-search">
-        <input
-          type="text"
-          placeholder="Search by name, email, or order ID"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            placeholder="Search by name, email, or order ID"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+          {searchTerm && (
+            <button 
+              className="search-clear-btn" 
+              onClick={() => setSearchTerm('')}
+              aria-label="Clear search"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
     </>
   );

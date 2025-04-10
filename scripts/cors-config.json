@@ -1,7 +1,17 @@
 [
   {
-    "origin": ["*"],
-    "method": ["GET", "PUT", "POST", "DELETE", "HEAD"],
+    "origin": [
+      "https://buttonsflowerfarm-8a54d.web.app",
+      "https://urban-flower-farm-staging.web.app",
+      "http://localhost:3000"
+    ],
+    "method": [
+      "GET",
+      "PUT",
+      "POST",
+      "DELETE",
+      "HEAD"
+    ],
     "maxAgeSeconds": 3600
   }
-] 
+]

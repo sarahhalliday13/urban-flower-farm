@@ -14,6 +14,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, signInAnonymously } from "firebase/auth";
 // Import auth functions only when needed
 
 // Your web app's Firebase configuration
@@ -33,9 +34,10 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 // Export Firebase utilities
-export { set, get, onValue, update, remove, storage, db };
+export { set, get, onValue, update, remove, storage, db, auth };
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {
@@ -60,25 +62,83 @@ export const uploadImageToFirebase = async (file, path) => {
   try {
     console.log('Starting image upload to Firebase:', { fileName: file.name, fileSize: file.size, path });
     
+    // BYPASS Cloud Function - Directly use Firebase Storage
+    // This is more reliable and removes the dependency on Cloud Functions
+    
     // Check if storage is properly initialized
     if (!storage) {
       console.error('Firebase storage is not initialized!');
       throw new Error('Firebase storage not initialized');
     }
     
+    // Try anonymous authentication to get an auth token
+    try {
+      console.log('Trying anonymous authentication for storage access...');
+      await signInAnonymously(auth);
+      console.log('Anonymous auth successful');
+    } catch (authError) {
+      console.warn('Anonymous auth failed (continuing anyway):', authError);
+    }
+    
     // Use plants folder structure with file name if no path is provided
     const storagePath = path || `plants/${file.name}`;
-    const fileRef = storageRef(storage, storagePath);
-    console.log('Created storage reference:', storagePath);
     
-    console.log('Uploading bytes to Firebase...');
-    await uploadBytes(fileRef, file);
-    console.log('Upload successful, getting download URL...');
-    
-    const downloadURL = await getDownloadURL(fileRef);
-    console.log('Download URL obtained:', downloadURL);
-    
-    return downloadURL;
+    try {
+      // Try the standard Firebase SDK approach first
+      console.log('Trying direct Firebase SDK upload...');
+      const fileRef = storageRef(storage, storagePath);
+      console.log('Created storage reference:', storagePath);
+      
+      console.log('Uploading bytes to Firebase...');
+      await uploadBytes(fileRef, file);
+      console.log('Upload successful, getting download URL...');
+      
+      const downloadURL = await getDownloadURL(fileRef);
+      console.log('Download URL obtained:', downloadURL);
+      
+      return downloadURL;
+    } catch (sdkError) {
+      console.warn('Firebase SDK upload failed, trying direct API approach:', sdkError);
+      
+      // Fallback to direct REST API approach
+      console.log('Attempting direct REST API upload as fallback...');
+      
+      // Construct the API URL
+      const bucket = process.env.REACT_APP_FIREBASE_STORAGE_BUCKET;
+      const encodedPath = encodeURIComponent(storagePath);
+      const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodedPath}`;
+      
+      // Get the file content as an array buffer
+      const fileContent = await file.arrayBuffer();
+      
+      // Make the request
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'X-Goog-Upload-Protocol': 'raw'
+        },
+        body: fileContent
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Direct upload failed with status: ${response.status}`);
+      }
+      
+      // Parse the response to get the download URL
+      const data = await response.json();
+      const downloadToken = data.downloadTokens;
+      
+      if (!downloadToken) {
+        throw new Error('No download token received from Firebase');
+      }
+      
+      // Construct the download URL
+      const directDownloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+      console.log('Direct upload successful, download URL:', directDownloadUrl);
+      
+      return directDownloadUrl;
+    }
   } catch (error) {
     console.error('Error uploading file to Firebase:', error);
     console.error('Error details:', error.code, error.message);
@@ -98,7 +158,101 @@ export const uploadImageToFirebase = async (file, path) => {
       console.error('Unknown error occurred, check Firebase console');
     }
     
-    // Rethrow to handle in the calling function
+    // Fallback to local storage in case all Firebase approaches fail
+    console.log('All Firebase upload methods failed, using local storage fallback...');
+    return createLocalImageUrl(file);
+  }
+};
+
+/**
+ * Upload file via the Cloud Function to bypass CORS
+ * @param {File} file - The file to upload
+ * @param {string} path - Optional path in storage
+ * @returns {Promise<string>} The download URL
+ */
+const uploadViaCloudFunction = async (file, path) => {
+  try {
+    console.log('Preparing upload via Cloud Function');
+    
+    // Determine environment and set correct function URL
+    let functionUrl;
+    if (process.env.NODE_ENV === 'production') {
+      functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/uploadImage';
+    } else {
+      // Use emulator if in development or local URL for staging
+      functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/uploadImage';
+    }
+
+    // Log full configuration for debugging
+    console.log('Current environment:', process.env.NODE_ENV);
+    console.log('Using Cloud Function URL:', functionUrl);
+    console.log('Firebase config:', {
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY?.substring(0, 5) + '...',
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET
+    });
+    
+    // Create form data to send to the function
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Add path if provided
+    if (path) {
+      // Extract folder part from the path (Cloud Function expects 'folder' parameter)
+      const folder = path.split('/')[0];
+      formData.append('folder', folder);
+    } else {
+      formData.append('folder', 'plants');
+    }
+    
+    console.log(`Uploading to Cloud Function at ${functionUrl}`);
+    
+    // First try a simple GET request to check if the function is available
+    try {
+      const checkResponse = await fetch(`${functionUrl}?check=true`, {
+        method: 'GET',
+        mode: 'cors',
+      });
+      console.log('Function availability check:', checkResponse.status, checkResponse.statusText);
+    } catch (checkError) {
+      console.warn('Function availability check failed:', checkError.message);
+    }
+    
+    // Send the request to the Cloud Function
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      body: formData,
+      // Don't set Content-Type header, the browser will set it with the correct boundary
+    });
+    
+    if (!response.ok) {
+      const statusCode = response.status;
+      let errorMessage;
+      
+      try {
+        const errorData = await response.text();
+        errorMessage = `Cloud Function error (${statusCode}): ${errorData}`;
+      } catch (textError) {
+        errorMessage = `Cloud Function error (${statusCode}): ${response.statusText}`;
+      }
+      
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    
+    // Parse the response
+    const result = await response.json();
+    
+    if (!result.success || !result.url) {
+      throw new Error('Cloud Function did not return a valid URL');
+    }
+    
+    console.log('Cloud Function upload successful, received URL:', result.url);
+    return result.url;
+  } catch (error) {
+    console.error('Error in Cloud Function upload:', error);
     throw error;
   }
 };

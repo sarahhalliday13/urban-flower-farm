@@ -367,13 +367,24 @@ const AdminOrders = () => {
         <h1>Order Management</h1>
         <div className="header-controls">
           <div className="search-box">
-            <input
-              type="text"
-              placeholder="Search by name, email, or order ID"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input"
-            />
+            <div className="search-input-wrapper">
+              <input
+                type="text"
+                placeholder="Search by name, email, or order ID"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              {searchTerm && (
+                <button 
+                  className="search-clear-btn" 
+                  onClick={() => setSearchTerm('')}
+                  aria-label="Clear search"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
           <div className="status-filter">
             <span>Status:</span>

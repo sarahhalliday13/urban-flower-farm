@@ -1,0 +1,86 @@
+[debug] [2025-04-09T23:24:58.055Z] ----------------------------------------------------------------------
+[debug] [2025-04-09T23:24:58.057Z] Command:       /Users/sarahhalliday/.nvm/versions/node/v20.19.0/bin/node /Users/sarahhalliday/.nvm/versions/node/v20.19.0/bin/firebase deploy --only hosting -P staging
+[debug] [2025-04-09T23:24:58.057Z] CLI Version:   14.1.0
+[debug] [2025-04-09T23:24:58.057Z] Platform:      darwin
+[debug] [2025-04-09T23:24:58.057Z] Node Version:  v20.19.0
+[debug] [2025-04-09T23:24:58.057Z] Time:          Wed Apr 09 2025 16:24:58 GMT-0700 (Pacific Daylight Time)
+[debug] [2025-04-09T23:24:58.057Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-04-09T23:24:58.058Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-04-09T23:24:58.151Z] Field "/hosting" in "firebase.json" is possibly invalid: must be object
+[debug] [2025-04-09T23:24:58.151Z] Object "/hosting/0" in "firebase.json" has unknown property: {"additionalProperty":"port"}
+[debug] [2025-04-09T23:24:58.151Z] Object "/hosting/0" in "firebase.json" is missing required property: {"missingProperty":"site"}
+[debug] [2025-04-09T23:24:58.151Z] Field "/hosting/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-04-09T23:24:58.151Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-04-09T23:24:58.153Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-09T23:24:58.153Z] > authorizing via signed-in user (sarah.halliday@gmail.com)
+[debug] [2025-04-09T23:24:58.154Z] [iam] checking project staging for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-04-09T23:24:58.154Z] Checked if tokens are valid: false, expires at: 1744169456737
+[debug] [2025-04-09T23:24:58.154Z] Checked if tokens are valid: false, expires at: 1744169456737
+[debug] [2025-04-09T23:24:58.154Z] > refreshing access token with scopes: []
+[debug] [2025-04-09T23:24:58.154Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2025-04-09T23:24:58.154Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-09T23:24:58.378Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2025-04-09T23:24:58.378Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2025-04-09T23:24:58.390Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions [none]
+[debug] [2025-04-09T23:24:58.390Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions x-goog-quota-user=projects/staging
+[debug] [2025-04-09T23:24:58.390Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-04-09T23:24:58.432Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-04-09T23:24:58.432Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[debug] [2025-04-09T23:24:58.821Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions 200
+[debug] [2025-04-09T23:24:58.821Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions {}
+[debug] [2025-04-09T23:24:58.821Z] [iam] error while checking permissions, command may fail: Authorization failed. This account is missing the following required permissions on project staging:
+
+  firebase.projects.get
+  firebasehosting.sites.update
+[debug] [2025-04-09T23:24:58.821Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:24:58.821Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:24:58.821Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/staging [none]
+[debug] [2025-04-09T23:24:59.217Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/staging 403
+[debug] [2025-04-09T23:24:59.217Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/staging {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-04-09T23:24:59.218Z] Request to https://firebase.googleapis.com/v1beta1/projects/staging had HTTP Error: 403, The caller does not have permission
+[debug] [2025-04-09T23:24:59.436Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/staging had HTTP Error: 403, The caller does not have permission
+    at responseToError (/Users/sarahhalliday/.nvm/versions/node/v20.19.0/lib/node_modules/firebase-tools/lib/responseToError.js:52:12)
+    at RetryOperation._fn (/Users/sarahhalliday/.nvm/versions/node/v20.19.0/lib/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project staging. Please make sure the project exists and your account has permission to access it.
+[debug] [2025-04-09T23:27:21.158Z] ----------------------------------------------------------------------
+[debug] [2025-04-09T23:27:21.160Z] Command:       /Users/sarahhalliday/.nvm/versions/node/v20.19.0/bin/node /Users/sarahhalliday/.nvm/versions/node/v20.19.0/bin/firebase deploy --only hosting -P staging
+[debug] [2025-04-09T23:27:21.160Z] CLI Version:   14.1.0
+[debug] [2025-04-09T23:27:21.160Z] Platform:      darwin
+[debug] [2025-04-09T23:27:21.160Z] Node Version:  v20.19.0
+[debug] [2025-04-09T23:27:21.160Z] Time:          Wed Apr 09 2025 16:27:21 GMT-0700 (Pacific Daylight Time)
+[debug] [2025-04-09T23:27:21.160Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-04-09T23:27:21.235Z] Field "/hosting" in "firebase.json" is possibly invalid: must be object
+[debug] [2025-04-09T23:27:21.236Z] Object "/hosting/0" in "firebase.json" has unknown property: {"additionalProperty":"port"}
+[debug] [2025-04-09T23:27:21.236Z] Object "/hosting/0" in "firebase.json" is missing required property: {"missingProperty":"site"}
+[debug] [2025-04-09T23:27:21.236Z] Field "/hosting/0" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-04-09T23:27:21.236Z] Field "/hosting" in "firebase.json" is possibly invalid: must match a schema in anyOf
+[debug] [2025-04-09T23:27:21.238Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-04-09T23:27:21.238Z] > authorizing via signed-in user (sarah.halliday@gmail.com)
+[debug] [2025-04-09T23:27:21.238Z] [iam] checking project staging for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2025-04-09T23:27:21.238Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:27:21.238Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:27:21.240Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions [none]
+[debug] [2025-04-09T23:27:21.240Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions x-goog-quota-user=projects/staging
+[debug] [2025-04-09T23:27:21.240Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2025-04-09T23:27:21.629Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions 200
+[debug] [2025-04-09T23:27:21.629Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/staging:testIamPermissions {}
+[debug] [2025-04-09T23:27:21.630Z] [iam] error while checking permissions, command may fail: Authorization failed. This account is missing the following required permissions on project staging:
+
+  firebase.projects.get
+  firebasehosting.sites.update
+[debug] [2025-04-09T23:27:21.630Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:27:21.630Z] Checked if tokens are valid: true, expires at: 1744244697378
+[debug] [2025-04-09T23:27:21.631Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/staging [none]
+[debug] [2025-04-09T23:27:21.927Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/staging 403
+[debug] [2025-04-09T23:27:21.927Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/staging {"error":{"code":403,"message":"The caller does not have permission","status":"PERMISSION_DENIED"}}
+[debug] [2025-04-09T23:27:21.928Z] Request to https://firebase.googleapis.com/v1beta1/projects/staging had HTTP Error: 403, The caller does not have permission
+[debug] [2025-04-09T23:27:22.143Z] FirebaseError: Request to https://firebase.googleapis.com/v1beta1/projects/staging had HTTP Error: 403, The caller does not have permission
+    at responseToError (/Users/sarahhalliday/.nvm/versions/node/v20.19.0/lib/node_modules/firebase-tools/lib/responseToError.js:52:12)
+    at RetryOperation._fn (/Users/sarahhalliday/.nvm/versions/node/v20.19.0/lib/node_modules/firebase-tools/lib/apiv2.js:312:77)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[error] 
+[error] Error: Failed to get Firebase project staging. Please make sure the project exists and your account has permission to access it.

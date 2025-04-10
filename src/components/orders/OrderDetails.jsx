@@ -260,36 +260,20 @@ const OrderDetails = () => {
               total={orderDetails.total || 0} 
             />
             
-            {/* Version info if order has been edited */}
-            {orderDetails.versions && orderDetails.versions.length > 0 && (
-              <div className="version-info">
-                <h4>Order History</h4>
-                <p>
-                  {orderDetails.isFinalized 
-                    ? 'This order has been finalized.' 
-                    : 'This order can still be edited.'}
-                </p>
-                <p>
-                  Version: {orderDetails.versions.length}
-                  {orderDetails.lastModified && (
-                    <span className="version-date">
-                      {' '}(Last modified: {new Date(orderDetails.lastModified).toLocaleDateString()})
-                    </span>
-                  )}
-                </p>
-              </div>
-            )}
-            
             <div className="customer-info-compact">
               <h3>Customer Information</h3>
               <p><strong>Name:</strong> {orderDetails.customer.name}</p>
               <p><strong>Email:</strong> {orderDetails.customer.email}</p>
               <p><strong>Phone:</strong> {orderDetails.customer.phone}</p>
               
-              <div className="order-notes">
-                <h4>Order Notes:</h4>
-                <p dangerouslySetInnerHTML={{ __html: formatNotes(orderDetails.notes) }}></p>
-              </div>
+              {(orderDetails.customer.notes || orderDetails.notes) && (
+                <div className="pickup-notes">
+                  <h4>Customer Notes:</h4>
+                  <div className="notes-highlight pickup-note">
+                    <p dangerouslySetInnerHTML={{ __html: formatNotes(orderDetails.customer.notes || orderDetails.notes) }}></p>
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="email-summary">
@@ -313,45 +297,45 @@ const OrderDetails = () => {
               <h3>Order Status</h3>
               <div className="status-progress-bar">
                 <div className={`status-step ${getStatusClass('pending')}`}>
-                  <div className="status-indicator"></div>
                   <button 
                     className="status-label"
                     onClick={() => handleStatusUpdate(orderDetails.id, 'Pending')}
                     disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
                   >
+                    <div className="status-indicator"></div>
                     Pending
                   </button>
                 </div>
                 
                 <div className={`status-step ${getStatusClass('processing')}`}>
-                  <div className="status-indicator"></div>
                   <button 
                     className="status-label"
                     onClick={() => handleStatusUpdate(orderDetails.id, 'Processing')}
                     disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
                   >
+                    <div className="status-indicator"></div>
                     Processing
                   </button>
                 </div>
                 
                 <div className={`status-step ${getStatusClass('shipped')}`}>
-                  <div className="status-indicator"></div>
                   <button 
                     className="status-label"
                     onClick={() => handleStatusUpdate(orderDetails.id, 'Shipped')}
                     disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
                   >
+                    <div className="status-indicator"></div>
                     Shipped
                   </button>
                 </div>
                 
                 <div className={`status-step ${getStatusClass('completed')}`}>
-                  <div className="status-indicator"></div>
                   <button 
                     className="status-label"
                     onClick={() => handleStatusUpdate(orderDetails.id, 'Completed')}
                     disabled={statusToLowerCase(orderDetails.status) === 'cancelled'}
                   >
+                    <div className="status-indicator"></div>
                     Completed
                   </button>
                 </div>
@@ -554,6 +538,26 @@ const OrderDetails = () => {
                 </button>
               )}
             </div>
+            
+            {/* Version info moved here from left column */}
+            {orderDetails.versions && orderDetails.versions.length > 0 && (
+              <div className="version-info">
+                <h3>Order History</h3>
+                <p>
+                  {orderDetails.isFinalized 
+                    ? 'This order has been finalized.' 
+                    : 'This order can still be edited.'}
+                </p>
+                <p>
+                  Version: {orderDetails.versions.length}
+                  {orderDetails.lastModified && (
+                    <span className="version-date">
+                      {' '}(Last modified: {new Date(orderDetails.lastModified).toLocaleDateString()})
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

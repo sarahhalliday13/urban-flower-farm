@@ -539,16 +539,23 @@
 .status-label {
   background: none;
   border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-size: 0.8rem;
   color: #777;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  white-space: nowrap;
+  transition: transform 0.2s;
 }
 
 .status-label:hover {
-  background-color: #f0f0f0;
+  transform: translateY(-2px);
+}
+
+.status-label:hover .status-indicator {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2);
 }
 
 /* Status state styling */
@@ -576,6 +583,15 @@
 .status-step.disabled .status-label {
   color: #999;
   cursor: not-allowed;
+}
+
+.status-step.disabled .status-label:hover {
+  transform: none;
+}
+
+.status-step.disabled .status-label:hover .status-indicator {
+  transform: none;
+  box-shadow: none;
 }
 
 .status-step.pending .status-indicator {
@@ -1066,18 +1082,34 @@
   cursor: pointer;
 }
 
-/* Highlight for pickup notes */
+/* Notes highlight styling */
 .notes-highlight {
-  border-left: 3px solid #ffc107;
+  border-left: 3px solid #4a7c59;
   padding-left: 0.75rem;
   margin: 0.5rem 0;
 }
 
 .pickup-note {
-  background-color: #fff8e1;
+  background-color: #f0f9f1;
   padding: 0.75rem;
   border-radius: 4px;
   font-weight: 500;
+}
+
+/* Customer notes section (renamed from pickup-notes) */
+.pickup-notes {
+  margin-top: 1rem;
+}
+
+.pickup-notes h4 {
+  color: #2c5530;
+  margin-bottom: 0.5rem;
+}
+
+.pickup-notes .pickup-note {
+  background-color: #f0f9f1;
+  border: 1px solid #d7ebd9;
+  border-left: 3px solid #4a7c59;
 }
 
 /* Status update notification */
@@ -1357,17 +1389,18 @@
 
 /* Version info styling */
 .version-info {
-  background-color: #fff;
+  background-color: white;
+  padding: 1rem;
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 15px;
-  margin-bottom: 16px;
+  margin-top: 1rem;
 }
 
-.version-info h4 {
-  color: #2c5530;
+.version-info h3 {
   margin-top: 0;
-  margin-bottom: 8px;
+  margin-bottom: 0.75rem;
+  color: #2c3e50;
+  font-size: 1.1rem;
 }
 
 .version-info p {
@@ -1931,4 +1964,39 @@
 
 .items-header .edit-order-btn:hover {
   background-color: #1e3c21;
+}
+
+/* Search box styles */
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  padding-right: 2.5rem; /* Make room for the clear button */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  line-height: 1;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.search-clear-btn:hover {
+  color: #333;
+  background-color: #f0f0f0;
 }

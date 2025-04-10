@@ -10,11 +10,12 @@
     "logs": "firebase functions:log"
   },
   "engines": {
-    "node": "22"
+    "node": "20"
   },
   "main": "index.js",
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
+    "busboy": "^1.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "firebase-admin": "^12.6.0",

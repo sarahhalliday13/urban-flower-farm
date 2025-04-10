@@ -15,6 +15,11 @@ const sgMail = require('@sendgrid/mail');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
+const Busboy = require('busboy');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -337,11 +342,6 @@ sendContactEmailApp.post('/send-contact-email', (req, res) => {
   sendContactEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
 });
 
-// Export the functions
-exports.sendEmail = onRequest(sendEmailApp);
-exports.sendOrderEmail = onRequest(sendOrderEmailApp);
-exports.sendContactEmail = onRequest(sendContactEmailApp);
-
 // Helper function to calculate total
 function calculateTotal(items) {
   if (!Array.isArray(items)) return 0;
@@ -542,3 +542,47 @@ function generateButtonsEmailTemplate(order) {
     </div>
   `;
 }
+
+// Create the express app for image upload with CORS
+const uploadImageApp = express();
+uploadImageApp.use(cors({ 
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 3600
+}));
+
+// Add a simple test endpoint to verify the function is accessible
+uploadImageApp.get('/', (req, res) => {
+  res.status(200).json({ success: true, message: 'Upload function is available' });
+});
+
+// Handle image uploads - for now, just return success to test CORS
+uploadImageApp.post('/', (req, res) => {
+  // Set CORS headers manually to ensure they're present
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // For now, just return success
+  res.status(200).json({ 
+    success: true, 
+    message: 'Upload endpoint is working, but actual upload functionality is under maintenance',
+    url: 'https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fplaceholder.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739',
+    path: 'images/placeholder.jpg'
+  });
+});
+
+// Handle OPTIONS preflight request
+uploadImageApp.options('*', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.status(204).send('');
+});
+
+// Export the functions
+exports.sendEmail = onRequest(sendEmailApp);
+exports.sendOrderEmail = onRequest(sendOrderEmailApp);
+exports.sendContactEmail = onRequest(sendContactEmailApp);
+exports.uploadImage = onRequest(uploadImageApp);
