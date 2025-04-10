@@ -76,14 +76,25 @@ const AdminDashboard = () => {
     };
     
     // Attach the listener
-    ordersListener = onValue(ordersRef, handleSnapshot, handleError);
+    try {
+      ordersListener = onValue(ordersRef, handleSnapshot, handleError);
+      console.log('Successfully attached order listener');
+    } catch (error) {
+      console.error('Error attaching order listener:', error);
+      handleError(error);
+    }
     
     // Cleanup function to remove the listener
     return () => {
       console.log('Cleaning up orders listener');
       isMounted = false;
       if (ordersListener) {
-        off(ordersRef);
+        try {
+          off(ordersRef);
+          console.log('Successfully detached order listener');
+        } catch (error) {
+          console.error('Error detaching order listener:', error);
+        }
       }
     };
   }, []);
@@ -230,6 +241,9 @@ const AdminDashboard = () => {
         console.log(`Manually refreshed orders: ${freshOrders.length} orders loaded`);
         setOrders(freshOrders);
         setIsLoadingOrders(false);
+        
+        // Update localStorage cache
+        localStorage.setItem('orders', JSON.stringify(freshOrders));
       })
       .catch(error => {
         console.error('Error refreshing orders:', error);

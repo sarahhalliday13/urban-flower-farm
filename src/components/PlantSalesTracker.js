@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDatabaseRef, onValue, get } from '../services/firebase';
+import { getDatabaseRef } from '../services/firebase';
+import { onValue, get } from 'firebase/database';
 import '../styles/PlantSalesTracker.css';
 
 const PlantSalesTracker = () => {
@@ -135,14 +136,14 @@ const PlantSalesTracker = () => {
     return salesArray;
   }, [filters.dateRange, filters.plantType, filters.sortBy]);
 
-  // Load orders from Firebase
+  // Function to load orders from Firebase - use the correct import
   const loadOrdersFromFirebase = useCallback(() => {
     setIsLoading(true);
     setError(null);
     
     const ordersRef = getDatabaseRef('orders');
     
-    // Listen for orders from Firebase
+    // Listen for orders from Firebase - use onValue from firebase/database
     const unsubscribe = onValue(ordersRef, (snapshot) => {
       try {
         if (!snapshot.exists()) {
