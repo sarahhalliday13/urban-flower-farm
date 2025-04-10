@@ -308,11 +308,15 @@ export const fetchPlants = async () => {
         
         console.log(`[${environment}] fetchPlants - Found cached plants data (${cacheAgeMinutes.toFixed(1)} minutes old)`);
         
-        // Use cache if it's less than 5 minutes old
-        if (cacheAgeMinutes < 5 && Array.isArray(parsedCache.data) && parsedCache.data.length > 0) {
+        // Use cache if it's less than 2 minutes old (reduced from 5 to ensure fresher data)
+        if (cacheAgeMinutes < 2 && Array.isArray(parsedCache.data) && parsedCache.data.length > 0) {
           console.log(`[${environment}] fetchPlants - Using cached plants data (${parsedCache.data.length} plants)`);
           return parsedCache.data;
+        } else {
+          console.log(`[${environment}] fetchPlants - Cache is too old or invalid, fetching fresh data`);
         }
+      } else {
+        console.log(`[${environment}] fetchPlants - No cache found, fetching fresh data`);
       }
     } catch (cacheError) {
       console.error(`[${environment}] fetchPlants - Error reading cached plants:`, cacheError);
@@ -366,12 +370,20 @@ export const fetchPlants = async () => {
           id: plantId, // Use the plant's ID or the Firebase key
           inventory: inventoryData[plantId] || {
             currentStock: 0,
-            status: "Unknown",
+            status: "Out of Stock",
             restockDate: "",
             notes: ""
           }
         };
       });
+      
+      // Update local inventory cache with the fetched data
+      try {
+        localStorage.setItem('plantInventory', JSON.stringify(inventoryData));
+        console.log(`[${environment}] fetchPlants - Updated local inventory cache`);
+      } catch (e) {
+        console.error(`[${environment}] fetchPlants - Error updating inventory cache:`, e);
+      }
       
       console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
       // Log a sample plant for verification
@@ -614,12 +626,14 @@ export const updatePlant = async (plantId, plantData) => {
  */
 export const updateInventory = async (plantId, inventoryData) => {
   try {
-    console.log(`Updating inventory for plant ${plantId}:`, inventoryData);
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Starting update for plant ${plantId}`);
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Data:`, inventoryData);
     
     const { featured, ...inventoryProps } = inventoryData;
     
     // First, update localStorage as a cache
     try {
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating localStorage cache`);
       const existingData = localStorage.getItem('plantInventory');
       let storedInventory = {};
       
@@ -635,6 +649,41 @@ export const updateInventory = async (plantId, inventoryData) => {
       
       // Save back to localStorage
       localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Local storage updated successfully`);
+      
+      // Update cached plants data too, if it exists
+      try {
+        const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
+        if (cachedData) {
+          const parsedCache = JSON.parse(cachedData);
+          if (Array.isArray(parsedCache.data)) {
+            const updatedPlants = parsedCache.data.map(plant => {
+              if (plant.id === plantId) {
+                return {
+                  ...plant,
+                  inventory: {
+                    ...(plant.inventory || {}),
+                    ...inventoryProps,
+                    lastUpdated: new Date().toISOString()
+                  }
+                };
+              }
+              return plant;
+            });
+            
+            // Update the cache with the new data
+            localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
+              ...parsedCache,
+              data: updatedPlants,
+              lastInventoryUpdate: new Date().toISOString()
+            }));
+            console.log(`[${process.env.NODE_ENV}] updateInventory - Updated plants cache for ${plantId}`);
+          }
+        }
+      } catch (cacheError) {
+        console.error(`[${process.env.NODE_ENV}] updateInventory - Error updating plants cache:`, cacheError);
+        // Continue with Firebase update
+      }
       
       // If there's a featured flag, update the plant in localStorage
       if (featured !== undefined) {
@@ -656,17 +705,25 @@ export const updateInventory = async (plantId, inventoryData) => {
     }
     
     // Update Firebase inventory
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Sending update to Firebase for path: inventory/${plantId}`);
     const inventoryRef = ref(database, `inventory/${plantId}`);
     await set(inventoryRef, {
       ...inventoryProps,
       lastUpdated: new Date().toISOString()
     });
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Firebase inventory update successful`);
     
     // Update featured status if provided
     if (featured !== undefined) {
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating featured status for plant ${plantId}`);
       const plantRef = ref(database, `plants/${plantId}`);
       await update(plantRef, { featured });
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Featured status update successful`);
     }
+    
+    // Clear the plants cache to force a refresh on next load
+    localStorage.removeItem('cachedPlantsWithTimestamp');
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared plants cache to ensure fresh data on next load`);
     
     return {
       success: true,
@@ -677,7 +734,8 @@ export const updateInventory = async (plantId, inventoryData) => {
       }
     };
   } catch (error) {
-    console.error('Error updating inventory in Firebase:', error);
+    console.error(`[${process.env.NODE_ENV}] Error updating inventory in Firebase:`, error);
+    console.error(`[${process.env.NODE_ENV}] Error details:`, error.code, error.message, error.stack);
     
     // Add to sync queue for failed updates
     addToSyncQueue(plantId, inventoryData);

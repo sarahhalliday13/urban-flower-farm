@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAdmin } from '../../context/AdminContext';
 import { 
-  // eslint-disable-next-line no-unused-vars
-  fetchPlants, 
+  fetchPlants,
+  updateInventory,
   updatePlant,
   addPlant,
   subscribeToInventory, 
-  // eslint-disable-next-line no-unused-vars
   processSyncQueue,
-  // eslint-disable-next-line no-unused-vars
   uploadImageToFirebase
 } from '../../services/firebase';
 import InventoryHeader from './InventoryHeader';
