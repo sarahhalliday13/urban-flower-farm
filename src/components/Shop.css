@@ -1613,3 +1613,48 @@
     padding: 0;
   }
 }
+
+/* Fix 1: Adjust pagination link padding on mobile */
+@media (max-width: 768px) {
+  .pagination-link.prev,
+  .pagination-link.next {
+    padding: 6px 0;
+    min-width: 50px;
+  }
+  
+  /* Mobile pagination controls fixed padding */
+  .mobile-pagination-wrapper .pagination-link {
+    padding: 6px 0;
+  }
+}
+
+/* Fix 2: Force sort and search on the same row for all screen sizes */
+@media (max-width: 480px) {
+  .shop-header-left .filter-wrapper {
+    gap: 8px;
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+  
+  .sort-control, 
+  .search-bar {
+    width: 50%;
+    max-width: 50%;
+    min-width: 0; /* Allow shrinking if needed */
+  }
+  
+  .search-bar {
+    flex-shrink: 1;
+  }
+  
+  .sort-select {
+    padding-left: 4px;
+    padding-right: 16px; /* Smaller padding for dropdown arrow */
+    font-size: 13px;
+  }
+  
+  .search-input {
+    font-size: 13px;
+    padding-left: 4px;
+  }
+}

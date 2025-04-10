@@ -480,18 +480,29 @@ function PlantDetails() {
                 };
                 
                 if (currentStock <= 0) {
+                  // Standardize on "Out of Stock" terminology
                   return (
                     <span className="status-badge sold-out" style={statusBadgeStyle}>
                       Out of Stock
                     </span>
                   );
                 } else if (currentStock < 10) {
+                  // Show as "In Stock" instead of "Low Stock"
                   return (
-                    <span className="status-badge low-stock" style={statusBadgeStyle}>
-                      Low Stock ({currentStock} left)
+                    <span className="status-badge in-stock" style={statusBadgeStyle}>
+                      In Stock
                     </span>
                   );
                 } else if (plant.inventory?.status) {
+                  // For other statuses like 'Coming Soon' or custom ones
+                  // If it happens to be "Sold Out", standardize to "Out of Stock"
+                  if (plant.inventory.status.toLowerCase() === 'sold out') {
+                    return (
+                      <span className="status-badge sold-out" style={statusBadgeStyle}>
+                        Out of Stock
+                      </span>
+                    );
+                  }
                   return (
                     <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`} style={statusBadgeStyle}>
                       {plant.inventory.status}

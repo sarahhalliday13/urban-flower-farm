@@ -129,10 +129,8 @@ function Shop() {
   // Add status counts calculation
   const getStatusCounts = useMemo(() => {
     const counts = {
-      'all': plants.length,
+      'all': 0,
       'In Stock': 0,
-      'Low Stock': 0,
-      'Sold Out': 0,
       'Coming Soon': 0,
       'Pre-order': 0
     };
@@ -144,35 +142,50 @@ function Shop() {
         return;
       }
       
+      // Skip plants with zero inventory (except Coming Soon and Pre-order)
+      if (!plant.inventory?.currentStock && 
+          plant.inventory?.status !== 'Coming Soon' && 
+          plant.inventory?.status !== 'Pre-order' && 
+          plant.inventory?.status !== 'Pre-Order') {
+        return;
+      }
+      
+      // Count this plant in the total
+      counts['all']++;
+      
       const status = plant.inventory?.status;
+      
+      // Handle special statuses
       if (status === 'Pre-order' || status === 'Pre-Order') {
         counts['Pre-order']++;
-      } else if (status && counts[status] !== undefined) {
-        counts[status]++;
-      } else if (!status && plant.inventory?.currentStock > 0) {
+      } else if (status === 'Coming Soon') {
+        counts['Coming Soon']++;
+      } else if (status === 'Low Stock' || (plant.inventory?.currentStock > 0 && (!status || status === 'In Stock'))) {
+        // Count both "Low Stock" and "In Stock" in the same category
         counts['In Stock']++;
-      } else if (!status) {
-        counts['Sold Out']++;
       }
     });
-    
-    // Update all count to be the sum of visible plants
-    counts['all'] = Object.values(counts).reduce((sum, count) => sum + count, 0) - counts['all'];
     
     return counts;
   }, [plants]);
 
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
-    // First filter out hidden plants
+    // First filter out hidden plants and out of stock plants
     const visiblePlants = plants.filter(plant => 
-      plant.hidden !== true && 
+      // Filter out hidden plants
+      (plant.hidden !== true && 
       plant.hidden !== 'true' && 
       plant.hidden !== 1 && 
-      plant.hidden !== '1'
+      plant.hidden !== '1') &&
+      // Only show plants with inventory > 0
+      ((plant.inventory?.currentStock > 0) || 
+      (plant.inventory?.status === 'Coming Soon') || 
+      (plant.inventory?.status === 'Pre-order') || 
+      (plant.inventory?.status === 'Pre-Order'))
     );
     
-    console.log('Total visible plants (not hidden):', visiblePlants.length);
+    console.log('Total visible plants (not hidden or out of stock):', visiblePlants.length);
     
     // Then apply search filter - USING displayedSearchTerm INSTEAD OF searchTerm
     const filteredPlants = visiblePlants.filter(plant => {
@@ -275,10 +288,6 @@ function Shop() {
         plant.inventory?.status === 'Low Stock' ||
         (plant.inventory?.currentStock > 0 && !plant.inventory?.status)
       );
-    } else if (sortOption === 'status-sold-out') {
-      statusFilteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status === 'Sold Out' || (!plant.inventory?.status && !plant.inventory?.currentStock)
-      );
     } else if (sortOption === 'status-coming-soon') {
       statusFilteredPlants = filteredPlants.filter(plant => 
         plant.inventory?.status === 'Coming Soon'
@@ -298,7 +307,6 @@ function Shop() {
       case 'all':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'status-in-stock':
-      case 'status-sold-out':
       case 'status-coming-soon':
       case 'status-pre-order':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -469,13 +477,8 @@ function Shop() {
       <div key={plant.id} className="plant-card" id={`plant-${plant.id}`}>
         <Link 
           to={`/plant/${plant.id}`}
-          className="plant-card-link"
-          onClick={(e) => {
-            // Prevent navigation if clicking on buttons
-            if (e.target.closest('.plant-actions')) {
-              e.preventDefault();
-              return;
-            }
+          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          onClick={() => {
             // Store current page for when user comes back
             localStorage.setItem('shopCurrentPage', currentPage.toString());
             // Store which plant was clicked (for anchor navigation)
@@ -493,9 +496,15 @@ function Shop() {
             <div className="badge-container">
               {plant.inventory?.status ? (
                 <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                    {plant.inventory.status}
-                  </span>
+                  {plant.inventory.status.toLowerCase() === 'low stock' ? (
+                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                      In Stock
+                    </span>
+                  ) : (
+                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                      {plant.inventory.status}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
@@ -661,11 +670,12 @@ function Shop() {
     if (suggestion.type === 'plant' || suggestion.type === 'scientific' || suggestion.type === 'common') {
       // Navigate to plant detail if it's a specific plant
       localStorage.setItem('lastViewedPlantId', suggestion.id.toString());
+      setShowSuggestions(false); // Ensure dropdown is hidden
       navigate(`/plant/${suggestion.id}`);
     } else {
       // Set search term for colors or plant types
       setSearchTerm(suggestion.text.toLowerCase());
-      setShowSuggestions(false);
+      setShowSuggestions(false); // Ensure dropdown is hidden
       // Update URL and navigate to page 1
       navigate(`/shop?page=1&sort=${sortOption}&search=${suggestion.text.toLowerCase()}`);
     }
@@ -681,12 +691,23 @@ function Shop() {
   // Handle form submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    setDisplayedSearchTerm(searchTerm); // Update the displayed search term with the value from the input
-    setShowSuggestions(false); // Hide the search dropdown when submitting
+    
+    // Force close dropdown and prevent it from reopening
+    setShowSuggestions(false);
+    
+    // Update the displayed search term with the value from the input
+    setDisplayedSearchTerm(searchTerm); 
+    
+    // Blur the input to prevent the onFocus handler from reopening the dropdown
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+    
     // Update the URL and navigate
     navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
-    // Focus back on search input after a moment
-    setTimeout(keepSearchFocus, 100);
+    
+    // Focus back on search input after a moment (if needed)
+    // setTimeout(keepSearchFocus, 100);
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
@@ -713,8 +734,7 @@ function Shop() {
                       aria-label="Sort plants by selected option"
                     >
                       <option value="all">All ({getStatusCounts.all})</option>
-                      <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
-                      <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
+                      <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
                       <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
                       <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
                     </select>
@@ -741,6 +761,12 @@ function Shop() {
                             setShowSuggestions(true);
                           }
                         }}
+                        onBlur={(e) => {
+                          // Only hide if the click isn't on a suggestion
+                          if (!e.relatedTarget || !e.relatedTarget.closest('.search-dropdown')) {
+                            setTimeout(() => setShowSuggestions(false), 150);
+                          }
+                        }}
                         className="search-input"
                         aria-label="Search plants"
                         ref={searchInputRef}
@@ -765,18 +791,26 @@ function Shop() {
                         type="submit" 
                         className="search-go-button"
                         aria-label="Search"
+                        onClick={() => setShowSuggestions(false)}
                       >
                         Go
                       </button>
                       
                       {/* Predictive search dropdown */}
                       {showSuggestions && (
-                        <div className={`search-dropdown ${showSuggestions ? 'active' : ''}`}>
+                        <div 
+                          className={`search-dropdown ${showSuggestions ? 'active' : ''}`}
+                          tabIndex="-1" // Make the dropdown focusable for blur handling
+                        >
                           {searchSuggestions.map((suggestion, index) => (
                             <div 
                               key={index} 
                               className="search-dropdown-item"
-                              onClick={() => handleSuggestionClick(suggestion)}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
+                                handleSuggestionClick(suggestion);
+                              }}
+                              tabIndex="0" // Make each item focusable
                             >
                               <span className="search-icon">🔍</span>
                               <span className="search-text">{suggestion.text}</span>

@@ -15,9 +15,19 @@ const InventoryTableRow = ({
   saveStatus,
   onEditPlant
 }) => {
-  const statusClass = plant.inventory?.status 
-    ? plant.inventory.status.toLowerCase().replace(/\s+/g, '-') 
-    : 'unknown';
+  // Map status to appropriate CSS class
+  const getStatusClass = (status) => {
+    if (!status) return 'unknown';
+    
+    // Map old status names to new CSS classes
+    if (status === 'Sold Out') return 'out-of-stock';
+    if (status === 'Low Stock') return 'in-stock';
+    
+    // Default transformation
+    return status.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  const statusClass = getStatusClass(plant.inventory?.status);
 
   return (
     <tr key={plant.id} className={isEditing ? 'editing' : ''}>

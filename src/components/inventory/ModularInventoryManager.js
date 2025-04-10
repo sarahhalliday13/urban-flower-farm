@@ -239,6 +239,21 @@ const ModularInventoryManager = () => {
     setHasUnsavedChanges(false);
   }, []);
 
+  // Helper function to standardize status values
+  const standardizeInventoryStatus = (status) => {
+    if (!status) return 'Unknown';
+    
+    const lowerStatus = status.toLowerCase();
+    
+    if (lowerStatus === 'in stock') return 'In Stock';
+    if (lowerStatus === 'low stock') return 'In Stock';
+    if (lowerStatus === 'out of stock' || lowerStatus === 'sold out') return 'Out of Stock';
+    if (lowerStatus.includes('coming') && lowerStatus.includes('soon')) return 'Coming Soon';
+    if (lowerStatus.includes('pre') && lowerStatus.includes('order')) return 'Pre-order';
+    
+    return status; // Return original if no match
+  };
+
   // Handle save button click
   const handleSave = useCallback(async (plantId) => {
     // Set saving status
@@ -264,6 +279,9 @@ const ModularInventoryManager = () => {
         if (currentStock <= 0) status = "Out of Stock";
         else if (currentStock < 5) status = "Low Stock";
         else status = "In Stock";
+      } else {
+        // Standardize status
+        status = standardizeInventoryStatus(status);
       }
       
       // Prepare the updated data
@@ -451,7 +469,7 @@ const ModularInventoryManager = () => {
         // Create updated inventory data
         const updatedInventory = {
           ...(plant.inventory || {}),
-          status: newStatus,
+          status: standardizeInventoryStatus(newStatus),
           currentStock: stockLevel
         };
         
@@ -498,80 +516,101 @@ const ModularInventoryManager = () => {
     handleLoadPlants(true);
   };
 
-  // Filter plants based on status filter and search term
+  // Filter plants based on search term, filter status, and categories
   const filteredPlants = useMemo(() => {
+    if (!plants) return [];
+    
     let filtered = [...plants];
     
-    // Apply search filter first
-    if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase();
-      filtered = filtered.filter(plant => 
-        plant.name?.toLowerCase().includes(lowerSearch) || 
-        plant.scientificName?.toLowerCase().includes(lowerSearch) ||
-        String(plant.id).includes(lowerSearch)
-      );
+    // Apply search term filter
+    if (searchTerm && searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter(plant => {
+        const commonName = (plant.commonName || '').toLowerCase();
+        const botanicalName = (plant.botanicalName || '').toLowerCase();
+        const description = (plant.description || '').toLowerCase();
+        const shortDescription = (plant.shortDescription || '').toLowerCase();
+        
+        return (
+          commonName.includes(term) ||
+          botanicalName.includes(term) ||
+          description.includes(term) ||
+          shortDescription.includes(term)
+        );
+      });
     }
     
-    // Then apply status filter
+    // Apply status filter (now includes both visible and hidden plants)
     if (filter !== 'all') {
-      if (filter === 'Hidden') {
+      if (filter === 'Sold Out') {
+        // Include both "Sold Out" and "Out of Stock"
         filtered = filtered.filter(plant => 
-          plant.hidden === true || plant.hidden === 'true'
+          (plant.inventory?.status === 'Sold Out' || plant.inventory?.status === 'Out of Stock')
+        );
+      } else if (filter === 'Unknown') {
+        // Filter for plants with missing or nonstandard status
+        filtered = filtered.filter(plant => 
+          !plant.inventory || 
+          !plant.inventory.status || 
+          !['In Stock', 'Low Stock', 'Sold Out', 'Out of Stock', 'Coming Soon', 'coming soon', 'Coming soon', 'Pre-order', 'Pre-Order', 'pre-order', 'Preorder'].includes(plant.inventory.status)
         );
       } else if (filter === 'In Stock') {
+        // Include both "In Stock" and "Low Stock"
         filtered = filtered.filter(plant => 
-          (plant.inventory?.status === 'In Stock' || plant.inventory?.status === 'Low Stock') && 
-          (!plant.hidden || plant.hidden !== true)
+          plant.inventory?.status === 'In Stock' || plant.inventory?.status === 'Low Stock'
         );
-      } else if (filter === 'Sold Out') {
-        // Include both "Sold Out" and "Out of Stock" in this filter
+      } else if (filter === 'Coming Soon') {
         filtered = filtered.filter(plant => 
-          (plant.inventory?.status === 'Sold Out' || plant.inventory?.status === 'Out of Stock') && 
-          (!plant.hidden || plant.hidden !== true)
+          plant.inventory?.status === 'Coming Soon' || 
+          plant.inventory?.status === 'coming soon' || 
+          plant.inventory?.status === 'Coming soon'
+        );
+      } else if (filter === 'Pre-order') {
+        filtered = filtered.filter(plant => 
+          plant.inventory?.status === 'Pre-order' || 
+          plant.inventory?.status === 'Pre-Order' || 
+          plant.inventory?.status === 'pre-order' || 
+          plant.inventory?.status === 'Preorder'
         );
       } else {
+        // Filter for specific status
         filtered = filtered.filter(plant => 
-          plant.inventory?.status === filter && 
-          (!plant.hidden || plant.hidden !== true)
+          plant.inventory && plant.inventory.status === filter
         );
       }
-    } else {
-      // For "all", include all plants (including hidden)
-      // No filtering needed as we want to show all plants
     }
     
     // Apply sorting
     if (sortConfig.key) {
       filtered.sort((a, b) => {
-        let valA, valB;
+        // Get the values to compare
+        let aValue, bValue;
         
-        // Custom handling for different types of fields
-        if (sortConfig.key === 'currentStock') {
-          valA = a.inventory?.currentStock || 0;
-          valB = b.inventory?.currentStock || 0;
+        if (sortConfig.key === 'name') {
+          aValue = a.name || '';
+          bValue = b.name || '';
+        } else if (sortConfig.key === 'currentStock') {
+          aValue = a.inventory?.currentStock || 0;
+          bValue = b.inventory?.currentStock || 0;
         } else if (sortConfig.key === 'status') {
-          valA = a.inventory?.status || '';
-          valB = b.inventory?.status || '';
-        } else if (sortConfig.key === 'featured' || sortConfig.key === 'hidden') {
-          valA = a[sortConfig.key] === true || a[sortConfig.key] === 'true';
-          valB = b[sortConfig.key] === true || b[sortConfig.key] === 'true';
-        } else {
-          valA = a[sortConfig.key] || '';
-          valB = b[sortConfig.key] || '';
+          aValue = a.inventory?.status || '';
+          bValue = b.inventory?.status || '';
+        } else if (sortConfig.key === 'restockDate') {
+          aValue = a.inventory?.restockDate || '';
+          bValue = b.inventory?.restockDate || '';
+        } else if (sortConfig.key === 'featured') {
+          aValue = a.featured === true || a.featured === 'true' ? 1 : 0;
+          bValue = b.featured === true || b.featured === 'true' ? 1 : 0;
+        } else if (sortConfig.key === 'hidden') {
+          aValue = a.hidden === true || a.hidden === 'true' ? 1 : 0;
+          bValue = b.hidden === true || b.hidden === 'true' ? 1 : 0;
         }
         
-        // Handle string comparison
-        if (typeof valA === 'string') {
-          valA = valA.toLowerCase();
-        }
-        if (typeof valB === 'string') {
-          valB = valB.toLowerCase();
-        }
-        
-        if (valA < valB) {
+        // Compare the values
+        if (aValue < bValue) {
           return sortConfig.direction === 'ascending' ? -1 : 1;
         }
-        if (valA > valB) {
+        if (aValue > bValue) {
           return sortConfig.direction === 'ascending' ? 1 : -1;
         }
         return 0;
@@ -586,35 +625,45 @@ const ModularInventoryManager = () => {
     const counts = {
       all: 0,
       'In Stock': 0,
-      'Low Stock': 0,
       'Sold Out': 0,
       'Coming Soon': 0,
       'Pre-order': 0,
       'Unknown': 0,
-      'Hidden': 0
+      'Hidden': 0 // Keep this for reference, but we won't show it in the dropdown
     };
     
     if (plants) {
-      // Count all plants for the 'all' count, including hidden
+      // Count all plants for the 'all' count
       counts.all = plants.length;
       
-      // Count by inventory status and hidden status
+      // Count by inventory status
       plants.forEach(plant => {
-        // Count hidden plants
+        // Track hidden items separately for reference
         if (plant.hidden === true || plant.hidden === 'true') {
           counts['Hidden']++;
-          // Skip counting other statuses for hidden plants
-          return;
         }
         
-        // Count by inventory status
+        // Count all plants (including hidden) by their status
         if (plant.inventory && plant.inventory.status) {
           const status = plant.inventory.status;
           
-          // Special handling for "Out of Stock" - count it as "Sold Out"
-          if (status === 'Out of Stock') {
+          // Count both "In Stock" and "Low Stock" as "In Stock"
+          if (status === 'In Stock' || status === 'Low Stock') {
+            counts['In Stock']++;
+          }
+          // Special handling for "Out of Stock" - count it as "Sold Out" 
+          else if (status === 'Out of Stock' || status === 'Sold Out') {
             counts['Sold Out']++;
-          } else if (counts[status] !== undefined) {
+          }
+          // Special handling for "Pre-order" with all case variants
+          else if (status === 'Pre-order' || status === 'Pre-Order' || status === 'pre-order' || status === 'Preorder') {
+            counts['Pre-order']++;
+          }
+          // Special handling for "Coming Soon" case variants
+          else if (status === 'Coming Soon' || status === 'coming soon' || status === 'Coming soon') {
+            counts['Coming Soon']++;
+          }
+          else if (counts[status] !== undefined) {
             counts[status]++;
           } else {
             // Count non-standard statuses as Unknown
@@ -631,6 +680,66 @@ const ModularInventoryManager = () => {
     return counts;
   }, [plants]);
 
+  // Function to update all "Low Stock" plants to "In Stock"
+  const updateLowStockToInStock = async () => {
+    // Find plants with "Low Stock" status
+    const lowStockPlants = plants.filter(plant => 
+      plant.inventory?.status === 'Low Stock'
+    );
+    
+    if (lowStockPlants.length === 0) {
+      // No plants to update
+      console.log('No plants with Low Stock status found.');
+      return;
+    }
+    
+    console.log(`Found ${lowStockPlants.length} plants with Low Stock status, updating to In Stock...`);
+    let updatedCount = 0;
+    
+    // Update each plant with In Stock status
+    for (const plant of lowStockPlants) {
+      try {
+        const updatedInventory = {
+          ...(plant.inventory || {}),
+          status: 'In Stock',
+          lastUpdated: new Date().toISOString()
+        };
+        
+        // Update the plant in the database
+        await updatePlant(plant.id, {
+          ...plant,
+          inventory: updatedInventory
+        });
+        
+        // Also update in AdminContext if available
+        if (typeof updatePlantData === 'function') {
+          updatePlantData({
+            ...plant,
+            inventory: updatedInventory
+          });
+        }
+        
+        updatedCount++;
+      } catch (error) {
+        console.error(`Error updating status for plant ${plant.id}:`, error);
+      }
+    }
+    
+    console.log(`Successfully updated ${updatedCount} of ${lowStockPlants.length} plants from Low Stock to In Stock.`);
+    
+    // Show success toast if any plants were updated
+    if (updatedCount > 0) {
+      const event = new CustomEvent('show-toast', { 
+        detail: { 
+          message: `Updated ${updatedCount} plants from Low Stock to In Stock!`,
+          type: 'success',
+          duration: 3000
+        }
+      });
+      window.dispatchEvent(event);
+    }
+  };
+
   // Subscribe to real-time inventory updates
   useEffect(() => {
     // Load plants initially
@@ -644,6 +753,12 @@ const ModularInventoryManager = () => {
     
     // Check for pending sync items initially
     checkSyncQueue();
+    
+    // Convert Low Stock to In Stock when component mounts
+    // Do this with a short delay to ensure plants are loaded
+    const timer = setTimeout(() => {
+      updateLowStockToInStock();
+    }, 2000);
     
     // Set up auto-refresh timer (every 5 minutes)
     const refreshTimer = setInterval(() => {
@@ -662,6 +777,7 @@ const ModularInventoryManager = () => {
       
       // Clean up all timers using the copied refs
       if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+      clearTimeout(timer);
     };
   }, [handleLoadPlants, checkSyncQueue]);
 
@@ -806,9 +922,17 @@ const ModularInventoryManager = () => {
                     
                     // ID handling - use existing ID or create new one
                     const plantId = currentPlant ? currentPlant.id : Date.now().toString();
+                    
+                    // Standardize the inventory status before saving
+                    const standardizedInventory = {
+                      ...plantFormData.inventory,
+                      status: standardizeInventoryStatus(plantFormData.inventory.status)
+                    };
+                    
                     const plantData = {
                       ...plantFormData,
-                      id: plantId
+                      id: plantId,
+                      inventory: standardizedInventory
                     };
                     
                     // Use the correct function based on whether we're adding or editing
@@ -827,7 +951,7 @@ const ModularInventoryManager = () => {
                     
                     // Show success toast
                     window.dispatchEvent(new CustomEvent('show-toast', {
-                      detail: {
+                      detail: { 
                         message: currentPlant ? 'Plant updated successfully!' : 'Plant added successfully!',
                         type: 'success',
                         duration: 3000
@@ -1161,7 +1285,6 @@ const ModularInventoryManager = () => {
                       onChange={(e) => updatePlantForm('inventory.status', e.target.value)}
                     >
                       <option value="In Stock">In Stock</option>
-                      <option value="Low Stock">Low Stock</option>
                       <option value="Out of Stock">Out of Stock</option>
                       <option value="Coming Soon">Coming Soon</option>
                       <option value="Pre-order">Pre-order</option>
@@ -1222,9 +1345,17 @@ const ModularInventoryManager = () => {
                     
                     // ID handling - use existing ID or create new one
                     const plantId = currentPlant ? currentPlant.id : Date.now().toString();
+                    
+                    // Standardize the inventory status before saving
+                    const standardizedInventory = {
+                      ...plantFormData.inventory,
+                      status: standardizeInventoryStatus(plantFormData.inventory.status)
+                    };
+                    
                     const plantData = {
                       ...plantFormData,
-                      id: plantId
+                      id: plantId,
+                      inventory: standardizedInventory
                     };
                     
                     // Use the correct function based on whether we're adding or editing
@@ -1243,7 +1374,7 @@ const ModularInventoryManager = () => {
                     
                     // Show success toast
                     window.dispatchEvent(new CustomEvent('show-toast', {
-                      detail: {
+                      detail: { 
                         message: currentPlant ? 'Plant updated successfully!' : 'Plant added successfully!',
                         type: 'success',
                         duration: 3000
