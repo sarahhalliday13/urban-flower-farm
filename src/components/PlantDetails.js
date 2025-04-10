@@ -94,29 +94,69 @@ function PlantDetails() {
         
         console.log(`Found plant with ID ${id}:`, plant.name);
         
-        // Simplify image handling - just use the mainImage with a fallback
-        const plantImages = [];
+        // Debug logs to investigate image structure
+        console.log('Raw plant data images:', plant.images);
+        console.log('Image type:', typeof plant.images);
+        console.log('Is images array?', Array.isArray(plant.images));
+        console.log('Main image:', plant.mainImage);
+        console.log('mainImageIndex:', plant.mainImageIndex);
+        console.log('Additional images:', plant.additionalImages);
         
-        // Add the main image if available
-        if (plant.mainImage) {
-          plantImages.push(plant.mainImage);
-        }
+        // Comprehensive image handling to account for all possible data structures
+        let plantImages = [];
         
-        // Try to add additional images (only if they exist)
+        // Handle images based on the data structure
         if (Array.isArray(plant.images) && plant.images.length > 0) {
-          // Skip the first image if it's the same as mainImage
-          const additionalImages = plant.images.filter(img => img !== plant.mainImage);
-          plantImages.push(...additionalImages);
-        } else if (Array.isArray(plant.additionalImages)) {
-          plantImages.push(...plant.additionalImages);
+          // Images is already an array, use it directly
+          plantImages = [...plant.images];
+          console.log('Using images from array, found', plantImages.length, 'images');
+        } else if (typeof plant.images === 'object' && plant.images !== null) {
+          // Images is an object (common in Firebase), convert to array
+          plantImages = Object.values(plant.images)
+            .filter(img => typeof img === 'string' && img.trim() !== '');
+          console.log('Extracted images from object, found', plantImages.length, 'images');
         }
+        
+        // If we found the main image and it's not already in the array, add it first
+        if (plant.mainImage && plantImages.indexOf(plant.mainImage) === -1) {
+          plantImages.unshift(plant.mainImage);
+          console.log('Added main image to the beginning of the array');
+        } else if (plant.mainImage && plant.mainImageIndex !== undefined) {
+          // If we have a main image and a main image index, make sure it's first in the array
+          const mainImageIndex = Number(plant.mainImageIndex);
+          if (!isNaN(mainImageIndex) && mainImageIndex >= 0 && mainImageIndex < plantImages.length) {
+            // Remove the main image from its current position
+            const mainImage = plantImages[mainImageIndex];
+            plantImages.splice(mainImageIndex, 1);
+            // Add it to the beginning
+            plantImages.unshift(mainImage);
+            console.log('Moved main image to the beginning based on mainImageIndex');
+          }
+        }
+        
+        // As a fallback, check for additionalImages if images array is still empty
+        if (plantImages.length === 0 && Array.isArray(plant.additionalImages) && plant.additionalImages.length > 0) {
+          plantImages = [...plant.additionalImages];
+          console.log('Using additionalImages, found', plantImages.length, 'images');
+        }
+        
+        // If we found the main image and it's in the array multiple times, deduplicate
+        if (plant.mainImage) {
+          plantImages = plantImages.filter((img, index) => 
+            img !== plant.mainImage || index === plantImages.indexOf(plant.mainImage)
+          );
+        }
+        
+        // Remove any empty or null entries
+        plantImages = plantImages.filter(img => img && typeof img === 'string' && img.trim() !== '');
         
         // Ensure we have at least a placeholder
         if (plantImages.length === 0) {
           plantImages.push('/images/placeholder.jpg');
+          console.log('No images found, using placeholder');
         }
         
-        console.log(`Plant ${plant.name} has ${plantImages.length} images`);
+        console.log(`Final result: Plant ${plant.name} has ${plantImages.length} images:`, plantImages);
         
         setPlant(plant);
         setImages(plantImages);
