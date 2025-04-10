@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory, updateOrder } from '../../services/firebase';
 import { sendOrderConfirmationEmails } from '../../services/emailService';
 import { useToast } from '../../context/ToastContext';
-import { db } from '../../services/firebase';
 
 // Create context
 const OrderContext = createContext();
@@ -705,7 +704,6 @@ export const OrderProvider = ({ children }) => {
     updateOrderItems: updateOrderItems,
     finalizeOrder: finalizeOrder,
     statusToLowerCase,
-    db,
   };
 
   console.log("OrderContext providing:", {

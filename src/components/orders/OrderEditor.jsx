@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
 import Invoice from '../Invoice';
-import { getDoc, doc, updateDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-hot-toast';
 import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
+import { updateOrder } from '../../services/firebase';
 
 /**
  * OrderEditor - Component for editing an existing order
@@ -52,80 +52,35 @@ const OrderEditor = ({ orderId, closeModal }) => {
     const loadOrderDetails = async () => {
       setIsLoading(true);
       try {
-        // Ensure db is available, if not, get it from firebase.js
-        if (!db) {
-          console.warn("DB not available from context, attempting to import directly");
-          try {
-            const firebaseModule = await import('../../services/firebase');
-            const firebaseDb = firebaseModule.db;
-            
-            if (!firebaseDb) {
-              throw new Error("Failed to initialize Firestore instance");
-            }
-            
-            console.log("Successfully imported db from firebase.js");
-            
-            // Use the imported db to get the order document
-            const orderDoc = await getDoc(doc(firebaseDb, 'orders', orderId));
-            
-            if (orderDoc.exists()) {
-              const orderData = orderDoc.data();
-              
-              // Initialize order details
-              setOrderData({
-                id: orderId,
-                customerEmail: orderData.customerEmail || '',
-                customerName: orderData.customerName || '',
-                customerPhone: orderData.customerPhone || '',
-                orderDate: orderData.orderDate ? new Date(orderData.orderDate) : new Date(),
-                orderStatus: orderData.orderStatus || 'pending',
-                shippingAddress: orderData.shippingAddress || '',
-                notes: orderData.notes || '',
-                paymentMethod: orderData.paymentMethod || 'card',
-                total: orderData.total || '0.00'
-              });
-              
-              // Initialize items with freebie status
-              if (orderData.items && Array.isArray(orderData.items)) {
-                setItems(orderData.items.map(item => ({
-                  ...item,
-                  isFreebie: item.isFreebie || false
-                })));
-              }
-            }
-          } catch (importError) {
-            console.error("Failed to import firebase db:", importError);
-            toast.error("Failed to connect to database");
+        // Use the orders from context or fetch if needed
+        const orderDetails = orders.find(order => order.id === orderId);
+        
+        if (orderDetails) {
+          // Initialize order details from context
+          setOrderData({
+            id: orderId,
+            customerEmail: orderDetails.customerEmail || '',
+            customerName: orderDetails.customerName || '',
+            customerPhone: orderDetails.customerPhone || '',
+            orderDate: orderDetails.orderDate ? new Date(orderDetails.orderDate) : new Date(),
+            orderStatus: orderDetails.orderStatus || 'pending',
+            shippingAddress: orderDetails.shippingAddress || '',
+            notes: orderDetails.notes || '',
+            paymentMethod: orderDetails.paymentMethod || 'card',
+            total: orderDetails.total || '0.00'
+          });
+          
+          // Initialize items with freebie status
+          if (orderDetails.items && Array.isArray(orderDetails.items)) {
+            setItems(orderDetails.items.map(item => ({
+              ...item,
+              isFreebie: item.isFreebie || false
+            })));
           }
         } else {
-          // Use the db from context
-          const orderDoc = await getDoc(doc(db, 'orders', orderId));
-          
-          if (orderDoc.exists()) {
-            const orderData = orderDoc.data();
-            
-            // Initialize order details
-            setOrderData({
-              id: orderId,
-              customerEmail: orderData.customerEmail || '',
-              customerName: orderData.customerName || '',
-              customerPhone: orderData.customerPhone || '',
-              orderDate: orderData.orderDate ? new Date(orderData.orderDate) : new Date(),
-              orderStatus: orderData.orderStatus || 'pending',
-              shippingAddress: orderData.shippingAddress || '',
-              notes: orderData.notes || '',
-              paymentMethod: orderData.paymentMethod || 'card',
-              total: orderData.total || '0.00'
-            });
-            
-            // Initialize items with freebie status
-            if (orderData.items && Array.isArray(orderData.items)) {
-              setItems(orderData.items.map(item => ({
-                ...item,
-                isFreebie: item.isFreebie || false
-              })));
-            }
-          }
+          // If order isn't in context, show error
+          console.error("Order not found in context");
+          toast.error("Order not found");
         }
       } catch (error) {
         console.error("Error loading order:", error);
@@ -135,7 +90,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
     };
     
     loadOrderDetails();
-  }, [orderId, db]);
+  }, [orderId, orders]);
   
   // Auto-save changes every 30 seconds if there are changes
   useEffect(() => {
@@ -200,7 +155,6 @@ const OrderEditor = ({ orderId, closeModal }) => {
   // Save order changes to Firebase
   const handleSaveOrder = async () => {
     setSaveInProgress(true);
-    let firebaseDb = db; // Use db from context by default
     
     try {
       // Calculate the correct total excluding freebies
@@ -212,24 +166,6 @@ const OrderEditor = ({ orderId, closeModal }) => {
       }, 0).toFixed(2);
       
       console.log("Saving order with total:", calculatedTotal);
-      
-      // Check if db is available, if not try to import it
-      if (!firebaseDb) {
-        console.warn("DB not available from context in handleSaveOrder, attempting to import directly");
-        try {
-          const firebaseModule = await import('../../services/firebase');
-          firebaseDb = firebaseModule.db;
-          
-          if (!firebaseDb) {
-            throw new Error("Failed to initialize Firestore instance");
-          }
-          
-          console.log("Successfully imported db from firebase.js for order saving");
-        } catch (importError) {
-          console.error("Failed to import firebase db:", importError);
-          throw new Error("Database connection could not be established");
-        }
-      }
       
       // Verify orderId is valid
       if (!orderId) {
@@ -245,22 +181,26 @@ const OrderEditor = ({ orderId, closeModal }) => {
         updatedAt: new Date().toISOString()
       };
       
-      // Log the exact path and data being sent
-      console.log(`Updating document in 'orders/${orderId}'`);
+      // Log the update
+      console.log(`Updating order: ${orderId}`);
       
       try {
-        // Update the order document using the available db instance
-        await updateDoc(doc(firebaseDb, 'orders', orderId), updateData);
+        // Use the Realtime Database updateOrder function instead of Firestore
+        const success = await updateOrder(orderId, updateData);
         
-        console.log("Order saved successfully");
-        toast.success("Order updated successfully");
-        addToast("Order updated successfully", "success");
-        
-        // If status changed to completed, show confirmation modal
-        if (orderData.orderStatus === 'completed' && orderStatusRef.current !== 'completed') {
-          setShowConfirmModal(true);
+        if (success) {
+          console.log("Order saved successfully");
+          toast.success("Order updated successfully");
+          addToast("Order updated successfully", "success");
+          
+          // If status changed to completed, show confirmation modal
+          if (orderData.orderStatus === 'completed' && orderStatusRef.current !== 'completed') {
+            setShowConfirmModal(true);
+          } else {
+            closeModal();
+          }
         } else {
-          closeModal();
+          throw new Error("Firebase returned false success status");
         }
       } catch (firebaseError) {
         console.error("Firebase error:", firebaseError);
