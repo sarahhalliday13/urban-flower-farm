@@ -524,16 +524,22 @@ const ModularInventoryManager = () => {
     if (searchTerm && searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase().trim();
       filtered = filtered.filter(plant => {
+        const name = (plant.name || '').toLowerCase();
         const commonName = (plant.commonName || '').toLowerCase();
+        const scientificName = (plant.scientificName || '').toLowerCase();
         const botanicalName = (plant.botanicalName || '').toLowerCase();
         const description = (plant.description || '').toLowerCase();
         const shortDescription = (plant.shortDescription || '').toLowerCase();
+        const plantId = String(plant.id || '').toLowerCase();
         
         return (
+          name.includes(term) ||
           commonName.includes(term) ||
+          scientificName.includes(term) ||
           botanicalName.includes(term) ||
           description.includes(term) ||
-          shortDescription.includes(term)
+          shortDescription.includes(term) ||
+          plantId.includes(term)
         );
       });
     }
