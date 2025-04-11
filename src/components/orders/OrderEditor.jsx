@@ -184,6 +184,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
       // Log the update
       console.log(`Updating order: ${orderId}`);
       
+      // Check updateOrder type
+      console.log("updateOrder type:", typeof updateOrder); // Should be: function
+      
       try {
         // Use the Realtime Database updateOrder function instead of Firestore
         const success = await updateOrder(orderId, updateData);
@@ -204,7 +207,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
         }
       } catch (firebaseError) {
         console.error("Firebase error:", firebaseError);
-        throw new Error(`Firebase error: ${firebaseError.message}`);
+        throw firebaseError;
       }
     } catch (error) {
       console.error("Error updating order:", error);
@@ -224,14 +227,14 @@ const OrderEditor = ({ orderId, closeModal }) => {
         errorMessage = "Network error: Check your internet connection";
       }
     
-      // ✅ Make sure these are only called if safe
+      // ✅ These won't blow up if something weird happens
       if (typeof toast?.error === 'function') {
         toast.error(errorMessage);
       }
       if (typeof addToast === 'function') {
         addToast(errorMessage, "error");
       }
-    }
+    }    
     setSaveInProgress(false);
   };
   
