@@ -610,7 +610,11 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
   });
 });
 
-exports.sendContactEmail = sendContactEmail;
+exports.sendContactEmail = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendContactEmailApp(req, res);
+  });
+});
 
 exports.uploadImage = functions.https.onRequest((req, res) => {
   corsHandler(req, res, () => {
@@ -618,6 +622,14 @@ exports.uploadImage = functions.https.onRequest((req, res) => {
   });
 });
 
-exports.simpleContact = simpleContactFunction;
+exports.simpleContact = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    simpleContactFunction(req, res);
+  });
+});
 
-exports.directContactEmail = directContactEmail;
+exports.directContactEmail = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    directContactEmail(req, res);
+  });
+});
