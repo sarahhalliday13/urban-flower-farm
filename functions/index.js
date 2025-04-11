@@ -595,41 +595,11 @@ uploadImageApp.options('*', (req, res) => {
   res.status(204).send('');
 });
 
-// New exports with cors wrapping:
-const corsHandler = cors({ origin: true });
-
-exports.sendEmail = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    sendEmailApp(req, res);
-  });
-});
-
-exports.sendOrderEmail = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    sendOrderEmailApp(req, res);
-  });
-});
-
-exports.sendContactEmail = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    sendContactEmailApp(req, res);
-  });
-});
-
-exports.uploadImage = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    uploadImageApp(req, res);
-  });
-});
-
-exports.simpleContact = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    simpleContactFunction(req, res);
-  });
-});
-
-exports.directContactEmail = functions.https.onRequest((req, res) => {
-  corsHandler(req, res, () => {
-    directContactEmail(req, res);
-  });
-});
+// Exports with proper CORS handling
+// Note: directContactEmail and simpleContactFunction are likely already functions, not Express apps
+exports.sendEmail = functions.https.onRequest(sendEmailApp);
+exports.sendOrderEmail = functions.https.onRequest(sendOrderEmailApp);
+exports.sendContactEmail = functions.https.onRequest(sendContactEmailApp);
+exports.uploadImage = functions.https.onRequest(uploadImageApp);
+exports.simpleContact = functions.https.onRequest(simpleContactFunction);
+exports.directContactEmail = functions.https.onRequest(directContactEmail);
