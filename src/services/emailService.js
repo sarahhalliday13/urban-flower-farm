@@ -149,15 +149,40 @@ export const sendContactFormEmail = async (formData) => {
     // Try to send email via Firebase Function
     try {
       const apiUrl = getApiUrl();
-      console.log(`Sending contact form email via: ${apiUrl}/sendContactEmail`);
       
-      const response = await fetch(`${apiUrl}/sendContactEmail`, {
+      // Use our new direct contact email function
+      console.log(`Sending contact form email via: ${apiUrl}/directContactEmail`);
+      
+      const response = await fetch(`${apiUrl}/directContactEmail`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
+        mode: 'cors',
         body: JSON.stringify(formData),
       });
+      
+      // Extra logging
+      console.log('Response status:', response.status);
+      console.log('Response headers:', [...response.headers.entries()]);
+      
+      // Handle non-JSON response
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.log('Non-JSON response received');
+        const textResponse = await response.text();
+        console.log('Text response:', textResponse);
+        if (response.ok) {
+          return {
+            success: true,
+            message: 'Your message has been sent successfully.',
+            data: { text: textResponse }
+          };
+        } else {
+          throw new Error(textResponse || 'Failed to send contact form');
+        }
+      }
       
       const data = await response.json();
       console.log('Contact form API response:', data);

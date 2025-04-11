@@ -8,8 +8,9 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
+// Remove v2 imports since we're using v3
+// const {onRequest} = require("firebase-functions/v2/https");
+// const logger = require("firebase-functions/logger");
 const functions = require('firebase-functions');
 const sgMail = require('@sendgrid/mail');
 const admin = require('firebase-admin');
@@ -20,6 +21,19 @@ const Busboy = require('busboy');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const simpleContactFunction = require('./simplifiedContact').simpleContact;
+const { sendContactEmail } = require('./sendContactEmail');
+const { directContactEmail } = require('./simple-contact-email');
+
+// Create a simple logger function since we removed the v2 logger
+const logger = {
+  info: (message, data) => {
+    console.log(message, data || '');
+  },
+  error: (message, data) => {
+    console.error(message, data || '');
+  }
+};
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -581,8 +595,29 @@ uploadImageApp.options('*', (req, res) => {
   res.status(204).send('');
 });
 
-// Export the functions
-exports.sendEmail = onRequest(sendEmailApp);
-exports.sendOrderEmail = onRequest(sendOrderEmailApp);
-exports.sendContactEmail = onRequest(sendContactEmailApp);
-exports.uploadImage = onRequest(uploadImageApp);
+// New exports with cors wrapping:
+const corsHandler = cors({ origin: true });
+
+exports.sendEmail = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendEmailApp(req, res);
+  });
+});
+
+exports.sendOrderEmail = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    sendOrderEmailApp(req, res);
+  });
+});
+
+exports.sendContactEmail = sendContactEmail;
+
+exports.uploadImage = functions.https.onRequest((req, res) => {
+  corsHandler(req, res, () => {
+    uploadImageApp(req, res);
+  });
+});
+
+exports.simpleContact = simpleContactFunction;
+
+exports.directContactEmail = directContactEmail;
