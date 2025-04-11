@@ -162,9 +162,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-              {hasOrders && (
-                <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
-              )}
             </>
           )}
         </div>
@@ -472,7 +469,6 @@ function AppContent() {
           <Link to="/faq">FAQ</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
-          {hasOrders && <Link to="/orders">My Orders</Link>}
           <Link to="/admin">Manage</Link>
         </div>
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>

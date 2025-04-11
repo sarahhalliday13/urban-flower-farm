@@ -73,7 +73,6 @@ function CartModal({ isOpen, onClose }) {
         {cartItems.length === 0 ? (
           <div className="empty-cart-container">
             <p className="empty-cart">Your cart is empty</p>
-            <button className="view-orders-btn" onClick={viewOrders}>View My Orders</button>
           </div>
         ) : (
           <>
@@ -152,7 +151,6 @@ function CartModal({ isOpen, onClose }) {
                 <span>${getTotal().toFixed(2)}</span>
               </div>
               <button className="checkout-btn" onClick={handleCheckout}>Proceed to Checkout</button>
-              <button className="view-orders-btn" onClick={viewOrders}>View My Orders</button>
             </div>
           </>
         )}
