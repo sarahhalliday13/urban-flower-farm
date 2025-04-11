@@ -4,8 +4,7 @@
   "private": true,
   "homepage": "/",
   "engines": {
-    "node": ">=18.17.0",
-    "npm": ">=9.0.0"
+    "node": "16"
   },
   "dependencies": {
     "@babel/core": "^7.16.0",

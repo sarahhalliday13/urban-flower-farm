@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { getDatabaseRef, onValue } from '../../services/firebase';
+import { getDatabase, ref, onValue } from 'firebase/database';
 
 /**
  * PlantSelector - A dropdown component for selecting plants to add to an order
@@ -17,7 +17,8 @@ const PlantSelector = ({ onAddItem }) => {
   // Load plants from Firebase
   useEffect(() => {
     setIsLoading(true);
-    const plantsRef = getDatabaseRef('plants');
+    const database = getDatabase();
+    const plantsRef = ref(database, 'plants');
     
     const unsubscribe = onValue(plantsRef, (snapshot) => {
       if (snapshot.exists()) {

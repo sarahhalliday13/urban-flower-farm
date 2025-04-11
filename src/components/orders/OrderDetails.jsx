@@ -238,7 +238,7 @@ const OrderDetails = () => {
       {isEditingOrder ? (
         <OrderEditor 
           orderId={activeOrder} 
-          onClose={() => setIsEditingOrder(false)} 
+          closeModal={() => setIsEditingOrder(false)} 
         />
       ) : (
         <div className="order-details-grid">

@@ -1,79 +1,46 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
-import Invoice from '../Invoice';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'react-hot-toast';
 import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
-import { updateOrder } from '../../services/firebase';
-// Direct imports from firebase/database as fallback
-import { getDatabase, ref, update } from 'firebase/database';
+import SaveCancelButtons from './SaveCancelButtons';
 
 /**
  * OrderEditor - Component for editing an existing order
- * Enhanced with improved layout, searchable dropdown, and better UX
+ * Ultra simplified version with direct REST API calls
  */
 const OrderEditor = ({ orderId, closeModal }) => {
   console.log("OrderEditor mounted with orderId:", orderId);
   
-  const { 
-    db,
-    orders, 
-    setOrders, 
-    createEmptyOrder, 
-    saveOrder, 
-    deleteOrder,
-    updateItemQuantity,
-    removeItemFromOrder,
-    addItemToOrder,
-    finalizeOrder 
-  } = useOrders();
-  
+  const { orders } = useOrders();
   const { addToast } = useToast();
-  const { orderStatusRef } = useOrders();
   
-  console.log("Orders from context:", orders);
-  console.log("finalizeOrder function:", typeof finalizeOrder);
+  // Current order status reference for comparison
+  const orderStatusRef = useRef(null);
   
   // Get current order
   const currentOrder = orders.find(order => order.id === orderId);
   const [items, setItems] = useState(currentOrder?.items || []);
   const [orderData, setOrderData] = useState(currentOrder || {});
   const [saveInProgress, setSaveInProgress] = useState(false);
-  const [lastAutoSave, setLastAutoSave] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   
-  // Create a local version of updateOrder as fallback
-  const localUpdateOrder = async (orderId, orderData) => {
-    console.log("Using local fallback updateOrder function");
-    try {
-      const database = getDatabase();
-      const orderRef = ref(database, `orders/${orderId}`);
-      await update(orderRef, orderData);
-      console.log(`Order ${orderId} updated successfully via local fallback`);
-      return true;
-    } catch (error) {
-      console.error('Error updating order via local fallback:', error);
-      return false;
-    }
-  };
-  
-  // Refs for autosave
-  const itemsRef = useRef(items);
-  itemsRef.current = items;
-  
+  // Load order details
   useEffect(() => {
-    // Load order details from Firebase
     const loadOrderDetails = async () => {
       setIsLoading(true);
+      
       try {
-        // Use the orders from context or fetch if needed
+        // Try to find the order in context
         const orderDetails = orders.find(order => order.id === orderId);
         
         if (orderDetails) {
-          // Initialize order details from context
+          // Store the current order status
+          orderStatusRef.current = orderDetails.orderStatus;
+          
+          // Set order data
           setOrderData({
             id: orderId,
             customerEmail: orderDetails.customerEmail || '',
@@ -87,49 +54,63 @@ const OrderEditor = ({ orderId, closeModal }) => {
             total: orderDetails.total || '0.00'
           });
           
-          // Initialize items with freebie status
+          // Initialize items
           if (orderDetails.items && Array.isArray(orderDetails.items)) {
-            setItems(orderDetails.items.map(item => ({
+            // Simplify items, remove freebie functionality
+            const processedItems = orderDetails.items.map(item => ({
               ...item,
-              isFreebie: item.isFreebie || false
-            })));
+              quantity: parseInt(item.quantity, 10) || 1,
+              price: parseFloat(item.price) || 0
+            }));
+            
+            setItems(processedItems);
           }
         } else {
-          // If order isn't in context, show error
-          console.error("Order not found in context");
-          toast.error("Order not found");
+          // Fallback to loading direct from Firebase
+          const snapshot = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json`);
+          const orderData = await snapshot.json();
+          
+          if (orderData) {
+            orderStatusRef.current = orderData.orderStatus;
+            
+            setOrderData({
+              id: orderId,
+              customerEmail: orderData.customerEmail || '',
+              customerName: orderData.customerName || '',
+              customerPhone: orderData.customerPhone || '',
+              orderDate: orderData.orderDate ? new Date(orderData.orderDate) : new Date(),
+              orderStatus: orderData.orderStatus || 'pending',
+              shippingAddress: orderData.shippingAddress || '',
+              notes: orderData.notes || '',
+              paymentMethod: orderData.paymentMethod || 'card',
+              total: orderData.total || '0.00'
+            });
+            
+            if (orderData.items && Array.isArray(orderData.items)) {
+              // Simplify items, remove freebie functionality
+              const processedItems = orderData.items.map(item => ({
+                ...item,
+                quantity: parseInt(item.quantity, 10) || 1,
+                price: parseFloat(item.price) || 0
+              }));
+              
+              setItems(processedItems);
+            }
+          } else {
+            console.error("Order not found in Firebase");
+            toast.error("Order not found");
+          }
         }
       } catch (error) {
         console.error("Error loading order:", error);
         toast.error("Failed to load order details");
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
     
     loadOrderDetails();
   }, [orderId, orders]);
-  
-  // Auto-save changes every 30 seconds if there are changes
-  useEffect(() => {
-    const autoSaveInterval = setInterval(() => {
-      if (itemsRef.current.length > 0) {
-        const draftKey = `orderDraft_${orderId}`;
-        const timestamp = new Date().toISOString();
-        
-        try {
-          localStorage.setItem(draftKey, JSON.stringify({
-            items: itemsRef.current,
-            timestamp
-          }));
-          setLastAutoSave(timestamp);
-        } catch (e) {
-          console.error('Error saving draft order:', e);
-        }
-      }
-    }, 30000); // 30 seconds
-    
-    return () => clearInterval(autoSaveInterval);
-  }, [orderId]);
   
   // Update item quantity
   const handleUpdateQuantity = (itemId, newQuantity) => {
@@ -149,133 +130,21 @@ const OrderEditor = ({ orderId, closeModal }) => {
   
   // Add new item to the order
   const handleAddItem = (item) => {
-      const newItem = {
+    const newItem = {
       ...item,
       quantity: 1,
-      id: uuidv4(),
-      isFreebie: false
+      id: uuidv4()
     };
-      setItems(prevItems => [...prevItems, newItem]);
+    setItems(prevItems => [...prevItems, newItem]);
   };
   
-  // Toggle item freebie status
-  const handleToggleFreebie = (itemId, isFreebie) => {
-    setItems(prevItems => 
-      prevItems.map(item => 
-        item.id === itemId 
-          ? { ...item, isFreebie } 
-          : item
-      )
-    );
-  };
-  
-  // Save order changes to Firebase
-  const handleSaveOrder = async () => {
-    setSaveInProgress(true);
-    
-    try {
-      // Calculate the correct total excluding freebies
-      const calculatedTotal = items.reduce((sum, item) => {
-        if (item.isFreebie) return sum;
-        const price = parseFloat(item.price) || 0;
-        const quantity = parseInt(item.quantity, 10) || 0;
-        return sum + (price * quantity);
-      }, 0).toFixed(2);
-      
-      console.log("Saving order with total:", calculatedTotal);
-      
-      // Verify orderId is valid
-      if (!orderId) {
-        console.error("Order ID is invalid:", orderId);
-        throw new Error("Invalid Order ID");
-      }
-      
-      // Prepare the update object
-      const updateData = {
-        ...orderData,
-        items,
-        total: calculatedTotal,
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Log the update
-      console.log(`Updating order: ${orderId}`);
-      
-      // Check updateOrder type
-      console.log("updateOrder type:", typeof updateOrder); // Should be: function
-      
-      try {
-        // Try to use the imported updateOrder first, fall back to local implementation if it fails
-        let success = false;
-        
-        try {
-          // First attempt with the imported updateOrder
-          if (typeof updateOrder === 'function') {
-            success = await updateOrder(orderId, updateData);
-            console.log("Used imported updateOrder function with result:", success);
-          } else {
-            console.warn("Imported updateOrder is not a function, using fallback");
-            throw new Error("updateOrder is not a function");
-          }
-        } catch (importError) {
-          console.warn("Imported updateOrder failed:", importError);
-          // Use local fallback as a last resort
-          success = await localUpdateOrder(orderId, updateData);
-          console.log("Used local fallback updateOrder with result:", success);
-        }
-        
-        if (success) {
-          console.log("Order saved successfully");
-          addToast?.("Order updated successfully", "success");
-          
-          // If status changed to completed, show confirmation modal
-          if (orderData.orderStatus === 'completed' && orderStatusRef.current !== 'completed') {
-            setShowConfirmModal(true);
-          } else {
-            closeModal();
-          }
-        } else {
-          throw new Error("Firebase returned false success status");
-        }
-      } catch (firebaseError) {
-        console.error("Firebase error:", firebaseError);
-        throw firebaseError;
-      }
-    } catch (error) {
-      console.error("Error updating order:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        code: error?.code,
-        stack: error?.stack,
-      });
-    
-      let errorMessage = "Failed to save order changes";
-    
-      if (error?.code === 'permission-denied') {
-        errorMessage = "Permission denied: You don't have access to update this order";
-      } else if (error?.code === 'not-found') {
-        errorMessage = "Order not found in database";
-      } else if (error?.message?.toLowerCase().includes('network')) {
-        errorMessage = "Network error: Check your internet connection";
-      }
-    
-      addToast?.(errorMessage, "error");
-    }    
-    setSaveInProgress(false);
-    return false; // Add fallback return for clarity
-  };
-  
-  // Calculate if any items have missing price data
-  const hasMissingPrices = items.some(item => 
-    !item.price || isNaN(parseFloat(item.price)) || parseFloat(item.price) === 0
-  );
-  
-  // Format price for display, handling missing prices
-  const formatPrice = (price) => {
-    if (!price || isNaN(parseFloat(price))) {
-      return '0.00';
-    }
-    return parseFloat(price).toFixed(2);
+  // Calculate the current total
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity, 10) || 0;
+      return sum + (price * quantity);
+    }, 0).toFixed(2);
   };
   
   // Helper function to safely format values for display
@@ -289,8 +158,86 @@ const OrderEditor = ({ orderId, closeModal }) => {
     return String(value);
   };
   
+  // The simplest save function with direct REST API
+  const handleSaveOrder = async () => {
+    console.log("Starting direct save with REST API");
+    setSaveInProgress(true);
+    
+    try {
+      // Prepare update object
+      const updateData = {
+        id: orderId,
+        items: items,
+        total: calculateTotal(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Make direct REST API call
+      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json`, {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Firebase responded with status ${response.status}`);
+      }
+      
+      console.log("Order saved successfully via REST API");
+      addToast?.("Order updated successfully", "success");
+      closeModal();
+    } catch (error) {
+      console.error("Error updating order:", error);
+      addToast?.("Failed to save order changes", "error");
+    } finally {
+      setSaveInProgress(false);
+    }
+  };
+  
+  // The simplest finalize function with direct REST API
+  const handleFinalizeOrder = async () => {
+    console.log("Starting direct finalize with REST API");
+    setSaveInProgress(true);
+    
+    try {
+      // Prepare update object
+      const updateData = {
+        id: orderId,
+        items: items,
+        total: calculateTotal(),
+        isFinalized: true,
+        finalizedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Make direct REST API call
+      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json`, {
+        method: 'PATCH',
+        body: JSON.stringify(updateData),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Firebase responded with status ${response.status}`);
+      }
+      
+      console.log("Order finalized successfully via REST API");
+      addToast?.("Order finalized successfully", "success");
+      closeModal();
+    } catch (error) {
+      console.error("Error finalizing order:", error);
+      addToast?.("Failed to finalize order", "error");
+    } finally {
+      setSaveInProgress(false);
+    }
+  };
+  
   // If the order is not found, show an error
-  if (!currentOrder) {
+  if (!currentOrder && !isLoading) {
     return (
       <div className="order-editor">
         <div className="editor-header">
@@ -315,41 +262,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
     );
   }
   
-  // If showing finalized invoice preview, render it
-  if (showConfirmModal) {
-    return (
-      <div className="order-editor">
-        <div className="editor-header">
-          <h2>Order #{formatValue(orderId)} Finalized</h2>
-          <button className="close-editor-btn" onClick={closeModal}>×</button>
-        </div>
-        <div className="finalized-message">
-          <p>This order has been finalized. Here is the final invoice:</p>
-          <div className="invoice-preview-container">
-            <Invoice 
-              order={{
-                ...currentOrder,
-                items,
-                isFinalized: true,
-                total: items.reduce((sum, item) => {
-                  if (item.isFreebie) return sum;
-                  const price = parseFloat(item.price) || 0;
-                  const quantity = parseInt(item.quantity, 10) || 0;
-                  return sum + (price * quantity);
-                }, 0)
-              }} 
-              type="print" 
-              invoiceType="final" 
-            />
-          </div>
-          <button className="close-preview-btn" onClick={closeModal}>
-            Close and Return to Orders
-          </button>
-        </div>
-      </div>
-    );
-  }
-  
+  // Main editor view
   return (
     <div className="order-editor">
       <div className="editor-header">
@@ -376,21 +289,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
                 editable={true}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
-                onToggleFreebie={handleToggleFreebie}
               />
-              
-              {hasMissingPrices && (
-                <div className="price-warning">
-                  <i className="warning-icon">⚠️</i>
-                  <span>Some items are missing price information. They'll be calculated as $0.00.</span>
-                </div>
-              )}
-              
-              {lastAutoSave && (
-                <div className="autosave-indicator">
-                  <span>Auto-saved: {new Date(lastAutoSave).toLocaleTimeString()}</span>
-                </div>
-              )}
             </div>
           </div>
           
@@ -409,83 +308,20 @@ const OrderEditor = ({ orderId, closeModal }) => {
               <p className="order-summary">
                 Total Items: {items.length}
                 <br />
-                Order Total: ${items.reduce((sum, item) => {
-                  if (item.isFreebie) return sum;
-                  const price = parseFloat(item.price) || 0;
-                  const quantity = parseInt(item.quantity, 10) || 0;
-                  return sum + (price * quantity);
-                }, 0).toFixed(2)}
+                Order Total: ${calculateTotal()}
               </p>
 
-              <div className="editor-actions">
-                <button 
-                  className="save-changes-btn"
-                  onClick={handleSaveOrder}
-                  disabled={items.length === 0 || saveInProgress}
-                >
-                  {saveInProgress ? 'Saving...' : 'Save Changes (Keep Editable)'}
-                </button>
-                
-                <button 
-                  className="finalize-order-btn"
-                  onClick={() => setShowConfirmModal(true)}
-                  disabled={items.length === 0 || saveInProgress}
-                >
-                  {saveInProgress ? 'Finalizing...' : 'Finalize Order'}
-                </button>
-                
-                <button 
-                  className="cancel-edit-btn"
-                  onClick={closeModal}
-                  disabled={saveInProgress}
-                >
-                  Cancel
-                </button>
-              </div>
+              <SaveCancelButtons 
+                onSave={handleSaveOrder}
+                onFinalize={handleFinalizeOrder}
+                onCancel={closeModal}
+                isDisabled={items.length === 0}
+                isSaving={saveInProgress}
+              />
             </div>
           </div>
         </div>
       </div>
-      
-      {/* Finalize Confirmation Modal */}
-      {showConfirmModal && (
-        <div className="confirmation-modal">
-          <div className="confirmation-content">
-            <h3>Confirm Order Finalization</h3>
-            <p>Are you sure you want to finalize this order?</p>
-            <p>Once finalized, the order cannot be edited further. All details will be locked.</p>
-            
-            <div className="confirmation-summary">
-              <p><strong>Order ID:</strong> {formatValue(orderId)}</p>
-              <p><strong>Customer:</strong> {formatValue(orderData.customerName)}</p>
-              <p><strong>Items:</strong> {items.length}</p>
-              <p><strong>Total:</strong> ${items.reduce((sum, item) => {
-                if (item.isFreebie) return sum;
-                const price = parseFloat(item.price) || 0;
-                const quantity = parseInt(item.quantity, 10) || 0;
-                return sum + (price * quantity);
-              }, 0).toFixed(2)}</p>
-            </div>
-            
-            <div className="confirmation-buttons">
-              <button 
-                className="confirm-finalize-btn"
-                onClick={handleSaveOrder}
-                disabled={saveInProgress}
-              >
-                {saveInProgress ? 'Finalizing...' : 'Yes, Finalize Order'}
-              </button>
-              <button 
-                className="cancel-finalize-btn"
-                onClick={() => setShowConfirmModal(false)}
-                disabled={saveInProgress}
-              >
-                No, Keep Editing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

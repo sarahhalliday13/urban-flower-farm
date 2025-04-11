@@ -9,43 +9,46 @@ import React, { useEffect, useState } from 'react';
  * @param {boolean} props.editable - Whether the items can be edited
  * @param {function} props.onUpdateQuantity - Function to update item quantity
  * @param {function} props.onRemoveItem - Function to remove an item
- * @param {function} props.onToggleFreebie - Function to toggle item freebie status
  */
 const OrderItemsTable = ({ 
-  items, 
-  total, 
+  items = [], 
+  total = '0.00', 
   editable = false,
-  onUpdateQuantity = () => {},
-  onRemoveItem = () => {},
-  onToggleFreebie = () => {}
+  onUpdateQuantity = () => console.log('Update quantity not implemented'),
+  onRemoveItem = () => console.log('Remove item not implemented')
 }) => {
   // Keep local state of the calculated total to ensure UI updates
   const [calculatedTotal, setCalculatedTotal] = useState('0.00');
   
   // Recalculate total whenever items change
   useEffect(() => {
-    const newTotal = items.reduce((sum, item) => {
-      if (item.isFreebie) return sum;
-      const price = parseFloat(item.price) || 0;
-      const quantity = parseInt(item.quantity, 10) || 0;
-      return sum + (price * quantity);
-    }, 0);
-    
-    setCalculatedTotal(newTotal.toFixed(2));
+    try {
+      console.log("Items in OrderItemsTable:", items);
+      const newTotal = items.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0);
+      
+      setCalculatedTotal(newTotal.toFixed(2));
+    } catch (error) {
+      console.error("Error calculating total:", error);
+      setCalculatedTotal('0.00');
+    }
   }, [items]);
 
   // Handle quantity change in editable mode
   const handleQuantityChange = (itemId, newQuantity) => {
-    // Ensure quantity is valid
-    const quantity = parseInt(newQuantity, 10);
-    if (isNaN(quantity) || quantity < 0) return;
-    
-    onUpdateQuantity(itemId, quantity);
-  };
-
-  // Handle freebie toggle in editable mode
-  const handleFreebieToggle = (itemId, isFreebie) => {
-    onToggleFreebie(itemId, isFreebie);
+    try {
+      // Ensure quantity is valid
+      const quantity = parseInt(newQuantity, 10);
+      if (isNaN(quantity) || quantity < 0) return;
+      
+      console.log(`Updating quantity for item ${itemId} to ${quantity}`);
+      onUpdateQuantity(itemId, quantity);
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+    }
   };
 
   return (
@@ -58,16 +61,13 @@ const OrderItemsTable = ({
             <th className="price-col">Price</th>
             <th className="total-col">Total</th>
             {editable && (
-              <>
-                <th className="freebie-col">Freebie</th>
-                <th className="actions-col">Actions</th>
-              </>
+              <th className="actions-col">Actions</th>
             )}
           </tr>
         </thead>
         <tbody>
           {items.map(item => (
-            <tr key={item.id} className={item.isFreebie ? 'freebie-item' : ''}>
+            <tr key={item.id}>
               <td className="product-col">{item.name}</td>
               <td className="quantity-col">
                 {editable ? (
@@ -83,49 +83,35 @@ const OrderItemsTable = ({
                 )}
               </td>
               <td className="price-col">
-                {item.isFreebie ? (
-                  <span className="freebie-price">$0.00</span>
-                ) : (
-                  `$${parseFloat(item.price).toFixed(2)}`
-                )}
+                ${parseFloat(item.price).toFixed(2)}
               </td>
               <td className="total-col">
-                {item.isFreebie ? (
-                  <span className="freebie-total">$0.00</span>
-                ) : (
-                  `$${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}`
-                )}
+                ${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}
               </td>
               {editable && (
-                <>
-                  <td className="freebie-col">
-                    <label className="freebie-toggle">
-                      <input
-                        type="checkbox"
-                        checked={!!item.isFreebie}
-                        onChange={(e) => handleFreebieToggle(item.id, e.target.checked)}
-                        className="freebie-checkbox"
-                      />
-                      <span className="freebie-label">Freebie</span>
-                    </label>
-                  </td>
-                  <td className="actions-col">
-                    <button 
-                      className="remove-item-link" 
-                      onClick={() => onRemoveItem(item.id)}
-                      aria-label={`Remove ${item.name}`}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </>
+                <td className="actions-col">
+                  <button 
+                    className="remove-item-link" 
+                    onClick={() => {
+                      try {
+                        console.log(`Removing item ${item.id}`);
+                        onRemoveItem(item.id);
+                      } catch (error) {
+                        console.error("Error removing item:", error);
+                      }
+                    }}
+                    aria-label={`Remove ${item.name}`}
+                  >
+                    Delete
+                  </button>
+                </td>
               )}
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={editable ? "5" : "3"} className="order-total-label">Order Total</td>
+            <td colSpan={editable ? "4" : "3"} className="order-total-label">Order Total</td>
             <td className="order-total-value">
               ${calculatedTotal}
             </td>

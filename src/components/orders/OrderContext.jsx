@@ -499,10 +499,31 @@ export const OrderProvider = ({ children }) => {
       
       console.log("Finalizing order:", existingOrder.id);
       
+      // Process items to ensure consistent freebie property
+      const processedItems = existingOrder.items.map(item => ({
+        ...item,
+        // Ensure isFreebie is a boolean
+        isFreebie: !!item.isFreebie,
+        // Ensure quantity is a number
+        quantity: parseInt(item.quantity, 10) || 1,
+        // Ensure price is valid
+        price: parseFloat(item.price) || 0
+      }));
+      
+      // Calculate total properly, excluding freebies
+      const calculatedTotal = processedItems.reduce((sum, item) => {
+        if (item.isFreebie) return sum;
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0).toFixed(2);
+      
       // Update finalized status in Firebase
       await updateOrder(orderId, { 
         isFinalized: true,
-        finalizedAt: new Date().toISOString()
+        finalizedAt: new Date().toISOString(),
+        items: processedItems,
+        total: calculatedTotal
       });
       
       // Update in local state
@@ -511,7 +532,9 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             isFinalized: true,
-            finalizedAt: new Date().toISOString()
+            finalizedAt: new Date().toISOString(),
+            items: processedItems,
+            total: calculatedTotal
           };
         }
         return order;
@@ -526,7 +549,9 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             isFinalized: true,
-            finalizedAt: new Date().toISOString()
+            finalizedAt: new Date().toISOString(),
+            items: processedItems,
+            total: calculatedTotal
           };
         }
         return order;
@@ -704,11 +729,13 @@ export const OrderProvider = ({ children }) => {
     updateOrderItems: updateOrderItems,
     finalizeOrder: finalizeOrder,
     statusToLowerCase,
+    updateOrder,
   };
 
   console.log("OrderContext providing:", {
     updateOrderItemsType: typeof updateOrderItems, 
     finalizeOrderType: typeof finalizeOrder,
+    updateOrderType: typeof updateOrder,
     ordersCount: orders.length
   });
 
