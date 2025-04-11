@@ -209,24 +209,28 @@ const OrderEditor = ({ orderId, closeModal }) => {
     } catch (error) {
       console.error("Error updating order:", error);
       console.error("Error details:", {
-        message: error.message,
-        code: error.code,
-        stack: error.stack
+        message: error?.message,
+        code: error?.code,
+        stack: error?.stack,
       });
-      
-      // More specific error message based on the error type
+    
       let errorMessage = "Failed to save order changes";
-      
-      if (error.code === 'permission-denied') {
+    
+      if (error?.code === 'permission-denied') {
         errorMessage = "Permission denied: You don't have access to update this order";
-      } else if (error.code === 'not-found') {
+      } else if (error?.code === 'not-found') {
         errorMessage = "Order not found in database";
-      } else if (error.message && error.message.includes('network')) {
+      } else if (error?.message?.toLowerCase().includes('network')) {
         errorMessage = "Network error: Check your internet connection";
       }
-      
-      toast.error(errorMessage);
-      addToast(errorMessage, "error");
+    
+      // ✅ Make sure these are only called if safe
+      if (typeof toast?.error === 'function') {
+        toast.error(errorMessage);
+      }
+      if (typeof addToast === 'function') {
+        addToast(errorMessage, "error");
+      }
     }
     setSaveInProgress(false);
   };
