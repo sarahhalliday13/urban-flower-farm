@@ -7,6 +7,8 @@ import { toast } from 'react-hot-toast';
 import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
 import { updateOrder } from '../../services/firebase';
+// Direct imports from firebase/database as fallback
+import { getDatabase, ref, update } from 'firebase/database';
 
 /**
  * OrderEditor - Component for editing an existing order
@@ -42,6 +44,21 @@ const OrderEditor = ({ orderId, closeModal }) => {
   const [lastAutoSave, setLastAutoSave] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  
+  // Create a local version of updateOrder as fallback
+  const localUpdateOrder = async (orderId, orderData) => {
+    console.log("Using local fallback updateOrder function");
+    try {
+      const database = getDatabase();
+      const orderRef = ref(database, `orders/${orderId}`);
+      await update(orderRef, orderData);
+      console.log(`Order ${orderId} updated successfully via local fallback`);
+      return true;
+    } catch (error) {
+      console.error('Error updating order via local fallback:', error);
+      return false;
+    }
+  };
   
   // Refs for autosave
   const itemsRef = useRef(items);
@@ -188,8 +205,24 @@ const OrderEditor = ({ orderId, closeModal }) => {
       console.log("updateOrder type:", typeof updateOrder); // Should be: function
       
       try {
-        // Use the Realtime Database updateOrder function instead of Firestore
-        const success = await updateOrder(orderId, updateData);
+        // Try to use the imported updateOrder first, fall back to local implementation if it fails
+        let success = false;
+        
+        try {
+          // First attempt with the imported updateOrder
+          if (typeof updateOrder === 'function') {
+            success = await updateOrder(orderId, updateData);
+            console.log("Used imported updateOrder function with result:", success);
+          } else {
+            console.warn("Imported updateOrder is not a function, using fallback");
+            throw new Error("updateOrder is not a function");
+          }
+        } catch (importError) {
+          console.warn("Imported updateOrder failed:", importError);
+          // Use local fallback as a last resort
+          success = await localUpdateOrder(orderId, updateData);
+          console.log("Used local fallback updateOrder with result:", success);
+        }
         
         if (success) {
           console.log("Order saved successfully");
