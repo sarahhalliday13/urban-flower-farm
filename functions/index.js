@@ -8,10 +8,9 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-// Remove v2 imports since we're using v3
-// const {onRequest} = require("firebase-functions/v2/https");
-// const logger = require("firebase-functions/logger");
+// Updated to use firebase-functions v4
 const functions = require('firebase-functions');
+const logger = functions.logger; // Use built-in functions logger
 const sgMail = require('@sendgrid/mail');
 const admin = require('firebase-admin');
 const express = require('express');
@@ -21,37 +20,44 @@ const Busboy = require('busboy');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const simpleContactFunction = require('./simplifiedContact').simpleContact;
+const { simpleContactFunction } = require('./simplifiedContact');
 const { sendContactEmail } = require('./sendContactEmail');
 const { directContactEmail } = require('./simple-contact-email');
-
-// Create a simple logger function since we removed the v2 logger
-const logger = {
-  info: (message, data) => {
-    console.log(message, data || '');
-  },
-  error: (message, data) => {
-    console.error(message, data || '');
-  }
-};
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Initialize express app
+// Create Express apps for our endpoints
 const sendEmailApp = express();
-const sendOrderEmailApp = express();
-const sendContactEmailApp = express();
-
-// Use CORS middleware for all apps
 sendEmailApp.use(cors({ origin: true }));
-sendEmailApp.use(express.json());
-sendOrderEmailApp.use(cors({ origin: true }));
-sendOrderEmailApp.use(express.json());
+sendEmailApp.use(express.json()); // v4 requires explicit JSON parser
+
+const sendOrderEmailApp = express();
+sendOrderEmailApp.use(cors({ 
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+}));
+sendOrderEmailApp.use(express.json()); // v4 requires explicit JSON parser
+
+// CRITICAL: Direct handler for OPTIONS preflight requests - must come BEFORE any routes
+// This overrides the cors middleware with a direct implementation
+sendOrderEmailApp.options('*', (req, res) => {
+  // Force 204 No Content response with CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.set('Access-Control-Max-Age', '86400'); // 24 hours
+  res.status(204).send('');
+});
+
+const sendContactEmailApp = express(); 
 sendContactEmailApp.use(cors({ origin: true }));
-sendContactEmailApp.use(express.json());
+sendContactEmailApp.use(express.json()); // v4 requires explicit JSON parser
 
 // Health check endpoints - CRITICAL for container healthcheck
 sendEmailApp.get('/', (req, res) => {
@@ -150,55 +156,79 @@ sendEmailApp.post('/send-email', (req, res) => {
 
 // Order email endpoint
 sendOrderEmailApp.post('/', async (req, res) => {
-  let orderSaved = false;
+  // Set explicit CORS headers for additional compatibility
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  
   let emailsSent = false;
+  let orderSaved = false;
   let orderId = null;
-
+  
   try {
-    const order = req.body;
-    orderId = order.id;
-    logger.info('Processing order email:', order);
+    // Get order data from request
+    const orderData = req.body;
+    
+    // Validate order data structure
+    if (!orderData || typeof orderData !== 'object') {
+      logger.error('Invalid order data: not an object');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid order data format',
+        details: 'Order data must be a valid JSON object'
+      });
+    }
+    
+    // *** FOR TESTING ONLY ***
+    // Check if this is a test request (has test:true flag) and bypass actual email sending
+    const isTestMode = orderData.test === true;
+    if (isTestMode) {
+      logger.info('Test mode detected, returning success without sending emails');
+      return res.status(200).json({
+        success: true,
+        test: true,
+        message: 'Test mode: This would normally send an order confirmation email',
+        orderData: orderData
+      });
+    }
+    
+    // Extract orderId or generate a new one
+    orderId = orderData.id || orderData.orderId || `manual-${Date.now()}`;
+    logger.info('Processing order email:', { orderId });
+    
+    // Create basic validated order structure with defaults
+    const validatedOrder = {
+      id: orderId,
+      date: orderData.date || new Date().toISOString(),
+      status: orderData.status || 'pending',
+      total: orderData.total || 0,
+      customer: {
+        firstName: orderData.customer?.firstName || orderData.customer?.name?.split(' ')[0] || 'Customer',
+        lastName: orderData.customer?.lastName || 
+                 (orderData.customer?.name?.split(' ').slice(1).join(' ') || ''),
+        email: orderData.customer?.email || 'buttonsflowerfarm@gmail.com',
+        phone: orderData.customer?.phone || 'N/A',
+        notes: orderData.customer?.notes || orderData.notes || ''
+      },
+      items: Array.isArray(orderData.items) ? orderData.items : []
+    };
+    
+    // Recalculate total if not provided or items have changed
+    if (!orderData.total && validatedOrder.items.length > 0) {
+      validatedOrder.total = calculateTotal(validatedOrder.items);
+    }
+
+    // Log validation results
+    logger.info('Order validated:', { 
+      orderId: validatedOrder.id,
+      customerEmail: validatedOrder.customer.email,
+      itemCount: validatedOrder.items.length,
+      total: validatedOrder.total
+    });
 
     if (!apiKeyConfigured) {
       throw new Error('SendGrid API key is not configured');
     }
-
-    // Check what fields might be missing and log them
-    const missingFields = [];
-    if (!order.customer) missingFields.push('customer');
-    else if (!order.customer.email) missingFields.push('customer.email');
-    if (!order.items) missingFields.push('items');
-    
-    // Log detailed information about missing fields
-    if (missingFields.length > 0) {
-      logger.error('Order validation failed, missing fields:', {
-        missingFields,
-        orderData: order
-      });
-      
-      // Try to use a more lenient approach - construct missing pieces if possible
-      if (!order.customer) {
-        order.customer = { email: 'buttonsflowerfarm@gmail.com' };
-        logger.info('Created fallback customer object');
-      } else if (!order.customer.email) {
-        order.customer.email = 'buttonsflowerfarm@gmail.com';
-        logger.info('Added fallback email to customer');
-      }
-      
-      if (!order.items) {
-        order.items = [];
-        logger.info('Created empty items array');
-      }
-    }
-
-    // Make sure order has all required fields
-    const validatedOrder = {
-      ...order,
-      id: order.id || `manual-${Date.now()}`,
-      date: order.date || new Date().toISOString(),
-      status: order.status || 'pending',
-      total: order.total || calculateTotal(order.items)
-    };
 
     // Server-side save order to database
     try {
@@ -286,7 +316,22 @@ sendOrderEmailApp.post('/', async (req, res) => {
 
 // Keep the old route for backward compatibility
 sendOrderEmailApp.post('/send-order-email', (req, res) => {
+  // Set explicit CORS headers for additional compatibility
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  
   sendOrderEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+});
+
+// Explicit OPTIONS handler for the old route path too
+sendOrderEmailApp.options('/send-order-email', (req, res) => {
+  // Force 204 No Content response with CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.set('Access-Control-Max-Age', '86400'); // 24 hours
+  res.status(204).send('');
 });
 
 // Contact form email endpoint
@@ -595,11 +640,23 @@ uploadImageApp.options('*', (req, res) => {
   res.status(204).send('');
 });
 
-// Exports with proper CORS handling
-// Note: directContactEmail and simpleContactFunction are likely already functions, not Express apps
-exports.sendEmail = functions.https.onRequest(sendEmailApp);
-exports.sendOrderEmail = functions.https.onRequest(sendOrderEmailApp);
-exports.sendContactEmail = functions.https.onRequest(sendContactEmailApp);
-exports.uploadImage = functions.https.onRequest(uploadImageApp);
-exports.simpleContact = functions.https.onRequest(simpleContactFunction);
-exports.directContactEmail = functions.https.onRequest(directContactEmail);
+// Add all the function exports here
+// Update exports for firebase-functions v4
+exports.sendEmail = functions
+  .region('us-central1')
+  .https.onRequest(sendEmailApp);
+
+exports.sendOrderEmail = functions
+  .region('us-central1')
+  .https.onRequest(sendOrderEmailApp);
+
+exports.sendContactEmail = functions
+  .region('us-central1')
+  .https.onRequest(sendContactEmailApp);
+
+exports.uploadImage = functions
+  .region('us-central1')
+  .https.onRequest(uploadImageApp);
+
+exports.simpleContactFunction = simpleContactFunction;
+exports.directContactEmail = directContactEmail;
