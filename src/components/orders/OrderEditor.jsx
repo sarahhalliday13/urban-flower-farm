@@ -193,8 +193,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
         
         if (success) {
           console.log("Order saved successfully");
-          toast.success("Order updated successfully");
-          addToast("Order updated successfully", "success");
+          addToast?.("Order updated successfully", "success");
           
           // If status changed to completed, show confirmation modal
           if (orderData.orderStatus === 'completed' && orderStatusRef.current !== 'completed') {
@@ -227,15 +226,10 @@ const OrderEditor = ({ orderId, closeModal }) => {
         errorMessage = "Network error: Check your internet connection";
       }
     
-      // ✅ These won't blow up if something weird happens
-      if (typeof toast?.error === 'function') {
-        toast.error(errorMessage);
-      }
-      if (typeof addToast === 'function') {
-        addToast(errorMessage, "error");
-      }
+      addToast?.(errorMessage, "error");
     }    
     setSaveInProgress(false);
+    return false; // Add fallback return for clarity
   };
   
   // Calculate if any items have missing price data
