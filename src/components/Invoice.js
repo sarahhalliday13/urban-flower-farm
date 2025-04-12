@@ -43,13 +43,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
   const orderVersion = getOrderVersion();
 
   return (
-    <div className={`invoice-container ${type} ${isPreliminary ? 'preliminary' : 'final'}`}>
-      {isPreliminary && (
-        <div className="preliminary-mark">
-          PRELIMINARY INVOICE - Subject to Change
-        </div>
-      )}
-      
+    <div className={`invoice-container ${type}`}>
       <div className="invoice-header">
         <div className="invoice-logo">
           <h1>Buttons Urban Flower Farm</h1>
@@ -61,11 +55,6 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           <p><strong>Status:</strong> {order.status}</p>
           {orderVersion.versionNumber && (
             <p><strong>Version:</strong> {orderVersion.versionNumber}</p>
-          )}
-          {isPreliminary && (
-            <p className="invoice-preliminary-note">
-              This is a preliminary invoice. Final items and totals may change at pickup.
-            </p>
           )}
         </div>
       </div>

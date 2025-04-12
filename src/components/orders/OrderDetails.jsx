@@ -518,23 +518,17 @@ const OrderDetails = () => {
                 onClick={() => setShowInvoice('preliminary')}
               >
                 {orderDetails.versions && orderDetails.versions.length > 0 && !orderDetails.isFinalized
-                  ? 'Generate Preliminary Invoice'
-                  : 'Generate Invoice'
+                  ? 'View Invoice'
+                  : 'View Invoice'
                 }
               </button>
-              
-              {orderDetails.versions && orderDetails.versions.length > 0 && !orderDetails.isFinalized && (
-                <p className="invoice-note">
-                  Note: This will be marked as a preliminary invoice since the order has not been finalized.
-                </p>
-              )}
               
               {orderDetails.versions && orderDetails.versions.length > 0 && orderDetails.isFinalized && (
                 <button 
                   className="generate-invoice-btn final-invoice" 
                   onClick={() => setShowInvoice('final')}
                 >
-                  Generate Final Invoice
+                  View Invoice
                 </button>
               )}
             </div>
