@@ -792,9 +792,10 @@
 .plant-status, .plant-type-badge {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 18px;
-  margin-top: 0px;
-  margin-bottom: 0px;
+  margin: 0;
+  padding: 0;
 }
 
 .plant-price {
@@ -807,21 +808,50 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.2rem 0.4rem;
+  padding: 0 20px;
   border-radius: 3px;
   font-size: 0.7rem;
   font-weight: 500;
-  height: 18px;
+  height: 24px;
   line-height: 1;
   min-width: 52px;
   text-align: center;
   margin: 0;
   vertical-align: middle;
   text-transform: capitalize;
+  box-sizing: border-box;
 }
 
-/* Status badge specific styles - keep just the colors */
+/* Type-specific badges - adding base style again to ensure it's applied */
+.type-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 20px !important;
+  height: 24px !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  min-width: 52px !important;
+}
+
+.type-badge.annual {
+  background-color: #f0f4fa;
+  color: #4a6da7;
+  border: 1px solid #d0d9e8;
+  padding: 0 20px !important;
+  height: 24px !important;
+}
+
+/* Status badge specific styles */
 .status-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 20px !important;
+  height: 24px !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  min-width: 52px !important;
   background-color: #e9f7ef;
   color: #2c5530;
   border: 1px solid #c8e6c9;
@@ -848,6 +878,8 @@
   background-color: #e8f5e9;
   color: #2e7d32;
   border: 1px solid #c8e6c9;
+  padding: 0 20px !important;
+  height: 24px !important;
 }
 
 .status-badge.pre-order {
@@ -866,27 +898,7 @@
   margin: 0.5rem 0 0.25rem;
 }
 
-/* Type badge styles */
-.type-badge {
-  padding: 0.2rem 0.4rem;
-  border-radius: 3px;
-  font-size: 0.7rem;
-  height: 18px;
-  line-height: 1;
-  min-width: 52px;
-  background-color: #e6f3e6;
-  color: #2c5530;
-  border: 1px solid #c8e6c9;
-  text-transform: capitalize;
-}
-
 /* Type-specific badges */
-.type-badge.annual {
-  background-color: #f0f4fa;
-  color: #4a6da7;
-  border: 1px solid #d0d9e8;
-}
-
 .type-badge.perennial {
   background-color: #f4edf7;
   color: #8e5ba6;
@@ -1658,6 +1670,5 @@
   
   .search-input {
     font-size: 13px;
-    padding-left: 4px;
   }
 }
