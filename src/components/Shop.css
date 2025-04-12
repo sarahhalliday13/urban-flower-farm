@@ -1415,8 +1415,9 @@
 .search-dropdown {
   position: absolute;
   top: 100%;
-  left: 0;
+  left: -20px;
   right: 0;
+  width: calc(100% + 20px);
   background-color: white;
   border: 1px solid #ccc;
   border-radius: 0 0 4px 4px;
@@ -1449,9 +1450,7 @@
 }
 
 .search-dropdown-item .search-icon {
-  color: #888;
-  margin-right: 8px;
-  font-size: 14px;
+  display: none;
 }
 
 .search-dropdown-item .search-text {
@@ -1466,14 +1465,16 @@
 
 @media (max-width: 768px) {
   .search-dropdown {
-    position: fixed;
-    top: auto;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-    max-height: 60vh;
-    border-radius: 8px;
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
+    position: absolute;
+    top: 100%;
+    left: -75px;
+    right: 0;
+    width: calc(100% + 75px);
+    bottom: auto;
+    max-height: 300px;
+    border-radius: 0 0 4px 4px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 100;
   }
 }
 

@@ -8,28 +8,21 @@ const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup email
 // Initialize SendGrid with API key
 let apiKey;
 try {
-  // First try to get from Firebase config
+  // Get the key directly from Firebase config
   apiKey = functions.config().sendgrid?.api_key;
-  if (apiKey) {
-    console.log('Using SendGrid API key from Firebase config');
-  } else {
-    // Fallback to environment variable
-    apiKey = process.env.SENDGRID_API_KEY;
-    console.log('Using SendGrid API key from environment variable');
+  console.log('API Key status:', apiKey ? `Found (length: ${apiKey.length})` : 'Not found');
+  
+  if (!apiKey) {
+    console.error('No SendGrid API key found in Firebase config!');
+    throw new Error('No SendGrid API key found in Firebase config!');
   }
-} catch (error) {
-  console.error('Error accessing Firebase config:', error);
-  // Fallback to environment variable
-  apiKey = process.env.SENDGRID_API_KEY;
-}
-
-// Log API key status
-console.log('API Key status:', apiKey ? `Found (length: ${apiKey.length})` : 'Not found');
-if (apiKey) {
+  
+  // Set the key
   sgMail.setApiKey(apiKey);
-  console.log('SendGrid API initialized');
-} else {
-  console.error('No SendGrid API key found!');
+  console.log('SendGrid API initialized successfully');
+} catch (error) {
+  console.error('Error configuring SendGrid:', error.message);
+  throw error; // Re-throw to ensure we fail clearly
 }
 
 exports.directContactEmail = functions.https.onRequest((req, res) => {
