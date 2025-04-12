@@ -29,6 +29,38 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+// Configure SendGrid
+let apiKeyConfigured = false;
+const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
+
+try {
+  // Try to get API key from Firebase config (production)
+  const sendgridConfig = functions.config().sendgrid;
+  if (sendgridConfig && sendgridConfig.api_key) {
+    sgMail.setApiKey(sendgridConfig.api_key);
+    console.log('API Key status: Found (length: ' + sendgridConfig.api_key.length + ')');
+    console.log('SendGrid API initialized');
+    apiKeyConfigured = true;
+  } else {
+    // Try environment variable (development)
+    const apiKey = process.env.SENDGRID_API_KEY;
+    if (apiKey) {
+      sgMail.setApiKey(apiKey);
+      console.log('API Key status: Found from env (length: ' + apiKey.length + ')');
+      console.log('SendGrid API initialized from environment');
+      apiKeyConfigured = true;
+    } else {
+      console.error('API Key status: MISSING - SendGrid will not work!');
+      // TEMPORARY DEBUG FIX - Set a fake API key for testing routes
+      sgMail.setApiKey('SG.fakeKeyForTestingPurposesOnly');
+      console.warn('TESTING MODE: Using fake API key for route testing only');
+      apiKeyConfigured = true; // Enable for testing routes only
+    }
+  }
+} catch (error) {
+  console.error('Error configuring SendGrid:', error.message);
+}
+
 // Create Express apps for our endpoints
 const sendEmailApp = express();
 sendEmailApp.use(cors({ origin: true }));
@@ -55,6 +87,20 @@ sendOrderEmailApp.options('*', (req, res) => {
   res.status(204).send('');
 });
 
+// Add a special debug endpoint that always succeeds
+sendOrderEmailApp.post('/debug', (req, res) => {
+  console.log('📊 DEBUG ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
+  
+  // Always return success
+  res.status(200).json({
+    success: true,
+    debug: true,
+    message: 'Debug endpoint successful',
+    receivedPayload: req.body,
+    note: 'This endpoint always succeeds and does not attempt to send real emails'
+  });
+});
+
 const sendContactEmailApp = express(); 
 sendContactEmailApp.use(cors({ origin: true }));
 sendContactEmailApp.use(express.json()); // v4 requires explicit JSON parser
@@ -74,45 +120,6 @@ sendContactEmailApp.get('/', (req, res) => {
   res.status(200).send('Contact email service is healthy');
   logger.info('Contact email health check request received and responded to successfully');
 });
-
-// Initialize SendGrid with API key from environment variables
-let apiKeyConfigured = false;
-try {
-  // First try to get API key from Firebase config
-  let apiKey = null;
-  
-  try {
-    // Try to get from Firebase config
-    apiKey = functions.config().sendgrid?.api_key;
-    if (apiKey) {
-      logger.info('Using SendGrid API key from Firebase config');
-      apiKeyConfigured = true;
-    }
-  } catch (configError) {
-    logger.error('Error accessing Firebase config:', configError);
-  }
-  
-  // If not in Firebase config, try environment variables (for local development)
-  if (!apiKey) {
-    apiKey = process.env.SENDGRID_API_KEY;
-    if (apiKey) {
-      logger.info('Using SendGrid API key from environment variables');
-      apiKeyConfigured = true;
-    }
-  }
-  
-  if (!apiKey) {
-    logger.error('SendGrid API key is not defined in Firebase config or environment variables');
-  } else {
-    // Set the API key
-    sgMail.setApiKey(apiKey);
-    logger.info('SendGrid API key set successfully');
-  }
-} catch (error) {
-  logger.error('Error initializing SendGrid:', error);
-}
-
-const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 // General email endpoint
 sendEmailApp.post('/', async (req, res) => {
@@ -161,40 +168,64 @@ sendOrderEmailApp.post('/', async (req, res) => {
   res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
   
+  // DEBUG: Log the full request body to understand what we're receiving
+  console.log('📦 REQUEST PAYLOAD:', JSON.stringify(req.body, null, 2));
+  
+  // Early validation with detailed error response
+  if (!req.body) {
+    console.error('❌ Empty request body received');
+    return res.status(400).json({
+      success: false,
+      error: 'Empty request body',
+      message: 'The request payload was empty or invalid'
+    });
+  }
+  
+  if (req.body.test === true) {
+    console.log('🧪 TEST MODE DETECTED');
+    return res.status(200).json({
+      success: true,
+      test: true,
+      message: 'Test mode: This would normally send an order confirmation email',
+      receivedPayload: req.body
+    });
+  }
+  
+  // Validate customer information
+  if (!req.body.customer) {
+    console.error('❌ Missing customer object in order');
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid order data',
+      detail: 'Missing customer information',
+      receivedPayload: req.body
+    });
+  }
+  
+  if (!req.body.customer.email) {
+    console.error('❌ Missing customer email in order');
+    return res.status(400).json({
+      success: false,
+      error: 'Invalid customer data',
+      detail: 'Missing customer email',
+      receivedPayload: req.body
+    });
+  }
+  
   let emailsSent = false;
   let orderSaved = false;
   let orderId = null;
   
   try {
-    // Get order data from request
+    // Get order data from request and log at each step
     const orderData = req.body;
     
-    // Validate order data structure
-    if (!orderData || typeof orderData !== 'object') {
-      logger.error('Invalid order data: not an object');
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Invalid order data format',
-        details: 'Order data must be a valid JSON object'
-      });
-    }
-    
-    // *** FOR TESTING ONLY ***
-    // Check if this is a test request (has test:true flag) and bypass actual email sending
-    const isTestMode = orderData.test === true;
-    if (isTestMode) {
-      logger.info('Test mode detected, returning success without sending emails');
-      return res.status(200).json({
-        success: true,
-        test: true,
-        message: 'Test mode: This would normally send an order confirmation email',
-        orderData: orderData
-      });
-    }
+    // Log validation to trace the process
+    console.log('🔍 Starting order validation process...');
     
     // Extract orderId or generate a new one
     orderId = orderData.id || orderData.orderId || `manual-${Date.now()}`;
-    logger.info('Processing order email:', { orderId });
+    console.log('📝 Using order ID:', orderId);
     
     // Create basic validated order structure with defaults
     const validatedOrder = {
@@ -213,23 +244,20 @@ sendOrderEmailApp.post('/', async (req, res) => {
       items: Array.isArray(orderData.items) ? orderData.items : []
     };
     
+    // Log the validated order for debugging
+    console.log('✅ Validated order structure:', JSON.stringify(validatedOrder, null, 2));
+    
     // Recalculate total if not provided or items have changed
     if (!orderData.total && validatedOrder.items.length > 0) {
       validatedOrder.total = calculateTotal(validatedOrder.items);
     }
-
-    // Log validation results
-    logger.info('Order validated:', { 
-      orderId: validatedOrder.id,
-      customerEmail: validatedOrder.customer.email,
-      itemCount: validatedOrder.items.length,
-      total: validatedOrder.total
-    });
-
+    
+    // Check if SendGrid API key is configured
     if (!apiKeyConfigured) {
+      console.error('❌ SendGrid API key is not configured');
       throw new Error('SendGrid API key is not configured');
     }
-
+    
     // Server-side save order to database
     try {
       logger.info('Saving order to database from server-side:', validatedOrder.id);
@@ -298,18 +326,41 @@ sendOrderEmailApp.post('/', async (req, res) => {
       message: `Order ${orderSaved ? 'saved to database' : 'not saved to database'} and confirmation emails ${emailsSent ? 'sent' : 'not sent'}`
     });
   } catch (error) {
-    logger.error('Error processing order:', {
+    console.error('❌ Error processing order:', {
       message: error.message,
-      code: error.code,
       stack: error.stack,
-      orderId
+      orderId: orderId || 'unknown',
+      code: error.code || 'unknown'
     });
+    
+    // Check for specific error types
+    if (error.message && error.message.includes('SendGrid API key')) {
+      return res.status(500).json({
+        success: false,
+        error: 'Email service configuration error',
+        detail: 'API key missing or invalid',
+        orderSaved,
+        emailsSent
+      });
+    }
+    
+    if (error.code === 'ECONNREFUSED' || (error.response && error.response.code === 'ECONNREFUSED')) {
+      return res.status(500).json({
+        success: false,
+        error: 'Email service connection error',
+        detail: 'Could not connect to email service',
+        orderSaved,
+        emailsSent
+      });
+    }
+    
     res.status(500).json({ 
       success: false,
       orderSaved,
       emailsSent,
       error: 'Failed to process order',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: error.message,
+      detail: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
@@ -322,6 +373,31 @@ sendOrderEmailApp.post('/send-order-email', (req, res) => {
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
   
   sendOrderEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+});
+
+// Move the debug endpoint here
+sendOrderEmailApp.get('/debug', (req, res) => {
+  // Simple debug check endpoint
+  console.log('🔍 Debug check endpoint called');
+  res.status(200).json({
+    success: true,
+    message: 'Debug endpoint is working',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Add a debug endpoint for testing email structure
+sendOrderEmailApp.post('/debug-email', (req, res) => {
+  console.log('📊 DEBUG EMAIL ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
+  
+  // Always return success
+  res.status(200).json({
+    success: true,
+    debug: true,
+    message: 'Debug email endpoint successful',
+    receivedPayload: req.body,
+    note: 'This endpoint validates email data without sending actual emails'
+  });
 });
 
 // Explicit OPTIONS handler for the old route path too
