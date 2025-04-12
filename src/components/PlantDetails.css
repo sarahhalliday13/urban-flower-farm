@@ -193,16 +193,22 @@ main {
 }
 
 .status-badge {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
   font-weight: 500;
-  display: inline-block;
+  height: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
   margin-left: auto;
   margin-bottom: 0;
   padding-bottom: 0;
   align-self: flex-start;
   margin-top: 0.3rem;
+  text-transform: capitalize;
 }
 
 .status-badge.in-stock {
@@ -444,11 +450,16 @@ main {
 
 /* Type badge styles */
 .type-badge {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.7rem;
   font-weight: 500;
+  height: 18px;
+  line-height: 1;
+  min-width: 52px;
   background-color: #e6f3e6;
   color: #2c5530;
   border: 1px solid #c8e6c9;

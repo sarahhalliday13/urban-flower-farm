@@ -817,12 +817,14 @@
   text-align: center;
   margin: 0;
   vertical-align: middle;
+  text-transform: capitalize;
 }
 
-/* Status badge specific styles */
+/* Status badge specific styles - keep just the colors */
 .status-badge {
   background-color: #e9f7ef;
   color: #2c5530;
+  border: 1px solid #c8e6c9;
 }
 
 .status-badge.sold-out {
