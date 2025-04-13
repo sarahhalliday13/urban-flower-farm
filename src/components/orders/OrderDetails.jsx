@@ -515,22 +515,10 @@ const OrderDetails = () => {
               <h3>Invoice</h3>
               <button 
                 className="generate-invoice-btn" 
-                onClick={() => setShowInvoice('preliminary')}
+                onClick={() => setShowInvoice(orderDetails.isFinalized ? 'final' : 'preliminary')}
               >
-                {orderDetails.versions && orderDetails.versions.length > 0 && !orderDetails.isFinalized
-                  ? 'View Invoice'
-                  : 'View Invoice'
-                }
+                View Invoice
               </button>
-              
-              {orderDetails.versions && orderDetails.versions.length > 0 && orderDetails.isFinalized && (
-                <button 
-                  className="generate-invoice-btn final-invoice" 
-                  onClick={() => setShowInvoice('final')}
-                >
-                  View Invoice
-                </button>
-              )}
             </div>
             
             {/* Version info moved here from left column */}
