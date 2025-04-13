@@ -1294,8 +1294,10 @@
   }
   
   /* Ensure order ID is right-aligned in mobile view */
-  td[data-label="Order"], .order-id-cell {
-    text-align: right;
+  td[data-label="Order"], 
+  .order-id-cell, 
+  .order-id {
+    text-align: right !important;
   }
   
   /* Status badge styling for mobile */
