@@ -1216,24 +1216,29 @@
   /* Specific styles for each column */
   .order-items .invoice-style-table .product-col {
     grid-column: 1;
+    grid-row: 1;
     width: 100%;
     font-weight: 500;
+    border: none;
   }
   
   .order-items .invoice-style-table .quantity-col {
     grid-column: 2;
+    grid-row: 1;
     width: 100%;
     text-align: center;
   }
   
   .order-items .invoice-style-table .price-col {
     grid-column: 3;
+    grid-row: 1;
     width: 100%;
     text-align: right;
   }
   
   .order-items .invoice-style-table .total-col {
     grid-column: 4;
+    grid-row: 1;
     width: 100%;
     text-align: right;
     font-weight: 600;
@@ -1266,6 +1271,13 @@
     font-weight: 700;
     text-align: right;
   }
+}
+
+/* Right align delete link in order editor */
+.remove-item-link {
+  text-align: right;
+  width: 100%;
+  display: block;
 }
 
 /* INVOICE STYLE TABLE */
@@ -1378,24 +1390,29 @@
   /* Specific styles for each column */
   .order-items .invoice-style-table .product-col {
     grid-column: 1;
+    grid-row: 1;
     width: 100%;
     font-weight: 500;
+    border: none;
   }
   
   .order-items .invoice-style-table .quantity-col {
     grid-column: 2;
+    grid-row: 1;
     width: 100%;
     text-align: center;
   }
   
   .order-items .invoice-style-table .price-col {
     grid-column: 3;
+    grid-row: 1;
     width: 100%;
     text-align: right;
   }
   
   .order-items .invoice-style-table .total-col {
     grid-column: 4;
+    grid-row: 1;
     width: 100%;
     text-align: right;
     font-weight: 600;
