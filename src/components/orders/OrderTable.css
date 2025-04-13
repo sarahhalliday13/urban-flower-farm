@@ -1279,7 +1279,7 @@
 
 /* Right-align order number on mobile */
 .order-id-cell {
-  text-align: right;
+  text-align: left; /* Default to left alignment for desktop */
 }
 
 @media (max-width: 768px) {
@@ -1294,7 +1294,7 @@
   }
   
   /* Ensure order ID is right-aligned in mobile view */
-  td[data-label="Order"] {
+  td[data-label="Order"], .order-id-cell {
     text-align: right;
   }
   
