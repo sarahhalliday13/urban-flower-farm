@@ -9,7 +9,9 @@ const SaveCancelButtons = ({
   onFinalize, 
   onCancel, 
   isDisabled, 
-  isSaving 
+  isSaving,
+  showFinalize = true,
+  saveButtonText = 'Save Changes'
 }) => {
   // Handle save click with safe error handling
   const handleSaveClick = () => {
@@ -60,16 +62,18 @@ const SaveCancelButtons = ({
         onClick={handleSaveClick}
         disabled={isDisabled || isSaving}
       >
-        {isSaving ? 'Saving...' : 'Save Changes'}
+        {isSaving ? 'Saving...' : saveButtonText}
       </button>
       
-      <button 
-        className="finalize-order-btn"
-        onClick={handleFinalizeClick}
-        disabled={isDisabled || isSaving}
-      >
-        {isSaving ? 'Finalizing...' : 'Finalize Order'}
-      </button>
+      {showFinalize && (
+        <button 
+          className="finalize-order-btn"
+          onClick={handleFinalizeClick}
+          disabled={isDisabled || isSaving}
+        >
+          {isSaving ? 'Finalizing...' : 'Finalize Order'}
+        </button>
+      )}
       
       <button 
         className="cancel-edit-btn"

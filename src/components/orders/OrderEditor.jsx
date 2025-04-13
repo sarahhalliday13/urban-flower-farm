@@ -306,17 +306,18 @@ const OrderEditor = ({ orderId, closeModal }) => {
             <div className="editor-card">
               <h3>Review & Save</h3>
               <p className="order-summary">
-                Total Items: {items.length}
+                Total Items: {items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0)}
                 <br />
                 Order Total: ${calculateTotal()}
               </p>
 
               <SaveCancelButtons 
                 onSave={handleSaveOrder}
-                onFinalize={handleFinalizeOrder}
                 onCancel={closeModal}
                 isDisabled={items.length === 0}
                 isSaving={saveInProgress}
+                showFinalize={false}
+                saveButtonText="Save Order"
               />
             </div>
           </div>
