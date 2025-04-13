@@ -2457,3 +2457,10 @@
     text-align: right;
   }
 }
+
+/* Right align delete link in order editor */
+.remove-item-link {
+  text-align: right;
+  width: 100%;
+  display: block;
+}
