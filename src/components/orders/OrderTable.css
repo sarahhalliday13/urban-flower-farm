@@ -121,6 +121,7 @@
 .order-id {
   font-weight: 600;
   color: #2c3e50;
+  margin-bottom: 0;
 }
 
 .order-date {
@@ -1131,39 +1132,72 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive styles */
+/* Mobile-specific adjustments */
 @media (max-width: 768px) {
-  .order-info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .status-buttons {
+  .orders-filters-row {
     flex-direction: column;
+    align-items: stretch;
   }
   
-  .status-btn {
+  .orders-search, .status-filter {
+    max-width: 100%;
     width: 100%;
+  }
+  
+  /* Ensure order ID is right-aligned in mobile view */
+  td[data-label="Order"], 
+  .order-id-cell, 
+  .order-id {
+    text-align: right !important;
+  }
+  
+  /* Override flex display for order-id in mobile view */
+  .order-id {
+    display: block !important;
+    justify-content: initial !important;
+    align-items: initial !important;
+  }
+  
+  /* Add more space between close button and edit button */
+  .close-details-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  /* Items header adjustment for mobile */
+  .items-header {
+    margin-top: 2rem; /* Add more space at the top to separate from X button */
+  }
+  
+  /* Remove bottom margin on order-items */
+  .order-items {
+    margin-bottom: 0;
+  }
+  
+  /* Left align customer info compact section and its heading */
+  .customer-info-compact,
+  .customer-info-compact h3 {
+    text-align: left;
+  }
+  
+  /* Left align all h3 headings in order details */
+  .status-management-visual h3,
+  .email-summary h3,
+  .invoice-actions h3,
+  .discount-section h3,
+  .payment-section h3,
+  .items-header h3,
+  .version-info h3 {
+    text-align: left;
+  }
+  
+  /* Status badge styling for mobile */
+  .order-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
     text-align: center;
-  }
-  
-  .orders-table thead {
-    display: none;
-  }
-  
-  .orders-table td {
-    display: block;
-    text-align: right;
-    padding: 0.5rem 1rem;
-  }
-  
-  .orders-table td::before {
-    content: attr(data-label);
-    float: left;
-    font-weight: 600;
-  }
-  
-  .customer-name, .customer-email {
-    text-align: right;
   }
 }
 
@@ -1298,6 +1332,46 @@
   .order-id-cell, 
   .order-id {
     text-align: right !important;
+  }
+  
+  /* Override flex display for order-id in mobile view */
+  .order-id {
+    display: block !important;
+    justify-content: initial !important;
+    align-items: initial !important;
+  }
+  
+  /* Add more space between close button and edit button */
+  .close-details-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  /* Items header adjustment for mobile */
+  .items-header {
+    margin-top: 2rem; /* Add more space at the top to separate from X button */
+  }
+  
+  /* Remove bottom margin on order-items */
+  .order-items {
+    margin-bottom: 0;
+  }
+  
+  /* Left align customer info compact section and its heading */
+  .customer-info-compact,
+  .customer-info-compact h3 {
+    text-align: left;
+  }
+  
+  /* Left align all h3 headings in order details */
+  .status-management-visual h3,
+  .email-summary h3,
+  .invoice-actions h3,
+  .discount-section h3,
+  .payment-section h3,
+  .items-header h3,
+  .version-info h3 {
+    text-align: left;
   }
   
   /* Status badge styling for mobile */
@@ -1913,11 +1987,39 @@
   cursor: pointer;
   transition: all 0.2s;
   margin-right: 8px;
+  position: relative;
+  z-index: 5;
+}
+
+.email-invoice-btn {
+  background-color: #2c5530;
+  color: #fff;
+  margin-top: 8px;
+}
+
+.email-invoice-btn:hover {
+  background-color: #1e3c21;
+  color: #fff;
 }
 
 .generate-invoice-btn:hover {
   background-color: #2c5530;
   color: #fff;
+}
+
+@media (max-width: 768px) {
+  .generate-invoice-btn {
+    padding: 10px 16px;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+    text-align: center;
+    font-size: 1rem;
+  }
+  
+  .email-invoice-btn {
+    margin-top: 4px;
+  }
 }
 
 .final-invoice {
