@@ -1336,23 +1336,38 @@
 
 .payment-edit-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
   margin-top: 1rem;
+}
+
+.save-payment-btn, .cancel-edit-btn {
+  flex: 1;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: center;
+  min-width: 80px;
 }
 
 .save-payment-btn {
   background-color: #2ecc71;
   color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.85rem;
-  cursor: pointer;
 }
 
 .save-payment-btn:hover {
   background-color: #27ae60;
+}
+
+.cancel-edit-btn {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.cancel-edit-btn:hover {
+  background-color: #ccc;
 }
 
 .payment-display p {
