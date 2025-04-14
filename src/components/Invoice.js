@@ -18,9 +18,10 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
     return parseFloat(amount).toFixed(2);
   };
   
-  // Determine if we should show a preliminary watermark
-  const isPreliminary = invoiceType === 'preliminary' || 
-    (order.versions && order.versions.length > 0 && !order.isFinalized);
+  // NOTE: The preliminary watermark functionality is temporarily disabled
+  // but keeping this commented for future reference
+  // const isPreliminary = invoiceType === 'preliminary' || 
+  //   (order.versions && order.versions.length > 0 && !order.isFinalized);
 
   // Get the appropriate version of the order for this invoice
   const getOrderVersion = () => {
