@@ -166,7 +166,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
     
     try {
       // First ensure we're authenticated
-      await ensureAuthenticated();
+      const userCredential = await ensureAuthenticated();
+      // Get the authentication token
+      const idToken = await userCredential.getIdToken();
       
       // Prepare update object
       const updateData = {
@@ -176,8 +178,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
         updatedAt: new Date().toISOString()
       };
       
-      // Make direct REST API call
-      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json`, {
+      // Make direct REST API call with auth token
+      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
         method: 'PATCH',
         body: JSON.stringify(updateData),
         headers: {
@@ -207,7 +209,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
     
     try {
       // First ensure we're authenticated
-      await ensureAuthenticated();
+      const userCredential = await ensureAuthenticated();
+      // Get the authentication token
+      const idToken = await userCredential.getIdToken();
       
       // Prepare update object
       const updateData = {
@@ -219,8 +223,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
         updatedAt: new Date().toISOString()
       };
       
-      // Make direct REST API call
-      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json`, {
+      // Make direct REST API call with auth token
+      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
         method: 'PATCH',
         body: JSON.stringify(updateData),
         headers: {

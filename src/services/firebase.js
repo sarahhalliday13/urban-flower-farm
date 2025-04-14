@@ -47,7 +47,29 @@ export const ensureAuthenticated = () => {
     // Check if already authenticated
     if (auth.currentUser) {
       console.log('🔒 Already authenticated:', auth.currentUser.uid);
-      resolve(auth.currentUser);
+      // Ensure we get a fresh token
+      auth.currentUser.getIdToken(true)
+        .then((token) => {
+          console.log('✅ Token refreshed successfully. Token length:', token.length);
+          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
+          resolve(auth.currentUser);
+        })
+        .catch((error) => {
+          console.error('❌ Error refreshing token:', error.message);
+          signInAnonymously(auth)
+            .then((userCredential) => {
+              console.log('✅ Anonymous auth successful after token refresh failed:', userCredential.user.uid);
+              userCredential.user.getIdToken(true).then(token => {
+                console.log('✅ New token obtained after re-auth. Token length:', token.length);
+                console.log('✅ New token first 10 chars:', token.substring(0, 10) + '...');
+                resolve(userCredential.user);
+              });
+            })
+            .catch((error) => {
+              console.error('❌ Anonymous auth failed:', error.message);
+              reject(error);
+            });
+        });
       return;
     }
     
@@ -55,7 +77,11 @@ export const ensureAuthenticated = () => {
     signInAnonymously(auth)
       .then((userCredential) => {
         console.log('✅ Anonymous auth successful:', userCredential.user.uid);
-        resolve(userCredential.user);
+        userCredential.user.getIdToken(true).then(token => {
+          console.log('✅ New token obtained. Token length:', token.length);
+          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
+          resolve(userCredential.user);
+        });
       })
       .catch((error) => {
         console.error('❌ Anonymous auth failed:', error.message);
