@@ -13,9 +13,6 @@ const InventoryFilterControls = ({
     if (currentFilter === 'Low Stock') return 'In Stock';
     return currentFilter;
   };
-
-  // Calculate the In Stock count (combining In Stock and Low Stock)
-  const inStockCount = statusCounts['In Stock'] + statusCounts['Low Stock'];
   
   return (
     <div className="header-controls">
