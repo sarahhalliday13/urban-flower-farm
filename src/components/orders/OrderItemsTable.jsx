@@ -30,10 +30,10 @@ const OrderItemsTable = ({
         return sum + (price * quantity);
       }, 0);
       
-      setCalculatedTotal(newTotal.toFixed(2));
+      setCalculatedTotal(Math.round(newTotal));
     } catch (error) {
       console.error("Error calculating total:", error);
-      setCalculatedTotal('0.00');
+      setCalculatedTotal('0');
     }
   }, [items]);
 
@@ -60,9 +60,6 @@ const OrderItemsTable = ({
             <th className="quantity-col">Quantity</th>
             <th className="price-col">Price</th>
             <th className="total-col">Total</th>
-            {editable && (
-              <th className="actions-col">Actions</th>
-            )}
           </tr>
         </thead>
         <tbody>
@@ -83,41 +80,75 @@ const OrderItemsTable = ({
                 )}
               </td>
               <td className="price-col">
-                ${parseFloat(item.price).toFixed(2)}
+                ${Math.round(parseFloat(item.price))}
               </td>
               <td className="total-col">
-                ${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  ${Math.round(parseFloat(item.price) * parseInt(item.quantity, 10))}
+                </div>
+                {editable && (
+                  <div style={{ marginTop: '8px', clear: 'both' }}>
+                    <button 
+                      className="remove-item-link" 
+                      onClick={() => {
+                        try {
+                          console.log(`Removing item ${item.id}`);
+                          onRemoveItem(item.id);
+                        } catch (error) {
+                          console.error("Error removing item:", error);
+                        }
+                      }}
+                      aria-label={`Remove ${item.name}`}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
               </td>
-              {editable && (
-                <td className="actions-col">
-                  <button 
-                    className="remove-item-link" 
-                    onClick={() => {
-                      try {
-                        console.log(`Removing item ${item.id}`);
-                        onRemoveItem(item.id);
-                      } catch (error) {
-                        console.error("Error removing item:", error);
-                      }
-                    }}
-                    aria-label={`Remove ${item.name}`}
-                  >
-                    Delete
-                  </button>
-                </td>
-              )}
             </tr>
           ))}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan={editable ? "4" : "3"} className="order-total-label">Order Total</td>
+            <td colSpan="3" className="order-total-label">Order Total</td>
             <td className="order-total-value">
               ${calculatedTotal}
             </td>
           </tr>
         </tfoot>
       </table>
+
+      <style jsx>{`
+        .total-col, .order-total-value {
+          border: none !important;
+        }
+
+        .quantity-input {
+          width: 60px;
+          height: 44px;
+          padding: 8px;
+          font-size: 16px;
+          border-radius: 4px;
+          border: 1px solid #ccc;
+          text-align: center;
+        }
+        
+        .remove-item-link {
+          text-align: right;
+          width: 100%;
+          display: block;
+          margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+          .quantity-input {
+            width: 70px;
+            height: 48px;
+            font-size: 18px;
+            padding: 8px 4px;
+          }
+        }
+      `}</style>
     </div>
   );
 };

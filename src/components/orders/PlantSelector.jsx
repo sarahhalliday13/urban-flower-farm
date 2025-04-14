@@ -116,7 +116,7 @@ const PlantSelector = ({ onAddItem }) => {
                 onClick={() => handleSelectPlant(plant)}
               >
                 <span className="plant-name">{plant.name}</span>
-                <span className="plant-price">${parseFloat(plant.price || 0).toFixed(2)}</span>
+                <span className="plant-price">${Math.round(parseFloat(plant.price || 0))}</span>
               </div>
             ))}
           </div>
@@ -141,6 +141,7 @@ const PlantSelector = ({ onAddItem }) => {
           border: 1px solid #ced4da;
           border-radius: 4px;
           font-size: 16px;
+          box-sizing: border-box;
         }
         
         .predictive-dropdown {

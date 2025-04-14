@@ -140,11 +140,11 @@ const OrderEditor = ({ orderId, closeModal }) => {
   
   // Calculate the current total
   const calculateTotal = () => {
-    return items.reduce((sum, item) => {
+    return items.reduce((total, item) => {
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
-      return sum + (price * quantity);
-    }, 0).toFixed(2);
+      return total + (price * quantity);
+    }, 0).toString();
   };
   
   // Helper function to safely format values for display
@@ -269,8 +269,6 @@ const OrderEditor = ({ orderId, closeModal }) => {
         <div className="editor-header-content">
           <h2>Edit Order #{formatValue(orderId)}</h2>
           <div className="order-metadata">
-            <span className="order-status-pill">{formatValue(orderData.orderStatus)}</span>
-            <span className="order-date">{new Date(orderData.orderDate || new Date()).toLocaleDateString()}</span>
             <span className="customer-name">{formatValue(orderData.customerName)}</span>
           </div>
         </div>
