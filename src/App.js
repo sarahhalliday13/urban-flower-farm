@@ -200,13 +200,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               >
                 News
               </AdminNavLink>
-              <AdminNavLink 
-                to="/admin/utilities" 
-                currentPath={currentPath}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Utilities
-              </AdminNavLink>
               <button className="logout-button" onClick={handleLogout}>
                 Logout
               </button>
