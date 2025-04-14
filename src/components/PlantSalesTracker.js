@@ -282,7 +282,7 @@ const PlantSalesTracker = () => {
         </div>
         <div className="plant-summary-card freebies">
           <h3>Total Freebies</h3>
-          <div className="plant-summary-value">{summary.totalFreebies}</div>
+          <div className="plant-summary-value">n/a</div>
           <div className="plant-summary-label">Given away for free</div>
         </div>
       </div>
@@ -368,7 +368,7 @@ const PlantSalesTracker = () => {
                     <tr key={plant.id}>
                       <td>{plant.name}</td>
                       <td>{plant.paidUnits}</td>
-                      <td>{plant.freebies || 0}</td>
+                      <td>n/a</td>
                       <td>${plant.revenue.toFixed(2)}</td>
                       <td>
                         {lastOrder 
