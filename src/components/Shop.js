@@ -587,10 +587,26 @@ function Shop() {
       return;
     }
 
+    // First, filter plants to match the visible plants criteria
+    const visiblePlants = plants.filter(plant => 
+      // Filter out hidden plants
+      (plant.hidden !== true && 
+      plant.hidden !== 'true' && 
+      plant.hidden !== 1 && 
+      plant.hidden !== '1') &&
+      // Only show plants with inventory > 0 or with Coming Soon/Pre-order status
+      ((plant.inventory?.currentStock > 0) || 
+      (plant.inventory?.status === 'Coming Soon') || 
+      (plant.inventory?.status === 'Pre-order') || 
+      (plant.inventory?.status === 'Pre-Order'))
+    );
+    
+    console.log('Generating suggestions from visible plants:', visiblePlants.length, 'out of', plants.length, 'total plants');
+    
     const searchLower = searchTerm.toLowerCase();
     
-    // Collect matches from various plant properties
-    const nameMatches = plants.filter(plant => 
+    // Use visiblePlants instead of all plants for suggestions
+    const nameMatches = visiblePlants.filter(plant => 
       plant.name?.toLowerCase().includes(searchLower)
     ).slice(0, 3).map(plant => ({
       text: plant.name,
@@ -599,7 +615,7 @@ function Shop() {
       id: plant.id
     }));
     
-    const scientificMatches = plants.filter(plant => 
+    const scientificMatches = visiblePlants.filter(plant => 
       plant.scientificName?.toLowerCase().includes(searchLower)
     ).slice(0, 2).map(plant => ({
       text: plant.scientificName,
@@ -608,7 +624,7 @@ function Shop() {
       id: plant.id
     }));
     
-    const commonMatches = plants.filter(plant => 
+    const commonMatches = visiblePlants.filter(plant => 
       plant.commonName?.toLowerCase().includes(searchLower) && 
       plant.commonName?.toLowerCase() !== plant.name?.toLowerCase()
     ).slice(0, 2).map(plant => ({
