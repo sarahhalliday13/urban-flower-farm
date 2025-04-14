@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
@@ -35,7 +35,6 @@ import ModularInventoryManager from './components/inventory/ModularInventoryMana
 import AdminDashboard from './components/AdminDashboard';
 // import AdminOrders from './components/AdminOrders';
 import { ModularOrderManager } from './components/orders/index';
-import AdminUtilities from './components/AdminUtilities';
 import { ModularPlantEditor } from './components/plant-editor';
 
 // Custom wrapper for plant details
@@ -430,16 +429,6 @@ function AppContent() {
           } 
         />
         <Route
-          path="/admin/utilities"
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminUtilities />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route 
           path="/admin/updates"
           element={
             <ProtectedRoute>
