@@ -65,29 +65,10 @@ const OrderItemsTable = ({
         <tbody>
           {items.map(item => (
             <tr key={item.id}>
-              <td className="product-col">{item.name}</td>
-              <td className="quantity-col">
-                {editable ? (
-                  <input 
-                    type="number" 
-                    min="0" 
-                    value={item.quantity} 
-                    onChange={(e) => handleQuantityChange(item.id, e.target.value)}
-                    className="quantity-input"
-                  />
-                ) : (
-                  item.quantity
-                )}
-              </td>
-              <td className="price-col">
-                ${Math.round(parseFloat(item.price))}
-              </td>
-              <td className="total-col">
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  ${Math.round(parseFloat(item.price) * parseInt(item.quantity, 10))}
-                </div>
+              <td className="product-col">
+                {item.name}
                 {editable && (
-                  <div style={{ marginTop: '8px', clear: 'both' }}>
+                  <div style={{ marginTop: '8px' }}>
                     <button 
                       className="remove-item-link" 
                       onClick={() => {
@@ -104,6 +85,43 @@ const OrderItemsTable = ({
                     </button>
                   </div>
                 )}
+              </td>
+              <td className="quantity-col">
+                {editable ? (
+                  <div className="quantity-control-wrapper">
+                    <button 
+                      className="quantity-btn decrease-btn"
+                      onClick={() => handleQuantityChange(item.id, Math.max(0, parseInt(item.quantity, 10) - 1))}
+                      aria-label="Decrease quantity"
+                    >
+                      -
+                    </button>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      value={item.quantity} 
+                      onChange={(e) => handleQuantityChange(item.id, e.target.value)}
+                      className="quantity-input"
+                    />
+                    <button 
+                      className="quantity-btn increase-btn"
+                      onClick={() => handleQuantityChange(item.id, parseInt(item.quantity, 10) + 1)}
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  item.quantity
+                )}
+              </td>
+              <td className="price-col">
+                ${Math.round(parseFloat(item.price))}
+              </td>
+              <td className="total-col">
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  ${Math.round(parseFloat(item.price) * parseInt(item.quantity, 10))}
+                </div>
               </td>
             </tr>
           ))}
@@ -122,31 +140,107 @@ const OrderItemsTable = ({
         .total-col, .order-total-value {
           border: none !important;
         }
+        
+        .invoice-style-table {
+          border-collapse: collapse;
+          border: none;
+          box-shadow: none;
+        }
+        
+        .invoice-style-table th,
+        .invoice-style-table td {
+          border: none;
+          box-shadow: none;
+          border-bottom: none;
+        }
+        
+        .product-col {
+          text-align: left;
+        }
+        
+        .invoice-style-table tr {
+          border: none;
+          box-shadow: none;
+          background: transparent;
+        }
+
+        .quantity-col {
+          width: 120px;
+        }
 
         .quantity-input {
-          width: 60px;
-          height: 44px;
-          padding: 8px;
+          width: 40px !important;
+          height: 40px !important;
+          min-width: 40px !important;
+          min-height: 40px !important;
+          max-width: 40px !important;
+          max-height: 40px !important;
+          padding: 0 !important;
+          margin: 0 !important;
           font-size: 16px;
           border-radius: 4px;
           border: 1px solid #ccc;
           text-align: center;
+          box-sizing: border-box !important;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        
+        .quantity-input::-webkit-inner-spin-button, 
+        .quantity-input::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        
+        .quantity-input[type=number] {
+          -moz-appearance: textfield;
+        }
+        
+        .quantity-control-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .quantity-btn {
+          width: 30px;
+          height: 40px;
+          border-radius: 4px;
+          background-color: #2c5530;
+          color: white;
+          border: none;
+          font-size: 18px;
+          line-height: 1;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 2px;
+        }
+        
+        .quantity-btn:hover {
+          background-color: #1e3c21;
         }
         
         .remove-item-link {
-          text-align: right;
+          text-align: left;
           width: 100%;
           display: block;
           margin-top: 5px;
+          color: #d32f2f;
         }
 
         @media (max-width: 768px) {
           .quantity-input {
-            width: 70px;
-            height: 48px;
-            font-size: 18px;
-            padding: 8px 4px;
+            width: 40px !important;
+            height: 40px !important;
+            padding: 0 !important;
           }
+        }
+
+        .order-total-label {
+          text-align: right;
+          padding-right: 20px;
         }
       `}</style>
     </div>
