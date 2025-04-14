@@ -5,10 +5,15 @@
 
 // Define the API base URL based on environment
 const getApiUrl = () => {
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  return isLocalhost 
-    ? 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1' 
-    : 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
+  const hostname = window.location.hostname;
+
+  if (hostname.includes('localhost')) {
+    return 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1';
+  } else if (hostname.includes('urban-flower-farm-staging.web.app')) {
+    return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
+  } else {
+    return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
+  }
 };
 
 // Send order confirmation emails
