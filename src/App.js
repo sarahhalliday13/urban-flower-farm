@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
@@ -79,13 +79,13 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
   const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [, forceUpdate] = useState();
-  const [hasOrders, setHasOrders] = useState(false);
   
   // Calculate cart count using getItemCount function
   const cartCount = getItemCount();
 
   // Function to check if user has orders
   const checkForUserOrders = () => {
+    // This function now just checks for user orders but doesn't set state
     const userEmail = localStorage.getItem('userEmail');
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
     
@@ -94,9 +94,9 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
       const userOrders = orders.filter(
         order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
       );
-      setHasOrders(userOrders.length > 0);
+      return userOrders.length > 0;
     } else {
-      setHasOrders(false);
+      return false;
     }
   };
 
@@ -119,11 +119,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
       window.removeEventListener('orderCreated', handleOrderCreated);
     };
   }, []);
-
-  // Force re-render when cart count changes
-  useEffect(() => {
-    // This empty dependency array ensures the effect runs when cartCount changes
-  }, [cartCount]);
 
   const toggleCart = () => {
     setIsCartOpen(!isCartOpen);
@@ -320,42 +315,8 @@ const AdminContentWrapper = ({ children }) => {
 
 // Separate component for the app content that can safely use hooks within the providers
 function AppContent() {
-  // Now useAuth is safely inside the AuthProvider
-  const { isAuthenticated: isAdmin } = useAuth();
-  const [hasOrders, setHasOrders] = useState(false);
   // Add state for mobile menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Function to check if user has orders
-  const checkForUserOrders = () => {
-    const userEmail = localStorage.getItem('userEmail');
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    
-    if (userEmail && orders.length > 0) {
-      // Check if any orders belong to this user
-      const userOrders = orders.filter(
-        order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
-      );
-      setHasOrders(userOrders.length > 0);
-    } else {
-      setHasOrders(false);
-    }
-  };
-
-  // Check for orders when component mounts
-  useEffect(() => {
-    checkForUserOrders();
-  }, []);
-  
-  // Listen for the 'orderCreated' event to update the orders display
-  useEffect(() => {
-    const handleOrderCreated = () => {
-      checkForUserOrders();
-    };
-    
-    window.addEventListener('orderCreated', handleOrderCreated);
-    return () => window.removeEventListener('orderCreated', handleOrderCreated);
-  }, []);
   
   return (
     <div className="App">
