@@ -14,7 +14,7 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously } from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 // Import auth functions only when needed
 
 // Your web app's Firebase configuration
@@ -38,6 +38,31 @@ const auth = getAuth(app);
 
 // Export Firebase utilities
 export { set, get, onValue, update, remove, storage, db, auth };
+
+// Utility to ensure user is authenticated before database operations
+export const ensureAuthenticated = () => {
+  return new Promise((resolve, reject) => {
+    const auth = getAuth();
+    
+    // Check if already authenticated
+    if (auth.currentUser) {
+      console.log('🔒 Already authenticated:', auth.currentUser.uid);
+      resolve(auth.currentUser);
+      return;
+    }
+    
+    // Try to sign in anonymously
+    signInAnonymously(auth)
+      .then((userCredential) => {
+        console.log('✅ Anonymous auth successful:', userCredential.user.uid);
+        resolve(userCredential.user);
+      })
+      .catch((error) => {
+        console.error('❌ Anonymous auth failed:', error.message);
+        reject(error);
+      });
+  });
+};
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {

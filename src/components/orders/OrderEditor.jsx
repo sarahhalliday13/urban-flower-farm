@@ -6,6 +6,7 @@ import { toast } from 'react-hot-toast';
 import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
 import SaveCancelButtons from './SaveCancelButtons';
+import { ensureAuthenticated } from '../../services/firebase';
 
 /**
  * OrderEditor - Component for editing an existing order
@@ -164,6 +165,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
     setSaveInProgress(true);
     
     try {
+      // First ensure we're authenticated
+      await ensureAuthenticated();
+      
       // Prepare update object
       const updateData = {
         id: orderId,
@@ -202,6 +206,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
     setSaveInProgress(true);
     
     try {
+      // First ensure we're authenticated
+      await ensureAuthenticated();
+      
       // Prepare update object
       const updateData = {
         id: orderId,
