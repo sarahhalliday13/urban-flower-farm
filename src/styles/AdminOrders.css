@@ -533,6 +533,31 @@
   justify-content: center;
 }
 
+/* Common style for invoice-style buttons - white bg, green outline, green text */
+.invoice-style-btn {
+  padding: 10px 16px;
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+  min-width: 140px;
+  text-align: center;
+}
+
+.invoice-style-btn:hover {
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.invoice-style-btn:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+  background-color: white;
+}
+
 .view-invoice-btn, .email-invoice-btn {
   padding: 10px 16px;
   border: none;
@@ -544,26 +569,57 @@
 }
 
 .view-invoice-btn {
-  background-color: #3498db;
-  color: white;
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
 }
 
 .view-invoice-btn:hover {
-  background-color: #2980b9;
+  background-color: rgba(44, 85, 48, 0.05);
 }
 
 .email-invoice-btn {
-  background-color: #2c5530;
-  color: white;
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
 }
 
 .email-invoice-btn:hover {
-  background-color: #1f3d22;
+  background-color: rgba(44, 85, 48, 0.05);
 }
 
 .email-invoice-btn:disabled {
-  background-color: #ccc;
+  background-color: white;
+  color: #ccc;
+  border-color: #ccc;
   cursor: not-allowed;
+}
+
+/* Update email-send-btn to match invoice style */
+.email-send-btn {
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 10px 16px;
+  transition: all 0.2s;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+  display: block;
+}
+
+.email-send-btn:hover {
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.email-send-btn:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+  background-color: white;
 }
 
 /* Invoice modal */

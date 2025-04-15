@@ -27,6 +27,12 @@
   font-size: 1.8rem;
 }
 
+.invoice-logo-image {
+  max-width: 200px;
+  height: auto;
+  display: block;
+}
+
 .invoice-info {
   text-align: right;
 }
@@ -50,6 +56,7 @@
 
 .invoice-from, .invoice-to {
   width: 48%;
+  text-align: left;
 }
 
 .invoice-from h3, .invoice-to h3 {
@@ -58,11 +65,13 @@
   font-size: 1.1rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.5rem;
+  text-align: left;
 }
 
 .invoice-from p, .invoice-to p {
   margin: 0.25rem 0;
   font-size: 0.9rem;
+  text-align: left;
 }
 
 .invoice-items {

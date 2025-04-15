@@ -47,7 +47,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
     <div className={`invoice-container ${type}`}>
       <div className="invoice-header">
         <div className="invoice-logo">
-          <h1>Buttons Urban Flower Farm</h1>
+          <img 
+            src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" 
+            alt="Buttons Urban Flower Farm" 
+            className="invoice-logo-image"
+          />
         </div>
         <div className="invoice-info">
           <h2>INVOICE</h2>
@@ -186,7 +190,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
                       z-index: 100;
                     }
                     .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
-                    .invoice-logo h1 { color: #2c5530; margin: 0; font-size: 1.8rem; }
+                    .invoice-logo-image { max-width: 200px; height: auto; display: block; }
                     .invoice-info { text-align: right; }
                     .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
                     .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
