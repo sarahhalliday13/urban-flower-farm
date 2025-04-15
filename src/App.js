@@ -18,6 +18,7 @@ import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 // eslint-disable-next-line no-unused-vars
 import { AdminProvider } from './context/AdminContext';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import './cart-styles.css';
 import FAQ from './components/FAQ';
 import UpdatesPage from './components/UpdatesPage';
@@ -28,7 +29,6 @@ import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
 import ErrorBoundary from './components/ErrorBoundary';
-
 // Import admin components directly instead of lazy loading
 // import InventoryManager from './components/InventoryManager';
 import ModularInventoryManager from './components/inventory/ModularInventoryManager';
@@ -36,6 +36,24 @@ import AdminDashboard from './components/AdminDashboard';
 // import AdminOrders from './components/AdminOrders';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
+
+// Initialize Firebase Anonymous Auth
+const auth = getAuth();
+signInAnonymously(auth)
+  .then(() => {
+    console.log('✅ Anonymous auth successful');
+  })
+  .catch((error) => {
+    console.error('❌ Anonymous auth failed:', error.message);
+  });
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log('🆔 Firebase user ID:', user.uid);
+  } else {
+    console.warn('⚠️ Not authenticated!');
+  }
+});
 
 // Custom wrapper for plant details
 const PlantDetailsWrapper = ({ children }) => {

@@ -59,11 +59,6 @@ function CartModal({ isOpen, onClose }) {
     navigate('/checkout');
   };
 
-  const viewOrders = () => {
-    onClose();
-    navigate('/orders');
-  };
-
   return (
     <div className={`cart-modal-overlay ${animationState}`}>
       <div className="cart-modal" ref={modalRef}>

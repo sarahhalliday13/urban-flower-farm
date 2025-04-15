@@ -1291,6 +1291,10 @@ export const saveOrder = async (orderData) => {
 export const getOrders = async () => {
   try {
     console.log('Fetching all orders from Firebase');
+    
+    // Ensure user is authenticated before reading orders
+    await ensureAuthenticated();
+    
     const ordersRef = ref(database, 'orders');
     const snapshot = await get(ordersRef);
     

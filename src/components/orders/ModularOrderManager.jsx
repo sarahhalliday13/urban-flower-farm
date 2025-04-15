@@ -2,7 +2,7 @@ import React from 'react';
 import { OrderProvider } from './OrderContext';
 import OrderTable from './OrderTable';
 import OrderFilterControls from './OrderFilterControls';
-import EmailQueueBanner from './EmailQueueBanner';
+// import EmailQueueBanner from './EmailQueueBanner';
 import './OrderTable.css';
 
 /**
@@ -35,7 +35,7 @@ const ModularOrderManager = () => {
         </div>
         
         {/* Email Banner for pending emails */}
-        <EmailQueueBanner />
+        {/* <EmailQueueBanner /> */}
         
         {/* Orders Table */}
         <OrderTable />

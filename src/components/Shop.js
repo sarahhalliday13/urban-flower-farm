@@ -697,13 +697,6 @@ function Shop() {
     }
   };
 
-  // Add a function to keep focus on the search input after form submission
-  const keepSearchFocus = () => {
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
-  };
-
   // Handle form submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -721,9 +714,6 @@ function Shop() {
     
     // Update the URL and navigate
     navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
-    
-    // Focus back on search input after a moment (if needed)
-    // setTimeout(keepSearchFocus, 100);
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
