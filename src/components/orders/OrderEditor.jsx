@@ -292,6 +292,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
           <div className="editor-column">
             <div className="editor-card">
               <h3>Current Items</h3>
+              <div className="add-item-section" style={{ marginBottom: '20px' }}>
+                <PlantSelector onAddItem={handleAddItem} />
+              </div>
               <OrderItemsTable 
                 items={items} 
                 total={orderData.total}
@@ -302,16 +305,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
             </div>
           </div>
           
-          {/* Right Column - Add Items + Actions */}
-          <div className="editor-column">
-            <div className="editor-card">
-              <h3>Add Items</h3>
-              
-              <div className="add-item-section">
-                <PlantSelector onAddItem={handleAddItem} />
-              </div>
-            </div>
-            
+          {/* Right Column - Actions */}
+          <div className="editor-column">            
             <div className="editor-card">
               <h3>Review & Save</h3>
               <p className="order-summary">
