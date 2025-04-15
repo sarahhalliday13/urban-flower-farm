@@ -1,5 +1,6 @@
 import React from 'react';
 import '../styles/Invoice.css';
+import { useOrders } from './orders/OrderContext';
 
 /**
  * Invoice component that displays order details in a printable format
@@ -9,6 +10,8 @@ import '../styles/Invoice.css';
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
+  const { sendOrderEmail, emailSending } = useOrders();
+  
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -159,84 +162,97 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
 
       {type === 'print' && (
         <div className="print-controls">
-          <button onClick={() => {
-            // Clean printing approach - forces single page
-            const printWindow = window.open('', '_blank');
-            if (!printWindow) {
-              alert('Please allow pop-ups to print the invoice');
-              return;
-            }
-            
-            // Create a clean document with just the invoice
-            printWindow.document.write(`
-              <html>
-                <head>
-                  <title>Invoice #${order.id}</title>
-                  <style>
-                    body { margin: 0; padding: 0.5in; font-family: Arial, sans-serif; }
-                    .invoice-container { max-width: 7.5in; margin: 0 auto; }
-                    .preliminary-mark { 
-                      position: absolute;
-                      top: 40%;
-                      left: 0;
-                      width: 100%;
-                      text-align: center;
-                      font-size: 3rem;
-                      transform: rotate(-45deg);
-                      color: rgba(220, 53, 69, 0.2);
-                      font-weight: bold;
-                      text-transform: uppercase;
-                      pointer-events: none;
-                      z-index: 100;
-                    }
-                    .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
-                    .invoice-logo-image { max-width: 200px; height: auto; display: block; }
-                    .invoice-info { text-align: right; }
-                    .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
-                    .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
-                    .invoice-preliminary-note { color: #dc3545; font-style: italic; margin-top: 0.5rem !important; }
-                    .invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 2rem; }
-                    .invoice-from, .invoice-to { width: 48%; }
-                    .invoice-from h3, .invoice-to h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-                    .invoice-from p, .invoice-to p { margin: 0.25rem 0; font-size: 0.9rem; }
-                    .invoice-items { margin-bottom: 2rem; }
-                    .invoice-items table { width: 100%; border-collapse: collapse; }
-                    .invoice-items th { background-color: #f5f5f5; padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #ddd; }
-                    .invoice-items td { padding: 0.75rem; border-bottom: 1px solid #eee; font-size: 0.9rem; text-align: left; }
-                    .invoice-items td:nth-child(2), .invoice-items td:nth-child(3), .invoice-items td:nth-child(4) { text-align: right; }
-                    .invoice-items tfoot td { border-top: 2px solid #ddd; font-weight: bold; }
-                    .total-label, .discount-label, .final-total-label { text-align: right; font-weight: bold; }
-                    .discount-label, .discount-amount { color: #28a745; }
-                    .final-total-label, .final-total-amount { font-size: 1.1rem; color: #2c5530; }
-                    .invoice-notes { margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
-                    .invoice-notes h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
-                    .invoice-notes p { margin: 0; font-size: 0.9rem; font-style: italic; }
-                    .invoice-payment { margin-bottom: 2rem; padding: 1rem; background-color: #f5f5f5; border-radius: 4px; }
-                    .invoice-payment h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
-                    .invoice-payment p { margin: 0.5rem 0; font-size: 0.9rem; }
-                    .invoice-payment ul { margin: 0.5rem 0; padding-left: 0; list-style-type: none; }
-                    .invoice-payment li { margin: 0.25rem 0; font-size: 0.9rem; }
-                    .payment-details { font-size: 0.9rem; }
-                  </style>
-                </head>
-                <body>
-                  ${document.querySelector('.invoice-container').outerHTML}
-                </body>
-              </html>
-            `);
-            
-            printWindow.document.close();
-            printWindow.focus();
-            
-            // Print after a short delay to ensure content is loaded
-            setTimeout(() => {
-              printWindow.print();
-              // Close window after print dialog is closed
+          <button 
+            onClick={() => {
+              // Clean printing approach - forces single page
+              const printWindow = window.open('', '_blank');
+              if (!printWindow) {
+                alert('Please allow pop-ups to print the invoice');
+                return;
+              }
+              
+              // Create a clean document with just the invoice
+              printWindow.document.write(`
+                <html>
+                  <head>
+                    <title>Invoice #${order.id}</title>
+                    <style>
+                      body { margin: 0; padding: 0.5in; font-family: Arial, sans-serif; }
+                      .invoice-container { max-width: 7.5in; margin: 0 auto; }
+                      .preliminary-mark { 
+                        position: absolute;
+                        top: 40%;
+                        left: 0;
+                        width: 100%;
+                        text-align: center;
+                        font-size: 3rem;
+                        transform: rotate(-45deg);
+                        color: rgba(220, 53, 69, 0.2);
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        pointer-events: none;
+                        z-index: 100;
+                      }
+                      .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
+                      .invoice-logo-image { max-width: 200px; height: auto; display: block; }
+                      .invoice-info { text-align: right; }
+                      .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
+                      .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
+                      .invoice-preliminary-note { color: #dc3545; font-style: italic; margin-top: 0.5rem !important; }
+                      .invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 2rem; }
+                      .invoice-from, .invoice-to { width: 48%; }
+                      .invoice-from h3, .invoice-to h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+                      .invoice-from p, .invoice-to p { margin: 0.25rem 0; font-size: 0.9rem; }
+                      .invoice-items { margin-bottom: 2rem; }
+                      .invoice-items table { width: 100%; border-collapse: collapse; }
+                      .invoice-items th { background-color: #f5f5f5; padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #ddd; }
+                      .invoice-items td { padding: 0.75rem; border-bottom: 1px solid #eee; font-size: 0.9rem; text-align: left; }
+                      .invoice-items td:nth-child(2), .invoice-items td:nth-child(3), .invoice-items td:nth-child(4) { text-align: right; }
+                      .invoice-items tfoot td { border-top: 2px solid #ddd; font-weight: bold; }
+                      .total-label, .discount-label, .final-total-label { text-align: right; font-weight: bold; }
+                      .discount-label, .discount-amount { color: #28a745; }
+                      .final-total-label, .final-total-amount { font-size: 1.1rem; color: #2c5530; }
+                      .invoice-notes { margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
+                      .invoice-notes h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
+                      .invoice-notes p { margin: 0; font-size: 0.9rem; font-style: italic; }
+                      .invoice-payment { margin-bottom: 2rem; padding: 1rem; background-color: #f5f5f5; border-radius: 4px; }
+                      .invoice-payment h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
+                      .invoice-payment p { margin: 0.5rem 0; font-size: 0.9rem; }
+                      .invoice-payment ul { margin: 0.5rem 0; padding-left: 0; list-style-type: none; }
+                      .invoice-payment li { margin: 0.25rem 0; font-size: 0.9rem; }
+                      .payment-details { font-size: 0.9rem; }
+                    </style>
+                  </head>
+                  <body>
+                    ${document.querySelector('.invoice-container').outerHTML}
+                  </body>
+                </html>
+              `);
+              
+              printWindow.document.close();
+              printWindow.focus();
+              
+              // Print after a short delay to ensure content is loaded
               setTimeout(() => {
-                printWindow.close();
+                printWindow.print();
+                // Close window after print dialog is closed
+                setTimeout(() => {
+                  printWindow.close();
+                }, 500);
               }, 500);
-            }, 500);
-          }} className="print-button">Print Invoice</button>
+            }} 
+            className="print-button"
+          >
+            Print Invoice
+          </button>
+          
+          <button 
+            onClick={() => sendOrderEmail(order)}
+            disabled={emailSending[order.id] || !order.customer.email || order.customer.email === 'Not provided'}
+            className="email-button"
+          >
+            {emailSending[order.id] ? 'Sending...' : 'Email Invoice'}
+          </button>
         </div>
       )}
     </div>
