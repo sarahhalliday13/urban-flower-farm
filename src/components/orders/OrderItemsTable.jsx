@@ -137,8 +137,8 @@ const OrderItemsTable = ({
       </table>
 
       <style jsx>{`
-        .total-col, .order-total-value {
-          border: none !important;
+        .order-total-value {
+          /* Remove border: none to show the border */
         }
         
         .invoice-style-table {
@@ -154,8 +154,20 @@ const OrderItemsTable = ({
           border-bottom: none;
         }
         
+        .invoice-style-table th {
+          padding: 10px 5px;
+          text-align: left;
+        }
+        
+        .invoice-style-table th.price-col,
+        .invoice-style-table th.total-col {
+          text-align: right;
+        }
+        
         .product-col {
           text-align: left;
+          width: 45%;
+          padding: 5px;
         }
         
         .invoice-style-table tr {
@@ -166,6 +178,17 @@ const OrderItemsTable = ({
 
         .quantity-col {
           width: 120px;
+        }
+        
+        .price-col {
+          width: 50px;
+          text-align: right;
+          padding-right: 20px;
+        }
+        
+        .total-col {
+          width: 70px;
+          text-align: right;
         }
 
         .quantity-input {
@@ -199,7 +222,7 @@ const OrderItemsTable = ({
         .quantity-control-wrapper {
           display: flex;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-end;
         }
         
         .quantity-btn {

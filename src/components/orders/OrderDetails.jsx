@@ -264,7 +264,11 @@ const OrderDetails = () => {
               <h3>Customer Information</h3>
               <p><strong>Name:</strong> {orderDetails.customer.name}</p>
               <p><strong>Email:</strong> {orderDetails.customer.email}</p>
-              <p><strong>Phone:</strong> {orderDetails.customer.phone}</p>
+              <p><strong>Phone:</strong> {orderDetails.customer.phone ? (
+                <a href={`tel:${orderDetails.customer.phone}`} style={{ color: '#2c5530', textDecoration: 'none' }}>
+                  {orderDetails.customer.phone}
+                </a>
+              ) : 'Not provided'}</p>
               
               {(orderDetails.customer.notes || orderDetails.notes) && (
                 <div className="pickup-notes">

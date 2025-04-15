@@ -98,14 +98,28 @@ const PlantSelector = ({ onAddItem }) => {
   return (
     <div className="plant-selector" ref={dropdownRef}>
       <div className="predictive-search-container">
-        <input
-          type="text"
-          className="predictive-search-input"
-          placeholder="Search plants..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          onFocus={() => searchQuery && setIsDropdownOpen(true)}
-        />
+        <div className="search-input-wrapper">
+          <input
+            type="text"
+            className="predictive-search-input"
+            placeholder="Add a flower"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            onFocus={() => searchQuery && setIsDropdownOpen(true)}
+          />
+          {searchQuery && (
+            <button 
+              className="clear-search-btn" 
+              onClick={() => {
+                setSearchQuery('');
+                setIsDropdownOpen(false);
+              }}
+              aria-label="Clear search"
+            >
+              &times;
+            </button>
+          )}
+        </div>
         
         {isDropdownOpen && filteredPlants.length > 0 && (
           <div className="predictive-dropdown">
@@ -156,7 +170,7 @@ const PlantSelector = ({ onAddItem }) => {
           border-top: none;
           border-radius: 0 0 4px 4px;
           box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-          z-index: 10;
+          z-index: 100;
         }
         
         .dropdown-item {
@@ -189,6 +203,60 @@ const PlantSelector = ({ onAddItem }) => {
           padding: 12px;
           text-align: center;
           color: #6c757d;
+        }
+
+        .search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          width: 100%;
+        }
+
+        .clear-search-btn {
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          background: none;
+          border: none;
+          color: #6c757d;
+          font-size: 20px;
+          line-height: 1;
+          padding: 0;
+          cursor: pointer;
+          height: 24px;
+          width: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+
+        .clear-search-btn:hover {
+          background-color: rgba(108, 117, 125, 0.1);
+          color: #495057;
+        }
+        
+        .predictive-search-input {
+          padding-right: 35px;
+        }
+        
+        .dropdown-item {
+          flex-wrap: nowrap;
+        }
+        
+        .plant-name {
+          flex: 1;
+          text-align: left;
+          margin-right: 10px;
+          white-space: normal;
+          word-break: break-word;
+        }
+        
+        .plant-price {
+          flex-shrink: 0;
+          text-align: right;
+          white-space: nowrap;
         }
       `}</style>
     </div>
