@@ -277,17 +277,13 @@ const OrderDetails = () => {
             </div>
             
             <div className="email-summary">
-              <h3>Email Status</h3>
-              <div className="email-status-display">
-                {getEmailStatus()}
-                <button 
-                  className="email-invoice-btn"
-                  onClick={() => sendOrderEmail(orderDetails)}
-                  disabled={emailSending[orderDetails.id] || !orderDetails.customer.email || orderDetails.customer.email === 'Not provided'}
-                >
-                  {emailSending[orderDetails.id] ? 'Sending...' : 'Send/Resend Email'}
-                </button>
-              </div>
+              <button 
+                className="email-invoice-btn"
+                onClick={() => sendOrderEmail(orderDetails)}
+                disabled={emailSending[orderDetails.id] || !orderDetails.customer.email || orderDetails.customer.email === 'Not provided'}
+              >
+                {emailSending[orderDetails.id] ? 'Sending...' : 'Send Order Email'}
+              </button>
             </div>
           </div>
           
@@ -600,3 +596,6 @@ const OrderDetails = () => {
 };
 
 export default OrderDetails;
+
+
+
