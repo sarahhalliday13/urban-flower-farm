@@ -207,8 +207,12 @@ const Checkout = () => {
       try {
         await saveOrder(newOrderData);
         
-        // Send confirmation emails
+        // NOTE: The server-side function will handle sending emails when the order is saved
+        // We're disabling direct frontend email sending to avoid duplicates
+        // Uncomment this only for testing/debugging:
+        /*
         await sendOrderConfirmationEmails(newOrderData);
+        */
         
         // Also save to localStorage for client-side access
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');

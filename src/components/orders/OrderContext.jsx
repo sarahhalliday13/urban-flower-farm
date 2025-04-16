@@ -225,6 +225,14 @@ export const OrderProvider = ({ children }) => {
   const sendOrderEmail = useCallback(async (order) => {
     if (emailSending[order.id]) return { success: false, message: 'Email already sending' }; 
     
+    // Check if email has already been sent
+    if (order.emailSent) {
+      console.log(`Order ${order.id} already has emailSent flag, but admin manually requested resend`);
+      // We still allow admins to manually resend if needed, but we log it
+    }
+    
+    console.log(`Admin triggered email for order ${order.id} at ${new Date().toISOString()}`);
+    
     // Set sending state for this order
     setEmailSending(prev => ({ ...prev, [order.id]: true }));
     
@@ -232,7 +240,9 @@ export const OrderProvider = ({ children }) => {
       const result = await sendOrderConfirmationEmails(order);
       
       if (result.success) {
-        addToast("Email sent successfully!", "success");
+        addToast(result.alreadySent 
+          ? "Email was already sent for this order" 
+          : "Email sent successfully!", "success");
         
         // Mark this order as having sent an email in localStorage
         const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');

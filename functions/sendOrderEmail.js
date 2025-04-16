@@ -4,6 +4,12 @@ const cors = require('cors')({
   origin: ['https://buttonsflowerfarm-8a54d.web.app', 'http://localhost:3000'], 
   credentials: true 
 });
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin SDK if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 // Email configuration
 const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
@@ -22,6 +28,7 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 
     try {
       const order = req.body;
+      console.log(`Triggered email for order ${order.id} at ${new Date().toISOString()}`);
       console.log('Processing order email:', {
         orderId: order.id,
         customer: order.customer?.email,
@@ -35,6 +42,25 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
           success: false,
           error: 'Missing required order information' 
         });
+      }
+
+      // Check if email has already been sent for this order
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        const orderSnapshot = await orderRef.once('value');
+        const orderData = orderSnapshot.val();
+        
+        if (orderData && orderData.emailSent === true) {
+          console.log(`Email already sent for order ${order.id}, skipping send`);
+          return res.status(200).send({
+            success: true,
+            message: 'Email already sent for this order',
+            alreadySent: true
+          });
+        }
+      } catch (dbError) {
+        console.error(`Error checking email status for order ${order.id}:`, dbError);
+        // Continue with sending if we can't check - better to potentially send twice than not at all
       }
 
       // Send email to customer
@@ -53,12 +79,37 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         html: generateButtonsEmailTemplate(order)
       };
 
-      console.log('Sending order confirmation emails...');
+      console.log(`Sending order confirmation emails for ${order.id}...`);
       const results = await Promise.all([
         sgMail.send(customerEmail),
         sgMail.send(buttonsEmail)
       ]);
-      console.log('Order email results:', JSON.stringify(results));
+      
+      // Log the SendGrid responses with message IDs
+      console.log(`SendGrid response for ${order.id} (customer):`, 
+        results[0]?.[0]?.statusCode, 
+        results[0]?.[0]?.headers?.['x-message-id']
+      );
+      console.log(`SendGrid response for ${order.id} (admin):`, 
+        results[1]?.[0]?.statusCode, 
+        results[1]?.[0]?.headers?.['x-message-id']
+      );
+      
+      // Mark the order as having sent email
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        await orderRef.update({
+          emailSent: true,
+          emailSentTimestamp: Date.now(),
+          emailMessageIds: [
+            results[0]?.[0]?.headers?.['x-message-id'],
+            results[1]?.[0]?.headers?.['x-message-id']
+          ]
+        });
+        console.log(`Updated order ${order.id} with emailSent flag`);
+      } catch (updateError) {
+        console.error(`Error updating emailSent flag for order ${order.id}:`, updateError);
+      }
       
       return res.status(200).send({ 
         success: true,

@@ -27,7 +27,17 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       };
     }
     
-    console.log(`Sending order confirmation for order: ${orderData.id}`);
+    console.log(`Request to send order confirmation for order: ${orderData.id}`);
+    
+    // Check if email has already been sent (marked in the order data)
+    if (orderData.emailSent === true) {
+      console.log(`Email already sent for order ${orderData.id}, skipping frontend send`);
+      return {
+        success: true,
+        message: 'Email already sent for this order',
+        alreadySent: true
+      };
+    }
     
     // Try to send email via Firebase Function
     try {
@@ -51,7 +61,7 @@ export const sendOrderConfirmationEmails = async (orderData) => {
         console.log('Order confirmation emails sent successfully');
         return {
           success: true,
-          message: 'Order confirmation emails sent successfully',
+          message: data.alreadySent ? 'Email was already sent for this order' : 'Order confirmation emails sent successfully',
           data
         };
       } else {

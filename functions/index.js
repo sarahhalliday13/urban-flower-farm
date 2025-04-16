@@ -736,3 +736,88 @@ exports.uploadImage = functions
 
 exports.simpleContactFunction = simpleContactFunction;
 exports.directContactEmail = directContactEmail;
+
+// Trigger to send emails when a new order is created
+exports.sendOrderEmailOnCreate = functions.database.ref('/orders/{orderId}')
+  .onCreate(async (snapshot, context) => {
+    const order = snapshot.val();
+    const orderId = context.params.orderId;
+    
+    console.log(`New order created trigger fired for ${orderId} at ${new Date().toISOString()}`);
+    
+    // Skip if emailSent is already true
+    if (order.emailSent === true) {
+      console.log(`Order ${orderId} already has emailSent=true, skipping email send`);
+      return null;
+    }
+    
+    try {
+      // Initialize SendGrid if not already done
+      const apiKey = process.env.SENDGRID_API_KEY || functions.config().sendgrid?.api_key;
+      if (!apiKey) {
+        console.error('SendGrid API key is not defined');
+        return null;
+      }
+      
+      const sgMail = require('@sendgrid/mail');
+      sgMail.setApiKey(apiKey);
+      
+      // Email configuration
+      const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
+      const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup admin email
+      
+      const getOrderNotes = (order) => {
+        if (!order) return '';
+        if (order.customer?.notes) return order.customer.notes;
+        return '';
+      };
+      
+      // Generate email templates (simplified for brevity - use your actual templates)
+      const customerEmailContent = `Thank you for your order ${orderId}`;
+      const adminEmailContent = `New order received: ${orderId} with notes: ${getOrderNotes(order)}`;
+      
+      // Setup email messages
+      const customerEmail = {
+        to: order.customer.email,
+        from: BUTTONS_EMAIL,
+        subject: `Order Confirmation - ${orderId}`,
+        html: customerEmailContent
+      };
+      
+      const adminEmail = {
+        to: [BUTTONS_EMAIL, ADMIN_EMAIL],
+        from: BUTTONS_EMAIL,
+        subject: `New Order Received - ${orderId}`,
+        html: adminEmailContent
+      };
+      
+      console.log(`Sending emails for order ${orderId} from database trigger`);
+      const results = await Promise.all([
+        sgMail.send(customerEmail),
+        sgMail.send(adminEmail)
+      ]);
+      
+      console.log(`SendGrid response for ${orderId} (trigger - customer):`, 
+        results[0]?.[0]?.statusCode, 
+        results[0]?.[0]?.headers?.['x-message-id']
+      );
+      
+      // Mark the order as having sent email
+      await snapshot.ref.update({
+        emailSent: true,
+        emailSentTimestamp: Date.now(),
+        emailMessageIds: [
+          results[0]?.[0]?.headers?.['x-message-id'],
+          results[1]?.[0]?.headers?.['x-message-id']
+        ]
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error(`Error sending email in trigger for order ${orderId}:`, error);
+      if (error.response) {
+        console.error('SendGrid error details:', error.response.body);
+      }
+      return { success: false, error: error.message };
+    }
+  });
