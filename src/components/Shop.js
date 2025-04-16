@@ -296,16 +296,19 @@ function Shop() {
       statusFilteredPlants = filteredPlants.filter(plant => 
         plant.inventory?.status === 'Pre-order' || plant.inventory?.status === 'Pre-Order'
       );
-    } else if (sortOption === 'all') {
-      statusFilteredPlants = filteredPlants;
+    } else {
+      // Default to in-stock if no valid option selected
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status === 'In Stock' || 
+        plant.inventory?.status === 'Low Stock' ||
+        (plant.inventory?.currentStock > 0 && !plant.inventory?.status)
+      );
     }
     
     console.log('Plants after status filter:', statusFilteredPlants.length, 'with sortOption:', sortOption);
     
     // Apply sorting
     switch (sortOption) {
-      case 'all':
-        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'status-in-stock':
       case 'status-coming-soon':
       case 'status-pre-order':
@@ -739,7 +742,6 @@ function Shop() {
                       className="sort-select"
                       aria-label="Sort plants by selected option"
                     >
-                      <option value="all">All ({getStatusCounts.all})</option>
                       <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
                       <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
                       <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
@@ -887,9 +889,6 @@ function Shop() {
         {sortedPlants.length > 0 && (
           <div className="pagination-info">
             Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedPlants.length)} of {sortedPlants.length} items
-            {sortOption !== 'all' && (
-              <span> (filtered from {getStatusCounts.all} total)</span>
-            )}
           </div>
         )}
         
