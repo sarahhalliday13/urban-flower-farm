@@ -71,6 +71,22 @@ const OrderDetails = () => {
     setIsEditingOrder(false);
   }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
   
+  // Custom close function to ensure order data is refreshed
+  const closeModalWithRefresh = async () => {
+    // First ensure we get fresh data
+    if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
+      try {
+        await window.orderContext.refreshOrders();
+        console.log("Orders refreshed before closing modal");
+      } catch (refreshError) {
+        console.error("Error refreshing orders:", refreshError);
+      }
+    }
+    
+    // Then update the editing state
+    setIsEditingOrder(false);
+  };
+  
   // If no active order, don't render anything
   if (!activeOrder) return null;
   
@@ -238,7 +254,7 @@ const OrderDetails = () => {
       {isEditingOrder ? (
         <OrderEditor 
           orderId={activeOrder} 
-          closeModal={() => setIsEditingOrder(false)} 
+          closeModal={closeModalWithRefresh} 
         />
       ) : (
         <div className="order-details-grid">

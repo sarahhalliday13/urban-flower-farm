@@ -194,39 +194,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
       console.log("Order saved successfully via REST API");
       addToast?.("Order updated successfully", "success");
       
-      // Refresh orders data to ensure UI is updated with the latest changes
-      // Only close the modal AFTER the refresh is complete
-      if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
-        // We need to make this a proper sequence
-        try {
-          const { refreshOrders } = window.orderContext;
-          
-          // Create a promise that resolves when orders are refreshed
-          await new Promise((resolve) => {
-            // Override the setOrders function temporarily to detect when refresh is complete
-            const originalSetOrders = window.orderContext.setOrders;
-            
-            // Replace with our version that calls resolve after updating state
-            window.orderContext.setOrders = (orders) => {
-              // Call the original function first
-              originalSetOrders(orders);
-              // Restore the original function
-              window.orderContext.setOrders = originalSetOrders;
-              // Signal that we're done
-              resolve();
-            };
-            
-            // Start the refresh
-            refreshOrders();
-          });
-          
-          console.log("Orders refreshed successfully, now closing modal");
-        } catch (refreshError) {
-          console.error("Error during order refresh:", refreshError);
-        }
-      }
-      
-      // Now that refresh is complete (or failed), close the modal
+      // The parent component (OrderDetails) will handle the refresh
+      // before actually closing the modal
       closeModal();
     } catch (error) {
       console.error("Error updating order:", error);
@@ -273,39 +242,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
       console.log("Order finalized successfully via REST API");
       addToast?.("Order finalized successfully", "success");
       
-      // Refresh orders data to ensure UI is updated with the latest changes
-      // Only close the modal AFTER the refresh is complete
-      if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
-        // We need to make this a proper sequence
-        try {
-          const { refreshOrders } = window.orderContext;
-          
-          // Create a promise that resolves when orders are refreshed
-          await new Promise((resolve) => {
-            // Override the setOrders function temporarily to detect when refresh is complete
-            const originalSetOrders = window.orderContext.setOrders;
-            
-            // Replace with our version that calls resolve after updating state
-            window.orderContext.setOrders = (orders) => {
-              // Call the original function first
-              originalSetOrders(orders);
-              // Restore the original function
-              window.orderContext.setOrders = originalSetOrders;
-              // Signal that we're done
-              resolve();
-            };
-            
-            // Start the refresh
-            refreshOrders();
-          });
-          
-          console.log("Orders refreshed successfully, now closing modal");
-        } catch (refreshError) {
-          console.error("Error during order refresh:", refreshError);
-        }
-      }
-      
-      // Now that refresh is complete (or failed), close the modal
+      // The parent component (OrderDetails) will handle the refresh
+      // before actually closing the modal
       closeModal();
     } catch (error) {
       console.error("Error finalizing order:", error);
