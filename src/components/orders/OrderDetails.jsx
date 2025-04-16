@@ -99,7 +99,8 @@ const OrderDetails = () => {
     // Then refresh the orders data
     if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
       try {
-        await window.orderContext.refreshOrders();
+        // Pass true for silent mode to avoid duplicate toast notifications
+        await window.orderContext.refreshOrders(true);
         console.log("Orders refreshed after editing");
       } catch (refreshError) {
         console.error("Error refreshing orders:", refreshError);

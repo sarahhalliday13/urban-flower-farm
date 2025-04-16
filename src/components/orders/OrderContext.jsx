@@ -102,7 +102,7 @@ export const OrderProvider = ({ children }) => {
   }, []);
 
   // Refresh orders manually (with UI feedback)
-  const refreshOrders = useCallback(() => {
+  const refreshOrders = useCallback((silent = false) => {
     console.log('Manually refreshing orders...');
     setLoading(true);
     
@@ -130,14 +130,21 @@ export const OrderProvider = ({ children }) => {
         // Update state and localStorage
         setOrders(processedOrders);
         localStorage.setItem('orders', JSON.stringify(processedOrders));
-        addToast('Orders refreshed successfully', 'success');
+        
+        // Only show toast if not in silent mode
+        if (!silent) {
+          addToast('Orders refreshed successfully', 'success');
+        }
         
         // Check for any pending orders that need emails
         checkPendingEmails(processedOrders);
       })
       .catch(error => {
         console.error('Error refreshing orders:', error);
-        addToast('Failed to refresh orders', 'error');
+        // Only show toast if not in silent mode
+        if (!silent) {
+          addToast('Failed to refresh orders', 'error');
+        }
       })
       .finally(() => {
         setLoading(false);
