@@ -28,9 +28,9 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 
     try {
       const order = req.body;
-      const isInvoiceEmail = order.isInvoiceEmail === true;
+      const isInvoiceEmail = req.body?.isInvoiceEmail === true;
       
-      console.log(`Triggered ${isInvoiceEmail ? 'invoice' : 'order confirmation'} email for order ${order.id} at ${new Date().toISOString()}`);
+      console.log(`Processing ${isInvoiceEmail ? 'invoice' : 'order confirmation'} email for order ${order.id} at ${new Date().toISOString()}`);
       console.log('Processing email:', {
         emailType: isInvoiceEmail ? 'invoice' : 'order confirmation',
         orderId: order.id,
@@ -78,15 +78,21 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         to: order.customer.email,
         from: BUTTONS_EMAIL,
         subject: subject,
-        html: generateCustomerEmailTemplate(order, isInvoiceEmail)
+        html: isInvoiceEmail 
+          ? generateInvoiceEmailTemplate(order)
+          : generateCustomerEmailTemplate(order)
       };
 
       // Send email to Buttons - send to both emails for redundancy
       const buttonsEmail = {
         to: [BUTTONS_EMAIL, ADMIN_EMAIL],
         from: BUTTONS_EMAIL,
-        subject: isInvoiceEmail ? `Invoice Sent for Order - ${order.id}` : `New Order Received - ${order.id}`,
-        html: generateButtonsEmailTemplate(order, isInvoiceEmail)
+        subject: isInvoiceEmail 
+          ? `Invoice Sent - ${order.id}`
+          : `New Order Received - ${order.id}`,
+        html: isInvoiceEmail 
+          ? generateInvoiceEmailTemplate(order, true) // true flag for admin version
+          : generateButtonsEmailTemplate(order)
       };
 
       console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
@@ -282,5 +288,117 @@ function generateButtonsEmailTemplate(order, isInvoice = false) {
         </div>
       ` : ''}
     </div>
+  `;
+}
+
+// Add new function for invoice email template
+function generateInvoiceEmailTemplate(order, isAdmin = false) {
+  // Extract needed data from order
+  const { id, items = [], total, customer = {}, date } = order;
+  const formattedDate = new Date(date).toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  // Format items for display in the email
+  const itemsList = items.map(item => {
+    return `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${parseFloat(item.price).toFixed(2)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  // Customize greeting based on whether this is for admin or customer
+  const greeting = isAdmin 
+    ? `<p>An invoice has been sent to ${customer.email} for order #${id}.</p>` 
+    : `<p>Dear ${customer.name || customer.firstName || 'Customer'},</p>
+       <p>Please find your invoice for order #${id} below.</p>`;
+  
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Invoice for Order - ${id}</title>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; }
+        .header { text-align: center; padding: 20px; background-color: #f5f5f5; }
+        .header img { max-width: 200px; }
+        .content { padding: 20px; }
+        .footer { text-align: center; font-size: 12px; color: #777; padding: 20px; background-color: #f5f5f5; }
+        .invoice-details { margin-bottom: 20px; }
+        .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .invoice-table th { background-color: #f5f5f5; text-align: left; padding: 10px; }
+        .invoice-total { font-weight: bold; text-align: right; }
+        .button { display: inline-block; padding: 10px 20px; background-color: #2c5530; color: white; text-decoration: none; border-radius: 4px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" alt="Buttons Urban Flower Farm">
+          <h1>Invoice</h1>
+        </div>
+        
+        <div class="content">
+          ${greeting}
+          
+          <div class="invoice-details">
+            <p><strong>Order #:</strong> ${id}</p>
+            <p><strong>Date:</strong> ${formattedDate}</p>
+            <p><strong>Customer:</strong> ${customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Not provided'}</p>
+            <p><strong>Email:</strong> ${customer.email || 'Not provided'}</p>
+          </div>
+          
+          <h2>Order Summary</h2>
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th style="text-align: center;">Quantity</th>
+                <th style="text-align: right;">Price</th>
+                <th style="text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsList}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3" class="invoice-total">Total</td>
+                <td style="text-align: right; font-weight: bold;">$${parseFloat(total).toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <h2>Payment Information</h2>
+          <p>Please complete your payment using one of the following methods:</p>
+          <ul>
+            <li><strong>Cash:</strong> Available for in-person pickup</li>
+            <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
+          </ul>
+          <p>Please include your order number (${id}) in the payment notes.</p>
+          
+          ${isAdmin ? '' : `
+            <p style="text-align: center; margin-top: 30px;">
+              <a href="https://urban-flower-farm-staging.web.app/orders/${id}" class="button">View Order Online</a>
+            </p>
+          `}
+        </div>
+        
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p>Buttons Urban Flower Farm</p>
+          <p>Email: buttonsflowerfarm@gmail.com</p>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
 } 
