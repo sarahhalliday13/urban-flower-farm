@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
 import Invoice from '../Invoice';
@@ -46,6 +46,8 @@ const OrderDetails = () => {
   const [shouldReopenAfterRefresh, setShouldReopenAfterRefresh] = useState(false);
   // Counter to force remount of OrderEditor
   const [editorKey, setEditorKey] = useState(0);
+  // Reference for scrolling
+  const orderDetailsRef = useRef(null);
   
   // Find the active order details
   const orderDetails = activeOrder ? orders.find(order => order.id === activeOrder) : null;
@@ -75,6 +77,17 @@ const OrderDetails = () => {
     setIsEditingOrder(false);
   }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
   
+  // Scroll to order details when opened or reopened
+  useEffect(() => {
+    if (orderDetailsRef.current && activeOrder) {
+      // Scroll to the top of order details when it becomes visible
+      orderDetailsRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+    }
+  }, [activeOrder, isEditingOrder]);
+  
   // Handle closing the edit modal with refresh
   const closeModalWithRefresh = async () => {
     // First close the modal immediately to avoid UI glitches
@@ -98,6 +111,14 @@ const OrderDetails = () => {
             setEditorKey(prev => prev + 1);
             setIsEditingOrder(true);
             setShouldReopenAfterRefresh(false);
+            
+            // Ensure element scrolls into view after reopening
+            if (orderDetailsRef.current) {
+              orderDetailsRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+              });
+            }
           }
         }, 100);
       }
@@ -265,7 +286,7 @@ const OrderDetails = () => {
   };
 
   return (
-    <div className="order-details-container">
+    <div className="order-details-container" ref={orderDetailsRef}>
       <button className="close-details-btn" onClick={() => setActiveOrder(null)}>×</button>
       
       {isEditingOrder ? (

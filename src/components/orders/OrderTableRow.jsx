@@ -14,6 +14,20 @@ const OrderTableRow = ({ order }) => {
   
   const toggleOrderDetails = () => {
     setActiveOrder(activeOrder === order.id ? null : order.id);
+    
+    // If we're opening the details, wait a bit for them to render then scroll
+    if (activeOrder !== order.id) {
+      setTimeout(() => {
+        // Find the order details container and scroll to it
+        const orderDetailsElement = document.querySelector('.order-details-container');
+        if (orderDetailsElement) {
+          orderDetailsElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start'
+          });
+        }
+      }, 100);
+    }
   };
 
   // Get readable status string
