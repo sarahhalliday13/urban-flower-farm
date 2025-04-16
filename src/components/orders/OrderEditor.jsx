@@ -193,6 +193,12 @@ const OrderEditor = ({ orderId, closeModal }) => {
       
       console.log("Order saved successfully via REST API");
       addToast?.("Order updated successfully", "success");
+      
+      // Refresh orders data to ensure UI is updated with the latest changes
+      if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
+        await window.orderContext.refreshOrders();
+      }
+      
       closeModal();
     } catch (error) {
       console.error("Error updating order:", error);
@@ -238,6 +244,12 @@ const OrderEditor = ({ orderId, closeModal }) => {
       
       console.log("Order finalized successfully via REST API");
       addToast?.("Order finalized successfully", "success");
+      
+      // Refresh orders data to ensure UI is updated with the latest changes
+      if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
+        await window.orderContext.refreshOrders();
+      }
+      
       closeModal();
     } catch (error) {
       console.error("Error finalizing order:", error);
