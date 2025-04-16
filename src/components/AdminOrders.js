@@ -643,7 +643,6 @@ const AdminOrders = () => {
             <Invoice 
               order={orders.find(order => order.id === showInvoice)} 
               type="print" 
-              key={`invoice-${showInvoice}`} 
             />
           </div>
         </div>

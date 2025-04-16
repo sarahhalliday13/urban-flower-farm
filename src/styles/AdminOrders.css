@@ -635,6 +635,9 @@
   align-items: center;
   z-index: 1000;
   overflow-y: auto;
+  visibility: visible; /* Ensure visibility */
+  transition: opacity 0.15s ease-in-out; /* Smooth transition */
+  opacity: 1;
 }
 
 .invoice-modal-content {
@@ -646,6 +649,9 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  transform: translateY(0); /* Prevent jumping */
+  transition: transform 0.15s ease-in-out;
 }
 
 /* Additional print-specific styles for the modal */
