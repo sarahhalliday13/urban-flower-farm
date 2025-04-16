@@ -27,10 +27,12 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       };
     }
     
-    console.log(`Request to send order confirmation for order: ${orderData.id}`);
+    const isInvoiceEmail = orderData.isInvoiceEmail === true;
     
-    // Check if email has already been sent (marked in the order data)
-    if (orderData.emailSent === true) {
+    console.log(`Request to send ${isInvoiceEmail ? 'invoice' : 'order confirmation'} for order: ${orderData.id}`);
+    
+    // Only check emailSent flag for order confirmation emails, not for invoice emails
+    if (!isInvoiceEmail && orderData.emailSent === true) {
       console.log(`Email already sent for order ${orderData.id}, skipping frontend send`);
       return {
         success: true,
@@ -42,7 +44,7 @@ export const sendOrderConfirmationEmails = async (orderData) => {
     // Try to send email via Firebase Function
     try {
       const apiUrl = getApiUrl();
-      console.log(`Sending order email via: ${apiUrl}/sendOrderEmail`);
+      console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order'} email via: ${apiUrl}/sendOrderEmail`);
       
       const response = await fetch(`${apiUrl}/sendOrderEmail`, {
         method: 'POST',
@@ -55,107 +57,32 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       });
       
       const data = await response.json();
-      console.log('Order email API response:', data);
+      console.log('Email API response:', data);
       
       if (response.ok && data.success) {
-        console.log('Order confirmation emails sent successfully');
+        console.log(`${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`);
         return {
           success: true,
-          message: data.alreadySent ? 'Email was already sent for this order' : 'Order confirmation emails sent successfully',
+          message: data.alreadySent && !isInvoiceEmail 
+            ? 'Email was already sent for this order' 
+            : `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`,
           data
         };
       } else {
-        throw new Error(data.error || data.details || 'Failed to send order emails');
+        throw new Error(data.error || data.details || `Failed to send ${isInvoiceEmail ? 'invoice' : 'order'} email`);
       }
-    } catch (apiError) {
-      console.error('Error calling email API:', apiError);
-      
-      // Fall back to localStorage queue if API call fails
-      console.log('Falling back to localStorage queue for manual sending');
-      
-      // Store the order information for later sending by admin
-      const pendingEmails = JSON.parse(localStorage.getItem('pendingOrderEmails') || '[]');
-      
-      // Check if we already have this order in pending emails
-      const existingEmailIndex = pendingEmails.findIndex(item => item.orderId === orderData.id);
-      
-      if (existingEmailIndex >= 0) {
-        // Update existing entry
-        pendingEmails[existingEmailIndex] = {
-          ...pendingEmails[existingEmailIndex],
-          orderId: orderData.id,
-          customerEmail: orderData.customer.email,
-          customerName: `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-          orderDate: orderData.date,
-          timestamp: Date.now(),
-          attempts: (pendingEmails[existingEmailIndex].attempts || 0) + 1,
-          lastAttempt: new Date().toISOString(),
-          error: apiError.message
-        };
-      } else {
-        // Add new entry
-        pendingEmails.push({
-          orderId: orderData.id,
-          customerEmail: orderData.customer.email,
-          customerName: `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-          orderDate: orderData.date,
-          timestamp: Date.now(),
-          attempts: 1,
-          lastAttempt: new Date().toISOString(),
-          error: apiError.message
-        });
-      }
-      
-      localStorage.setItem('pendingOrderEmails', JSON.stringify(pendingEmails));
-      console.log(`Order ${orderData.id} added to pending emails queue for manual sending`);
-      
-      // Track emails that need to be manually sent in a separate collection for the admin
-      const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
-      
-      if (!manualEmails.find(item => item.orderId === orderData.id)) {
-        manualEmails.push({
-          orderId: orderData.id,
-          customerEmail: orderData.customer.email,
-          customerName: `${orderData.customer.firstName} ${orderData.customer.lastName}`,
-          status: 'pending',
-          date: new Date().toISOString(),
-          error: apiError.message
-        });
-        
-        localStorage.setItem('manualEmails', JSON.stringify(manualEmails));
-      }
-      
-      // Return success: false to indicate email was not actually sent
-      // but we have handled it gracefully
+    } catch (error) {
+      console.error(`Error sending ${isInvoiceEmail ? 'invoice' : 'order'} email:`, error);
       return {
         success: false,
-        message: 'Email service unavailable. Order tracked for manual email sending.',
-        pendingEmailSaved: true,
-        error: apiError.message
+        message: error.message || `Failed to send ${isInvoiceEmail ? 'invoice' : 'order'} email`,
       };
     }
   } catch (error) {
-    console.error('Error in sendOrderConfirmationEmails:', error);
-    
-    // Final fallback - just track that we need to send an email
-    try {
-      const pendingEmails = JSON.parse(localStorage.getItem('pendingOrderEmails') || '[]');
-      pendingEmails.push({
-        orderId: orderData.id,
-        timestamp: Date.now(),
-        attempts: 1,
-        error: error.message
-      });
-      localStorage.setItem('pendingOrderEmails', JSON.stringify(pendingEmails));
-      console.log('Stored order in pendingOrderEmails for later retry');
-    } catch (e) {
-      console.error('Failed to store pending email:', e);
-    }
-    
+    console.error('Error in email service:', error);
     return {
       success: false,
-      message: 'Could not send order confirmation emails. Will retry later.',
-      error: error.message
+      message: error.message || 'An unexpected error occurred in the email service',
     };
   }
 };

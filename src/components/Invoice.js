@@ -10,7 +10,7 @@ import { useOrders } from './orders/OrderContext';
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
-  const { sendOrderEmail, emailSending } = useOrders();
+  const { sendInvoiceEmail, emailSending } = useOrders();
   
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -247,7 +247,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           </button>
           
           <button 
-            onClick={() => sendOrderEmail(order)}
+            onClick={() => sendInvoiceEmail(order)}
             disabled={emailSending[order.id] || !order.customer.email || order.customer.email === 'Not provided'}
             className="email-button"
           >

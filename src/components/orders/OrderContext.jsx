@@ -278,6 +278,52 @@ export const OrderProvider = ({ children }) => {
     }
   }, [orders, emailSending, addToast]);
 
+  // Send invoice email (separate from order confirmation emails)
+  const sendInvoiceEmail = useCallback(async (order) => {
+    if (emailSending[order.id]) return { success: false, message: 'Email already sending' }; 
+    
+    console.log(`Admin triggered invoice email for order ${order.id} at ${new Date().toISOString()}`);
+    
+    // Set sending state for this order
+    setEmailSending(prev => ({ ...prev, [order.id]: true }));
+    
+    try {
+      // Create a copy of the order data with a special flag for invoice
+      const invoiceData = {
+        ...order,
+        isInvoiceEmail: true // Special flag to indicate this is an invoice email, not an order confirmation
+      };
+      
+      const result = await sendOrderConfirmationEmails(invoiceData);
+      
+      if (result.success) {
+        addToast("Invoice email sent successfully!", "success");
+        
+        // Update localStorage to track invoice email sending
+        const invoiceEmails = JSON.parse(localStorage.getItem('invoiceEmails') || '[]');
+        const updatedEmails = [...invoiceEmails, {
+          orderId: order.id,
+          status: 'sent',
+          sentDate: new Date().toISOString(),
+          type: 'invoice'
+        }];
+        localStorage.setItem('invoiceEmails', JSON.stringify(updatedEmails));
+        
+        return { success: true };
+      } else {
+        addToast("Failed to send invoice email: " + (result.message || "Unknown error"), "error");
+        return { success: false, message: result.message || "Failed to send invoice email" };
+      }
+    } catch (error) {
+      console.error(`Error sending invoice email for order ${order.id}:`, error);
+      addToast("Error sending invoice email: " + error.message, "error");
+      return { success: false, message: error.message };
+    } finally {
+      // Clear sending state
+      setEmailSending(prev => ({ ...prev, [order.id]: false }));
+    }
+  }, [orders, emailSending, addToast]);
+
   /**
    * Update the discount for an order
    * @param {string} orderId - The ID of the order to update
@@ -747,6 +793,7 @@ export const OrderProvider = ({ children }) => {
     finalizeOrder: finalizeOrder,
     statusToLowerCase,
     updateOrder,
+    sendInvoiceEmail,
   };
 
   console.log("OrderContext providing:", {

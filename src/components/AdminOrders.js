@@ -617,7 +617,7 @@ const AdminOrders = () => {
                                 </button>
                                 <button 
                                   className="email-invoice-btn"
-                                  onClick={() => sendOrderEmail(order)}
+                                  onClick={() => sendInvoiceEmail(order)}
                                   disabled={!order.customer.email || order.customer.email === 'Not provided'}
                                 >
                                   Email Invoice

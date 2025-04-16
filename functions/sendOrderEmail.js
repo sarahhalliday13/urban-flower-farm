@@ -28,8 +28,11 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 
     try {
       const order = req.body;
-      console.log(`Triggered email for order ${order.id} at ${new Date().toISOString()}`);
-      console.log('Processing order email:', {
+      const isInvoiceEmail = order.isInvoiceEmail === true;
+      
+      console.log(`Triggered ${isInvoiceEmail ? 'invoice' : 'order confirmation'} email for order ${order.id} at ${new Date().toISOString()}`);
+      console.log('Processing email:', {
+        emailType: isInvoiceEmail ? 'invoice' : 'order confirmation',
         orderId: order.id,
         customer: order.customer?.email,
         itemCount: order.items?.length,
@@ -44,42 +47,49 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         });
       }
 
-      // Check if email has already been sent for this order
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        const orderSnapshot = await orderRef.once('value');
-        const orderData = orderSnapshot.val();
-        
-        if (orderData && orderData.emailSent === true) {
-          console.log(`Email already sent for order ${order.id}, skipping send`);
-          return res.status(200).send({
-            success: true,
-            message: 'Email already sent for this order',
-            alreadySent: true
-          });
+      // Only check emailSent flag for order confirmation emails, not for invoice emails
+      if (!isInvoiceEmail) {
+        try {
+          const orderRef = admin.database().ref(`orders/${order.id}`);
+          const orderSnapshot = await orderRef.once('value');
+          const orderData = orderSnapshot.val();
+          
+          if (orderData && orderData.emailSent === true) {
+            console.log(`Order confirmation email already sent for order ${order.id}, skipping send`);
+            return res.status(200).send({
+              success: true,
+              message: 'Order confirmation email already sent for this order',
+              alreadySent: true
+            });
+          }
+        } catch (dbError) {
+          console.error(`Error checking email status for order ${order.id}:`, dbError);
+          // Continue with sending if we can't check - better to potentially send twice than not at all
         }
-      } catch (dbError) {
-        console.error(`Error checking email status for order ${order.id}:`, dbError);
-        // Continue with sending if we can't check - better to potentially send twice than not at all
       }
+
+      // Customize the subject based on email type
+      const subject = isInvoiceEmail
+        ? `Invoice for Order - ${order.id}`
+        : `Order Confirmation - ${order.id}`;
 
       // Send email to customer
       const customerEmail = {
         to: order.customer.email,
         from: BUTTONS_EMAIL,
-        subject: `Order Confirmation - ${order.id}`,
-        html: generateCustomerEmailTemplate(order)
+        subject: subject,
+        html: generateCustomerEmailTemplate(order, isInvoiceEmail)
       };
 
       // Send email to Buttons - send to both emails for redundancy
       const buttonsEmail = {
         to: [BUTTONS_EMAIL, ADMIN_EMAIL],
         from: BUTTONS_EMAIL,
-        subject: `New Order Received - ${order.id}`,
-        html: generateButtonsEmailTemplate(order)
+        subject: isInvoiceEmail ? `Invoice Sent for Order - ${order.id}` : `New Order Received - ${order.id}`,
+        html: generateButtonsEmailTemplate(order, isInvoiceEmail)
       };
 
-      console.log(`Sending order confirmation emails for ${order.id}...`);
+      console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
       const results = await Promise.all([
         sgMail.send(customerEmail),
         sgMail.send(buttonsEmail)
@@ -95,42 +105,60 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         results[1]?.[0]?.headers?.['x-message-id']
       );
       
-      // Mark the order as having sent email
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        await orderRef.update({
-          emailSent: true,
-          emailSentTimestamp: Date.now(),
-          emailMessageIds: [
-            results[0]?.[0]?.headers?.['x-message-id'],
-            results[1]?.[0]?.headers?.['x-message-id']
-          ]
-        });
-        console.log(`Updated order ${order.id} with emailSent flag`);
-      } catch (updateError) {
-        console.error(`Error updating emailSent flag for order ${order.id}:`, updateError);
+      // For regular order confirmation emails, update the emailSent flag in the database
+      if (!isInvoiceEmail) {
+        try {
+          const orderRef = admin.database().ref(`orders/${order.id}`);
+          await orderRef.update({
+            emailSent: true,
+            emailSentTimestamp: Date.now(),
+            emailMessageIds: [
+              results[0]?.[0]?.headers?.['x-message-id'],
+              results[1]?.[0]?.headers?.['x-message-id']
+            ]
+          });
+          console.log(`Updated order ${order.id} with emailSent flag`);
+        } catch (updateError) {
+          console.error(`Error updating emailSent flag for order ${order.id}:`, updateError);
+        }
+      } else {
+        // For invoice emails, update a separate invoiceEmailSent property
+        try {
+          const orderRef = admin.database().ref(`orders/${order.id}`);
+          await orderRef.update({
+            invoiceEmailSent: true,
+            invoiceEmailSentTimestamp: Date.now(),
+            invoiceEmailMessageIds: [
+              results[0]?.[0]?.headers?.['x-message-id'],
+              results[1]?.[0]?.headers?.['x-message-id']
+            ]
+          });
+          console.log(`Updated order ${order.id} with invoiceEmailSent flag`);
+        } catch (updateError) {
+          console.error(`Error updating invoiceEmailSent flag for order ${order.id}:`, updateError);
+        }
       }
       
       return res.status(200).send({ 
         success: true,
-        message: 'Order confirmation emails sent successfully' 
+        message: `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} emails sent successfully`
       });
     } catch (error) {
-      console.error('Error sending order confirmation emails:', error);
+      console.error('Error sending emails:', error);
       if (error.response) {
         console.error('SendGrid error details:', error.response.body);
       }
       return res.status(500).send({ 
         success: false,
-        error: 'Failed to send order confirmation emails',
+        error: 'Failed to send emails',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   });
 });
 
-// Email template functions
-function generateCustomerEmailTemplate(order) {
+// Email template functions - now with isInvoice parameter
+function generateCustomerEmailTemplate(order, isInvoice = false) {
   const itemsList = order.items.map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
@@ -199,7 +227,7 @@ function generateCustomerEmailTemplate(order) {
   `;
 }
 
-function generateButtonsEmailTemplate(order) {
+function generateButtonsEmailTemplate(order, isInvoice = false) {
   const itemsList = order.items.map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
