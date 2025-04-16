@@ -194,8 +194,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
       console.log("Order saved successfully via REST API");
       addToast?.("Order updated successfully", "success");
       
-      // The parent component (OrderDetails) will handle the refresh
-      // before actually closing the modal
+      // Close the modal - the parent will handle reopening after refresh
       closeModal();
     } catch (error) {
       console.error("Error updating order:", error);
@@ -242,8 +241,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
       console.log("Order finalized successfully via REST API");
       addToast?.("Order finalized successfully", "success");
       
-      // The parent component (OrderDetails) will handle the refresh
-      // before actually closing the modal
+      // Close the modal - the parent will handle reopening after refresh
       closeModal();
     } catch (error) {
       console.error("Error finalizing order:", error);

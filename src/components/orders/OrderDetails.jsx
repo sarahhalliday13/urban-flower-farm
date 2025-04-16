@@ -42,6 +42,10 @@ const OrderDetails = () => {
   
   // State for order editing
   const [isEditingOrder, setIsEditingOrder] = useState(false);
+  // Track if we need to reopen the modal after refresh
+  const [shouldReopenAfterRefresh, setShouldReopenAfterRefresh] = useState(false);
+  // Counter to force remount of OrderEditor
+  const [editorKey, setEditorKey] = useState(0);
   
   // Find the active order details
   const orderDetails = activeOrder ? orders.find(order => order.id === activeOrder) : null;
@@ -71,20 +75,33 @@ const OrderDetails = () => {
     setIsEditingOrder(false);
   }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
   
-  // Custom close function to ensure order data is refreshed
+  // Handle closing the edit modal with refresh
   const closeModalWithRefresh = async () => {
-    // First ensure we get fresh data
+    // First close the modal immediately to avoid UI glitches
+    setIsEditingOrder(false);
+    
+    // Flag that we should reopen after refresh
+    setShouldReopenAfterRefresh(true);
+    
+    // Then refresh the orders data
     if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
       try {
         await window.orderContext.refreshOrders();
-        console.log("Orders refreshed before closing modal");
+        console.log("Orders refreshed after editing");
       } catch (refreshError) {
         console.error("Error refreshing orders:", refreshError);
+      } finally {
+        // Reopen the edit modal after a short delay to ensure state is updated
+        setTimeout(() => {
+          if (shouldReopenAfterRefresh) {
+            // Increment editor key to force remount
+            setEditorKey(prev => prev + 1);
+            setIsEditingOrder(true);
+            setShouldReopenAfterRefresh(false);
+          }
+        }, 100);
       }
     }
-    
-    // Then update the editing state
-    setIsEditingOrder(false);
   };
   
   // If no active order, don't render anything
@@ -255,6 +272,7 @@ const OrderDetails = () => {
         <OrderEditor 
           orderId={activeOrder} 
           closeModal={closeModalWithRefresh} 
+          key={editorKey}
         />
       ) : (
         <div className="order-details-grid">
