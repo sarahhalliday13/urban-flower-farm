@@ -28,7 +28,12 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 
     try {
       const order = req.body;
-      const isInvoiceEmail = req.body?.isInvoiceEmail === true;
+      // Fix the isInvoiceEmail detection to check the parsed order object
+      const isInvoiceEmail = order?.isInvoiceEmail === true;
+      
+      // Add strong logging for debugging
+      console.log('🔥 Full incoming order object:', JSON.stringify(order, null, 2));
+      console.log('🔥 Detected isInvoiceEmail flag:', isInvoiceEmail);
       
       // Log clearly which type of email we're sending
       console.log(`Email type: ${isInvoiceEmail ? 'INVOICE' : 'ORDER CONFIRMATION'}`);
