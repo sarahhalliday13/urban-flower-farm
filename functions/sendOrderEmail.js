@@ -100,6 +100,22 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       };
 
       console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
+      
+      // Log the exact email payloads before sending
+      console.log("📧 Customer Email Payload:", {
+        to: customerEmail.to,
+        from: customerEmail.from,
+        subject: customerEmail.subject,
+        htmlLength: customerEmail.html?.length || 0
+      });
+      
+      console.log("📧 Admin Email Payload:", {
+        to: buttonsEmail.to,
+        from: buttonsEmail.from,
+        subject: buttonsEmail.subject,
+        htmlLength: buttonsEmail.html?.length || 0
+      });
+      
       const results = await Promise.all([
         sgMail.send(customerEmail),
         sgMail.send(buttonsEmail)
