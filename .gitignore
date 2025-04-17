@@ -51,3 +51,4 @@ setup-sendgrid.sh
 deploy-with-key.js
 captured_site/
 button_flower_farm_build.zip
+functions/.runtimeconfig.json
