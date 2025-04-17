@@ -30,6 +30,10 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       const order = req.body;
       const isInvoiceEmail = req.body?.isInvoiceEmail === true;
       
+      // Log clearly which type of email we're sending
+      console.log(`Email type: ${isInvoiceEmail ? 'INVOICE' : 'ORDER CONFIRMATION'}`);
+      console.log(`isInvoiceEmail flag value:`, isInvoiceEmail);
+
       console.log(`Processing ${isInvoiceEmail ? 'invoice' : 'order confirmation'} email for order ${order.id} at ${new Date().toISOString()}`);
       console.log('Processing email:', {
         emailType: isInvoiceEmail ? 'invoice' : 'order confirmation',
@@ -68,7 +72,7 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         }
       }
 
-      // Customize the subject based on email type
+      // DIRECTLY SET the subject based on email type
       const subject = isInvoiceEmail
         ? `Invoice for Order - ${order.id}`
         : `Order Confirmation - ${order.id}`;
@@ -77,10 +81,10 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       const customerEmail = {
         to: order.customer.email,
         from: BUTTONS_EMAIL,
-        subject: subject,
+        subject: subject, // Use the subject we defined above
         html: isInvoiceEmail 
           ? generateInvoiceEmailTemplate(order)
-          : generateCustomerEmailTemplate(order)
+          : generateCustomerEmailTemplate(order, isInvoiceEmail)
       };
 
       // Send email to Buttons - send to both emails for redundancy
@@ -92,7 +96,7 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
           : `New Order Received - ${order.id}`,
         html: isInvoiceEmail 
           ? generateInvoiceEmailTemplate(order, true) // true flag for admin version
-          : generateButtonsEmailTemplate(order)
+          : generateButtonsEmailTemplate(order, isInvoiceEmail)
       };
 
       console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
