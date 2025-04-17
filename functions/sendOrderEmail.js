@@ -89,7 +89,7 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         subject: subject, // Use the subject we defined above
         html: isInvoiceEmail 
           ? generateInvoiceEmailTemplate(order)
-          : generateCustomerEmailTemplate(order, isInvoiceEmail)
+          : generateCustomerEmailTemplate(order)
       };
 
       // Send email to Buttons - send to both emails for redundancy
