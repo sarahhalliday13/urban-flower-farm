@@ -1,7 +1,6 @@
-const fetch = require('node-fetch'); // install with npm install node-fetch if missing
+const fetch = require('node-fetch');
 
 const functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/sendOrderEmail';
-const apiKey = process.env.SENDGRID_API_KEY; // only needed if you want to verify in SendGrid later
 
 const testOrder = {
   id: `ORD-TEST-${Date.now()}`,
@@ -17,12 +16,15 @@ const testOrder = {
     email: 'sarah.halliday+testinvoice@gmail.com',
     phone: '604-000-0000'
   },
-  isInvoiceEmail: true
+  isInvoiceEmail: true,    // ✅ Tells sendOrderEmail.js to use the Invoice template
+  isTestInvoice: true      // ✅ Tells sendOrderEmail.js to SKIP saving to database
 };
 
 async function sendTestInvoice() {
   try {
     console.log('🚀 Sending test invoice POST request...');
+    console.log('Test order payload:', JSON.stringify(testOrder, null, 2)); // Debugging output
+
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -42,4 +44,4 @@ async function sendTestInvoice() {
   }
 }
 
-sendTestInvoice(); 
+sendTestInvoice();
