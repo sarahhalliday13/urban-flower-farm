@@ -46,6 +46,15 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       const apiUrl = getApiUrl();
       console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order'} email via: ${apiUrl}/sendOrderEmail`);
       
+      // Ensure isInvoiceEmail flag is explicitly included at the top-level
+      const dataToSend = {
+        ...orderData,
+        isInvoiceEmail: isInvoiceEmail === true // Ensure boolean value
+      };
+      
+      // Log the actual payload being sent to check if isInvoiceEmail is included
+      console.log('Sending payload with isInvoiceEmail flag:', JSON.stringify(dataToSend).includes('isInvoiceEmail'));
+      
       const response = await fetch(`${apiUrl}/sendOrderEmail`, {
         method: 'POST',
         headers: {
@@ -53,7 +62,7 @@ export const sendOrderConfirmationEmails = async (orderData) => {
           'Accept': 'application/json'
         },
         mode: 'cors',
-        body: JSON.stringify(orderData),
+        body: JSON.stringify(dataToSend),
       });
       
       const data = await response.json();
