@@ -738,82 +738,83 @@ exports.simpleContactFunction = simpleContactFunction;
 exports.directContactEmail = directContactEmail;
 
 // Trigger to send emails when a new order is created
-exports.sendOrderEmailOnCreate = functions.database.ref('/orders/{orderId}')
-  .onCreate(async (snapshot, context) => {
-    const order = snapshot.val();
-    const orderId = context.params.orderId;
+// Commenting out this function to prevent duplicate emails
+// exports.sendOrderEmailOnCreate = functions.database.ref('/orders/{orderId}')
+//   .onCreate(async (snapshot, context) => {
+//     const order = snapshot.val();
+//     const orderId = context.params.orderId;
     
-    console.log(`New order created trigger fired for ${orderId} at ${new Date().toISOString()}`);
+//     console.log(`New order created trigger fired for ${orderId} at ${new Date().toISOString()}`);
     
-    // Skip if emailSent is already true
-    if (order.emailSent === true) {
-      console.log(`Order ${orderId} already has emailSent=true, skipping email send`);
-      return null;
-    }
+//     // Skip if emailSent is already true
+//     if (order.emailSent === true) {
+//       console.log(`Order ${orderId} already has emailSent=true, skipping email send`);
+//       return null;
+//     }
     
-    try {
-      // Use the API key from the config which was already set up in the top of the file
-      if (!apiKeyConfigured) {
-        console.error('SendGrid API key is not configured');
-        return { success: false, error: 'SendGrid API key not configured' };
-      }
+//     try {
+//       // Use the API key from the config which was already set up in the top of the file
+//       if (!apiKeyConfigured) {
+//         console.error('SendGrid API key is not configured');
+//         return { success: false, error: 'SendGrid API key not configured' };
+//       }
       
-      // Email configuration (already defined at the top of the file)
-      // Using consistent capitalization with the rest of the file
-      const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
-      const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup admin email
+//       // Email configuration (already defined at the top of the file)
+//       // Using consistent capitalization with the rest of the file
+//       const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
+//       const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup admin email
       
-      // Use the existing template functions
-      const customerEmailContent = generateCustomerEmailTemplate(order);
-      const buttonsEmailContent = generateButtonsEmailTemplate(order);
+//       // Use the existing template functions
+//       const customerEmailContent = generateCustomerEmailTemplate(order);
+//       const buttonsEmailContent = generateButtonsEmailTemplate(order);
       
-      // Setup email messages
-      const customerEmail = {
-        to: order.customer.email,
-        from: BUTTONS_EMAIL,
-        subject: `Order Confirmation - ${orderId}`,
-        html: customerEmailContent
-      };
+//       // Setup email messages
+//       const customerEmail = {
+//         to: order.customer.email,
+//         from: BUTTONS_EMAIL,
+//         subject: `Order Confirmation - ${orderId}`,
+//         html: customerEmailContent
+//       };
       
-      const buttonsEmail = {
-        to: [BUTTONS_EMAIL, ADMIN_EMAIL],
-        from: BUTTONS_EMAIL,
-        subject: `New Order Received - ${orderId}`,
-        html: buttonsEmailContent
-      };
+//       const buttonsEmail = {
+//         to: [BUTTONS_EMAIL, ADMIN_EMAIL],
+//         from: BUTTONS_EMAIL,
+//         subject: `New Order Received - ${orderId}`,
+//         html: buttonsEmailContent
+//       };
       
-      console.log(`Sending emails for order ${orderId} from database trigger`);
-      const results = await Promise.all([
-        sgMail.send(customerEmail),
-        sgMail.send(buttonsEmail)
-      ]);
+//       console.log(`Sending emails for order ${orderId} from database trigger`);
+//       const results = await Promise.all([
+//         sgMail.send(customerEmail),
+//         sgMail.send(buttonsEmail)
+//       ]);
       
-      console.log(`SendGrid response for ${orderId} (trigger - customer):`, 
-        results[0]?.[0]?.statusCode, 
-        results[0]?.[0]?.headers?.['x-message-id']
-      );
+//       console.log(`SendGrid response for ${orderId} (trigger - customer):`, 
+//         results[0]?.[0]?.statusCode, 
+//         results[0]?.[0]?.headers?.['x-message-id']
+//       );
       
-      console.log(`SendGrid response for ${orderId} (trigger - admin):`, 
-        results[1]?.[0]?.statusCode, 
-        results[1]?.[0]?.headers?.['x-message-id']
-      );
+//       console.log(`SendGrid response for ${orderId} (trigger - admin):`, 
+//         results[1]?.[0]?.statusCode, 
+//         results[1]?.[0]?.headers?.['x-message-id']
+//       );
       
-      // Mark the order as having sent email
-      await snapshot.ref.update({
-        emailSent: true,
-        emailSentTimestamp: Date.now(),
-        emailMessageIds: [
-          results[0]?.[0]?.headers?.['x-message-id'],
-          results[1]?.[0]?.headers?.['x-message-id']
-        ]
-      });
+//       // Mark the order as having sent email
+//       await snapshot.ref.update({
+//         emailSent: true,
+//         emailSentTimestamp: Date.now(),
+//         emailMessageIds: [
+//           results[0]?.[0]?.headers?.['x-message-id'],
+//           results[1]?.[0]?.headers?.['x-message-id']
+//         ]
+//       });
       
-      return { success: true };
-    } catch (error) {
-      console.error(`Error sending email in trigger for order ${orderId}:`, error);
-      if (error.response) {
-        console.error('SendGrid error details:', error.response.body);
-      }
-      return { success: false, error: error.message };
-    }
-  });
+//       return { success: true };
+//     } catch (error) {
+//       console.error(`Error sending email in trigger for order ${orderId}:`, error);
+//       if (error.response) {
+//         console.error('SendGrid error details:', error.response.body);
+//       }
+//       return { success: false, error: error.message };
+//     }
+//   });
