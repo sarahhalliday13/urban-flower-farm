@@ -35,6 +35,19 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       console.log('🔥 Full incoming order object:', JSON.stringify(order, null, 2));
       console.log('🔥 Detected isInvoiceEmail flag:', isInvoiceEmail);
       
+      // 🛑 Don't save to database if it's an invoice email
+      if (!isInvoiceEmail) {
+        try {
+          const orderRef = admin.database().ref(`orders/${order.id}`);
+          await orderRef.set(order);
+          console.log(`Order ${order.id} saved to database`);
+        } catch (saveError) {
+          console.error(`Error saving order ${order.id} to database:`, saveError);
+        }
+      } else {
+        console.log(`Skipping database save for invoice email: ${order.id}`);
+      }
+      
       // Log clearly which type of email we're sending
       console.log(`Email type: ${isInvoiceEmail ? 'INVOICE' : 'ORDER CONFIRMATION'}`);
       console.log(`isInvoiceEmail flag value:`, isInvoiceEmail);
