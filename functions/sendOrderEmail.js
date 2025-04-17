@@ -116,20 +116,32 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         htmlLength: buttonsEmail.html?.length || 0
       });
       
-      const results = await Promise.all([
-        sgMail.send(customerEmail),
-        sgMail.send(buttonsEmail)
-      ]);
+      // Add safeguard against template mismatches
+      if (isInvoiceEmail && !order.isInvoiceEmail) {
+        throw new Error('Mismatch: Expected an invoice email but flag missing in order data.');
+      }
+      
+      // For invoices, only send to customer
+      // For order confirmations, send to both customer and admin
+      const results = isInvoiceEmail
+        ? [await sgMail.send(customerEmail)] // Only customer for invoice
+        : await Promise.all([
+            sgMail.send(customerEmail),
+            sgMail.send(buttonsEmail)
+          ]);
       
       // Log the SendGrid responses with message IDs
       console.log(`SendGrid response for ${order.id} (customer):`, 
         results[0]?.[0]?.statusCode, 
         results[0]?.[0]?.headers?.['x-message-id']
       );
-      console.log(`SendGrid response for ${order.id} (admin):`, 
-        results[1]?.[0]?.statusCode, 
-        results[1]?.[0]?.headers?.['x-message-id']
-      );
+      
+      if (!isInvoiceEmail) {
+        console.log(`SendGrid response for ${order.id} (admin):`, 
+          results[1]?.[0]?.statusCode, 
+          results[1]?.[0]?.headers?.['x-message-id']
+        );
+      }
       
       // For regular order confirmation emails, update the emailSent flag in the database
       if (!isInvoiceEmail) {
@@ -421,4 +433,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
     </body>
     </html>
   `;
-} 
+}
+
+// Export the function for testing
+exports.generateInvoiceEmailTemplate = generateInvoiceEmailTemplate; 

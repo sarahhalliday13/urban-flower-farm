@@ -4,6 +4,7 @@ import { sendOrderConfirmationEmails } from '../services/emailService';
 import Invoice from './Invoice';
 import '../styles/AdminOrders.css';
 import { useToast } from '../context/ToastContext';
+import { useOrders } from './orders/OrderContext';
 
 const AdminOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -16,6 +17,7 @@ const AdminOrders = () => {
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
   const [emailSending, setEmailSending] = useState({});
   const { addToast } = useToast();
+  const { sendInvoiceEmail } = useOrders();
 
   useEffect(() => {
     loadOrders();
