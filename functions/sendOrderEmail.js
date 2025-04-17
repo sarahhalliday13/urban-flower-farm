@@ -116,11 +116,6 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
         htmlLength: buttonsEmail.html?.length || 0
       });
       
-      // Add safeguard against template mismatches
-      if (isInvoiceEmail && !order.isInvoiceEmail) {
-        throw new Error('Mismatch: Expected an invoice email but flag missing in order data.');
-      }
-      
       // For invoices, only send to customer
       // For order confirmations, send to both customer and admin
       const results = isInvoiceEmail
