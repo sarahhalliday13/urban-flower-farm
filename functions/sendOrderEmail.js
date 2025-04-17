@@ -27,9 +27,17 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
     }
 
     try {
-      const order = req.body;
-      // Fix the isInvoiceEmail detection to check the parsed order object
-      const isInvoiceEmail = order?.isInvoiceEmail === true;
+      // More robust parsing of the incoming request
+      const incomingOrder = req.body || {};
+      console.log('🔥🔥🔥 Incoming order object:', JSON.stringify(incomingOrder, null, 2));
+      console.log('🔥🔥🔥 Received isInvoiceEmail flag:', incomingOrder?.isInvoiceEmail);
+      
+      // Explicitly determine isInvoiceEmail from the incoming request
+      const isInvoiceEmail = incomingOrder.isInvoiceEmail === true;
+      console.log('🔥 Final determined isInvoiceEmail:', isInvoiceEmail);
+      
+      // Use the incoming order for further processing
+      const order = incomingOrder;
       
       // Add strong logging for debugging
       console.log('🔥 Full incoming order object:', JSON.stringify(order, null, 2));
@@ -94,6 +102,9 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       const subject = isInvoiceEmail
         ? `Invoice for Order - ${order.id}`
         : `Order Confirmation - ${order.id}`;
+        
+      console.log('⚠️ SUBJECT CHOSEN:', subject);
+      console.log('⚠️ TEMPLATE TYPE:', isInvoiceEmail ? 'INVOICE TEMPLATE' : 'ORDER CONFIRMATION TEMPLATE');
 
       // Send email to customer
       const customerEmail = {
