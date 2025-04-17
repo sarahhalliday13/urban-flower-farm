@@ -9,12 +9,26 @@ const Checkout = () => {
   const { cartItems, getTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
-  const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', phone: '', notes: '' });
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    notes: ''
+  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
+
+  // 🧠🚨 ADD THIS:
+  if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+    return null; // Don't render broken page, wait for navigate
+  }
+
+  // (then your useEffects and rest of the component continue here)
+
 
   useEffect(() => {
     if (location.pathname === '/checkout/confirmation') {
@@ -43,10 +57,12 @@ const Checkout = () => {
   }, [location, navigate]);
 
   useEffect(() => {
-    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+    if (cartItems.length === 0 && !orderComplete && location.pathname === '/checkout') {
+      console.log('🛒 Cart empty, redirecting to /shop...');
       navigate('/shop');
     }
-  }, [cartItems, navigate, orderComplete, location.pathname]);
+  }, [cartItems, orderComplete, location.pathname, navigate]);
+  
 
   useEffect(() => {
     const savedCustomerData = getCustomerData();
