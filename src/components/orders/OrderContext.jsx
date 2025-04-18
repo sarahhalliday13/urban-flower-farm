@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory, updateOrder } from '../../services/firebase';
 import { sendOrderConfirmationEmails } from '../../services/emailService';
+import { sendInvoiceEmail as invoiceEmailService } from '../../services/invoiceService';
 import { useToast } from '../../context/ToastContext';
 
 // Create context
@@ -27,6 +28,11 @@ export const OrderProvider = ({ children }) => {
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
   const [emailSending, setEmailSending] = useState({});
   const { addToast } = useToast();
+  const [orderEmailStatus, setOrderEmailStatus] = useState({
+    loading: false,
+    success: false,
+    error: null
+  });
 
   // Helper to safely convert status to lowercase
   const statusToLowerCase = useCallback((status) => {
@@ -278,51 +284,78 @@ export const OrderProvider = ({ children }) => {
     }
   }, [orders, emailSending, addToast]);
 
-  // Send invoice email (separate from order confirmation emails)
-  const sendInvoiceEmail = useCallback(async (order) => {
-    if (emailSending[order.id]) return { success: false, message: 'Email already sending' }; 
+  // Update the existing sendInvoiceEmail function to use the renamed import
+  const sendInvoiceEmail = async (order) => {
+    console.log("📧 ORDER CONTEXT - Starting invoice email process for order:", order?.id);
     
-    console.log(`Admin triggered invoice email for order ${order.id} at ${new Date().toISOString()}`);
+    if (!order) {
+      console.error('📧 ORDER CONTEXT ERROR - No order provided to sendInvoiceEmail');
+      setOrderEmailStatus({
+        loading: false,
+        success: false,
+        error: 'No order data provided'
+      });
+      return;
+    }
+
+    // Log the customer email to help debug
+    console.log("📧 ORDER CONTEXT - Customer email:", order.customer?.email || "MISSING EMAIL");
     
-    // Set sending state for this order
-    setEmailSending(prev => ({ ...prev, [order.id]: true }));
-    
+    // Validate order has required properties
+    if (!order.customer || !order.customer.email) {
+      console.error('📧 ORDER CONTEXT ERROR - Order missing customer email:', order);
+      setOrderEmailStatus({
+        loading: false,
+        success: false,
+        error: 'Customer email is required'
+      });
+      return;
+    }
+
+    setOrderEmailStatus({
+      loading: true,
+      success: false,
+      error: null
+    });
+
     try {
-      // Create a copy of the order data with a special flag for invoice
-      const invoiceData = {
-        ...order,
-        isInvoiceEmail: true // Special flag to indicate this is an invoice email, not an order confirmation
-      };
+      // Use the new invoiceService with Firebase callable
+      console.log("📧 ORDER CONTEXT - Calling invoiceService.sendInvoiceEmail");
+      const result = await invoiceEmailService(order);
       
-      const result = await sendOrderConfirmationEmails(invoiceData);
+      console.log("📧 ORDER CONTEXT - Invoice email result:", result);
       
       if (result.success) {
-        addToast("Invoice email sent successfully!", "success");
+        console.log('📧 ORDER CONTEXT SUCCESS - Invoice email sent via callable function');
         
-        // Update localStorage to track invoice email sending
-        const invoiceEmails = JSON.parse(localStorage.getItem('invoiceEmails') || '[]');
-        const updatedEmails = [...invoiceEmails, {
-          orderId: order.id,
-          status: 'sent',
-          sentDate: new Date().toISOString(),
-          type: 'invoice'
-        }];
-        localStorage.setItem('invoiceEmails', JSON.stringify(updatedEmails));
+        // Update local state to reflect the email was sent
+        const updatedOrders = orders.map(o => {
+          if (o.id === order.id) {
+            return { ...o, invoiceEmailSent: true };
+          }
+          return o;
+        });
         
-        return { success: true };
+        setOrders(updatedOrders);
+        setOrderEmailStatus({
+          loading: false,
+          success: true,
+          error: null
+        });
       } else {
-        addToast("Failed to send invoice email: " + (result.message || "Unknown error"), "error");
-        return { success: false, message: result.message || "Failed to send invoice email" };
+        console.error('📧 ORDER CONTEXT ERROR - Service returned failure:', result.message);
+        throw new Error(result.message || 'Failed to send invoice email');
       }
     } catch (error) {
-      console.error(`Error sending invoice email for order ${order.id}:`, error);
-      addToast("Error sending invoice email: " + error.message, "error");
-      return { success: false, message: error.message };
-    } finally {
-      // Clear sending state
-      setEmailSending(prev => ({ ...prev, [order.id]: false }));
+      console.error('📧 ORDER CONTEXT ERROR - Error sending invoice email:', error?.message || error);
+      console.error('📧 ORDER CONTEXT ERROR - Full error object:', error);
+      setOrderEmailStatus({
+        loading: false,
+        success: false,
+        error: error?.message || 'Failed to send invoice email'
+      });
     }
-  }, [orders, emailSending, addToast]);
+  };
 
   /**
    * Update the discount for an order
@@ -794,6 +827,8 @@ export const OrderProvider = ({ children }) => {
     statusToLowerCase,
     updateOrder,
     sendInvoiceEmail,
+    orderEmailStatus,
+    setOrderEmailStatus,
   };
 
   console.log("OrderContext providing:", {

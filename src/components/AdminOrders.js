@@ -17,7 +17,7 @@ const AdminOrders = () => {
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
   const [emailSending, setEmailSending] = useState({});
   const { addToast } = useToast();
-  const { sendInvoiceEmail } = useOrders();
+  const { sendInvoiceEmail, orderEmailStatus } = useOrders();
 
   useEffect(() => {
     loadOrders();
@@ -327,6 +327,23 @@ const AdminOrders = () => {
     }
   };
 
+  const handleEmailInvoice = async (order) => {
+    if (!order || !order.customer || !order.customer.email) {
+      addToast('Customer email is required to send an invoice', 'error');
+      return;
+    }
+    
+    // Use the new callable function from OrderContext
+    await sendInvoiceEmail(order);
+    
+    // Show toast based on the result from OrderContext
+    if (orderEmailStatus.success) {
+      addToast('Invoice email sent successfully', 'success');
+    } else if (orderEmailStatus.error) {
+      addToast(`Failed to send invoice email: ${orderEmailStatus.error}`, 'error');
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
     // Ensure the order has required fields to prevent errors
     if (!order || !order.customer) return false;
@@ -619,10 +636,10 @@ const AdminOrders = () => {
                                 </button>
                                 <button 
                                   className="email-invoice-btn"
-                                  onClick={() => sendInvoiceEmail(order)}
-                                  disabled={!order.customer.email || order.customer.email === 'Not provided'}
+                                  onClick={() => handleEmailInvoice(order)}
+                                  disabled={!order.customer.email || order.customer.email === 'Not provided' || orderEmailStatus.loading}
                                 >
-                                  Email Invoice
+                                  {orderEmailStatus.loading ? 'Sending...' : 'Email Invoice'}
                                 </button>
                               </div>
                             </div>

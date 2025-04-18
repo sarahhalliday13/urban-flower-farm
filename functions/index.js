@@ -737,6 +737,78 @@ exports.uploadImage = functions
 exports.simpleContactFunction = simpleContactFunction;
 exports.directContactEmail = directContactEmail;
 
+// Import sendOrderEmail function
+const sendOrderEmail = require('./sendOrderEmail');
+const sendInvoiceEmail = require('./sendInvoiceEmail');
+exports.sendOrderEmail = sendOrderEmail.sendOrderEmail;
+exports.sendInvoiceEmail = sendInvoiceEmail.sendInvoiceEmail;
+
+// Add a callable version of sendInvoiceEmail
+exports.sendInvoiceEmailCallable = functions
+  .region('us-central1')
+  .https.onCall(async (data, context) => {
+    try {
+      console.log('Processing callable invoice email request for order:', data?.orderId);
+      
+      // Validate data
+      if (!data || !data.orderId || !data.customerEmail) {
+        console.error('Missing required data for invoice email callable:', data);
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Missing required data for invoice email (orderId or customerEmail)'
+        );
+      }
+      
+      // Process the order data for sending invoice
+      const orderData = {
+        id: data.orderId,
+        customer: {
+          email: data.customerEmail
+        },
+        invoiceHtml: data.invoiceHtml || null,
+        items: data.items || [],
+        total: data.total || 0
+      };
+      
+      console.log('Constructed orderData for invoice email:', JSON.stringify(orderData, null, 2));
+      
+      try {
+        // Send the invoice email using the existing implementation
+        const result = await sendInvoiceEmail.sendInvoiceEmailInternal(orderData);
+        
+        // Always return a properly structured response
+        return {
+          success: true,
+          message: 'Invoice email sent successfully',
+          details: result || {}
+        };
+      } catch (invoiceError) {
+        console.error('Error in sendInvoiceEmailInternal:', invoiceError);
+        
+        // Return error to client as a properly structured HttpsError
+        throw new functions.https.HttpsError(
+          'internal',
+          invoiceError.message || 'Failed to send invoice email',
+          { details: invoiceError }
+        );
+      }
+    } catch (error) {
+      console.error('Error in sendInvoiceEmailCallable:', error);
+      
+      // If it's already an HttpsError, just rethrow it
+      if (error.code && error.message) {
+        throw error;
+      }
+      
+      // Otherwise, convert to a proper HttpsError
+      throw new functions.https.HttpsError(
+        'internal',
+        error.message || 'Unknown error in invoice email processing',
+        { details: error }
+      );
+    }
+  });
+
 // Trigger to send emails when a new order is created
 // Commenting out this function to prevent duplicate emails
 // exports.sendOrderEmailOnCreate = functions.database.ref('/orders/{orderId}')

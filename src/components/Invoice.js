@@ -1,6 +1,81 @@
 import React, { useRef, useEffect } from 'react';
 import '../styles/Invoice.css';
 import { useOrders } from './orders/OrderContext';
+import { toast } from 'react-hot-toast';
+
+// Add a function to generate invoice HTML that can be exported
+export const generateInvoiceHTML = (order) => {
+  if (!order) return '';
+  
+  // Format currency with $ sign and 2 decimal places
+  const formatCurrency = (amount) => {
+    return `$${parseFloat(amount).toFixed(2)}`;
+  };
+  
+  // Create line items HTML
+  const itemsHTML = order.items?.map(item => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.quantity * item.price)}</td>
+    </tr>
+  `).join('') || '';
+  
+  // Generate full invoice HTML
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #336633;">Button's Urban Flower Farm</h1>
+        <p>Invoice for Order #${order.id}</p>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <h3>Bill To:</h3>
+        <p>${order.customer?.name || order.customerName || ''}</p>
+        <p>${order.customer?.email || order.customerEmail || ''}</p>
+        <p>${order.customer?.phone || order.customerPhone || ''}</p>
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+        <thead>
+          <tr style="background-color: #eee;">
+            <th style="padding: 10px; text-align: left;">Item</th>
+            <th style="padding: 10px; text-align: center;">Quantity</th>
+            <th style="padding: 10px; text-align: right;">Price</th>
+            <th style="padding: 10px; text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Subtotal:</td>
+            <td style="padding: 10px; text-align: right;">${formatCurrency(order.subtotal || order.total || 0)}</td>
+          </tr>
+          ${order.discount ? `
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Discount:</td>
+            <td style="padding: 10px; text-align: right;">-${formatCurrency(order.discount)}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatCurrency(order.total || 0)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      
+      <div style="margin-top: 50px; text-align: center; color: #666; font-size: 14px;">
+        <p>Thank you for your business!</p>
+        <p>Button's Urban Flower Farm</p>
+        <p>Email: buttonsflowerfarm@gmail.com</p>
+      </div>
+    </div>
+  `;
+};
 
 /**
  * Invoice component that displays order details in a printable format
@@ -10,7 +85,7 @@ import { useOrders } from './orders/OrderContext';
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
-  const { sendInvoiceEmail, emailSending } = useOrders();
+  const { sendInvoiceEmail, emailSending, orderEmailStatus } = useOrders();
   const invoiceContainerRef = useRef(null);
   
   const formatDate = (dateString) => {
@@ -46,6 +121,24 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
   };
   
   const orderVersion = getOrderVersion();
+
+  // Function to handle sending invoice email
+  const handleSendInvoiceEmail = async () => {
+    if (!order || !order.customer || !order.customer.email) {
+      toast.error('Customer email is required to send invoice');
+      return;
+    }
+    
+    // Use the new callable function
+    await sendInvoiceEmail(order);
+    
+    // Show toast based on result
+    if (orderEmailStatus.success) {
+      toast.success('Invoice email sent successfully!');
+    } else if (orderEmailStatus.error) {
+      toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+    }
+  };
 
   return (
     <div className={`invoice-container ${type}`} ref={invoiceContainerRef}>
@@ -257,11 +350,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           </button>
           
           <button 
-            onClick={() => sendInvoiceEmail(order)}
-            disabled={emailSending[order.id] || !order.customer.email || order.customer.email === 'Not provided'}
-            className="email-button"
+            onClick={handleSendInvoiceEmail}
+            disabled={!order.customer?.email || orderEmailStatus.loading}
+            className="email-invoice-button"
           >
-            {emailSending[order.id] ? 'Sending...' : 'Email Invoice'}
+            {orderEmailStatus.loading ? 'Sending...' : 'Email Invoice'}
           </button>
         </div>
       )}
