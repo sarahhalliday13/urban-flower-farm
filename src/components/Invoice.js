@@ -83,8 +83,9 @@ export const generateInvoiceHTML = (order) => {
  * @param {Object} props.order - The order object to display
  * @param {string} props.type - The type of invoice display ('print' or other)
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
+ * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
-const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
+const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
   const { sendInvoiceEmail, emailSending, orderEmailStatus } = useOrders();
   const invoiceContainerRef = useRef(null);
   
@@ -129,8 +130,8 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
       return;
     }
     
-    // Use the new callable function
-    await sendInvoiceEmail(order);
+    // Use the new callable function with standalone flag
+    await sendInvoiceEmail(order, standalone);
     
     // Show toast based on result
     if (orderEmailStatus.success) {
@@ -138,6 +139,24 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
     } else if (orderEmailStatus.error) {
       toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
     }
+  };
+
+  // Check if the email button should be disabled
+  const isEmailButtonDisabled = () => {
+    // If it's a standalone invoice (from /invoice/:orderId), always allow sending
+    if (standalone) {
+      return !order.customer?.email || orderEmailStatus.loading;
+    }
+    
+    // Otherwise, disable if already sent or no email or loading
+    return !order.customer?.email || order.invoiceEmailSent || orderEmailStatus.loading;
+  };
+
+  // Get email button text
+  const getEmailButtonText = () => {
+    if (orderEmailStatus.loading) return 'Sending...';
+    if (order.invoiceEmailSent && !standalone) return 'Invoice Already Sent';
+    return 'Email Invoice';
   };
 
   return (
@@ -351,10 +370,10 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           
           <button 
             onClick={handleSendInvoiceEmail}
-            disabled={!order.customer?.email || orderEmailStatus.loading}
+            disabled={isEmailButtonDisabled()}
             className="email-invoice-button"
           >
-            {orderEmailStatus.loading ? 'Sending...' : 'Email Invoice'}
+            {getEmailButtonText()}
           </button>
         </div>
       )}

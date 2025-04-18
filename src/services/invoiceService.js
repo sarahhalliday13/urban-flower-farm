@@ -23,8 +23,11 @@ export const sendInvoiceEmail = async (order) => {
       throw new Error('Invalid order data');
     }
 
+    // Extract the isStandalone flag if it exists
+    const isStandalone = order.isStandalone === true;
+    
     // Check if invoice email was already sent (optional local check)
-    if (order.invoiceEmailSent === true) {
+    if (!isStandalone && order.invoiceEmailSent === true) {
       console.log(`🔍 INVOICE DEBUG - Invoice email already marked as sent for order ${order.id}`);
       return {
         success: true,
@@ -41,7 +44,7 @@ export const sendInvoiceEmail = async (order) => {
       customerEmail: order.customer?.email || order.email || order.customerEmail,
       items: order.items || [],
       total: order.total || 0,
-      // You can include any other order data needed for the invoice
+      isStandalone: isStandalone
     };
     
     // Generate invoice HTML if needed

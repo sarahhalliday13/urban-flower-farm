@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory } from '../services/firebase';
 import { sendOrderConfirmationEmails } from '../services/emailService';
-import Invoice from './Invoice';
+import { useNavigate } from 'react-router-dom';
 import '../styles/AdminOrders.css';
 import { useToast } from '../context/ToastContext';
 import { useOrders } from './orders/OrderContext';
 
 const AdminOrders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeOrder, setActiveOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showInvoice, setShowInvoice] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(null);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
   const [emailSending, setEmailSending] = useState({});
@@ -258,11 +258,7 @@ const AdminOrders = () => {
   };
 
   const viewInvoice = (orderId) => {
-    setShowInvoice(orderId);
-  };
-
-  const closeInvoice = () => {
-    setShowInvoice(null);
+    navigate(`/invoice/${orderId}`);
   };
 
   const sendOrderEmail = async (order) => {
@@ -655,19 +651,6 @@ const AdminOrders = () => {
         </div>
       )}
       
-      {showInvoice && (
-        <div className="invoice-modal">
-          <div className="invoice-modal-content">
-            <button className="close-invoice" onClick={closeInvoice}>×</button>
-            <Invoice 
-              order={orders.find(order => order.id === showInvoice)} 
-              type="print" 
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Add confirmation dialog */}
       {showCancelConfirm && (
         <div className="confirmation-modal">
           <div className="confirmation-content">

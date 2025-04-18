@@ -1338,6 +1338,32 @@ export const getOrders = async () => {
   }
 };
 
+/**
+ * Fetches a single order by ID from Firebase
+ * @param {string} orderId - The ID of the order to fetch
+ * @returns {Promise<Object|null>} The order data or null if not found
+ */
+export const getOrder = async (orderId) => {
+  try {
+    console.log(`Fetching order ${orderId} from Firebase`);
+    
+    const orderRef = ref(database, `orders/${orderId}`);
+    const snapshot = await get(orderRef);
+    
+    if (snapshot.exists()) {
+      const orderData = snapshot.val();
+      console.log(`Found order ${orderId} in Firebase`);
+      return orderData;
+    }
+    
+    console.log(`Order ${orderId} not found in Firebase`);
+    return null;
+  } catch (error) {
+    console.error(`Error fetching order ${orderId} from Firebase:`, error);
+    return null;
+  }
+};
+
 export const updateOrderStatus = async (orderId, newStatus) => {
   try {
     const orderRef = ref(database, `orders/${orderId}`);
@@ -1606,6 +1632,7 @@ const firebaseService = {
   loadSamplePlants,
   saveOrder,
   getOrders,
+  getOrder,
   updateOrderStatus,
   repairInventoryData,
   deletePlant,

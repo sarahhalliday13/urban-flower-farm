@@ -285,8 +285,8 @@ export const OrderProvider = ({ children }) => {
   }, [orders, emailSending, addToast]);
 
   // Update the existing sendInvoiceEmail function to use the renamed import
-  const sendInvoiceEmail = async (order) => {
-    console.log("📧 ORDER CONTEXT - Starting invoice email process for order:", order?.id);
+  const sendInvoiceEmail = async (order, isStandalone = false) => {
+    console.log("📧 ORDER CONTEXT - Starting invoice email process for order:", order?.id, "isStandalone:", isStandalone);
     
     if (!order) {
       console.error('📧 ORDER CONTEXT ERROR - No order provided to sendInvoiceEmail');
@@ -312,6 +312,17 @@ export const OrderProvider = ({ children }) => {
       return;
     }
 
+    // Skip the invoiceEmailSent check when standalone is true
+    if (!isStandalone && order.invoiceEmailSent === true) {
+      console.log("📧 ORDER CONTEXT - Invoice already sent for order:", order.id);
+      setOrderEmailStatus({
+        loading: false,
+        success: true,
+        error: null
+      });
+      return { success: true, message: 'Invoice email already sent' };
+    }
+
     setOrderEmailStatus({
       loading: true,
       success: false,
@@ -321,7 +332,14 @@ export const OrderProvider = ({ children }) => {
     try {
       // Use the new invoiceService with Firebase callable
       console.log("📧 ORDER CONTEXT - Calling invoiceService.sendInvoiceEmail");
-      const result = await invoiceEmailService(order);
+      
+      // Add isStandalone flag to order data
+      const orderWithFlag = {
+        ...order,
+        isStandalone: isStandalone
+      };
+      
+      const result = await invoiceEmailService(orderWithFlag);
       
       console.log("📧 ORDER CONTEXT - Invoice email result:", result);
       

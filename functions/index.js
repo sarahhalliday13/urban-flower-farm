@@ -767,7 +767,8 @@ exports.sendInvoiceEmailCallable = functions
         },
         invoiceHtml: data.invoiceHtml || null,
         items: data.items || [],
-        total: data.total || 0
+        total: data.total || 0,
+        isStandalone: data.isStandalone === true // Pass the standalone flag
       };
       
       console.log('Constructed orderData for invoice email:', JSON.stringify(orderData, null, 2));

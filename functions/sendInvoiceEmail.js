@@ -58,32 +58,40 @@ const sendInvoiceEmailInternal = async (orderData) => {
 
     console.log(`📨 INVOICE INTERNAL - Processing invoice email for order ${orderData.id} to ${orderData.customer.email}`);
 
-    // Check if invoice has already been sent
+    // Extract isStandalone flag
+    const isStandalone = orderData.isStandalone === true;
+    console.log(`📨 INVOICE INTERNAL - isStandalone flag: ${isStandalone}`);
+
+    // Check if invoice has already been sent (skip if isStandalone is true)
     let orderFromDb = null;
     let orderRef = null;
     
-    try {
-      const db = admin.database();
-      orderRef = db.ref(`orders/${orderData.id}`);
-      const orderSnapshot = await orderRef.once('value');
-      
-      if (orderSnapshot.exists()) {
-        orderFromDb = orderSnapshot.val();
+    if (!isStandalone) {
+      try {
+        const db = admin.database();
+        orderRef = db.ref(`orders/${orderData.id}`);
+        const orderSnapshot = await orderRef.once('value');
         
-        if (orderFromDb.invoiceEmailSent === true) {
-          console.log(`📨 INVOICE INTERNAL - Invoice email already sent for order ${orderData.id}`);
-          return {
-            success: true,
-            message: 'Invoice email already sent for this order',
-            alreadySent: true
-          };
+        if (orderSnapshot.exists()) {
+          orderFromDb = orderSnapshot.val();
+          
+          if (orderFromDb.invoiceEmailSent === true) {
+            console.log(`📨 INVOICE INTERNAL - Invoice email already sent for order ${orderData.id}`);
+            return {
+              success: true,
+              message: 'Invoice email already sent for this order',
+              alreadySent: true
+            };
+          }
+        } else {
+          console.log(`📨 INVOICE INTERNAL - Order ${orderData.id} not found in database, continuing with email send`);
         }
-      } else {
-        console.log(`📨 INVOICE INTERNAL - Order ${orderData.id} not found in database, continuing with email send`);
+      } catch (dbError) {
+        console.error('📨 INVOICE INTERNAL ERROR - Database error:', dbError);
+        // Continue with email send even if database check fails
       }
-    } catch (dbError) {
-      console.error('📨 INVOICE INTERNAL ERROR - Database error:', dbError);
-      // Continue with email send even if database check fails
+    } else {
+      console.log(`📨 INVOICE INTERNAL - Skipping already-sent check for standalone invoice`);
     }
 
     // Generate email content with fallbacks for missing data
