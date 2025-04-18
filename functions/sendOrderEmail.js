@@ -12,8 +12,7 @@ if (!admin.apps.length) {
 }
 
 // Email configuration
-const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
-const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup email
+const BUTTONS_EMAIL = 'order@buttonsflowerfarm.ca';
 
 // Initialize SendGrid with API key
 const apiKey = process.env.SENDGRID_API_KEY;
@@ -80,8 +79,9 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 
       // Build customer email
       const customerEmail = {
-        to: order.customer.email,
+        to: [order.customer.email, 'buttonsflowerfarm@gmail.com'],
         from: BUTTONS_EMAIL,
+        replyTo: BUTTONS_EMAIL,
         subject: subject,
         html: isInvoiceEmail
           ? generateInvoiceEmailTemplate(order)
@@ -92,8 +92,9 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
       let adminEmail;
       if (!isInvoiceEmail) {
         adminEmail = {
-          to: [BUTTONS_EMAIL, ADMIN_EMAIL],
+          to: BUTTONS_EMAIL,
           from: BUTTONS_EMAIL,
+          replyTo: BUTTONS_EMAIL,
           subject: `New Order Received - ${order.id}`,
           html: generateButtonsEmailTemplate(order)
         };

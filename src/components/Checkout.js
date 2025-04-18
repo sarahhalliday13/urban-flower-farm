@@ -387,12 +387,6 @@ const Checkout = () => {
           
           <div className="order-actions">
             <button 
-              onClick={() => navigate('/orders')} 
-              className="view-orders-btn"
-            >
-              View Your Orders
-            </button>
-            <button 
               onClick={() => navigate('/shop')} 
               className="continue-shopping-btn"
             >

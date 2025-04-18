@@ -170,13 +170,25 @@ const OrderEditor = ({ orderId, closeModal }) => {
       // Get the authentication token
       const idToken = await userCredential.getIdToken();
       
+      // Preserve existing payment and discount information
+      const paymentInfo = currentOrder?.payment || orderData?.payment;
+      const discountInfo = currentOrder?.discount || orderData?.discount;
+      
       // Prepare update object
       const updateData = {
         id: orderId,
         items: items,
         total: calculateTotal(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Preserve payment and discount information
+        payment: paymentInfo,
+        discount: discountInfo
       };
+      
+      console.log("Saving order with payment and discount data:", {
+        paymentInfo,
+        discountInfo
+      });
       
       // Make direct REST API call with auth token
       const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
@@ -215,6 +227,10 @@ const OrderEditor = ({ orderId, closeModal }) => {
       // Get the authentication token
       const idToken = await userCredential.getIdToken();
       
+      // Preserve existing payment and discount information
+      const paymentInfo = currentOrder?.payment || orderData?.payment;
+      const discountInfo = currentOrder?.discount || orderData?.discount;
+      
       // Prepare update object
       const updateData = {
         id: orderId,
@@ -222,8 +238,16 @@ const OrderEditor = ({ orderId, closeModal }) => {
         total: calculateTotal(),
         isFinalized: true,
         finalizedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Preserve payment and discount information
+        payment: paymentInfo,
+        discount: discountInfo
       };
+      
+      console.log("Finalizing order with payment and discount data:", {
+        paymentInfo,
+        discountInfo
+      });
       
       // Make direct REST API call with auth token
       const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
