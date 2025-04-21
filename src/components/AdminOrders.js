@@ -625,7 +625,7 @@ const AdminOrders = () => {
                               <h4>Invoice Options</h4>
                               <div className="invoice-buttons">
                                 <button 
-                                  className="view-invoice-btn"
+                                  className="view-invoice-button"
                                   onClick={() => viewInvoice(order.id)}
                                 >
                                   View & Print Invoice
