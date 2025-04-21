@@ -241,27 +241,43 @@
   margin-top: 1rem;
 }
 
-.view-invoice-button,
-.email-invoice-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #2c5530;
-  border-radius: 4px;
+/* Updated invoice button styles to match InvoicePage.css */
+.view-invoice-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  background: white;
-  color: #2c5530;
-  transition: all 0.2s;
+  transition: background-color 0.2s ease;
+  background-color: #336633;
+  color: #fff;
+  border: none;
 }
 
-.view-invoice-button:hover,
+.view-invoice-button:hover {
+  background-color: #264d26;
+}
+
+.email-invoice-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
 .email-invoice-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
+  background-color: #eee;
 }
 
 .email-invoice-btn:disabled {
-  background: white;
+  background-color: #f8f9fa;
   color: #ccc;
-  border-color: #ccc;
+  border-color: #ddd;
   cursor: not-allowed;
 }
 
