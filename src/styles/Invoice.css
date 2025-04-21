@@ -353,8 +353,16 @@
     font-size: 18px;
   }
   
+  .invoice-action-buttons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+  }
+  
   .back-button,
-  .print-button {
+  .print-button,
+  .email-top-button {
     width: 100%;
     justify-content: center;
     padding: 12px;
@@ -536,4 +544,29 @@
   .invoice-items td:first-child {
     width: 35%;
   }
+}
+
+/* Add these styles for the invoice action buttons */
+.invoice-action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.email-top-button {
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  background-color: transparent;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.email-top-button:hover:not(:disabled) {
+  background-color: rgba(44, 85, 48, 0.1);
+}
+
+.email-top-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #999;
+  color: #999;
 }

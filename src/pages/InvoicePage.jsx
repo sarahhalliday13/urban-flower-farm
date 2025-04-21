@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import Invoice from '../components/Invoice';
 import '../styles/InvoicePage.css';
-import { OrderProvider } from '../components/orders/OrderContext';
+import { OrderProvider, useOrders } from '../components/orders/OrderContext';
+import { toast } from 'react-hot-toast';
 
 // Simple loading component
 const Loading = () => (
@@ -28,6 +29,7 @@ const Button = ({ variant = 'primary', onClick, className, children }) => {
   const variantStyles = {
     primary: { backgroundColor: '#2c5530', color: '#fff' },
     secondary: { backgroundColor: '#f8f9fa', color: '#333', border: '1px solid #ddd' },
+    outline: { backgroundColor: 'transparent', color: '#2c5530', border: '1px solid #2c5530' },
   };
 
   return (
@@ -38,6 +40,43 @@ const Button = ({ variant = 'primary', onClick, className, children }) => {
     >
       {children}
     </button>
+  );
+};
+
+// Email Button component (for access to OrderContext)
+const EmailButton = ({ order }) => {
+  const { sendInvoiceEmail, orderEmailStatus } = useOrders();
+  const [sending, setSending] = useState(false);
+
+  const handleEmailInvoice = async () => {
+    if (!order?.customer?.email) {
+      toast.error('Customer email is required to send invoice');
+      return;
+    }
+
+    setSending(true);
+    await sendInvoiceEmail(order, true);
+    
+    if (orderEmailStatus.success) {
+      toast.success('Invoice email sent successfully');
+    } else if (orderEmailStatus.error) {
+      toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+    }
+    
+    setSending(false);
+  };
+
+  const isButtonDisabled = !order?.customer?.email || sending || orderEmailStatus?.loading;
+  
+  return (
+    <Button 
+      variant="outline" 
+      onClick={handleEmailInvoice} 
+      className="email-top-button"
+      disabled={isButtonDisabled}
+    >
+      {sending || orderEmailStatus?.loading ? 'Sending...' : 'Email Invoice'}
+    </Button>
   );
 };
 
@@ -102,9 +141,14 @@ const InvoicePage = () => {
           ← Back to Orders
         </Button>
         <h2>Invoice #{order.id}</h2>
-        <Button variant="primary" onClick={handlePrint} className="print-button">
-          Print Invoice
-        </Button>
+        <div className="invoice-action-buttons">
+          <OrderProvider>
+            <EmailButton order={order} />
+          </OrderProvider>
+          <Button variant="primary" onClick={handlePrint} className="print-button">
+            Print Invoice
+          </Button>
+        </div>
       </div>
 
       <div className="invoice-page-body">
