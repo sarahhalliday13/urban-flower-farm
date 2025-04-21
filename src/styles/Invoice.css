@@ -334,36 +334,206 @@
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
-  .invoice-header {
-    flex-direction: column;
-    align-items: flex-start;
+  /* Page level styling */
+  .invoice-page {
+    padding: 10px;
   }
   
-  .invoice-logo, .invoice-info {
+  .invoice-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .invoice-page-header h2 {
+    text-align: center;
+    margin: 15px 0;
+    word-break: break-word;
+    font-size: 18px;
+  }
+  
+  .back-button,
+  .print-button {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+    font-size: 16px;
+    margin: 5px 0;
+  }
+  
+  /* Invoice container styling */
+  .invoice-container {
+    padding: 15px;
+    border-radius: 6px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Header with logo and invoice info */
+  .invoice-header {
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 20px;
+    text-align: center;
+    padding-bottom: 15px;
+  }
+  
+  .invoice-logo {
     max-width: 100%;
     width: 100%;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .invoice-logo-image {
+    max-width: 220px;
+    height: auto;
   }
   
   .invoice-info {
-    text-align: left;
-    margin-top: 20px;
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
   }
   
+  .invoice-info h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  /* From/To section */
   .invoice-addresses {
     flex-direction: column;
   }
   
-  .invoice-from, .invoice-to {
+  .invoice-from, 
+  .invoice-to {
     max-width: 100%;
-    margin: 0 0 20px 0;
+    width: 100%;
+    margin: 0 0 15px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .invoice-from h3, 
+  .invoice-to h3 {
+    text-align: center;
+    font-size: 16px;
+  }
+  
+  .invoice-from p, 
+  .invoice-to p {
+    text-align: center;
+  }
+  
+  /* Items table */
+  .invoice-items {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .invoice-items table {
+    min-width: 100%;
+  }
+  
+  .invoice-items th {
+    font-size: 13px;
+    padding: 8px 4px;
+  }
+  
+  .invoice-items td {
+    font-size: 13px;
+    padding: 8px 4px;
+  }
+  
+  /* Don't hide any columns, but make them narrower */
+  .invoice-items th:first-child,
+  .invoice-items td:first-child {
+    width: 40%;
+  }
+  
+  .invoice-items th:nth-child(2),
+  .invoice-items td:nth-child(2) {
+    width: 20%;
   }
   
   .invoice-items th:nth-child(3),
-  .invoice-items td:nth-child(3) {
-    display: none; /* Hide price column on small screens */
+  .invoice-items td:nth-child(3),
+  .invoice-items th:nth-child(4),
+  .invoice-items td:nth-child(4) {
+    width: 20%;
   }
   
+  /* Ensure footer items align well */
+  .invoice-items tfoot td {
+    font-size: 13px;
+    padding: 8px 4px;
+  }
+  
+  /* Make the total stand out more */
+  .final-total-label, 
+  .final-total-amount {
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  /* Payment information and notes */
+  .invoice-payment,
+  .invoice-notes {
+    padding: 10px;
+  }
+  
+  .invoice-payment h3,
+  .invoice-notes h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .invoice-payment p,
+  .invoice-notes p,
+  .invoice-payment li {
+    font-size: 13px;
+  }
+  
+  /* Controls */
   .print-controls {
     flex-direction: column;
+    gap: 10px;
+  }
+  
+  .print-button,
+  .email-invoice-button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .invoice-page-header h2 {
+    font-size: 16px;
+  }
+  
+  .invoice-logo-image {
+    max-width: 180px;
+  }
+  
+  .invoice-info h2 {
+    font-size: 18px;
+  }
+  
+  /* Make table font even smaller */
+  .invoice-items th,
+  .invoice-items td {
+    font-size: 12px;
+    padding: 6px 3px;
+  }
+  
+  /* Adjust proportions for very small screens */
+  .invoice-items th:first-child,
+  .invoice-items td:first-child {
+    width: 35%;
   }
 }
