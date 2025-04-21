@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import '../styles/Invoice.css';
 import { useOrders } from './orders/OrderContext';
 import { toast } from 'react-hot-toast';
@@ -86,22 +86,37 @@ export const generateInvoiceHTML = (order) => {
  * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
-  const { sendInvoiceEmail, emailSending, orderEmailStatus } = useOrders();
+  // Get order context functions with fallbacks for when the provider might not be fully available
+  const orderContext = useOrders();
+  const { sendInvoiceEmail = () => {}, 
+          emailSending = {}, 
+          orderEmailStatus = {} } = orderContext || {};
+          
   const invoiceContainerRef = useRef(null);
   
+  // Guard against missing order data
+  if (!order) {
+    return <div className="invoice-error">Order data is missing or invalid</div>;
+  }
+  
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    try {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date unavailable';
+    }
   };
 
   const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
+    try {
+      return parseFloat(amount || 0).toFixed(2);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return '0.00';
+    }
   };
-  
-  // NOTE: The preliminary watermark functionality is temporarily disabled
-  // but keeping this commented for future reference
-  // const isPreliminary = invoiceType === 'preliminary' || 
-  //   (order.versions && order.versions.length > 0 && !order.isFinalized);
 
   // Get the appropriate version of the order for this invoice
   const getOrderVersion = () => {
@@ -125,36 +140,40 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
 
   // Function to handle sending invoice email
   const handleSendInvoiceEmail = async () => {
-    if (!order || !order.customer || !order.customer.email) {
+    if (!order?.customer?.email) {
       toast.error('Customer email is required to send invoice');
       return;
     }
     
-    // Use the new callable function with standalone flag
-    await sendInvoiceEmail(order, standalone);
-    
-    // Show toast based on result
-    if (orderEmailStatus.success) {
-      toast.success('Invoice email sent successfully!');
-    } else if (orderEmailStatus.error) {
-      toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+    // Use the callable function with standalone flag
+    if (typeof sendInvoiceEmail === 'function') {
+      await sendInvoiceEmail(order, standalone);
+      
+      // Show toast based on result
+      if (orderEmailStatus?.success) {
+        toast.success('Invoice email sent successfully!');
+      } else if (orderEmailStatus?.error) {
+        toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+      }
+    } else {
+      toast.error('Email service is not available');
     }
   };
 
   // Check if the email button should be disabled
   const isEmailButtonDisabled = () => {
-    // If it's a standalone invoice (from /invoice/:orderId), always allow sending
+    // If it's a standalone invoice, always allow sending if there's an email
     if (standalone) {
-      return !order.customer?.email || orderEmailStatus.loading;
+      return !order?.customer?.email || orderEmailStatus?.loading;
     }
     
     // Otherwise, disable if already sent or no email or loading
-    return !order.customer?.email || order.invoiceEmailSent || orderEmailStatus.loading;
+    return !order?.customer?.email || order.invoiceEmailSent || orderEmailStatus?.loading;
   };
 
   // Get email button text
   const getEmailButtonText = () => {
-    if (orderEmailStatus.loading) return 'Sending...';
+    if (orderEmailStatus?.loading) return 'Sending...';
     if (order.invoiceEmailSent && !standalone) return 'Invoice Already Sent';
     return 'Email Invoice';
   };
@@ -188,9 +207,9 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         </div>
         <div className="invoice-to">
           <h3>To</h3>
-          <p>{order.customer.name}</p>
-          <p>Email: {order.customer.email}</p>
-          {order.customer.phone && order.customer.phone !== 'Not provided' && (
+          <p>{order.customer?.name || 'Customer'}</p>
+          <p>Email: {order.customer?.email || 'Not provided'}</p>
+          {order.customer?.phone && order.customer.phone !== 'Not provided' && (
             <p>Phone: {order.customer.phone}</p>
           )}
         </div>
@@ -207,10 +226,10 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             </tr>
           </thead>
           <tbody>
-            {orderVersion.items.map((item, index) => (
+            {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td>{item.name}</td>
-                <td>{item.quantity}</td>
+                <td>{item.name || 'Product'}</td>
+                <td>{item.quantity || 0}</td>
                 <td>${formatCurrency(item.price)}</td>
                 <td>${formatCurrency(item.price * item.quantity)}</td>
               </tr>
@@ -282,13 +301,13 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
                 // Clean printing approach - forces single page
                 const printWindow = window.open('', '_blank');
                 if (!printWindow) {
-                  alert('Please allow pop-ups to print the invoice');
+                  toast.error('Please allow pop-ups to print the invoice');
                   return;
                 }
                 
                 // Only proceed if we have the invoice container reference
                 if (!invoiceContainerRef.current) {
-                  alert('Error: Invoice content not ready for printing');
+                  toast.error('Error: Invoice content not ready for printing');
                   return;
                 }
                 

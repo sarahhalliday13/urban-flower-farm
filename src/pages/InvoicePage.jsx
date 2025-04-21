@@ -3,26 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import Invoice from '../components/Invoice';
 import '../styles/InvoicePage.css';
+import { OrderProvider } from '../components/orders/OrderContext';
 
 // Simple loading component
 const Loading = () => (
-  <div className="loading-container" style={{ padding: '20px', textAlign: 'center' }}>
-    <h2>Loading Invoice</h2>
-    <div className="loading-spinner" style={{ 
-      display: 'inline-block',
-      width: '30px',
-      height: '30px',
-      border: '3px solid rgba(0,0,0,0.1)',
-      borderRadius: '50%',
-      borderTopColor: '#2c5530',
-      animation: 'spin 1s linear infinite',
-      margin: '20px auto'
-    }}></div>
-    <style>{`
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-    `}</style>
+  <div className="loading-container">
+    <h2>Loading Invoice...</h2>
+    <div className="loading-spinner"></div>
   </div>
 );
 
@@ -35,23 +22,16 @@ const Button = ({ variant = 'primary', onClick, className, children }) => {
     cursor: 'pointer',
     fontWeight: '500',
     display: 'inline-block',
-    textAlign: 'center'
+    textAlign: 'center',
   };
-  
+
   const variantStyles = {
-    primary: {
-      backgroundColor: '#2c5530',
-      color: '#fff'
-    },
-    secondary: {
-      backgroundColor: '#f8f9fa',
-      color: '#333',
-      border: '1px solid #ddd'
-    }
+    primary: { backgroundColor: '#2c5530', color: '#fff' },
+    secondary: { backgroundColor: '#f8f9fa', color: '#333', border: '1px solid #ddd' },
   };
-  
+
   return (
-    <button 
+    <button
       onClick={onClick}
       className={className}
       style={{ ...baseStyle, ...variantStyles[variant] }}
@@ -68,17 +48,11 @@ const InvoicePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Format currency helper function
-  const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
-  };
-
   useEffect(() => {
     const fetchOrder = async () => {
       try {
         setLoading(true);
         const orderData = await getOrder(orderId);
-        
         if (!orderData) {
           setError('Order not found');
         } else {
@@ -100,12 +74,14 @@ const InvoicePage = () => {
   };
 
   const handlePrint = () => {
+    document.documentElement.classList.add('printing');
     window.print();
+    setTimeout(() => {
+      document.documentElement.classList.remove('printing');
+    }, 1000);
   };
 
-  if (loading) {
-    return <Loading />;
-  }
+  if (loading) return <Loading />;
 
   if (error) {
     return (
@@ -121,29 +97,23 @@ const InvoicePage = () => {
 
   return (
     <div className="invoice-page">
-      <div className="invoice-page-header">
-        <Button 
-          variant="secondary" 
-          onClick={handleBack}
-          className="back-button non-printable"
-        >
-          Back to Orders
+      <div className="invoice-page-header non-printable">
+        <Button variant="secondary" onClick={handleBack} className="back-button">
+          ← Back to Orders
         </Button>
         <h2>Invoice #{order.id}</h2>
-        <Button 
-          variant="primary" 
-          onClick={handlePrint}
-          className="print-button non-printable"
-        >
+        <Button variant="primary" onClick={handlePrint} className="print-button">
           Print Invoice
         </Button>
       </div>
-      
-      <div className="invoice-container">
-        <Invoice order={order} standalone={true} />
+
+      <div className="invoice-page-body">
+        <OrderProvider>
+          <Invoice order={order} standalone={true} />
+        </OrderProvider>
       </div>
     </div>
   );
 };
 
-export default InvoicePage; 
+export default InvoicePage;
