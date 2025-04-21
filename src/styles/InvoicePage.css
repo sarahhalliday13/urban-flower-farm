@@ -37,39 +37,7 @@
   color: #d32f2f;
 }
 
-/* Mobile adjustments */
-@media (max-width: 768px) {
-  .invoice-page-container {
-    padding: 0.75rem;
-    margin: 0.5rem;
-    box-shadow: none;
-    border: 1px solid #eee;
-  }
-}
-
-/* Print styles */
-@media print {
-  .back-button {
-    display: none;
-  }
-  
-  .invoice-page-container {
-    box-shadow: none;
-    margin: 0;
-    padding: 0;
-    border: none;
-    max-width: 100%;
-  }
-  
-  body {
-    background: #fff;
-  }
-  
-  @page {
-    margin: 0.5cm;
-  }
-}
-
+/* ===== Invoice Layout ===== */
 .invoice-page {
   padding: 20px;
   max-width: 1200px;
@@ -110,34 +78,76 @@
   margin-bottom: 30px;
 }
 
-/* Print Styles */
+/* ===== Button Styling ===== */
+.print-button,
+.email-invoice-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.print-button {
+  background-color: #336633;
+  color: #fff;
+}
+
+.print-button:hover {
+  background-color: #264d26;
+}
+
+.email-invoice-button {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.email-invoice-button:hover {
+  background-color: #eee;
+}
+
+/* ===== Mobile adjustments ===== */
+@media (max-width: 768px) {
+  .invoice-page-container {
+    padding: 0.75rem;
+    margin: 0.5rem;
+    box-shadow: none;
+    border: 1px solid #eee;
+  }
+}
+
+/* ===== Print Styles ===== */
 @media print {
   body {
-    background-color: white !important;
+    background: #fff !important;
   }
-  
-  .invoice-page {
-    padding: 0;
-    max-width: 100%;
-  }
-  
+
+  .invoice-page,
+  .invoice-page-container,
   .invoice-container {
     box-shadow: none;
-    padding: 0;
     margin: 0;
+    padding: 0;
+    border: none;
+    max-width: 100%;
   }
-  
-  .non-printable {
+
+  .non-printable,
+  .print-button,
+  .email-invoice-button,
+  .back-button {
     display: none !important;
   }
-  
-  /* Ensure all content is visible in print */
+
   .invoice table {
     page-break-inside: avoid;
   }
-  
-  /* Adjust font sizes for print */
+
   .invoice-page h2 {
     font-size: 18pt;
   }
-} 
+}

@@ -71,7 +71,7 @@ export const generateInvoiceHTML = (order) => {
       <div style="margin-top: 50px; text-align: center; color: #666; font-size: 14px;">
         <p>Thank you for your business!</p>
         <p>Button's Urban Flower Farm</p>
-        <p>Email: buttonsflowerfarm@gmail.com</p>
+        <p>Email: invoice@buttonsflowerfarm.ca</p>
       </div>
     </div>
   `;
@@ -199,12 +199,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         </div>
       </div>
 
+      <div className="thank-you-message">
+        Thanks for supporting our local farm! We appreciate your business and hope you enjoy your flowers.
+      </div>
+
       <div className="invoice-addresses">
-        <div className="invoice-from">
-          <h3>From</h3>
-          <p>Buttons Urban Flower Farm</p>
-          <p>Email: buttonsflowerfarm@gmail.com</p>
-        </div>
         <div className="invoice-to">
           <h3>To</h3>
           <p>{order.customer?.name || 'Customer'}</p>
@@ -212,6 +211,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           {order.customer?.phone && order.customer.phone !== 'Not provided' && (
             <p>Phone: {order.customer.phone}</p>
           )}
+        </div>
+        <div className="invoice-from">
+          <h3>From</h3>
+          <p>Buttons Urban Flower Farm</p>
+          <p>Email: invoice@buttonsflowerfarm.ca</p>
         </div>
       </div>
 
@@ -285,7 +289,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
+              <li><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</li>
             </ul>
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>
@@ -333,16 +337,30 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
                           pointer-events: none;
                           z-index: 100;
                         }
+                        
+                        /* Main container styles */
+                        .invoice-container { box-shadow: none; padding: 0; }
+                        
+                        /* Header with logo and invoice info */
                         .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
-                        .invoice-logo-image { max-width: 200px; height: auto; display: block; }
+                        .invoice-logo-image { max-width: 130px; height: auto; display: block; }
                         .invoice-info { text-align: right; }
                         .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
                         .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
                         .invoice-preliminary-note { color: #dc3545; font-style: italic; margin-top: 0.5rem !important; }
+                        
+                        /* From/To section - with To on left, From on right */
                         .invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 2rem; }
                         .invoice-from, .invoice-to { width: 48%; }
+                        .invoice-to { margin-right: 10px; }
+                        .invoice-from { margin-left: 10px; }
                         .invoice-from h3, .invoice-to h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
                         .invoice-from p, .invoice-to p { margin: 0.25rem 0; font-size: 0.9rem; }
+                        
+                        /* Thank you message */
+                        .thank-you-message { text-align: center; color: #2c5530; font-style: italic; margin: 15px 0 30px 0; padding: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 16px; font-weight: 500; background-color: #f9f9f9; border-radius: 4px; }
+                        
+                        /* Items table */
                         .invoice-items { margin-bottom: 2rem; }
                         .invoice-items table { width: 100%; border-collapse: collapse; }
                         .invoice-items th { background-color: #f5f5f5; padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #ddd; }
@@ -352,6 +370,8 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
                         .total-label, .discount-label, .final-total-label { text-align: right; font-weight: bold; }
                         .discount-label, .discount-amount { color: #28a745; }
                         .final-total-label, .final-total-amount { font-size: 1.1rem; color: #2c5530; }
+                        
+                        /* Notes and payment */
                         .invoice-notes { margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
                         .invoice-notes h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
                         .invoice-notes p { margin: 0; font-size: 0.9rem; font-style: italic; }
@@ -361,6 +381,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
                         .invoice-payment ul { margin: 0.5rem 0; padding-left: 0; list-style-type: none; }
                         .invoice-payment li { margin: 0.25rem 0; font-size: 0.9rem; }
                         .payment-details { font-size: 0.9rem; }
+                        
+                        /* Hide elements that shouldn't be printed */
+                        .print-controls { display: none !important; }
+                        .invoice-page-header { display: none !important; }
+                        .back-button { display: none !important; }
                       </style>
                     </head>
                     <body>
