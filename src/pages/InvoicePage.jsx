@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import Invoice from '../components/Invoice';
@@ -72,7 +72,7 @@ const EmailButton = ({ order }) => {
     <Button 
       variant="outline" 
       onClick={handleEmailInvoice} 
-      className="email-top-button"
+      className="email-invoice-button"
       disabled={isButtonDisabled}
     >
       {sending || orderEmailStatus?.loading ? 'Sending...' : 'Email Invoice'}
@@ -140,7 +140,6 @@ const InvoicePage = () => {
         <Button variant="secondary" onClick={handleBack} className="back-button">
           ← Back to Orders
         </Button>
-        <h2>Invoice #{order.id}</h2>
         <div className="invoice-action-buttons">
           <OrderProvider>
             <EmailButton order={order} />

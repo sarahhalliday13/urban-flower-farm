@@ -9,6 +9,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
+  width: 100%;
 }
 
 .invoice-page-body {
@@ -287,18 +288,21 @@
 }
 
 .email-invoice-button {
-  background-color: #f8f9fa;
-  color: #333;
-  border: 1px solid #ddd;
+  background-color: transparent;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-.email-invoice-button:hover {
-  background-color: #e9ecef;
+.email-invoice-button:hover:not(:disabled) {
+  background-color: rgba(44, 85, 48, 0.1);
 }
 
 .email-invoice-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  border-color: #999;
+  color: #999;
 }
 
 /* Print Styles */
@@ -346,13 +350,6 @@
     margin-bottom: 20px;
   }
   
-  .invoice-page-header h2 {
-    text-align: center;
-    margin: 15px 0;
-    word-break: break-word;
-    font-size: 18px;
-  }
-  
   .invoice-action-buttons {
     display: flex;
     flex-direction: column;
@@ -362,7 +359,7 @@
   
   .back-button,
   .print-button,
-  .email-top-button {
+  .email-invoice-button {
     width: 100%;
     justify-content: center;
     padding: 12px;
@@ -546,27 +543,9 @@
   }
 }
 
-/* Add these styles for the invoice action buttons */
+/* Update the invoice action buttons styles */
 .invoice-action-buttons {
   display: flex;
   gap: 10px;
   align-items: center;
-}
-
-.email-top-button {
-  color: #2c5530;
-  border: 1px solid #2c5530;
-  background-color: transparent;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.email-top-button:hover:not(:disabled) {
-  background-color: rgba(44, 85, 48, 0.1);
-}
-
-.email-top-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  border-color: #999;
-  color: #999;
 }
