@@ -220,35 +220,35 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <thead>
             <tr>
               <th>Item</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Total</th>
+              <th style={{ textAlign: 'center' }}>Quantity</th>
+              <th style={{ textAlign: 'right' }}>Price</th>
+              <th style={{ textAlign: 'right' }}>Total</th>
             </tr>
           </thead>
           <tbody>
             {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
                 <td>{item.name || 'Product'}</td>
-                <td>{item.quantity || 0}</td>
-                <td>${formatCurrency(item.price)}</td>
-                <td>${formatCurrency(item.price * item.quantity)}</td>
+                <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
+                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
+                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="3" className="total-label">Subtotal</td>
-              <td className="total-amount">${formatCurrency(orderVersion.total)}</td>
+              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Subtotal</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(orderVersion.total)}</td>
             </tr>
             {order.discount && parseFloat(order.discount.amount) > 0 && (
               <tr>
-                <td colSpan="3" className="discount-label">Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
-                <td className="discount-amount">-${formatCurrency(order.discount.amount)}</td>
+                <td colSpan="3" className="discount-label" style={{ textAlign: 'right' }}>Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
+                <td className="discount-amount" style={{ textAlign: 'right' }}>-${formatCurrency(order.discount.amount)}</td>
               </tr>
             )}
             <tr>
-              <td colSpan="3" className="final-total-label">Total</td>
-              <td className="final-total-amount">
+              <td colSpan="3" className="final-total-label" style={{ textAlign: 'right' }}>Total</td>
+              <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
                   order.discount && parseFloat(order.discount.amount) > 0
                     ? Math.max(0, orderVersion.total - parseFloat(order.discount.amount))
