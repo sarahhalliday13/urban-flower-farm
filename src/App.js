@@ -12,6 +12,8 @@ import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/ToastManager';
+// Import Toaster from react-hot-toast
+import { Toaster } from 'react-hot-toast';
 // eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
 // eslint-disable-next-line no-unused-vars
@@ -448,6 +450,7 @@ const App = () => (
         <CartProvider>
           <AdminProvider>
             <ToastProvider>
+              <Toaster position="top-center" reverseOrder={false} />
               <AppContent />
             </ToastProvider>
           </AdminProvider>
