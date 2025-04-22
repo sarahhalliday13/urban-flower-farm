@@ -2,12 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
-import { sendInvoiceEmail } from '../services/invoiceService'; // <-- import your service directly
+import { sendInvoiceEmail } from '../services/invoiceService';
 import Invoice from '../components/Invoice';
 import { toast } from 'react-hot-toast';
 import '../styles/InvoicePage.css';
 
-// Reusable Button component
 const Button = ({ variant = 'primary', onClick, disabled, className, children }) => {
   const baseStyle = {
     padding: '8px 16px',
@@ -29,9 +28,9 @@ const Button = ({ variant = 'primary', onClick, disabled, className, children })
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={className}
       style={{ ...baseStyle, ...variantStyles[variant] }}
-      disabled={disabled}
     >
       {children}
     </button>
@@ -48,35 +47,39 @@ const EmailButton = ({ order }) => {
       return;
     }
 
-    setSending(true);
+    try {
+      setSending(true);
 
-    const result = await sendInvoiceEmail(order); // direct call
+      const result = await sendInvoiceEmail(order);
 
-    if (result.success) {
-      toast.success('Invoice emailed successfully!');
-      setSent(true);
-    } else {
-      toast.error(`Failed to send invoice: ${result.message}`);
+      if (result.success) {
+        toast.success('✅ Invoice emailed successfully!');
+        setSent(true);
+      } else {
+        toast.error(`🚨 Failed to send invoice: ${result.message}`);
+      }
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      toast.error('Unexpected error sending invoice.');
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
   };
 
-  const isButtonDisabled = !order?.customer?.email || sending;
+  const isButtonDisabled = sending || !order?.customer?.email;
 
   return (
     <Button
       variant="outline"
       onClick={handleEmailInvoice}
-      className="email-invoice-button"
       disabled={isButtonDisabled}
+      className="email-invoice-button"
     >
       {sending ? 'Sending...' : sent ? '✅ Invoice Sent' : 'Email Invoice'}
     </Button>
   );
 };
 
-// Loading spinner component
 const Loading = () => (
   <div className="loading-container">
     <h2>Loading Invoice...</h2>
@@ -84,7 +87,6 @@ const Loading = () => (
   </div>
 );
 
-// Main InvoicePage
 const InvoicePage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -95,7 +97,6 @@ const InvoicePage = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        setLoading(true);
         const orderData = await getOrder(orderId);
         if (!orderData) {
           setError('Order not found');
@@ -104,7 +105,7 @@ const InvoicePage = () => {
         }
       } catch (err) {
         console.error('Error fetching order:', err);
-        setError('Failed to load order details');
+        setError('Failed to load order');
       } finally {
         setLoading(false);
       }
@@ -113,9 +114,7 @@ const InvoicePage = () => {
     fetchOrder();
   }, [orderId]);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+  const handleBack = () => navigate(-1);
 
   const handlePrint = () => {
     document.documentElement.classList.add('printing');
@@ -142,20 +141,19 @@ const InvoicePage = () => {
   return (
     <div className="invoice-page">
       <div className="invoice-page-header non-printable">
-        <Button variant="secondary" onClick={handleBack} className="back-button">
+        <Button variant="secondary" onClick={handleBack}>
           ← Back to Orders
         </Button>
-
         <div className="invoice-action-buttons">
           <EmailButton order={order} />
-          <Button variant="primary" onClick={handlePrint} className="print-button">
+          <Button variant="primary" onClick={handlePrint}>
             Print Invoice
           </Button>
         </div>
       </div>
 
       <div className="invoice-page-body">
-        <Invoice order={order} standalone={true} />
+        <Invoice order={order} standalone />
       </div>
     </div>
   );
