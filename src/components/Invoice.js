@@ -1,6 +1,81 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import '../styles/Invoice.css';
 import { useOrders } from './orders/OrderContext';
+import { toast } from 'react-hot-toast';
+
+// Add a function to generate invoice HTML that can be exported
+export const generateInvoiceHTML = (order) => {
+  if (!order) return '';
+  
+  // Format currency with $ sign and 2 decimal places
+  const formatCurrency = (amount) => {
+    return `$${parseFloat(amount).toFixed(2)}`;
+  };
+  
+  // Create line items HTML
+  const itemsHTML = order.items?.map(item => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.quantity * item.price)}</td>
+    </tr>
+  `).join('') || '';
+  
+  // Generate full invoice HTML
+  return `
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #336633;">Button's Urban Flower Farm</h1>
+        <p>Invoice for Order #${order.id}</p>
+        <p>Date: ${new Date().toLocaleDateString()}</p>
+      </div>
+      
+      <div style="margin-bottom: 30px;">
+        <h3>Bill To:</h3>
+        <p>${order.customer?.name || order.customerName || ''}</p>
+        <p>${order.customer?.email || order.customerEmail || ''}</p>
+        <p>${order.customer?.phone || order.customerPhone || ''}</p>
+      </div>
+      
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+        <thead>
+          <tr style="background-color: #eee;">
+            <th style="padding: 10px; text-align: left;">Item</th>
+            <th style="padding: 10px; text-align: center;">Quantity</th>
+            <th style="padding: 10px; text-align: right;">Price</th>
+            <th style="padding: 10px; text-align: right;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemsHTML}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Subtotal:</td>
+            <td style="padding: 10px; text-align: right;">${formatCurrency(order.subtotal || order.total || 0)}</td>
+          </tr>
+          ${order.discount ? `
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Discount:</td>
+            <td style="padding: 10px; text-align: right;">-${formatCurrency(order.discount)}</td>
+          </tr>
+          ` : ''}
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatCurrency(order.total || 0)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      
+      <div style="margin-top: 50px; text-align: center; color: #666; font-size: 14px;">
+        <p>Thank you for your business!</p>
+        <p>Button's Urban Flower Farm</p>
+        <p>Email: invoice@buttonsflowerfarm.ca</p>
+      </div>
+    </div>
+  `;
+};
 
 /**
  * Invoice component that displays order details in a printable format
@@ -8,24 +83,40 @@ import { useOrders } from './orders/OrderContext';
  * @param {Object} props.order - The order object to display
  * @param {string} props.type - The type of invoice display ('print' or other)
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
+ * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
-const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
-  const { sendInvoiceEmail, emailSending } = useOrders();
+const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
+  // Get order context functions with fallbacks for when the provider might not be fully available
+  const orderContext = useOrders();
+  const { sendInvoiceEmail = () => {}, 
+          emailSending = {}, 
+          orderEmailStatus = {} } = orderContext || {};
+          
   const invoiceContainerRef = useRef(null);
   
+  // Guard against missing order data
+  if (!order) {
+    return <div className="invoice-error">Order data is missing or invalid</div>;
+  }
+  
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    try {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Date unavailable';
+    }
   };
 
   const formatCurrency = (amount) => {
-    return parseFloat(amount).toFixed(2);
+    try {
+      return parseFloat(amount || 0).toFixed(2);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return '0.00';
+    }
   };
-  
-  // NOTE: The preliminary watermark functionality is temporarily disabled
-  // but keeping this commented for future reference
-  // const isPreliminary = invoiceType === 'preliminary' || 
-  //   (order.versions && order.versions.length > 0 && !order.isFinalized);
 
   // Get the appropriate version of the order for this invoice
   const getOrderVersion = () => {
@@ -46,6 +137,46 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
   };
   
   const orderVersion = getOrderVersion();
+
+  // Function to handle sending invoice email
+  const handleSendInvoiceEmail = async () => {
+    if (!order?.customer?.email) {
+      toast.error('Customer email is required to send invoice');
+      return;
+    }
+    
+    // Use the callable function with standalone flag
+    if (typeof sendInvoiceEmail === 'function') {
+      await sendInvoiceEmail(order, standalone);
+      
+      // Show toast based on result
+      if (orderEmailStatus?.success) {
+        toast.success('Invoice email sent successfully!');
+      } else if (orderEmailStatus?.error) {
+        toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+      }
+    } else {
+      toast.error('Email service is not available');
+    }
+  };
+
+  // Check if the email button should be disabled
+  const isEmailButtonDisabled = () => {
+    // If it's a standalone invoice, always allow sending if there's an email
+    if (standalone) {
+      return !order?.customer?.email || orderEmailStatus?.loading;
+    }
+    
+    // Otherwise, disable if already sent or no email or loading
+    return !order?.customer?.email || order.invoiceEmailSent || orderEmailStatus?.loading;
+  };
+
+  // Get email button text
+  const getEmailButtonText = () => {
+    if (orderEmailStatus?.loading) return 'Sending...';
+    if (order.invoiceEmailSent && !standalone) return 'Invoice Already Sent';
+    return 'Email Invoice';
+  };
 
   return (
     <div className={`invoice-container ${type}`} ref={invoiceContainerRef}>
@@ -68,19 +199,23 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
         </div>
       </div>
 
+      <div className="thank-you-message">
+        Thanks for supporting our local farm! We appreciate your business and hope you enjoy your flowers.
+      </div>
+
       <div className="invoice-addresses">
+        <div className="invoice-to">
+          <h3>To</h3>
+          <p>{order.customer?.name || 'Customer'}</p>
+          <p>Email: {order.customer?.email || 'Not provided'}</p>
+          {order.customer?.phone && order.customer.phone !== 'Not provided' && (
+            <p>Phone: {order.customer.phone}</p>
+          )}
+        </div>
         <div className="invoice-from">
           <h3>From</h3>
           <p>Buttons Urban Flower Farm</p>
-          <p>Email: buttonsflowerfarm@gmail.com</p>
-        </div>
-        <div className="invoice-to">
-          <h3>To</h3>
-          <p>{order.customer.name}</p>
-          <p>Email: {order.customer.email}</p>
-          {order.customer.phone && order.customer.phone !== 'Not provided' && (
-            <p>Phone: {order.customer.phone}</p>
-          )}
+          <p>Email: invoice@buttonsflowerfarm.ca</p>
         </div>
       </div>
 
@@ -89,35 +224,35 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           <thead>
             <tr>
               <th>Item</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Total</th>
+              <th style={{ textAlign: 'center' }}>Quantity</th>
+              <th style={{ textAlign: 'right' }}>Price</th>
+              <th style={{ textAlign: 'right' }}>Total</th>
             </tr>
           </thead>
           <tbody>
-            {orderVersion.items.map((item, index) => (
+            {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td>{item.name}</td>
-                <td>{item.quantity}</td>
-                <td>${formatCurrency(item.price)}</td>
-                <td>${formatCurrency(item.price * item.quantity)}</td>
+                <td>{item.name || 'Product'}</td>
+                <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
+                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
+                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="3" className="total-label">Subtotal</td>
-              <td className="total-amount">${formatCurrency(orderVersion.total)}</td>
+              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Subtotal</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(orderVersion.total)}</td>
             </tr>
             {order.discount && parseFloat(order.discount.amount) > 0 && (
               <tr>
-                <td colSpan="3" className="discount-label">Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
-                <td className="discount-amount">-${formatCurrency(order.discount.amount)}</td>
+                <td colSpan="3" className="discount-label" style={{ textAlign: 'right' }}>Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
+                <td className="discount-amount" style={{ textAlign: 'right' }}>-${formatCurrency(order.discount.amount)}</td>
               </tr>
             )}
             <tr>
-              <td colSpan="3" className="final-total-label">Total</td>
-              <td className="final-total-amount">
+              <td colSpan="3" className="final-total-label" style={{ textAlign: 'right' }}>Total</td>
+              <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
                   order.discount && parseFloat(order.discount.amount) > 0
                     ? Math.max(0, orderVersion.total - parseFloat(order.discount.amount))
@@ -154,7 +289,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
+              <li><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</li>
             </ul>
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>
@@ -170,13 +305,13 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
                 // Clean printing approach - forces single page
                 const printWindow = window.open('', '_blank');
                 if (!printWindow) {
-                  alert('Please allow pop-ups to print the invoice');
+                  toast.error('Please allow pop-ups to print the invoice');
                   return;
                 }
                 
                 // Only proceed if we have the invoice container reference
                 if (!invoiceContainerRef.current) {
-                  alert('Error: Invoice content not ready for printing');
+                  toast.error('Error: Invoice content not ready for printing');
                   return;
                 }
                 
@@ -202,16 +337,30 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
                           pointer-events: none;
                           z-index: 100;
                         }
+                        
+                        /* Main container styles */
+                        .invoice-container { box-shadow: none; padding: 0; }
+                        
+                        /* Header with logo and invoice info */
                         .invoice-header { display: flex; justify-content: space-between; margin-bottom: 2rem; border-bottom: 2px solid #2c5530; padding-bottom: 1rem; }
-                        .invoice-logo-image { max-width: 200px; height: auto; display: block; }
+                        .invoice-logo-image { max-width: 130px; height: auto; display: block; }
                         .invoice-info { text-align: right; }
                         .invoice-info h2 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.5rem; }
                         .invoice-info p { margin: 0.25rem 0; font-size: 0.9rem; }
                         .invoice-preliminary-note { color: #dc3545; font-style: italic; margin-top: 0.5rem !important; }
+                        
+                        /* From/To section - with To on left, From on right */
                         .invoice-addresses { display: flex; justify-content: space-between; margin-bottom: 2rem; }
                         .invoice-from, .invoice-to { width: 48%; }
+                        .invoice-to { margin-right: 10px; }
+                        .invoice-from { margin-left: 10px; }
                         .invoice-from h3, .invoice-to h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
                         .invoice-from p, .invoice-to p { margin: 0.25rem 0; font-size: 0.9rem; }
+                        
+                        /* Thank you message */
+                        .thank-you-message { text-align: center; color: #2c5530; font-style: italic; margin: 15px 0 30px 0; padding: 15px; border-top: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 16px; font-weight: 500; background-color: #f9f9f9; border-radius: 4px; }
+                        
+                        /* Items table */
                         .invoice-items { margin-bottom: 2rem; }
                         .invoice-items table { width: 100%; border-collapse: collapse; }
                         .invoice-items th { background-color: #f5f5f5; padding: 0.75rem; text-align: left; font-weight: 600; font-size: 0.9rem; border-bottom: 2px solid #ddd; }
@@ -221,6 +370,8 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
                         .total-label, .discount-label, .final-total-label { text-align: right; font-weight: bold; }
                         .discount-label, .discount-amount { color: #28a745; }
                         .final-total-label, .final-total-amount { font-size: 1.1rem; color: #2c5530; }
+                        
+                        /* Notes and payment */
                         .invoice-notes { margin-bottom: 2rem; padding: 1rem; background-color: #f9f9f9; border-radius: 4px; }
                         .invoice-notes h3 { color: #2c5530; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
                         .invoice-notes p { margin: 0; font-size: 0.9rem; font-style: italic; }
@@ -230,6 +381,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
                         .invoice-payment ul { margin: 0.5rem 0; padding-left: 0; list-style-type: none; }
                         .invoice-payment li { margin: 0.25rem 0; font-size: 0.9rem; }
                         .payment-details { font-size: 0.9rem; }
+                        
+                        /* Hide elements that shouldn't be printed */
+                        .print-controls { display: none !important; }
+                        .invoice-page-header { display: none !important; }
+                        .back-button { display: none !important; }
                       </style>
                     </head>
                     <body>
@@ -257,11 +413,11 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           </button>
           
           <button 
-            onClick={() => sendInvoiceEmail(order)}
-            disabled={emailSending[order.id] || !order.customer.email || order.customer.email === "Not provided"}
-            className="email-button"
+            onClick={handleSendInvoiceEmail}
+            disabled={isEmailButtonDisabled()}
+            className="email-invoice-button"
           >
-            {emailSending[order.id] ? 'Sending...' : 'Email Invoice'}
+            {getEmailButtonText()}
           </button>
         </div>
       )}

@@ -641,28 +641,16 @@
 .view-invoice-btn,
 .email-invoice-btn {
   padding: 0.5rem 1rem;
-  border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: all 0.2s;
-}
-
-.view-invoice-btn {
-  background-color: #e3f2fd;
-  color: #0d47a1;
-}
-
-.view-invoice-btn:hover {
-  background-color: #bbdefb;
-}
-
-.email-invoice-btn {
   background-color: white;
   color: #2c5530;
   border: 1px solid #2c5530;
 }
 
+.view-invoice-btn:hover,
 .email-invoice-btn:hover {
   background-color: rgba(44, 85, 48, 0.05);
 }
@@ -847,52 +835,35 @@
   color: #721c24;
 }
 
-/* Email and invoice buttons - TIGHTER SPACING */
+/* Email/Invoice buttons (in the compact view) */
 .email-send-btn,
 .view-invoice-btn,
 .email-invoice-btn {
-  padding: 6px 10px;
-  border: none;
+  padding: 6px 12px;
+  font-size: 0.85rem;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.85rem;
-  margin-top: 0.4rem;
-  transition: background-color 0.2s;
-  width: 100%;
+  transition: all 0.2s;
+  font-weight: normal;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
 }
 
-.email-send-btn {
-  background-color: #2c5530;
-  color: white;
-}
-
-.email-send-btn:hover {
-  background-color: #1e3c22;
-}
-
-.view-invoice-btn {
-  background-color: #3498db;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-.view-invoice-btn:hover {
-  background-color: #2980b9;
-}
-
-.email-invoice-btn {
-  background-color: #6c757d;
-  color: white;
-}
-
+.email-send-btn:hover,
+.view-invoice-btn:hover,
 .email-invoice-btn:hover {
-  background-color: #5a6268;
+  background-color: rgba(44, 85, 48, 0.05);
 }
 
 .email-send-btn:disabled,
 .view-invoice-btn:disabled,
 .email-invoice-btn:disabled {
-  opacity: 0.6;
+  background-color: white;
+  color: #ccc;
+  border-color: #ccc;
   cursor: not-allowed;
 }
 
@@ -971,42 +942,6 @@
   margin: 0;
   background-color: #f8f8f8;
   border-top: 1px solid #eee;
-}
-
-/* Invoice modal */
-.invoice-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.invoice-modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-.close-invoice-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #2c5530;
-  cursor: pointer;
 }
 
 /* Confirmation modal */
@@ -1298,922 +1233,6 @@
   display: none;
 }
 
-/* Enhanced Order Editor Styles */
-.order-editor {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.editor-header {
-  background-color: #2c5530;
-  color: white;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.editor-header-content {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-}
-
-.editor-header h3 {
-  margin: 0;
-  font-size: 1.3rem;
-  margin-bottom: 5px;
-  margin-top: 0px;
-  text-align: left;
-}
-
-.order-metadata {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-  margin-bottom: 10px;
-}
-
-.order-status-pill {
-  background-color: rgba(255, 255, 255, 0.2);
-  padding: 3px 10px;
-  border-radius: 12px;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-.close-editor-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.8rem;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  line-height: 1;
-  transition: opacity 0.2s;
-  position: absolute;
-  right: 15px;
-  top: 15px;
-  z-index: 10;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 50%;
-}
-
-.close-editor-btn:hover {
-  opacity: 0.8;
-}
-
-.editor-content {
-  padding: 0;
-}
-
-.editor-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-@media (max-width: 1024px) {
-  .editor-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.editor-column {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.editor-card {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.editor-card h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #2c5530;
-  font-size: 1.1rem;
-  border-bottom: 1px solid #e3e3e3;
-  padding-bottom: 10px;
-  text-align: left;
-}
-
-.price-warning {
-  margin-top: 15px;
-  padding: 10px 15px;
-  background-color: #fff3cd;
-  border-left: 4px solid #ffc107;
-  color: #856404;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
-  border-radius: 4px;
-}
-
-.warning-icon {
-  font-style: normal;
-  font-size: 1.2rem;
-}
-
-.autosave-indicator {
-  margin-top: 10px;
-  text-align: right;
-  font-size: 0.8rem;
-  color: #6c757d;
-  font-style: italic;
-}
-
-.search-input-container {
-  margin-bottom: 15px;
-}
-
-.plant-search-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  font-size: 0.95rem;
-}
-
-.plant-search-input:focus {
-  border-color: #2c5530;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.15);
-}
-
-.plant-select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  height: auto;
-  max-height: 200px;
-  font-size: 0.95rem;
-}
-
-.plant-select:focus {
-  border-color: #2c5530;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.15);
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 500;
-  color: #333;
-}
-
-.quantity-input {
-  width: 60px;
-  padding: 4px 8px;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.quantity-input:focus {
-  border-color: #2c5530;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(44, 85, 48, 0.15);
-}
-
-.add-item-container {
-  margin-top: 20px;
-}
-
-.add-item-btn {
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  width: 100%;
-  font-size: 0.95rem;
-}
-
-.add-item-btn:hover {
-  background-color: #218838;
-}
-
-.add-item-btn:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.add-item-btn.success {
-  background-color: #28a745;
-  pointer-events: none;
-}
-
-.success-icon {
-  margin-right: 5px;
-}
-
-.order-summary {
-  padding: 10px;
-  background-color: #f1f8e9;
-  border-radius: 4px;
-  margin-bottom: 20px;
-  line-height: 1.6;
-}
-
-.editor-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: space-between;
-}
-
-@media (max-width: 768px) {
-  .editor-actions {
-    flex-direction: column;
-  }
-  
-  .editor-actions button {
-    width: 100%;
-  }
-}
-
-.save-changes-btn,
-.finalize-order-btn,
-.cancel-edit-btn {
-  padding: 12px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-  flex: 1;
-  min-width: 130px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.save-changes-btn {
-  background-color: #2c5530;
-  color: white;
-  border: none;
-}
-
-.save-changes-btn:hover {
-  background-color: #1e3c21;
-}
-
-.finalize-order-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-}
-
-.finalize-order-btn:hover {
-  background-color: #c82333;
-}
-
-.cancel-edit-btn {
-  background-color: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #6c757d;
-}
-
-.cancel-edit-btn:hover {
-  background-color: #e2e6ea;
-}
-
-.save-changes-btn:disabled,
-.finalize-order-btn:disabled,
-.cancel-edit-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Finalization Confirmation Modal */
-.confirmation-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-}
-
-.confirmation-content {
-  background-color: white;
-  border-radius: 8px;
-  padding: 25px;
-  width: 90%;
-  max-width: 500px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.confirmation-content h3 {
-  color: #dc3545;
-  margin-top: 0;
-  margin-bottom: 15px;
-}
-
-.confirmation-summary {
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 4px;
-  margin: 15px 0;
-}
-
-.confirmation-summary p {
-  margin: 5px 0;
-}
-
-.confirmation-buttons {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-
-.confirm-finalize-btn,
-.cancel-finalize-btn {
-  padding: 10px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.confirm-finalize-btn {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-}
-
-.confirm-finalize-btn:hover {
-  background-color: #c82333;
-}
-
-.cancel-finalize-btn {
-  background-color: #f8f9fa;
-  color: #6c757d;
-  border: 1px solid #6c757d;
-}
-
-.cancel-finalize-btn:hover {
-  background-color: #e2e6ea;
-}
-
-.confirm-finalize-btn:disabled,
-.cancel-finalize-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Finalized Invoice Preview */
-.finalized-message {
-  padding: 20px;
-  text-align: center;
-}
-
-.invoice-preview-container {
-  margin: 20px 0;
-  border: 1px solid #e3e3e3;
-  border-radius: 8px;
-  overflow: hidden;
-  background-color: #fff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-.close-preview-btn {
-  background-color: #2c5530;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  margin-top: 20px;
-}
-
-.close-preview-btn:hover {
-  background-color: #1e3c21;
-}
-
-/* Style for the remove item link instead of button */
-.remove-item-link {
-  background: none;
-  border: none;
-  color: #d32f2f;
-  cursor: pointer;
-  font-size: 0.9rem;
-  padding: 0;
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-
-.remove-item-link:hover {
-  color: #b71c1c;
-}
-
-/* Invoice styling for preliminary vs final */
-.invoice-container.preliminary .preliminary-mark {
-  position: absolute;
-  top: 40%;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-size: 3rem;
-  transform: rotate(-45deg);
-  color: rgba(220, 53, 69, 0.2);
-  font-weight: bold;
-  text-transform: uppercase;
-  pointer-events: none;
-  z-index: 100;
-}
-
-.invoice-note {
-  font-size: 0.8rem;
-  color: #dc3545;
-  font-style: italic;
-  margin-top: 4px;
-}
-
-.generate-invoice-btn {
-  background-color: #fff;
-  color: #2c5530;
-  border: 1px solid #2c5530;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-right: 8px;
-  position: relative;
-  z-index: 5;
-}
-
-.email-invoice-btn {
-  background-color: white;
-  color: #2c5530;
-  border: 1px solid #2c5530;
-}
-
-.email-invoice-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
-}
-
-.email-invoice-btn:disabled {
-  background-color: white;
-  color: #ccc;
-  border-color: #ccc;
-  cursor: not-allowed;
-}
-
-.generate-invoice-btn:hover {
-  background-color: #2c5530;
-  color: #fff;
-}
-
-@media (max-width: 768px) {
-  .generate-invoice-btn {
-    padding: 10px 16px;
-    width: 100%;
-    margin-right: 0;
-    margin-bottom: 8px;
-    text-align: center;
-    font-size: 1rem;
-  }
-  
-  .email-invoice-btn {
-    margin-top: 4px;
-  }
-}
-
-.final-invoice {
-  background-color: #2c5530;
-  color: #fff;
-}
-
-.final-invoice:hover {
-  background-color: #1e3c21;
-}
-
-/* Make sure the invoice modal properly displays */
-.invoice-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.invoice-modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-/* Items header with edit button */
-.items-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.items-header h3 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 1.1rem;
-}
-
-.items-header .edit-order-btn {
-  margin-top: 0;
-}
-
-/* Search box styles */
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  padding-right: 2.5rem; /* Make room for the clear button */
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.search-clear-btn {
-  position: absolute;
-  right: 0.5rem;
-  background: none;
-  border: none;
-  color: #999;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.2rem 0.5rem;
-  line-height: 1;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.search-clear-btn:hover {
-  color: #333;
-  background-color: #f0f0f0;
-}
-
-.discount-edit-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.discount-amount-input {
-  display: flex;
-  align-items: center;
-}
-
-.discount-amount-input span {
-  margin-right: 0.25rem;
-}
-
-.discount-amount-input input {
-  width: 80px;
-  padding: 0.35rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.discount-reason-input {
-  width: 100%;
-  padding: 0.35rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-.discount-edit-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.discount-preview {
-  margin-top: 0.75rem;
-  padding: 0.5rem;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #777;
-  text-align: center;
-  font-style: italic;
-  font-weight: 400;
-}
-
-.save-discount-btn,
-.cancel-edit-btn {
-  padding: 0.35rem 0.75rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  flex: 1;
-  min-width: 80px;
-  text-align: center;
-}
-
-.save-discount-btn {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.save-discount-btn:hover {
-  background-color: #27ae60;
-}
-
-.cancel-edit-btn {
-  background-color: #e0e0e0;
-  color: #333;
-}
-
-.cancel-edit-btn:hover {
-  background-color: #ccc;
-}
-
-/* Items table - TIGHTER SPACING */
-.order-items h4 {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  color: #2c3e50;
-}
-
-/* Order table header layout */
-.orders-header {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.orders-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.orders-filters-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  gap: 1rem;
-}
-
-.orders-title {
-  font-size: 1.5rem;
-  margin: 0;
-  color: #2c3e50;
-}
-
-.orders-search {
-  flex-grow: 1;
-  max-width: 500px;
-}
-
-.status-filter {
-  min-width: 180px;
-}
-
-/* Right-align order number on mobile */
-.order-id-cell {
-  text-align: left; /* Default to left alignment for desktop */
-}
-
-/* Mobile-specific adjustments */
-@media (max-width: 768px) {
-  .orders-filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .orders-search, .status-filter {
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  /* Ensure order ID is right-aligned in mobile view */
-  td[data-label="Order"], 
-  .order-id-cell, 
-  .order-id {
-    text-align: right !important;
-  }
-  
-  /* Override flex display for order-id in mobile view */
-  .order-id {
-    display: block !important;
-    justify-content: initial !important;
-    align-items: initial !important;
-  }
-  
-  /* Add more space between close button and edit button */
-  .close-details-btn {
-    top: 0.5rem;
-    right: 0.5rem;
-  }
-  
-  /* Items header adjustment for mobile */
-  .items-header {
-    margin-top: 2rem; /* Add more space at the top to separate from X button */
-  }
-  
-  /* Remove bottom margin on order-items */
-  .order-items {
-    margin-bottom: 0;
-  }
-  
-  /* Left align customer info compact section and its heading */
-  .customer-info-compact,
-  .customer-info-compact h3 {
-    text-align: left;
-  }
-  
-  /* Left align all h3 headings in order details */
-  .status-management-visual h3,
-  .email-summary h3,
-  .invoice-actions h3,
-  .discount-section h3,
-  .payment-section h3,
-  .items-header h3,
-  .version-info h3 {
-    text-align: left;
-  }
-  
-  /* Status badge styling for mobile */
-  .order-status {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    text-align: center;
-  }
-  
-  /* Mobile improvements for order items table */
-  .order-items .invoice-style-table {
-    display: table;
-    table-layout: fixed;
-    width: 100%;
-  }
-  
-  .order-items .invoice-style-table thead {
-    display: none; /* Hide headers on mobile to save space */
-  }
-  
-  .order-items .invoice-style-table tbody, 
-  .order-items .invoice-style-table tr {
-    display: block;
-  }
-  
-  /* Create a card-like layout for each item row */
-  .order-items .invoice-style-table tbody tr {
-    border: none;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    padding: 12px;
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    align-items: center;
-    gap: 0; /* Remove gap between cells */
-    background-color: white;
-  }
-  
-  /* Style all cells in the row */
-  .order-items .invoice-style-table td {
-    display: block;
-    border: none;
-    box-shadow: none; /* Ensure no shadow */
-    padding: 0 6px; /* Reduce vertical padding, maintain horizontal */
-    text-align: left;
-    font-size: 0.95rem;
-    background: transparent; /* Ensure transparent background */
-  }
-  
-  /* Specific styles for each column */
-  .order-items .invoice-style-table .product-col {
-    grid-column: 1;
-    width: 100%;
-    font-weight: 500;
-    border: none;
-  }
-  
-  .order-items .invoice-style-table .quantity-col {
-    grid-column: 2;
-    width: 100%;
-    text-align: center;
-  }
-  
-  .order-items .invoice-style-table .quantity-col input {
-    width: 70px;
-    height: 48px;
-    padding: 8px 4px;
-    font-size: 18px;
-    text-align: center;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-  }
-  
-  .order-items .invoice-style-table .price-col {
-    grid-column: 3;
-    width: 100%;
-    text-align: right;
-  }
-  
-  .order-items .invoice-style-table .total-col {
-    grid-column: 4;
-    width: 100%;
-    text-align: right;
-    font-weight: 600;
-    border: none;
-  }
-  
-  /* Order total row styling */
-  .order-items .invoice-style-table tfoot tr {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin-top: 8px;
-  }
-  
-  .order-items .invoice-style-table tfoot td {
-    padding: 0;
-    border: none;
-  }
-  
-  .order-items .invoice-style-table .order-total-label {
-    font-weight: 600;
-    font-size: 1rem;
-    text-align: left;
-  }
-  
-  .order-items .invoice-style-table .order-total-value {
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: right;
-  }
-}
-
-/* Right align delete link in order editor */
-.remove-item-link {
-  text-align: right;
-  width: 100%;
-  display: block;
-}
-
-/* Hide close-details-btn when order editor is open */
-.order-editor + .order-details-container .close-details-btn {
-  display: none;
-}
-
 .save-payment-btn {
   background-color: #2ecc71;
   color: white;
@@ -2295,17 +1314,17 @@
 .edit-payment-btn,
 .edit-order-btn,
 .email-send-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  font-weight: normal;
+  margin-right: 5px;
+  margin-bottom: 5px;
   background-color: white;
   color: #2c5530;
   border: 1px solid #2c5530;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  padding: 8px 16px;
-  transition: all 0.2s;
-  text-align: center;
-  margin-top: 8px;
-  display: inline-block;
 }
 
 .edit-payment-btn:hover,
@@ -2317,10 +1336,10 @@
 .edit-payment-btn:disabled,
 .edit-order-btn:disabled,
 .email-send-btn:disabled {
-  border-color: #ccc;
-  color: #ccc;
-  cursor: not-allowed;
   background-color: white;
+  color: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
 }
 
 /* Items header with edit button */
@@ -2347,4 +1366,57 @@
   max-width: 300px;
   margin: 0 auto;
   display: block;
+}
+
+.email-send-btn {
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.email-send-btn:hover {
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.email-resend-btn {
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.email-resend-btn:hover {
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.email-resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.generate-invoice-btn {
+  background-color: white;
+  color: #2c5530;
+  border: 1px solid #2c5530;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  margin-bottom: 10px;
+}
+
+.generate-invoice-btn:hover {
+  background-color: rgba(44, 85, 48, 0.05);
 }

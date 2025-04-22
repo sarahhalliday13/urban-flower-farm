@@ -3,6 +3,7 @@ import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
 import Invoice from '../Invoice';
 import OrderEditor from './OrderEditor';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * OrderDetails - Expanded view for selected order
@@ -29,6 +30,8 @@ const OrderDetails = () => {
     updateOrderItems,
     finalizeOrder
   } = useOrders();
+  
+  const navigate = useNavigate();
   
   // State for discount editing
   const [discountAmount, setDiscountAmount] = useState('');
@@ -132,8 +135,8 @@ const OrderDetails = () => {
   // If order details not found, don't render anything
   if (!orderDetails) return null;
   
-  const closeInvoice = () => {
-    setShowInvoice(null);
+  const viewInvoice = () => {
+    navigate(`/invoice/${orderDetails.id}`);
   };
 
   // Handle saving the discount
@@ -571,7 +574,7 @@ const OrderDetails = () => {
               <h3>Invoice</h3>
               <button 
                 className="generate-invoice-btn" 
-                onClick={() => setShowInvoice(orderDetails.isFinalized ? 'final' : 'preliminary')}
+                onClick={viewInvoice}
               >
                 View Invoice
               </button>
@@ -596,20 +599,6 @@ const OrderDetails = () => {
                 </p>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Invoice Modal */}
-      {showInvoice && (
-        <div className="invoice-modal">
-          <div className="invoice-modal-content">
-            <button className="close-invoice-btn" onClick={closeInvoice}>×</button>
-            <Invoice 
-              order={orderDetails} 
-              type="print" 
-              invoiceType={showInvoice} 
-            />
           </div>
         </div>
       )}

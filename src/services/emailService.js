@@ -96,6 +96,26 @@ export const sendOrderConfirmationEmails = async (orderData) => {
   }
 };
 
+// Send invoice email - dedicated function to use the new invoice email endpoint
+export const sendInvoiceEmail = async (orderData) => {
+  console.warn('DEPRECATED: Please use the invoiceService.sendInvoiceEmail function instead');
+  console.warn('This function uses the old HTTP API method and may be removed in the future');
+  console.warn('Import from: import { sendInvoiceEmail } from "../services/invoiceService"');
+  
+  // Forward to the appropriate implementation in invoiceService
+  try {
+    // Dynamically import to avoid circular dependencies
+    const invoiceModule = await import('./invoiceService');
+    return invoiceModule.sendInvoiceEmail(orderData);
+  } catch (error) {
+    console.error('Failed to redirect to invoiceService:', error);
+    return {
+      success: false,
+      message: 'Email service has been updated. Please refresh the page and try again.',
+    };
+  }
+};
+
 // Send contact form email
 export const sendContactFormEmail = async (formData) => {
   try {

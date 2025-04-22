@@ -7,6 +7,7 @@ import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
 import SaveCancelButtons from './SaveCancelButtons';
 import { ensureAuthenticated } from '../../services/firebase';
+import './OrderEditor.css';
 
 /**
  * OrderEditor - Component for editing an existing order
@@ -170,13 +171,25 @@ const OrderEditor = ({ orderId, closeModal }) => {
       // Get the authentication token
       const idToken = await userCredential.getIdToken();
       
+      // Preserve existing payment and discount information
+      const paymentInfo = currentOrder?.payment || orderData?.payment;
+      const discountInfo = currentOrder?.discount || orderData?.discount;
+      
       // Prepare update object
       const updateData = {
         id: orderId,
         items: items,
         total: calculateTotal(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        // Preserve payment and discount information
+        payment: paymentInfo,
+        discount: discountInfo
       };
+      
+      console.log("Saving order with payment and discount data:", {
+        paymentInfo,
+        discountInfo
+      });
       
       // Make direct REST API call with auth token
       const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
@@ -204,53 +217,6 @@ const OrderEditor = ({ orderId, closeModal }) => {
     }
   };
   
-  // The simplest finalize function with direct REST API
-  const handleFinalizeOrder = async () => {
-    console.log("Starting direct finalize with REST API");
-    setSaveInProgress(true);
-    
-    try {
-      // First ensure we're authenticated
-      const userCredential = await ensureAuthenticated();
-      // Get the authentication token
-      const idToken = await userCredential.getIdToken();
-      
-      // Prepare update object
-      const updateData = {
-        id: orderId,
-        items: items,
-        total: calculateTotal(),
-        isFinalized: true,
-        finalizedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // Make direct REST API call with auth token
-      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updateData),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Firebase responded with status ${response.status}`);
-      }
-      
-      console.log("Order finalized successfully via REST API");
-      addToast?.("Order finalized successfully", "success");
-      
-      // Close the modal - the parent will handle reopening after refresh
-      closeModal();
-    } catch (error) {
-      console.error("Error finalizing order:", error);
-      addToast?.("Failed to finalize order", "error");
-    } finally {
-      setSaveInProgress(false);
-    }
-  };
-  
   // If the order is not found, show an error
   if (!currentOrder && !isLoading) {
     return (
@@ -259,7 +225,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
           <h2>Order Not Found</h2>
           <button className="close-editor-btn" onClick={closeModal}>×</button>
         </div>
-        <p>The selected order could not be found.</p>
+        <div className="editor-content">
+          <p>The selected order could not be found.</p>
+        </div>
       </div>
     );
   }
@@ -269,10 +237,12 @@ const OrderEditor = ({ orderId, closeModal }) => {
     return (
       <div className="order-editor">
         <div className="editor-header">
-          <h2>Loading Order Editor...</h2>
+          <h2>Loading Order #{orderId}...</h2>
           <button className="close-editor-btn" onClick={closeModal}>×</button>
         </div>
-        <p>Loading order details...</p>
+        <div className="editor-content" style={{ textAlign: 'center', padding: '20px' }}>
+          <div>Loading order details...</div>
+        </div>
       </div>
     );
   }
@@ -281,12 +251,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
   return (
     <div className="order-editor">
       <div className="editor-header">
-        <div className="editor-header-content">
-          <h2>Edit Order #{formatValue(orderId)}</h2>
-          <div className="order-metadata">
-            <span className="customer-name">{formatValue(orderData.customerName)}</span>
-          </div>
-        </div>
+        <h2>Edit Order #{formatValue(orderId)}</h2>
         <button className="close-editor-btn" onClick={closeModal}>×</button>
       </div>
       
@@ -296,7 +261,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
           <div className="editor-column">
             <div className="editor-card">
               <h3>Current Items</h3>
-              <div className="add-item-section" style={{ marginBottom: '20px' }}>
+              <div className="add-item-section">
                 <PlantSelector onAddItem={handleAddItem} />
               </div>
               <OrderItemsTable 

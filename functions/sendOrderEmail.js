@@ -1,7 +1,7 @@
 const functions = require('firebase-functions');
 const sgMail = require('@sendgrid/mail');
 const cors = require('cors')({ 
-  origin: ['https://buttonsflowerfarm-8a54d.web.app', 'http://localhost:3000'], 
+  origin: ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'], 
   credentials: true 
 });
 const admin = require('firebase-admin');
@@ -12,189 +12,203 @@ if (!admin.apps.length) {
 }
 
 // Email configuration
-const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
-const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup email
+const BUTTONS_EMAIL = 'order@buttonsflowerfarm.ca';
 
 // Initialize SendGrid with API key
 const apiKey = process.env.SENDGRID_API_KEY;
 console.log('API Key status:', apiKey ? 'Found (length: ' + apiKey.length + ')' : 'Not found');
 sgMail.setApiKey(apiKey);
 
-exports.sendOrderEmail = functions.https.onRequest((req, res) => {
-  cors(req, res, async () => {
-    if (req.method !== 'POST') {
-      return res.status(405).send({ error: 'Method Not Allowed' });
-    }
+// Export a handler function to be used with Express
+exports.handler = async (req, res) => {
+  // Compatible with both direct function call and express router
+  try {
+    const incomingOrder = req.body || {};
+    console.log('🔥 Incoming order object:', JSON.stringify(incomingOrder, null, 2));
+    console.log('🔥 Received isInvoiceEmail flag:', incomingOrder?.isInvoiceEmail);
 
-    try {
-      const incomingOrder = req.body || {};
-      console.log('🔥 Incoming order object:', JSON.stringify(incomingOrder, null, 2));
-      console.log('🔥 Received isInvoiceEmail flag:', incomingOrder?.isInvoiceEmail);
+    const isInvoiceEmail = incomingOrder.isInvoiceEmail === true;
+    console.log('🔥 Final determined isInvoiceEmail:', isInvoiceEmail);
 
-      const isInvoiceEmail = incomingOrder.isInvoiceEmail === true;
-      console.log('🔥 Final determined isInvoiceEmail:', isInvoiceEmail);
+    const order = incomingOrder;
 
-      const order = incomingOrder;
-
-      // Save to database ONLY if not an invoice
-      if (!isInvoiceEmail && !order.isTestInvoice) {
-        try {
-          const orderRef = admin.database().ref(`orders/${order.id}`);
-          await orderRef.set(order);
-          console.log(`Order ${order.id} saved to database`);
-        } catch (saveError) {
-          console.error(`Error saving order ${order.id}:`, saveError);
-        }
-      } else {
-        console.log(`Skipping database save for invoice email or test order: ${order.id}`);
-      }      
-
-      // Only check emailSent flag for order confirmation emails, not for invoice emails
-      if (!isInvoiceEmail) {
-        try {
-          const orderRef = admin.database().ref(`orders/${order.id}`);
-          const orderSnapshot = await orderRef.once('value');
-          const orderData = orderSnapshot.val();
-          
-          if (orderData && orderData.emailSent === true) {
-            console.log(`Order confirmation email already sent for order ${order.id}, skipping send`);
-            return res.status(200).send({
-              success: true,
-              message: 'Order confirmation email already sent for this order',
-              alreadySent: true
-            });
-          }
-        } catch (dbError) {
-          console.error(`Error checking email status for order ${order.id}:`, dbError);
-          // Continue with sending if we can't check - better to potentially send twice than not at all
-        }
+    // Save to database ONLY if not an invoice
+    if (!isInvoiceEmail && !order.isTestInvoice) {
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        await orderRef.set(order);
+        console.log(`Order ${order.id} saved to database`);
+      } catch (saveError) {
+        console.error(`Error saving order ${order.id}:`, saveError);
       }
+    } else {
+      console.log(`Skipping database save for invoice email or test order: ${order.id}`);
+    }      
 
-      // Determine subject based on invoice flag
-      const subject = isInvoiceEmail
-        ? `Invoice for Order - ${order.id}`
-        : `Order Confirmation - ${order.id}`;
+    // Only check emailSent flag for order confirmation emails, not for invoice emails
+    if (!isInvoiceEmail) {
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        const orderSnapshot = await orderRef.once('value');
+        const orderData = orderSnapshot.val();
         
-      console.log('⚠️ SUBJECT CHOSEN:', subject);
-      console.log('⚠️ TEMPLATE TYPE:', isInvoiceEmail ? 'INVOICE TEMPLATE' : 'ORDER CONFIRMATION TEMPLATE');
+        if (orderData && orderData.emailSent === true) {
+          console.log(`Order confirmation email already sent for order ${order.id}, skipping send`);
+          return res.status(200).send({
+            success: true,
+            message: 'Order confirmation email already sent for this order',
+            alreadySent: true
+          });
+        }
+      } catch (dbError) {
+        console.error(`Error checking email status for order ${order.id}:`, dbError);
+        // Continue with sending if we can't check - better to potentially send twice than not at all
+      }
+    }
 
-      // Build customer email
-      const customerEmail = {
-        to: order.customer.email,
+    // Determine subject based on invoice flag
+    const subject = isInvoiceEmail
+      ? `Invoice for Order - ${order.id}`
+      : `Order Confirmation - ${order.id}`;
+      
+    console.log('⚠️ SUBJECT CHOSEN:', subject);
+    console.log('⚠️ TEMPLATE TYPE:', isInvoiceEmail ? 'INVOICE TEMPLATE' : 'ORDER CONFIRMATION TEMPLATE');
+
+    // Build customer email
+    const customerEmail = {
+      to: [order.customer.email, 'buttonsflowerfarm@gmail.com'],
+      from: BUTTONS_EMAIL,
+      replyTo: BUTTONS_EMAIL,
+      subject: subject,
+      html: isInvoiceEmail
+        ? generateInvoiceEmailTemplate(order)
+        : generateCustomerEmailTemplate(order)
+    };
+
+    // Build admin email ONLY for non-invoice
+    let adminEmail;
+    if (!isInvoiceEmail) {
+      adminEmail = {
+        to: BUTTONS_EMAIL,
         from: BUTTONS_EMAIL,
-        subject: subject,
-        html: isInvoiceEmail
-          ? generateInvoiceEmailTemplate(order)
-          : generateCustomerEmailTemplate(order)
+        replyTo: BUTTONS_EMAIL,
+        subject: `New Order Received - ${order.id}`,
+        html: generateButtonsEmailTemplate(order)
       };
+    }
 
-      // Build admin email ONLY for non-invoice
-      let adminEmail;
-      if (!isInvoiceEmail) {
-        adminEmail = {
-          to: [BUTTONS_EMAIL, ADMIN_EMAIL],
-          from: BUTTONS_EMAIL,
-          subject: `New Order Received - ${order.id}`,
-          html: generateButtonsEmailTemplate(order)
-        };
-      }
-
-      // Log the exact email payloads before sending
-      console.log("📧 Customer Email Payload:", {
-        to: customerEmail.to,
-        from: customerEmail.from,
-        subject: customerEmail.subject,
-        htmlLength: customerEmail.html?.length || 0
-      });
-      
-      if (adminEmail) {
-        console.log("📧 Admin Email Payload:", {
-          to: adminEmail.to,
-          from: adminEmail.from,
-          subject: adminEmail.subject,
-          htmlLength: adminEmail.html?.length || 0
-        });
-      }
-      
-      // Now send emails
-      console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
-      
-      const sendEmailPromises = [];
-      sendEmailPromises.push(sgMail.send(customerEmail));
-      
-      if (adminEmail) {
-        sendEmailPromises.push(sgMail.send(adminEmail));
-      }
-      
-      // Await all sends
-      const results = await Promise.all(sendEmailPromises);
-      
-      // Log the SendGrid responses with message IDs
-      console.log(`SendGrid response for ${order.id} (customer):`, 
-        results[0]?.[0]?.statusCode, 
-        results[0]?.[0]?.headers?.['x-message-id']
-      );
-      
-      if (!isInvoiceEmail) {
-        console.log(`SendGrid response for ${order.id} (admin):`, 
-          results[1]?.[0]?.statusCode, 
-          results[1]?.[0]?.headers?.['x-message-id']
-        );
-      }
-      
-      // For regular order confirmation emails, update the emailSent flag in the database
-      if (!isInvoiceEmail) {
-        try {
-          const orderRef = admin.database().ref(`orders/${order.id}`);
-          await orderRef.update({
-            emailSent: true,
-            emailSentTimestamp: Date.now(),
-            emailMessageIds: [
-              results[0]?.[0]?.headers?.['x-message-id'],
-              results[1]?.[0]?.headers?.['x-message-id']
-            ]
-          });
-          console.log(`Updated order ${order.id} with emailSent flag`);
-        } catch (updateError) {
-          console.error(`Error updating emailSent flag for order ${order.id}:`, updateError);
-        }
-      } else {
-        // For invoice emails, update a separate invoiceEmailSent property
-        try {
-          const orderRef = admin.database().ref(`orders/${order.id}`);
-          await orderRef.update({
-            invoiceEmailSent: true,
-            invoiceEmailSentTimestamp: Date.now(),
-            invoiceEmailMessageIds: [
-              results[0]?.[0]?.headers?.['x-message-id']
-            ]
-          });
-          console.log(`Updated order ${order.id} with invoiceEmailSent flag`);
-        } catch (updateError) {
-          console.error(`Error updating invoiceEmailSent flag for order ${order.id}:`, updateError);
-        }
-      }
-
-      return res.status(200).send({ 
-        success: true,
-        message: `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} emails sent successfully`
-      });
-
-    } catch (error) {
-      console.error('❌ Error sending emails:', error);
-      if (error.response) {
-        console.error('SendGrid error details:', error.response.body);
-      }
-      return res.status(500).send({ 
-        success: false,
-        error: 'Failed to send emails',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    // Log the exact email payloads before sending
+    console.log("📧 Customer Email Payload:", {
+      to: customerEmail.to,
+      from: customerEmail.from,
+      subject: customerEmail.subject,
+      htmlLength: customerEmail.html?.length || 0
+    });
+    
+    if (adminEmail) {
+      console.log("📧 Admin Email Payload:", {
+        to: adminEmail.to,
+        from: adminEmail.from,
+        subject: adminEmail.subject,
+        htmlLength: adminEmail.html?.length || 0
       });
     }
+    
+    // Now send emails
+    console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
+    
+    const sendEmailPromises = [];
+    sendEmailPromises.push(sgMail.send(customerEmail));
+    
+    if (adminEmail) {
+      sendEmailPromises.push(sgMail.send(adminEmail));
+    }
+    
+    // Await all sends
+    const results = await Promise.all(sendEmailPromises);
+    
+    // Log the SendGrid responses with message IDs
+    console.log(`SendGrid response for ${order.id} (customer):`, 
+      results[0]?.[0]?.statusCode, 
+      results[0]?.[0]?.headers?.['x-message-id']
+    );
+    
+    if (!isInvoiceEmail) {
+      console.log(`SendGrid response for ${order.id} (admin):`, 
+        results[1]?.[0]?.statusCode, 
+        results[1]?.[0]?.headers?.['x-message-id']
+      );
+    }
+    
+    // For regular order confirmation emails, update the emailSent flag in the database
+    if (!isInvoiceEmail) {
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        await orderRef.update({
+          emailSent: true,
+          emailSentTimestamp: Date.now(),
+          emailMessageIds: [
+            results[0]?.[0]?.headers?.['x-message-id'],
+            results[1]?.[0]?.headers?.['x-message-id']
+          ]
+        });
+        console.log(`Updated order ${order.id} with emailSent flag`);
+      } catch (updateError) {
+        console.error(`Error updating emailSent flag for order ${order.id}:`, updateError);
+      }
+    } else {
+      // For invoice emails, update a separate invoiceEmailSent property
+      try {
+        const orderRef = admin.database().ref(`orders/${order.id}`);
+        await orderRef.update({
+          invoiceEmailSent: true,
+          invoiceEmailSentTimestamp: Date.now(),
+          invoiceEmailMessageIds: [
+            results[0]?.[0]?.headers?.['x-message-id']
+          ]
+        });
+        console.log(`Updated order ${order.id} with invoiceEmailSent flag`);
+      } catch (updateError) {
+        console.error(`Error updating invoiceEmailSent flag for order ${order.id}:`, updateError);
+      }
+    }
+
+    return res.status(200).send({ 
+      success: true,
+      message: `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} emails sent successfully`
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending emails:', error);
+    if (error.response) {
+      console.error('SendGrid error details:', error.response.body);
+    }
+    return res.status(500).send({ 
+      success: false,
+      error: 'Failed to send emails',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Export for direct function use
+exports.sendOrderEmail = functions.https.onRequest((req, res) => {
+  // Apply CORS middleware with our settings explicitly
+  cors(req, res, async () => {
+    // Handle preflight OPTIONS requests explicitly
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+      res.set('Access-Control-Max-Age', '3600');
+      res.status(204).send('');
+      return;
+    }
+    
+    // For actual requests, forward to the handler
+    return exports.handler(req, res);
   });
 });
-
-// (template functions below stay unchanged - you already have them correctly)
 
 // Email template functions - now with isInvoice parameter
 function generateCustomerEmailTemplate(order, isInvoice = false) {
@@ -241,9 +255,9 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
       </table>
 
       ${order.customer.notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="color: #4a7c59; margin-top: 0;">Your Notes</h3>
-          <p>${order.customer.notes}</p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px;">
+          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Your Pickup Request</h3>
+          <p style="margin-bottom: 0;">${order.customer.notes}</p>
         </div>
       ` : ''}
 
@@ -315,9 +329,9 @@ function generateButtonsEmailTemplate(order, isInvoice = false) {
       </table>
 
       ${order.customer.notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <h3 style="color: #4a7c59; margin-top: 0;">Customer Notes</h3>
-          <p>${order.customer.notes}</p>
+        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px;">
+          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Your Pickup Request</h3>
+          <p style="margin-bottom: 0;">${order.customer.notes}</p>
         </div>
       ` : ''}
     </div>

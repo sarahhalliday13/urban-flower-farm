@@ -1276,14 +1276,15 @@ export const loadSamplePlants = async () => {
 export const saveOrder = async (orderData) => {
   try {
     console.log('📦 Attempting to save order:', orderData.id);
-
+    
     const orderRef = ref(database, `orders/${orderData.id}`);
     await set(orderRef, orderData);
     console.log('✅ Order saved successfully to Firebase:', orderData.id);
 
-    console.log('📧 About to POST to sendOrderEmail function...');
-    
+    // After saving the order, trigger the cloud function directly
     const functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/sendOrderEmail';
+    console.log('📧 Sending order email via POST to:', functionUrl);
+
     const response = await fetch(functionUrl, {
       method: 'POST',
       headers: {
@@ -1292,24 +1293,21 @@ export const saveOrder = async (orderData) => {
       body: JSON.stringify(orderData)
     });
 
-    console.log('📧 POST request sent, waiting for response...');
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ sendOrderEmail failed:', response.status, errorText);
+      console.error('❌ Failed to send email via cloud function:', response.status, errorText);
       return false;
     }
 
     const responseData = await response.json();
     console.log('📧 Email function responded successfully:', responseData);
-
+    
     return true;
   } catch (error) {
-    console.error('❌ FULL ERROR in saveOrder:', error);
+    console.error('❌ Error saving order and sending email:', error);
     return false;
   }
 };
-
 
 export const getOrders = async () => {
   try {
@@ -1337,6 +1335,32 @@ export const getOrders = async () => {
   } catch (error) {
     console.error('Error fetching orders from Firebase:', error);
     return [];
+  }
+};
+
+/**
+ * Fetches a single order by ID from Firebase
+ * @param {string} orderId - The ID of the order to fetch
+ * @returns {Promise<Object|null>} The order data or null if not found
+ */
+export const getOrder = async (orderId) => {
+  try {
+    console.log(`Fetching order ${orderId} from Firebase`);
+    
+    const orderRef = ref(database, `orders/${orderId}`);
+    const snapshot = await get(orderRef);
+    
+    if (snapshot.exists()) {
+      const orderData = snapshot.val();
+      console.log(`Found order ${orderId} in Firebase`);
+      return orderData;
+    }
+    
+    console.log(`Order ${orderId} not found in Firebase`);
+    return null;
+  } catch (error) {
+    console.error(`Error fetching order ${orderId} from Firebase:`, error);
+    return null;
   }
 };
 
@@ -1608,6 +1632,7 @@ const firebaseService = {
   loadSamplePlants,
   saveOrder,
   getOrders,
+  getOrder,
   updateOrderStatus,
   repairInventoryData,
   deletePlant,
