@@ -1275,18 +1275,41 @@ export const loadSamplePlants = async () => {
 // Order related functions
 export const saveOrder = async (orderData) => {
   try {
-    console.log('Saving order to Firebase:', orderData.id);
-    
-    // Store order by ID for direct lookup
+    console.log('📦 Attempting to save order:', orderData.id);
+
     const orderRef = ref(database, `orders/${orderData.id}`);
     await set(orderRef, orderData);
+    console.log('✅ Order saved successfully to Firebase:', orderData.id);
+
+    console.log('📧 About to POST to sendOrderEmail function...');
     
+    const functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/sendOrderEmail';
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    console.log('📧 POST request sent, waiting for response...');
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ sendOrderEmail failed:', response.status, errorText);
+      return false;
+    }
+
+    const responseData = await response.json();
+    console.log('📧 Email function responded successfully:', responseData);
+
     return true;
   } catch (error) {
-    console.error('Error saving order to Firebase:', error);
+    console.error('❌ FULL ERROR in saveOrder:', error);
     return false;
   }
 };
+
 
 export const getOrders = async () => {
   try {

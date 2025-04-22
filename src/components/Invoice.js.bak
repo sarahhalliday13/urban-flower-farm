@@ -258,7 +258,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final' }) => {
           
           <button 
             onClick={() => sendInvoiceEmail(order)}
-            disabled={emailSending[order.id] || !order.customer.email || order.customer.email === "Not provided"}
+            disabled={emailSending[order.id] || !order.customer.email || order.customer.email === 'Not provided'}
             className="email-button"
           >
             {emailSending[order.id] ? 'Sending...' : 'Email Invoice'}

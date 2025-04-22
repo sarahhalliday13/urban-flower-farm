@@ -22,7 +22,11 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
 
-  // Normal Hooks first - no conditions!
+  // 🧠🚨 Early return to prevent rendering with empty cart
+  if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+    return null; // Don't render broken page, wait for navigate
+  }
+
   useEffect(() => {
     const savedCustomerData = getCustomerData();
     if (savedCustomerData) {
@@ -72,15 +76,9 @@ const Checkout = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
@@ -104,8 +102,11 @@ const Checkout = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
+
     setIsSubmitting(true);
+
     try {
       await saveCustomerData({
         firstName: formData.firstName,
@@ -129,6 +130,7 @@ const Checkout = () => {
           }
         }
       });
+
       const orderNumber = highestOrderNumber + 1;
       const newOrderId = `ORD-${currentYear}-${orderNumber}-${timestamp.toString().slice(-4)}`;
       
@@ -140,8 +142,7 @@ const Checkout = () => {
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-          notes: formData.notes || '',
-          address: {}
+          notes: formData.notes || ''
         },
         items: cartItems.map(item => ({
           id: item.id,
@@ -157,17 +158,9 @@ const Checkout = () => {
         status: 'Processing'
       };
 
+      console.log('📦 Saving order:', newOrderData.id);
       const saveResult = await saveOrder(newOrderData);
-
-      if (saveResult) {
-        localStorage.setItem('orders', JSON.stringify([...orders, newOrderData]));
-        localStorage.setItem('latestOrderId', newOrderId);
-        window.dispatchEvent(new Event('orderCreated'));
-        clearCart();
-        navigate('/checkout/confirmation');
-      } else {
-        console.error('Failed to save order to Firebase');
-      }
+      if (!saveResult) throw new Error('❌ Failed to save order or send email');
 
       try {
         for (const item of cartItems) {
@@ -177,26 +170,33 @@ const Checkout = () => {
           });
         }
       } catch (inventoryError) {
-        console.error('Error updating inventory:', inventoryError);
+        console.error('⚠️ Inventory update error:', inventoryError);
         setInventoryUpdateStatus('warning');
       }
 
+      const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+      localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
+      localStorage.setItem('userEmail', formData.email.toLowerCase());
+      localStorage.setItem('latestOrderId', newOrderId);
+
+      window.dispatchEvent(new Event('orderCreated'));
+      clearCart();
+
+      await new Promise(resolve => setTimeout(resolve, 500));
+      navigate('/checkout/confirmation');
+
     } catch (error) {
-      console.error('Error processing order:', error);
+      console.error('❌ Error during checkout:', error);
+      setErrors({ ...errors, submit: 'There was an error processing your order. Please try again.' });
+    } finally {
       setIsSubmitting(false);
-      setErrors(prev => ({
-        ...prev,
-        submit: 'There was an error processing your order. Please try again.'
-      }));
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      if (e.target.tagName.toLowerCase() !== 'textarea') {
-        e.preventDefault();
-        handleSubmit(e);
-      }
+    if (e.key === 'Enter' && !e.shiftKey && e.target.tagName.toLowerCase() !== 'textarea') {
+      e.preventDefault();
+      handleSubmit(e);
     }
   };
 
@@ -237,4 +237,4 @@ const Checkout = () => {
   );
 };
 
-export default Checkout; 
+export default Checkout;
