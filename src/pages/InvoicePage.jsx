@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import { sendInvoiceEmail } from '../services/invoiceService';
 import Invoice from '../components/Invoice';
+import { OrderProvider } from '../components/orders/OrderContext';
 import { toast } from 'react-hot-toast';
 import '../styles/InvoicePage.css';
 
@@ -139,23 +140,25 @@ const InvoicePage = () => {
   }
 
   return (
-    <div className="invoice-page">
-      <div className="invoice-page-header non-printable">
-        <Button variant="secondary" onClick={handleBack}>
-          ← Back to Orders
-        </Button>
-        <div className="invoice-action-buttons">
-          <EmailButton order={order} />
-          <Button variant="primary" onClick={handlePrint}>
-            Print Invoice
+    <OrderProvider>
+      <div className="invoice-page">
+        <div className="invoice-page-header non-printable">
+          <Button variant="secondary" onClick={handleBack}>
+            ← Back to Orders
           </Button>
+          <div className="invoice-action-buttons">
+            <EmailButton order={order} />
+            <Button variant="primary" onClick={handlePrint}>
+              Print Invoice
+            </Button>
+          </div>
+        </div>
+
+        <div className="invoice-page-body">
+          <Invoice order={order} standalone />
         </div>
       </div>
-
-      <div className="invoice-page-body">
-        <Invoice order={order} standalone />
-      </div>
-    </div>
+    </OrderProvider>
   );
 };
 
