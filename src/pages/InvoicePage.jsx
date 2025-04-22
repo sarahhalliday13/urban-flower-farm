@@ -54,7 +54,7 @@ const EmailButton = ({ order }) => {
       const result = await sendInvoiceEmail(order);
 
       if (result.success) {
-        toast.success('✅ Invoice emailed successfully!');
+        toast.success('Invoice emailed successfully!');
         setSent(true);
       } else {
         toast.error(`🚨 Failed to send invoice: ${result.message}`);

@@ -452,7 +452,18 @@ const App = () => (
         <CartProvider>
           <AdminProvider>
             <ToastProvider>
-              <Toaster position="top-center" reverseOrder={false} />
+              <Toaster 
+                position="top-center" 
+                reverseOrder={false}
+                toastOptions={{
+                  success: {
+                    iconTheme: {
+                      primary: 'transparent',
+                      secondary: 'transparent',
+                    },
+                  },
+                }}
+              />
               <AppContent />
             </ToastProvider>
           </AdminProvider>
