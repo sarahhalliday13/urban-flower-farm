@@ -22,7 +22,7 @@ const Button = ({ variant = 'primary', onClick, disabled, className, children })
 
   const variantStyles = {
     primary: { backgroundColor: '#2c5530', color: '#fff' },
-    secondary: { backgroundColor: '#f8f9fa', color: '#333', border: '1px solid #ddd' },
+    secondary: { backgroundColor: '#fff', color: '#2c5530', border: '1px solid #2c5530' },
     outline: { backgroundColor: 'transparent', color: '#2c5530', border: '1px solid #2c5530' },
   };
 
@@ -148,7 +148,7 @@ const InvoicePage = () => {
           </Button>
           <div className="invoice-action-buttons">
             <EmailButton order={order} />
-            <Button variant="primary" onClick={handlePrint}>
+            <Button variant="secondary" onClick={handlePrint}>
               Print Invoice
             </Button>
           </div>
