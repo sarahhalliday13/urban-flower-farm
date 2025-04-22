@@ -9,7 +9,17 @@ export const generateInvoiceHTML = (order) => {
   
   // Format currency with $ sign and 2 decimal places
   const formatCurrency = (amount) => {
-    return `$${parseFloat(amount).toFixed(2)}`;
+    return parseFloat(amount || 0).toFixed(2);
+  };
+
+  // Format date function
+  const formatDate = (dateString) => {
+    try {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (error) {
+      return new Date().toLocaleDateString();
+    }
   };
   
   // Create line items HTML
@@ -17,61 +27,117 @@ export const generateInvoiceHTML = (order) => {
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
     </tr>
   `).join('') || '';
   
-  // Generate full invoice HTML
+  // Calculate total after discount
+  const subtotal = order.subtotal || order.total || 0;
+  const discount = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
+  const total = Math.max(0, subtotal - discount);
+  
+  // Generate full invoice HTML matching the site version
   return `
-    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #336633;">Button's Urban Flower Farm</h1>
-        <p>Invoice for Order #${order.id}</p>
-        <p>Date: ${new Date().toLocaleDateString()}</p>
+    <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 30px; background-color: #fff; border-radius: 8px;">
+      <!-- Header with logo and invoice title -->
+      <div style="display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 2px solid #2c5530; padding-bottom: 20px;">
+        <div style="max-width: 180px;">
+          <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" 
+               alt="Buttons Urban Flower Farm" 
+               style="max-width: 160px; width: 100%; height: auto;"/>
+        </div>
+        <div style="text-align: right;">
+          <h2 style="color: #2c5530; margin-top: 0; margin-bottom: 15px; font-size: 24px;">INVOICE</h2>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Order #:</strong> ${order.id}</p>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Date:</strong> ${formatDate(order.date)}</p>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Status:</strong> ${order.status || 'Processing'}</p>
+        </div>
       </div>
       
+      <!-- From/To section -->
+      <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
+        <div style="flex: 1; max-width: 45%; margin-right: 20px;">
+          <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
+          <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
+          <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
+          ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
+        </div>
+        <div style="flex: 1; max-width: 45%; margin-left: 20px;">
+          <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
+          <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
+          <p style="margin: 5px 0; font-size: 14px;">Email: invoice@buttonsflowerfarm.ca</p>
+        </div>
+      </div>
+      
+      <!-- Items table -->
       <div style="margin-bottom: 30px;">
-        <h3>Bill To:</h3>
-        <p>${order.customer?.name || order.customerName || ''}</p>
-        <p>${order.customer?.email || order.customerEmail || ''}</p>
-        <p>${order.customer?.phone || order.customerPhone || ''}</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr>
+              <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600;">Item</th>
+              <th style="background-color: #f9f9f9; padding: 10px; text-align: center; border-bottom: 2px solid #ddd; font-weight: 600;">Quantity</th>
+              <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600;">Price</th>
+              <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHTML}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Subtotal</td>
+              <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd;">$${formatCurrency(subtotal)}</td>
+            </tr>
+            ${discount > 0 ? `
+            <tr>
+              <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold; color: #28a745;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
+              <td style="padding: 10px; text-align: right; color: #28a745;">-$${formatCurrency(discount)}</td>
+            </tr>
+            ` : ''}
+            <tr>
+              <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold; font-size: 16px; color: #2c5530;">Total</td>
+              <td style="padding: 10px; text-align: right; font-weight: bold; font-size: 16px; color: #2c5530;">$${formatCurrency(total)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
       
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-        <thead>
-          <tr style="background-color: #eee;">
-            <th style="padding: 10px; text-align: left;">Item</th>
-            <th style="padding: 10px; text-align: center;">Quantity</th>
-            <th style="padding: 10px; text-align: right;">Price</th>
-            <th style="padding: 10px; text-align: right;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHTML}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Subtotal:</td>
-            <td style="padding: 10px; text-align: right;">${formatCurrency(order.subtotal || order.total || 0)}</td>
-          </tr>
-          ${order.discount ? `
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Discount:</td>
-            <td style="padding: 10px; text-align: right;">-${formatCurrency(order.discount)}</td>
-          </tr>
-          ` : ''}
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">${formatCurrency(order.total || 0)}</td>
-          </tr>
-        </tfoot>
-      </table>
+      <!-- Notes section if available -->
+      ${order.notes ? `
+      <div style="margin-bottom: 30px; padding: 15px; background-color: #f9f9f9; border-radius: 4px;">
+        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Order Notes</h3>
+        <p style="margin: 0; font-size: 14px; font-style: italic;">${order.notes}</p>
+      </div>
+      ` : ''}
       
-      <div style="margin-top: 50px; text-align: center; color: #666; font-size: 14px;">
-        <p>Thank you for your business!</p>
-        <p>Button's Urban Flower Farm</p>
-        <p>Email: invoice@buttonsflowerfarm.ca</p>
+      <!-- Payment Information -->
+      <div style="margin-bottom: 30px; padding: 15px; background-color: #f8f8f8; border-radius: 4px;">
+        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Payment Information</h3>
+        ${order.payment && order.payment.method ? `
+        <div>
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Payment Method:</strong> ${order.payment.method.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ')}</p>
+          ${order.payment.timing ? `
+          <p style="margin: 5px 0; font-size: 14px;"><strong>Payment Timing:</strong> ${order.payment.timing.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+          ).join(' ')}</p>
+          ` : ''}
+        </div>
+        ` : `
+        <p style="margin: 5px 0; font-size: 14px;">Please complete your payment using one of the following methods:</p>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li style="margin: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</li>
+          <li style="margin: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</li>
+        </ul>
+        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
+        `}
+      </div>
+      
+      <!-- Thank you message -->
+      <div style="margin-top: 40px; font-style: italic; padding: 1rem; background-color: #f9f9f9; border-left: 4px solid #2c5530; font-size: 1rem; color: #2c5530;">
+        Thanks for supporting our local farm! We appreciate your business and hope you enjoy your flowers.
       </div>
     </div>
   `;
