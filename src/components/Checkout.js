@@ -23,48 +23,7 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
 
-  // Check if we're on the confirmation page
-  useEffect(() => {
-    if (location.pathname === '/checkout/confirmation') {
-      // Get the latest order ID from localStorage
-      const latestOrderId = localStorage.getItem('latestOrderId');
-      
-      if (latestOrderId) {
-        // Find the order in the orders array
-        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const foundOrder = allOrders.find(order => order.id === latestOrderId);
-        
-        if (foundOrder) {
-          // Set state with the found order
-          setOrderComplete(true);
-          setOrderId(foundOrder.id);
-          setFormData(prevData => ({
-            ...prevData,
-            firstName: foundOrder.customer.firstName,
-            lastName: foundOrder.customer.lastName,
-            email: foundOrder.customer.email,
-            phone: foundOrder.customer.phone,
-            notes: foundOrder.customer.notes || ''
-          }));
-        } else {
-          // No order found, redirect to shop
-          navigate('/shop');
-        }
-      } else {
-        // No order ID in localStorage, redirect to shop
-        navigate('/shop');
-      }
-    }
-  }, [location, navigate]);
-
-  useEffect(() => {
-    // Redirect to shop if cart is empty and not on confirmation page
-    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
-      navigate('/shop');
-    }
-  }, [cartItems, navigate, orderComplete, location.pathname]);
-
-  // Add useEffect to load saved customer data
+  // Move all useEffect hooks before conditional return
   useEffect(() => {
     const savedCustomerData = getCustomerData();
     if (savedCustomerData) {
@@ -78,19 +37,50 @@ const Checkout = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Always check cart status
+    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+      navigate('/shop');
+    }
+  }, [cartItems, navigate, orderComplete, location.pathname]);
+
+  useEffect(() => {
+    // Always check if on confirmation page
+    if (location.pathname === '/checkout/confirmation') {
+      const latestOrderId = localStorage.getItem('latestOrderId');
+      if (latestOrderId) {
+        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const foundOrder = allOrders.find(order => order.id === latestOrderId);
+        if (foundOrder) {
+          setOrderComplete(true);
+          setOrderId(foundOrder.id);
+          setFormData(prevData => ({
+            ...prevData,
+            firstName: foundOrder.customer.firstName,
+            lastName: foundOrder.customer.lastName,
+            email: foundOrder.customer.email,
+            phone: foundOrder.customer.phone,
+            notes: foundOrder.customer.notes || ''
+          }));
+        } else {
+          navigate('/shop');
+        }
+      } else {
+        navigate('/shop');
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  // Early return to prevent rendering with empty cart - AFTER all hooks
+  if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+    return null; // Don't render broken page, wait for navigate
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when field is edited
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
