@@ -38,9 +38,7 @@ const Button = ({ variant = 'primary', onClick, disabled, className, children })
   );
 };
 
-// Email Button component (for access to OrderContext)
 const EmailButton = ({ order }) => {
-  const { sendInvoiceEmail, orderEmailStatus } = useOrders();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -51,23 +49,20 @@ const EmailButton = ({ order }) => {
     }
 
     setSending(true);
-    await sendInvoiceEmail(order, true);
+
+    const result = await sendInvoiceEmail(order); // direct call
+
+    if (result.success) {
+      toast.success('Invoice emailed successfully!');
+      setSent(true);
+    } else {
+      toast.error(`Failed to send invoice: ${result.message}`);
+    }
+
+    setSending(false);
   };
 
-  useEffect(() => {
-    if (sending) {
-      if (orderEmailStatus.success) {
-        toast.success('Invoice emailed successfully!');
-        setSent(true);
-        setSending(false);
-      } else if (orderEmailStatus.error) {
-        toast.error(`Failed to send invoice: ${orderEmailStatus.error}`);
-        setSending(false);
-      }
-    }
-  }, [orderEmailStatus, sending]);
-
-  const isButtonDisabled = !order?.customer?.email || sending || orderEmailStatus?.loading;
+  const isButtonDisabled = !order?.customer?.email || sending;
 
   return (
     <Button
@@ -76,7 +71,7 @@ const EmailButton = ({ order }) => {
       className="email-invoice-button"
       disabled={isButtonDisabled}
     >
-      {sending || orderEmailStatus?.loading ? 'Sending...' : sent ? '✅ Invoice Sent' : 'Email Invoice'}
+      {sending ? 'Sending...' : sent ? '✅ Invoice Sent' : 'Email Invoice'}
     </Button>
   );
 };
