@@ -12,6 +12,8 @@ import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/ToastManager';
+// Import Toaster from react-hot-toast
+import { Toaster } from 'react-hot-toast';
 // eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
 // eslint-disable-next-line no-unused-vars
@@ -36,6 +38,7 @@ import AdminDashboard from './components/AdminDashboard';
 // import AdminOrders from './components/AdminOrders';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
+import InvoicePage from './pages/InvoicePage';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -357,6 +360,7 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/invoice/:orderId" element={<InvoicePage />} />
         <Route 
           path="/admin" 
           element={
@@ -448,6 +452,18 @@ const App = () => (
         <CartProvider>
           <AdminProvider>
             <ToastProvider>
+              <Toaster 
+                position="top-center" 
+                reverseOrder={false}
+                toastOptions={{
+                  success: {
+                    iconTheme: {
+                      primary: 'transparent',
+                      secondary: 'transparent',
+                    },
+                  },
+                }}
+              />
               <AppContent />
             </ToastProvider>
           </AdminProvider>

@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useOrders } from './OrderContext';
 import OrderItemsTable from './OrderItemsTable';
 import Invoice from '../Invoice';
 import OrderEditor from './OrderEditor';
+import { useNavigate } from 'react-router-dom';
 
 /**
  * OrderDetails - Expanded view for selected order
@@ -30,6 +31,8 @@ const OrderDetails = () => {
     finalizeOrder
   } = useOrders();
   
+  const navigate = useNavigate();
+  
   // State for discount editing
   const [discountAmount, setDiscountAmount] = useState('');
   const [discountReason, setDiscountReason] = useState('');
@@ -42,6 +45,12 @@ const OrderDetails = () => {
   
   // State for order editing
   const [isEditingOrder, setIsEditingOrder] = useState(false);
+  // Track if we need to reopen the modal after refresh
+  const [shouldReopenAfterRefresh, setShouldReopenAfterRefresh] = useState(false);
+  // Counter to force remount of OrderEditor
+  const [editorKey, setEditorKey] = useState(0);
+  // Reference for scrolling
+  const orderDetailsRef = useRef(null);
   
   // Find the active order details
   const orderDetails = activeOrder ? orders.find(order => order.id === activeOrder) : null;
@@ -71,14 +80,63 @@ const OrderDetails = () => {
     setIsEditingOrder(false);
   }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
   
+  // Scroll to order details when opened or reopened
+  useEffect(() => {
+    if (orderDetailsRef.current && activeOrder) {
+      // Scroll to the top of order details when it becomes visible
+      orderDetailsRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start'
+      });
+    }
+  }, [activeOrder, isEditingOrder]);
+  
+  // Handle closing the edit modal with refresh
+  const closeModalWithRefresh = async () => {
+    // First close the modal immediately to avoid UI glitches
+    setIsEditingOrder(false);
+    
+    // Flag that we should reopen after refresh
+    setShouldReopenAfterRefresh(true);
+    
+    // Then refresh the orders data
+    if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
+      try {
+        // Pass true for silent mode to avoid duplicate toast notifications
+        await window.orderContext.refreshOrders(true);
+        console.log("Orders refreshed after editing");
+      } catch (refreshError) {
+        console.error("Error refreshing orders:", refreshError);
+      } finally {
+        // Reopen the edit modal after a short delay to ensure state is updated
+        setTimeout(() => {
+          if (shouldReopenAfterRefresh) {
+            // Increment editor key to force remount
+            setEditorKey(prev => prev + 1);
+            setIsEditingOrder(true);
+            setShouldReopenAfterRefresh(false);
+            
+            // Ensure element scrolls into view after reopening
+            if (orderDetailsRef.current) {
+              orderDetailsRef.current.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+              });
+            }
+          }
+        }, 100);
+      }
+    }
+  };
+  
   // If no active order, don't render anything
   if (!activeOrder) return null;
   
   // If order details not found, don't render anything
   if (!orderDetails) return null;
   
-  const closeInvoice = () => {
-    setShowInvoice(null);
+  const viewInvoice = () => {
+    navigate(`/invoice/${orderDetails.id}`);
   };
 
   // Handle saving the discount
@@ -232,13 +290,14 @@ const OrderDetails = () => {
   };
 
   return (
-    <div className="order-details-container">
+    <div className="order-details-container" ref={orderDetailsRef}>
       <button className="close-details-btn" onClick={() => setActiveOrder(null)}>×</button>
       
       {isEditingOrder ? (
         <OrderEditor 
           orderId={activeOrder} 
-          closeModal={() => setIsEditingOrder(false)} 
+          closeModal={closeModalWithRefresh} 
+          key={editorKey}
         />
       ) : (
         <div className="order-details-grid">
@@ -515,7 +574,7 @@ const OrderDetails = () => {
               <h3>Invoice</h3>
               <button 
                 className="generate-invoice-btn" 
-                onClick={() => setShowInvoice(orderDetails.isFinalized ? 'final' : 'preliminary')}
+                onClick={viewInvoice}
               >
                 View Invoice
               </button>
@@ -540,20 +599,6 @@ const OrderDetails = () => {
                 </p>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Invoice Modal */}
-      {showInvoice && (
-        <div className="invoice-modal">
-          <div className="invoice-modal-content">
-            <button className="close-invoice-btn" onClick={closeInvoice}>×</button>
-            <Invoice 
-              order={orderDetails} 
-              type="print" 
-              invoiceType={showInvoice} 
-            />
           </div>
         </div>
       )}

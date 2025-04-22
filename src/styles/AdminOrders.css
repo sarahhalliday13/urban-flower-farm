@@ -1,213 +1,156 @@
+/* AdminOrders.css */
+
+/* Container */
 .admin-orders-container {
+  padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  font-family: 'Poppins', sans-serif;
-  overflow-x: hidden;
 }
 
+/* Header */
 .admin-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.admin-header h1 {
-  color: #2c3e50;
-  font-size: 24px;
-  margin: 0;
-  padding: 0;
-  font-weight: 600;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
 .header-controls {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
-  margin-right: 1rem;
+  align-items: center;
 }
 
+/* Search Box */
 .search-box {
+  flex: 1;
+  min-width: 250px;
+}
+
+.search-input-wrapper {
   position: relative;
 }
 
-.search-box input {
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #ddd;
+.search-input {
+  width: 100%;
+  padding: 0.5rem 2.5rem 0.5rem 1rem;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
-  width: 230px;
-  height: 40px;
-  box-sizing: border-box;
 }
 
+.search-clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #777;
+  cursor: pointer;
+}
+
+/* Status Filter */
 .status-filter {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
-.status-filter span {
-  font-weight: 500;
-  color: #4b5563;
-}
-
-.status-filter select {
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #ddd;
+.status-select {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 0.9rem;
-  background-color: white;
-  min-width: 145px;
-  appearance: menulist;
-  height: 40px;
-  box-sizing: border-box;
 }
 
-.admin-page-title {
-  color: #2c3e50;
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  padding-bottom: 0.5rem;
-  text-align: left;
-  border-bottom: none;
-}
-
-/* Admin controls */
-.admin-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.filter-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  flex: 0 1 auto;
-}
-
-.filter-controls label {
-  font-weight: 500;
-  color: #555;
-}
-
-.filter-controls select {
-  padding: 10px;
-  border: 1px solid #ddd;
+/* Refresh Button */
+.refresh-button {
+  background-color: #2c5530;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
   border-radius: 4px;
-  font-size: 16px;
-  background-color: white;
+  cursor: pointer;
 }
 
-/* Loading and no orders states */
-.loading, .no-orders {
-  text-align: center;
-  padding: 2rem;
-  color: #555;
+.refresh-button:hover {
+  background-color: #1f3d22;
 }
 
-/* Orders list */
+/* Orders Table */
 .orders-list {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
 }
 
 .orders-table {
   width: 100%;
-  table-layout: fixed;
   border-collapse: collapse;
-  margin-bottom: 1rem;
-  background-color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border-radius: 8px;
-  overflow: hidden;
+}
+
+.orders-table th, .orders-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
 }
 
 .orders-table th {
-  background-color: #f8f9fa;
-  padding: 12px 16px;
-  text-align: left;
+  background-color: #f5f5f5;
   font-weight: 600;
-  color: #2c3e50;
-  border-bottom: 2px solid #eee;
 }
 
-/* Align the Actions header with the buttons */
-.orders-table th:last-child {
-  text-align: right; /* Align with action buttons which are right-aligned */
-}
-
-.orders-table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid #eee;
-  vertical-align: middle;
-}
-
-.orders-table tr:not(.details-row):hover {
-  background-color: #f9f9f9;
-  cursor: pointer;
-}
-
-.orders-table tr:last-child td {
-  border-bottom: none;
-}
-
-.order-id {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.order-date {
-  color: #7f8c8d;
+.order-id, .order-date, .customer-name, .customer-email, .order-total {
   display: block;
 }
 
-.customer-name {
-  font-weight: 500;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.customer-email {
-  font-size: 0.85em;
-  color: #7f8c8d;
-  display: block;
-}
-
-.view-details-btn {
-  padding: 6px 12px;
-  background-color: #3498db;
-  color: white;
-  border: none;
+/* Status Badges */
+.order-status {
+  padding: 0.25rem 0.5rem;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  text-transform: capitalize;
+  font-weight: 500;
+  display: inline-block;
 }
 
-.view-details-btn:hover {
-  background-color: #2980b9;
+.status-completed {
+  background-color: #d4edda;
+  color: #155724;
 }
 
-.details-row {
-  background-color: #f8f9fa;
+.status-processing {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.status-shipped {
+  background-color: #d1ecf1;
+  color: #0c5460;
+}
+
+.status-cancelled {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-pending {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+/* Loading / No Orders */
+.loading, .no-orders {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
+
+/* Details View */
+.details-row td {
+  background: #f9f9f9;
 }
 
 .order-details {
   padding: 1.5rem;
-  background-color: #f8f9fa;
-  border-radius: 0 0 8px 8px;
-  width: 100%;
-  box-sizing: border-box;
-  max-width: 100%;
-  overflow-x: hidden;
 }
 
 .order-details-header {
@@ -217,1000 +160,194 @@
   margin-bottom: 1rem;
 }
 
-.order-details-header h3 {
-  margin: 0;
-  color: #2c3e50;
-}
-
 .close-details-btn {
   background: none;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #7f8c8d;
+  color: #999;
 }
 
-.close-details-btn:hover {
-  color: #e74c3c;
-}
-
-/* Order card styles - keeping for reference but no longer used */
-.order-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  background-color: white;
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.order-header:hover {
-  background-color: #f1f1f1;
-}
-
-.order-summary h3 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 18px;
-}
-
-.order-meta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.toggle-icon {
-  color: #7f8c8d;
-  font-size: 12px;
-}
-
-/* Order details */
-.order-items {
-  margin-bottom: 2rem;
-}
-
-.order-items h4, 
-.customer-info h4, 
-.shipping-info h4, 
-.order-notes h4,
-.order-actions h4 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-size: 16px;
-}
-
+/* Order Items Table */
 .items-table {
   width: 100%;
   border-collapse: collapse;
+  margin-bottom: 1.5rem;
 }
 
-.items-table th, 
-.items-table td {
-  padding: 12px;
+.items-table th, .items-table td {
+  padding: 0.5rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #ddd;
 }
 
-.items-table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-/* Update order info grid for two columns */
+/* Info Grid */
 .order-info-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
-  margin-bottom: 2rem;
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  overflow: hidden;
 }
 
-.customer-info, 
-.order-notes {
-  padding: 1.5rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  min-height: 200px;
-}
-
-.customer-info p, 
-.order-notes p {
-  margin: 0.5rem 0;
-  color: #555;
-}
-
-.customer-info a {
-  color: #3498db;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.customer-info a:hover {
-  color: #2980b9;
-  text-decoration: underline;
-}
-
-/* Improve spacing in items table */
-.items-table tbody tr {
-  border-bottom: 1px solid #eee;
-}
-
-.items-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.items-table td {
-  padding: 20px 16px;
-  vertical-align: middle;
-}
-
-.items-table tbody tr:hover {
-  background-color: #f9f9f9;
-}
-
-/* Improve order actions section */
-.order-actions {
-  margin-top: 2rem;
-  padding: 2rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.order-actions h4 {
-  color: #2c3e50;
-  margin-bottom: 1.5rem;
+/* Section Titles */
+.customer-info h4,
+.status-management h4,
+.email-management h4,
+.order-notes h4,
+.invoice-section h4 {
+  margin-bottom: 0.5rem;
   font-size: 1.2rem;
-  text-align: center;
-  font-weight: 600;
 }
 
-.status-section, 
-.inventory-section,
-.invoice-section {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.status-section h5, 
-.inventory-section h5,
-.invoice-section h5 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  color: #2c3e50;
-  font-size: 1rem;
-  font-weight: 600;
-  text-align: left;
-}
-
+/* Status Buttons */
 .status-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .status-btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  background: #fff;
   cursor: pointer;
-  font-size: 14px;
-  opacity: 0.7;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.status-btn:hover {
-  opacity: 0.9;
+  border-radius: 4px;
 }
 
 .status-btn.active {
-  opacity: 1;
-  font-weight: bold;
+  background-color: #2c5530;
+  color: #fff;
+  border-color: #2c5530;
 }
 
-.status-btn.active:after {
-  content: "✓";
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background-color: white;
-  color: green;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.status-btn.pending {
-  background-color: #f39c12;
-  color: white;
-}
-
-.status-btn.processing {
-  background-color: #3498db;
-  color: white;
-}
-
-.status-btn.shipped {
-  background-color: #2ecc71;
-  color: white;
-}
-
-.status-btn.completed {
-  background-color: #27ae60;
-  color: white;
-}
-
-.status-btn.cancelled {
-  background-color: #e74c3c;
-  color: white;
-}
-
-/* 
- * BUTTON STYLE GUIDE
- * ------------------
- * Primary buttons: Green background (#10b981) with white text - Used for main actions like Save
- * Secondary buttons: Blue background (#3b82f6) with white text - Used for secondary actions like Edit/Update
- * Tertiary buttons: White background with grey text (#4b5563) - Used for less important actions like Cancel
- */
-
-/* Inventory update button - improve layout */
-.inventory-update-btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  background-color: #3b82f6; /* Secondary button: Blue for secondary actions */
-  color: white;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  margin-bottom: 0.5rem;
-  display: block;
-  width: 100%;
-  max-width: 300px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-.inventory-update-btn:hover {
-  background-color: #2563eb;
-}
-
-.inventory-update-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.inventory-update-btn.updating {
-  background-color: #3b82f6;
-}
-
-.inventory-update-btn.success {
-  background-color: #10b981;
-}
-
-.inventory-update-btn.error {
-  background-color: #e74c3c;
-}
-
-.inventory-note {
-  font-size: 12px;
-  color: #777;
-  font-style: italic;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-/* Invoice buttons - improve layout */
-.invoice-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: center;
-}
-
-/* Common style for invoice-style buttons - white bg, green outline, green text */
-.invoice-style-btn {
-  padding: 10px 16px;
-  background-color: white;
-  color: #2c5530;
-  border: 1px solid #2c5530;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  min-width: 140px;
-  text-align: center;
-}
-
-.invoice-style-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
-}
-
-.invoice-style-btn:disabled {
-  border-color: #ccc;
-  color: #ccc;
-  cursor: not-allowed;
-  background-color: white;
-}
-
-.view-invoice-btn, .email-invoice-btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s;
-  min-width: 140px;
-}
-
-.view-invoice-btn {
-  background-color: white;
-  color: #2c5530;
-  border: 1px solid #2c5530;
-}
-
-.view-invoice-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
-}
-
-.email-invoice-btn {
-  background-color: white;
-  color: #2c5530;
-  border: 1px solid #2c5530;
-}
-
-.email-invoice-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
-}
-
-.email-invoice-btn:disabled {
-  background-color: white;
-  color: #ccc;
-  border-color: #ccc;
-  cursor: not-allowed;
-}
-
-/* Update email-send-btn to match invoice style */
+/* Email Management */
 .email-send-btn {
-  background-color: white;
-  color: #2c5530;
-  border: 1px solid #2c5530;
+  background-color: #2c5530;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  padding: 10px 16px;
-  transition: all 0.2s;
-  width: 100%;
-  max-width: 300px;
-  margin: 0 auto;
-  display: block;
+  margin-top: 0.5rem;
 }
 
 .email-send-btn:hover {
-  background-color: rgba(44, 85, 48, 0.05);
+  background-color: #1f3d22;
 }
 
-.email-send-btn:disabled {
-  border-color: #ccc;
+/* Invoice Section Buttons */
+.invoice-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Updated invoice button styles to match InvoicePage.css */
+.view-invoice-button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background-color: #336633;
+  color: #fff;
+  border: none;
+}
+
+.view-invoice-button:hover {
+  background-color: #264d26;
+}
+
+.email-invoice-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.email-invoice-btn:hover {
+  background-color: #eee;
+}
+
+.email-invoice-btn:disabled {
+  background-color: #f8f9fa;
   color: #ccc;
+  border-color: #ddd;
   cursor: not-allowed;
-  background-color: white;
 }
 
-/* Invoice modal */
-.invoice-modal {
+/* Confirmation Modal */
+.confirmation-modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
   display: flex;
-  justify-content: center;
   align-items: center;
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-.invoice-modal-content {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 800px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-/* Additional print-specific styles for the modal */
-@media print {
-  .invoice-modal {
-    position: absolute;
-    background: none;
-    overflow: visible;
-  }
-  
-  .invoice-modal-content {
-    overflow: visible;
-    max-height: none;
-    padding: 0;
-    box-shadow: none;
-    border-radius: 0;
-  }
-}
-
-.close-invoice {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #333;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.close-invoice:hover {
-  color: #000;
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-  .admin-orders-container {
-    padding: 1rem;
-  }
-  
-  .admin-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .admin-header h1 {
-    font-size: 20px;
-  }
-  
-  .header-controls {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.75rem;
-  }
-  
-  .search-box, .search-box input, .status-filter, .status-filter select {
-    width: 100%;
-  }
-  
-  .admin-page-title {
-    width: 100%;
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-  }
-  
-  /* Hide "Actions" label in mobile view */
-  .orders-table td[data-label="Actions"]:before {
-    display: none;
-  }
-  
-  /* Center the action buttons without the label */
-  .orders-table td[data-label="Actions"] {
-    justify-content: center;
-  }
-  
-  .admin-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-  
-  .filter-controls {
-    flex-direction: column;
-    align-items: flex-start;
-    width: 100%;
-  }
-  
-  .filter-controls select {
-    width: 100%;
-  }
-  
-  .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-  
-  .status-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-  }
-  
-  .order-details-header {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  
-  .order-info-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .customer-info, 
-  .order-notes,
-  .status-management {
-    height: auto;
-    min-height: auto;
-    padding: 1rem;
-    grid-column: auto;
-  }
-  
-  /* Completely reset the table layout for mobile */
-  .orders-table {
-    border: none;
-    background: transparent;
-    box-shadow: none;
-  }
-  
-  .orders-table tbody tr {
-    margin-bottom: 1.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background-color: white;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-  }
-  
-  .orders-table tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    text-align: right;
-    padding: 15px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  
-  /* Make customer data look better */
-  td[data-label="Customer"] {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  td[data-label="Customer"]:before {
-    margin-bottom: 8px;
-    text-align: left;
-    width: 100%;
-  }
-  
-  td[data-label="Customer"] .customer-name,
-  td[data-label="Customer"] .customer-email {
-    margin-left: auto;
-    width: auto;
-    text-align: right;
-    padding-left: 0;
-  }
-  
-  /* Make Order ID stand out */
-  td[data-label="Order"] .order-id {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #334155;
-  }
-  
-  /* Improve Status pill display */
-  td[data-label="Status"] .order-status {
-    margin-left: auto;
-    min-width: 110px;
-    text-align: center;
-  }
-  
-  /* Center the view details button */
-  td[data-label="Actions"] {
-    justify-content: center;
-    padding: 15px 20px;
-  }
-  
-  .view-details-btn {
-    width: 100%;
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    border-radius: 6px;
-    background-color: #3498db;
-  }
-  
-  /* Make the order details card connected to the main card */
-  .orders-table tbody tr.details-row {
-    margin-top: -1.5rem;
-    border-top: none;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-  }
-  
-  .orders-table tbody td {
-    padding: 15px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  
-  .orders-table tbody td:before {
-    content: attr(data-label);
-    font-weight: 600;
-    text-align: left;
-    flex: 1;
-    padding-right: 1rem;
-  }
-  
-  .orders-table tbody td:last-child {
-    border-bottom: none;
-  }
-  
-  .orders-table tbody td[colspan] {
-    display: block;
-    padding: 0;
-  }
-  
-  .orders-table tbody td[colspan]:before {
-    display: none;
-  }
-  
-  /* Improve spacing for customer info */
-  .customer-name, .customer-email {
-    display: block;
-    text-align: right;
-  }
-  
-  /* Center status in its cell */
-  td[data-label="Status"] {
-    align-items: center;
-  }
-  
-  td[data-label="Status"] .order-status {
-    min-width: 100px;
-    text-align: center;
-  }
-  
-  /* Improve order details on mobile */
-  .order-details {
-    padding: 1rem;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow-x: hidden;
-  }
-  
-  .order-actions h4 {
-    text-align: center;
-  }
-  
-  .status-section, 
-  .inventory-section,
-  .invoice-section {
-    margin-bottom: 1.5rem;
-    padding: 1rem;
-  }
-  
-  .status-section h5, 
-  .inventory-section h5,
-  .invoice-section h5 {
-    text-align: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .inventory-note {
-    text-align: center;
-    margin-top: 0.5rem;
-  }
-  
-  .status-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-  }
-  
-  td[data-label="Total"] {
-    display: flex;
-    align-items: center;
-  }
-  
-  .order-total {
-    margin-left: auto;
-    top: 0;
-  }
-}
-
-@media (max-width: 576px) {
-  .items-table {
-    margin: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .order-items {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 0;
-  }
-  
-  .items-table tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    text-align: right;
-    padding: 12px 16px;
-    border-bottom: 1px solid #eee;
-    flex-wrap: nowrap;
-    border-top: none;
-    background-color: transparent;
-  }
-  
-  .items-table tbody td:before {
-    content: attr(data-label);
-    font-weight: 600;
-    text-align: left;
-    flex: 0 0 40%;
-    padding-right: 10px;
-    white-space: nowrap;
-  }
-  
-  .items-table tbody td > span,
-  .items-table tbody td > div {
-    flex: 0 0 60%;
-    text-align: right;
-  }
-  
-  .invoice-buttons {
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .invoice-buttons button {
-    width: 100%;
-  }
-  
-  .order-details {
-    padding: 1rem;
-    margin: 0 -1rem;
-    width: calc(100% + 2rem);
-  }
-  
-  /* Fix order items table on small screens */
-  .order-items h4 {
-    text-align: center;
-    margin-bottom: 0.75rem;
-  }
-  
-  .items-table tbody td {
-    flex-wrap: wrap;
-  }
-  
-  .items-table tbody td:before {
-    width: 100%;
-    margin-bottom: 0.25rem;
-    padding-right: 0;
-  }
-  
-  /* Fix action buttons on small screens */
-  .view-details-btn,
-  .inventory-update-btn,
-  .view-invoice-btn,
-  .email-invoice-btn {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    box-sizing: border-box; /* Ensure padding is included in width */
-    max-width: 100%; /* Override max-width for small screens */
-    margin-left: 0; /* Reset margin for small screens */
-    margin-right: 0; /* Reset margin for small screens */
-  }
-  
-  /* Ensure inventory section has proper padding */
-  .inventory-section {
-    padding: 15px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  
-  .items-table tbody td > span,
-  .items-table tbody td > div,
-  .items-table tbody td > .order-total {
-    flex: 0 0 60%;
-    text-align: right;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-  }
-  
-  .items-table tbody td .order-total {
-    position: static;
-    margin-left: auto;
-  }
-}
-
-/* Add specific styling for the total cell */
-td[data-label="Total"] {
-  border-top: none !important;
-  background-color: transparent !important;
-  vertical-align: middle;
-}
-
-.order-total {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 1.1rem;
-  display: inline-block;
-  background-color: transparent;
-  border-top: none;
-  padding: 0;
-  margin: 0;
-  vertical-align: middle;
-  position: relative;
-  top: 2px;
-}
-
-/* Fix for details row to match table width */
-.orders-table tbody tr.details-row {
-  box-shadow: none;
-  width: 100%;
-}
-
-.orders-table tbody tr.details-row td {
-  padding: 0;
-  width: 100%;
-}
-
-.orders-table tbody tr.details-row td[colspan] {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  .admin-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .admin-header h1 {
-    font-size: 20px;
-  }
-}
-
-/* Status Management section - make it more prominent */
-.status-management {
-  grid-column: 2;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.status-management h4 {
-  text-align: center;
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-/* Invoice section - make it more prominent */
-.invoice-section {
-  grid-column: 1 / -1;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.invoice-section h4 {
-  text-align: center;
-  font-size: 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-/* Remove inventory section styles that are no longer needed */
-.inventory-section,
-.inventory-update-btn,
-.inventory-note {
-  display: none;
-}
-
-/* Confirmation Modal Styles */
-.confirmation-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
   justify-content: center;
-  align-items: center;
-  z-index: 1000;
 }
 
 .confirmation-content {
-  background-color: white;
+  background: white;
   padding: 2rem;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 90%;
-}
-
-.confirmation-content h3 {
-  color: #2c3e50;
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-}
-
-.confirmation-content p {
-  margin-bottom: 1rem;
-  color: #4a5568;
-}
-
-.confirmation-content ul {
-  margin-bottom: 1.5rem;
-  padding-left: 1.5rem;
-}
-
-.confirmation-content li {
-  color: #4a5568;
-  margin-bottom: 0.5rem;
+  max-width: 400px;
+  text-align: center;
 }
 
 .confirmation-buttons {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.confirm-btn, .cancel-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 .confirm-btn {
-  background-color: #e74c3c;
+  background-color: #dc3545;
   color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
-}
-
-.confirm-btn:hover {
-  background-color: #c0392b;
 }
 
 .cancel-btn {
-  background-color: #95a5a6;
+  background-color: #6c757d;
   color: white;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.2s;
 }
 
-.cancel-btn:hover {
-  background-color: #7f8c8d;
-} 
+/* Status Update Notification */
+.status-update-notification {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  background: #2c5530;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  z-index: 10000;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .invoice-buttons {
+    flex-direction: column;
+  }
+}
