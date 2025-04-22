@@ -98,69 +98,20 @@ export const sendOrderConfirmationEmails = async (orderData) => {
 
 // Send invoice email - dedicated function to use the new invoice email endpoint
 export const sendInvoiceEmail = async (orderData) => {
+  console.warn('DEPRECATED: Please use the invoiceService.sendInvoiceEmail function instead');
+  console.warn('This function uses the old HTTP API method and may be removed in the future');
+  console.warn('Import from: import { sendInvoiceEmail } from "../services/invoiceService"');
+  
+  // Forward to the appropriate implementation in invoiceService
   try {
-    if (!orderData || !orderData.id) {
-      console.error('Invalid order data provided to sendInvoiceEmail:', orderData);
-      return {
-        success: false,
-        message: 'Invalid order data provided'
-      };
-    }
-    
-    console.log(`Request to send invoice for order: ${orderData.id}`);
-    
-    // Check if invoice email was already sent
-    if (orderData.invoiceEmailSent === true) {
-      console.log(`Invoice email already sent for order ${orderData.id}, skipping frontend send`);
-      return {
-        success: true,
-        message: 'Invoice email already sent for this order',
-        alreadySent: true
-      };
-    }
-    
-    // Try to send email via new dedicated Firebase Function
-    try {
-      const apiUrl = getApiUrl();
-      console.log(`Sending invoice email via: ${apiUrl}/sendInvoiceEmail`);
-      
-      const response = await fetch(`${apiUrl}/sendInvoiceEmail`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        mode: 'cors',
-        body: JSON.stringify(orderData),
-      });
-      
-      const data = await response.json();
-      console.log('Invoice Email API response:', data);
-      
-      if (response.ok && data.success) {
-        console.log('Invoice email sent successfully');
-        return {
-          success: true,
-          message: data.alreadySent 
-            ? 'Invoice email was already sent for this order' 
-            : 'Invoice email sent successfully',
-          data
-        };
-      } else {
-        throw new Error(data.error || data.details || 'Failed to send invoice email');
-      }
-    } catch (error) {
-      console.error('Error sending invoice email:', error);
-      return {
-        success: false,
-        message: error.message || 'Failed to send invoice email',
-      };
-    }
+    // Dynamically import to avoid circular dependencies
+    const invoiceModule = await import('./invoiceService');
+    return invoiceModule.sendInvoiceEmail(orderData);
   } catch (error) {
-    console.error('Error in invoice email service:', error);
+    console.error('Failed to redirect to invoiceService:', error);
     return {
       success: false,
-      message: error.message || 'An unexpected error occurred in the invoice email service',
+      message: 'Email service has been updated. Please refresh the page and try again.',
     };
   }
 };

@@ -1,26 +1,20 @@
+// src/pages/InvoicePage.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
+import { sendInvoiceEmail } from '../services/invoiceService'; // <-- import your service directly
 import Invoice from '../components/Invoice';
-import '../styles/InvoicePage.css';
-import { OrderProvider, useOrders } from '../components/orders/OrderContext';
 import { toast } from 'react-hot-toast';
+import '../styles/InvoicePage.css';
 
-// Simple loading component
-const Loading = () => (
-  <div className="loading-container">
-    <h2>Loading Invoice...</h2>
-    <div className="loading-spinner"></div>
-  </div>
-);
-
-// Simple Button component
-const Button = ({ variant = 'primary', onClick, className, children }) => {
+// Reusable Button component
+const Button = ({ variant = 'primary', onClick, disabled, className, children }) => {
   const baseStyle = {
     padding: '8px 16px',
     border: 'none',
     borderRadius: '4px',
-    cursor: 'pointer',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+    opacity: disabled ? 0.6 : 1,
     fontWeight: '500',
     display: 'inline-block',
     textAlign: 'center',
@@ -37,6 +31,7 @@ const Button = ({ variant = 'primary', onClick, className, children }) => {
       onClick={onClick}
       className={className}
       style={{ ...baseStyle, ...variantStyles[variant] }}
+      disabled={disabled}
     >
       {children}
     </button>
@@ -47,6 +42,7 @@ const Button = ({ variant = 'primary', onClick, className, children }) => {
 const EmailButton = ({ order }) => {
   const { sendInvoiceEmail, orderEmailStatus } = useOrders();
   const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   const handleEmailInvoice = async () => {
     if (!order?.customer?.email) {
@@ -56,30 +52,44 @@ const EmailButton = ({ order }) => {
 
     setSending(true);
     await sendInvoiceEmail(order, true);
-    
-    if (orderEmailStatus.success) {
-      toast.success('Invoice email sent successfully');
-    } else if (orderEmailStatus.error) {
-      toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
-    }
-    
-    setSending(false);
   };
 
+  useEffect(() => {
+    if (sending) {
+      if (orderEmailStatus.success) {
+        toast.success('Invoice emailed successfully!');
+        setSent(true);
+        setSending(false);
+      } else if (orderEmailStatus.error) {
+        toast.error(`Failed to send invoice: ${orderEmailStatus.error}`);
+        setSending(false);
+      }
+    }
+  }, [orderEmailStatus, sending]);
+
   const isButtonDisabled = !order?.customer?.email || sending || orderEmailStatus?.loading;
-  
+
   return (
-    <Button 
-      variant="outline" 
-      onClick={handleEmailInvoice} 
+    <Button
+      variant="outline"
+      onClick={handleEmailInvoice}
       className="email-invoice-button"
       disabled={isButtonDisabled}
     >
-      {sending || orderEmailStatus?.loading ? 'Sending...' : 'Email Invoice'}
+      {sending || orderEmailStatus?.loading ? 'Sending...' : sent ? '✅ Invoice Sent' : 'Email Invoice'}
     </Button>
   );
 };
 
+// Loading spinner component
+const Loading = () => (
+  <div className="loading-container">
+    <h2>Loading Invoice...</h2>
+    <div className="loading-spinner"></div>
+  </div>
+);
+
+// Main InvoicePage
 const InvoicePage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -128,7 +138,7 @@ const InvoicePage = () => {
         <h2>Error</h2>
         <p>{error}</p>
         <Button variant="secondary" onClick={handleBack}>
-          Back to Orders
+          ← Back to Orders
         </Button>
       </div>
     );
@@ -140,10 +150,9 @@ const InvoicePage = () => {
         <Button variant="secondary" onClick={handleBack} className="back-button">
           ← Back to Orders
         </Button>
+
         <div className="invoice-action-buttons">
-          <OrderProvider>
-            <EmailButton order={order} />
-          </OrderProvider>
+          <EmailButton order={order} />
           <Button variant="primary" onClick={handlePrint} className="print-button">
             Print Invoice
           </Button>
@@ -151,9 +160,7 @@ const InvoicePage = () => {
       </div>
 
       <div className="invoice-page-body">
-        <OrderProvider>
-          <Invoice order={order} standalone={true} />
-        </OrderProvider>
+        <Invoice order={order} standalone={true} />
       </div>
     </div>
   );
