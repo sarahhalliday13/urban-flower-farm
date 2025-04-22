@@ -15,6 +15,7 @@ const sgMail = require('@sendgrid/mail');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
+const corsLib = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const Busboy = require('busboy');
 const path = require('path');
@@ -24,10 +25,37 @@ const { simpleContactFunction } = require('./simplifiedContact');
 const { sendContactEmail } = require('./sendContactEmail');
 const { directContactEmail } = require('./simple-contact-email');
 
+// Import our email functions directly - CRITICAL: use destructuring syntax to get the actual function
+const { sendOrderEmail } = require('./sendOrderEmail');
+const invoiceEmailModule = require('./sendInvoiceEmail');
+
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
+
+// Create the main Express app
+const app = express();
+
+// Setup CORS for all routes (staging + prod + localhost)
+const allowedOrigins = [
+  'https://buttonsflowerfarm-8a54d.web.app',
+  'https://urban-flower-farm-staging.web.app',
+  'http://localhost:3000'
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
+
+// Parse JSON
+app.use(express.json());
 
 // Configure SendGrid
 let apiKeyConfigured = false;
@@ -61,34 +89,17 @@ try {
   console.error('Error configuring SendGrid:', error.message);
 }
 
-// Create Express apps for our endpoints
-const sendEmailApp = express();
-sendEmailApp.use(cors({ origin: true }));
-sendEmailApp.use(express.json()); // v4 requires explicit JSON parser
-
-const sendOrderEmailApp = express();
-sendOrderEmailApp.use(cors({ 
-  origin: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  credentials: true,
-  maxAge: 86400 // 24 hours
-}));
-sendOrderEmailApp.use(express.json()); // v4 requires explicit JSON parser
-
-// CRITICAL: Direct handler for OPTIONS preflight requests - must come BEFORE any routes
-// This overrides the cors middleware with a direct implementation
-sendOrderEmailApp.options('*', (req, res) => {
-  // Force 204 No Content response with CORS headers
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-  res.set('Access-Control-Max-Age', '86400'); // 24 hours
-  res.status(204).send('');
+// Health check endpoints - CRITICAL for container healthcheck
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    message: 'API service is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Add a special debug endpoint that always succeeds
-sendOrderEmailApp.post('/debug', (req, res) => {
+// Add a debug endpoint that always succeeds
+app.post('/debug', (req, res) => {
   console.log('📊 DEBUG ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
   
   // Always return success
@@ -101,28 +112,8 @@ sendOrderEmailApp.post('/debug', (req, res) => {
   });
 });
 
-const sendContactEmailApp = express(); 
-sendContactEmailApp.use(cors({ origin: true }));
-sendContactEmailApp.use(express.json()); // v4 requires explicit JSON parser
-
-// Health check endpoints - CRITICAL for container healthcheck
-sendEmailApp.get('/', (req, res) => {
-  res.status(200).send('Email service is healthy');
-  logger.info('Health check request received and responded to successfully');
-});
-
-sendOrderEmailApp.get('/', (req, res) => {
-  res.status(200).send('Order email service is healthy');
-  logger.info('Order email health check request received and responded to successfully');
-});
-
-sendContactEmailApp.get('/', (req, res) => {
-  res.status(200).send('Contact email service is healthy');
-  logger.info('Contact email health check request received and responded to successfully');
-});
-
 // General email endpoint
-sendEmailApp.post('/', async (req, res) => {
+app.post('/', async (req, res) => {
   try {
     const { to, subject, text, html } = req.body;
     logger.info('Received email request:', { to, subject });
@@ -157,226 +148,12 @@ sendEmailApp.post('/', async (req, res) => {
 });
 
 // Keep the old route for backward compatibility
-sendEmailApp.post('/send-email', (req, res) => {
-  sendEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
-});
-
-// Order email endpoint
-sendOrderEmailApp.post('/', async (req, res) => {
-  // Set explicit CORS headers for additional compatibility
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-  
-  // DEBUG: Log the full request body to understand what we're receiving
-  console.log('📦 REQUEST PAYLOAD:', JSON.stringify(req.body, null, 2));
-  
-  // Early validation with detailed error response
-  if (!req.body) {
-    console.error('❌ Empty request body received');
-    return res.status(400).json({
-      success: false,
-      error: 'Empty request body',
-      message: 'The request payload was empty or invalid'
-    });
-  }
-  
-  if (req.body.test === true) {
-    console.log('🧪 TEST MODE DETECTED');
-    return res.status(200).json({
-      success: true,
-      test: true,
-      message: 'Test mode: This would normally send an order confirmation email',
-      receivedPayload: req.body
-    });
-  }
-  
-  // Validate customer information
-  if (!req.body.customer) {
-    console.error('❌ Missing customer object in order');
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid order data',
-      detail: 'Missing customer information',
-      receivedPayload: req.body
-    });
-  }
-  
-  if (!req.body.customer.email) {
-    console.error('❌ Missing customer email in order');
-    return res.status(400).json({
-      success: false,
-      error: 'Invalid customer data',
-      detail: 'Missing customer email',
-      receivedPayload: req.body
-    });
-  }
-  
-  let emailsSent = false;
-  let orderSaved = false;
-  let orderId = null;
-  
-  try {
-    // Get order data from request and log at each step
-    const orderData = req.body;
-    
-    // Log validation to trace the process
-    console.log('🔍 Starting order validation process...');
-    
-    // Extract orderId or generate a new one
-    orderId = orderData.id || orderData.orderId || `manual-${Date.now()}`;
-    console.log('📝 Using order ID:', orderId);
-    
-    // Create basic validated order structure with defaults
-    const validatedOrder = {
-      id: orderId,
-      date: orderData.date || new Date().toISOString(),
-      status: orderData.status || 'pending',
-      total: orderData.total || 0,
-      customer: {
-        firstName: orderData.customer?.firstName || orderData.customer?.name?.split(' ')[0] || 'Customer',
-        lastName: orderData.customer?.lastName || 
-                 (orderData.customer?.name?.split(' ').slice(1).join(' ') || ''),
-        email: orderData.customer?.email || 'buttonsflowerfarm@gmail.com',
-        phone: orderData.customer?.phone || 'N/A',
-        notes: orderData.customer?.notes || orderData.notes || ''
-      },
-      items: Array.isArray(orderData.items) ? orderData.items : []
-    };
-    
-    // Log the validated order for debugging
-    console.log('✅ Validated order structure:', JSON.stringify(validatedOrder, null, 2));
-    
-    // Recalculate total if not provided or items have changed
-    if (!orderData.total && validatedOrder.items.length > 0) {
-      validatedOrder.total = calculateTotal(validatedOrder.items);
-    }
-    
-    // Check if SendGrid API key is configured
-    if (!apiKeyConfigured) {
-      console.error('❌ SendGrid API key is not configured');
-      throw new Error('SendGrid API key is not configured');
-    }
-    
-    // Server-side save order to database
-    try {
-      logger.info('Saving order to database from server-side:', validatedOrder.id);
-      // Check if order already exists
-      const existingOrder = await admin.database().ref(`orders/${validatedOrder.id}`).once('value');
-      
-      if (existingOrder.exists()) {
-        logger.info('Order already exists in database, updating:', validatedOrder.id);
-      }
-      
-      await admin.database().ref(`orders/${validatedOrder.id}`).set({
-        ...validatedOrder,
-        _serverSaveTimestamp: Date.now(),
-        _serverSaved: true
-      });
-      
-      orderSaved = true;
-      logger.info('Order saved to database from server-side successfully:', validatedOrder.id);
-    } catch (dbError) {
-      logger.error('Error saving order to database from server-side:', {
-        error: dbError.message,
-        orderId: validatedOrder.id,
-        stack: dbError.stack
-      });
-      // Continue with email sending even if database save fails
-    }
-
-    // Send email to customer
-    const customerEmail = {
-      to: validatedOrder.customer.email,
-      from: BUTTONS_EMAIL,
-      subject: `Order Confirmation - ${validatedOrder.id}`,
-      html: generateCustomerEmailTemplate(validatedOrder)
-    };
-
-    // Send email to Buttons
-    const buttonsEmail = {
-      to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL,
-      subject: `New Order Received - ${validatedOrder.id}`,
-      html: generateButtonsEmailTemplate(validatedOrder)
-    };
-
-    logger.info('Sending order confirmation emails...');
-    try {
-      await sgMail.send(customerEmail);
-      logger.info('Customer confirmation email sent successfully');
-      
-      await sgMail.send(buttonsEmail);
-      logger.info('Admin notification email sent successfully');
-      
-      emailsSent = true;
-    } catch (emailError) {
-      logger.error('Error sending confirmation emails:', {
-        message: emailError.message,
-        response: emailError.response?.body,
-        code: emailError.code
-      });
-      throw emailError; // Re-throw to be caught by the outer catch block
-    }
-    
-    res.status(200).json({ 
-      success: true,
-      orderSaved,
-      emailsSent,
-      message: `Order ${orderSaved ? 'saved to database' : 'not saved to database'} and confirmation emails ${emailsSent ? 'sent' : 'not sent'}`
-    });
-  } catch (error) {
-    console.error('❌ Error processing order:', {
-      message: error.message,
-      stack: error.stack,
-      orderId: orderId || 'unknown',
-      code: error.code || 'unknown'
-    });
-    
-    // Check for specific error types
-    if (error.message && error.message.includes('SendGrid API key')) {
-      return res.status(500).json({
-        success: false,
-        error: 'Email service configuration error',
-        detail: 'API key missing or invalid',
-        orderSaved,
-        emailsSent
-      });
-    }
-    
-    if (error.code === 'ECONNREFUSED' || (error.response && error.response.code === 'ECONNREFUSED')) {
-      return res.status(500).json({
-        success: false,
-        error: 'Email service connection error',
-        detail: 'Could not connect to email service',
-        orderSaved,
-        emailsSent
-      });
-    }
-    
-    res.status(500).json({ 
-      success: false,
-      orderSaved,
-      emailsSent,
-      error: 'Failed to process order',
-      message: error.message,
-      detail: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
-  }
-});
-
-// Keep the old route for backward compatibility
-sendOrderEmailApp.post('/send-order-email', (req, res) => {
-  // Set explicit CORS headers for additional compatibility
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-  
-  sendOrderEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+app.post('/send-email', (req, res) => {
+  app._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
 });
 
 // Move the debug endpoint here
-sendOrderEmailApp.get('/debug', (req, res) => {
+app.get('/debug', (req, res) => {
   // Simple debug check endpoint
   console.log('🔍 Debug check endpoint called');
   res.status(200).json({
@@ -387,7 +164,7 @@ sendOrderEmailApp.get('/debug', (req, res) => {
 });
 
 // Add a debug endpoint for testing email structure
-sendOrderEmailApp.post('/debug-email', (req, res) => {
+app.post('/debug-email', (req, res) => {
   console.log('📊 DEBUG EMAIL ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
   
   // Always return success
@@ -401,7 +178,7 @@ sendOrderEmailApp.post('/debug-email', (req, res) => {
 });
 
 // Explicit OPTIONS handler for the old route path too
-sendOrderEmailApp.options('/send-order-email', (req, res) => {
+app.options('/send-order-email', (req, res) => {
   // Force 204 No Content response with CORS headers
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -411,70 +188,23 @@ sendOrderEmailApp.options('/send-order-email', (req, res) => {
 });
 
 // Contact form email endpoint
-sendContactEmailApp.post('/', async (req, res) => {
+app.post('/sendContactEmail', async (req, res) => {
+  // Forward the request to the contact email handler
   try {
-    const { name, email, phone, subject, message } = req.body;
-    logger.info('Received contact form submission:', { name, email });
-
-    if (!apiKeyConfigured) {
-      throw new Error('SendGrid API key is not configured');
-    }
-
-    // Validate required fields
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const msg = {
-      to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL, // Must be verified sender
-      replyTo: email,
-      subject: subject || `New message from ${name}`,
-      text: `
-Name: ${name}
-Email: ${email}
-Phone: ${phone || 'Not provided'}
-
-Message:
-${message}
-      `,
-      html: `
-<h3>New Contact Form Submission</h3>
-<p><strong>Name:</strong> ${name}</p>
-<p><strong>Email:</strong> ${email}</p>
-<p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
-<br>
-<p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, '<br>')}</p>
-      `
-    };
-
-    logger.info('Sending contact form email...');
-    await sgMail.send(msg);
-    logger.info('Contact form email sent successfully');
-
-    res.status(200).json({ 
-      success: true,
-      message: 'Contact form email sent successfully' 
-    });
+    await sendContactEmail.handler(req, res);
   } catch (error) {
-    logger.error('Error sending contact form email:', {
-      message: error.message,
-      response: error.response?.body,
-      code: error.code,
-      stack: error.stack
-    });
+    console.error('Error in sendContactEmail route:', error);
     res.status(500).json({ 
-      success: false,
-      error: 'Failed to send contact form email',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false, 
+      error: 'Failed to process contact email request',
+      message: error.message
     });
   }
 });
 
 // Keep the old route for backward compatibility
-sendContactEmailApp.post('/send-contact-email', (req, res) => {
-  sendContactEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+app.post('/send-contact-email', (req, res) => {
+  app._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
 });
 
 // Helper function to calculate total
@@ -681,7 +411,7 @@ function generateButtonsEmailTemplate(order) {
 // Create the express app for image upload with CORS
 const uploadImageApp = express();
 uploadImageApp.use(cors({ 
-  origin: '*',
+  origin: ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   maxAge: 3600
@@ -692,10 +422,17 @@ uploadImageApp.get('/', (req, res) => {
   res.status(200).json({ success: true, message: 'Upload function is available' });
 });
 
-// Handle image uploads - for now, just return success to test CORS
-uploadImageApp.post('/', (req, res) => {
+// Handle image uploads - placeholder until we create a proper handler
+uploadImageApp.post('/uploadImage', (req, res) => {
   // Set CORS headers manually to ensure they're present
-  res.set('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+  
   res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
@@ -710,184 +447,31 @@ uploadImageApp.post('/', (req, res) => {
 
 // Handle OPTIONS preflight request
 uploadImageApp.options('*', (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  const allowedOrigins = ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
   res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.status(204).send('');
 });
 
-// Add all the function exports here
-// Update exports for firebase-functions v4
-exports.sendEmail = functions
-  .region('us-central1')
-  .https.onRequest(sendEmailApp);
+// Export the API
+exports.api = functions.region('us-central1').https.onRequest(app);
 
-exports.sendOrderEmail = functions
-  .region('us-central1')
-  .https.onRequest(sendOrderEmailApp);
+// Export the uploadImage function
+exports.uploadImage = functions.region('us-central1').https.onRequest(uploadImageApp);
 
-exports.sendContactEmail = functions
-  .region('us-central1')
-  .https.onRequest(sendContactEmailApp);
+// Export sendOrderEmail directly, letting it handle its own CORS
+exports.sendOrderEmail = sendOrderEmail;
 
-exports.uploadImage = functions
-  .region('us-central1')
-  .https.onRequest(uploadImageApp);
+// Export sendInvoiceEmail function
+exports.sendInvoiceEmail = invoiceEmailModule.sendInvoiceEmail;
 
+// Export other functions
 exports.simpleContactFunction = simpleContactFunction;
 exports.directContactEmail = directContactEmail;
-
-// Import sendOrderEmail function
-const sendOrderEmail = require('./sendOrderEmail');
-const sendInvoiceEmail = require('./sendInvoiceEmail');
-exports.sendOrderEmail = sendOrderEmail.sendOrderEmail;
-exports.sendInvoiceEmail = sendInvoiceEmail.sendInvoiceEmail;
-
-// Add a callable version of sendInvoiceEmail
-exports.sendInvoiceEmailCallable = functions
-  .region('us-central1')
-  .https.onCall(async (data, context) => {
-    try {
-      console.log('Processing callable invoice email request for order:', data?.orderId);
-      
-      // Validate data
-      if (!data || !data.orderId || !data.customerEmail) {
-        console.error('Missing required data for invoice email callable:', data);
-        throw new functions.https.HttpsError(
-          'invalid-argument',
-          'Missing required data for invoice email (orderId or customerEmail)'
-        );
-      }
-      
-      // Process the order data for sending invoice
-      const orderData = {
-        id: data.orderId,
-        customer: {
-          email: data.customerEmail
-        },
-        invoiceHtml: data.invoiceHtml || null,
-        items: data.items || [],
-        total: data.total || 0,
-        isStandalone: data.isStandalone === true // Pass the standalone flag
-      };
-      
-      console.log('Constructed orderData for invoice email:', JSON.stringify(orderData, null, 2));
-      
-      try {
-        // Send the invoice email using the existing implementation
-        const result = await sendInvoiceEmail.sendInvoiceEmailInternal(orderData);
-        
-        // Always return a properly structured response
-        return {
-          success: true,
-          message: 'Invoice email sent successfully',
-          details: result || {}
-        };
-      } catch (invoiceError) {
-        console.error('Error in sendInvoiceEmailInternal:', invoiceError);
-        
-        // Return error to client as a properly structured HttpsError
-        throw new functions.https.HttpsError(
-          'internal',
-          invoiceError.message || 'Failed to send invoice email',
-          { details: invoiceError }
-        );
-      }
-    } catch (error) {
-      console.error('Error in sendInvoiceEmailCallable:', error);
-      
-      // If it's already an HttpsError, just rethrow it
-      if (error.code && error.message) {
-        throw error;
-      }
-      
-      // Otherwise, convert to a proper HttpsError
-      throw new functions.https.HttpsError(
-        'internal',
-        error.message || 'Unknown error in invoice email processing',
-        { details: error }
-      );
-    }
-  });
-
-// Trigger to send emails when a new order is created
-// Commenting out this function to prevent duplicate emails
-// exports.sendOrderEmailOnCreate = functions.database.ref('/orders/{orderId}')
-//   .onCreate(async (snapshot, context) => {
-//     const order = snapshot.val();
-//     const orderId = context.params.orderId;
-    
-//     console.log(`New order created trigger fired for ${orderId} at ${new Date().toISOString()}`);
-    
-//     // Skip if emailSent is already true
-//     if (order.emailSent === true) {
-//       console.log(`Order ${orderId} already has emailSent=true, skipping email send`);
-//       return null;
-//     }
-    
-//     try {
-//       // Use the API key from the config which was already set up in the top of the file
-//       if (!apiKeyConfigured) {
-//         console.error('SendGrid API key is not configured');
-//         return { success: false, error: 'SendGrid API key not configured' };
-//       }
-      
-//       // Email configuration (already defined at the top of the file)
-//       // Using consistent capitalization with the rest of the file
-//       const BUTTONS_EMAIL = 'Buttonsflowerfarm@gmail.com';
-//       const ADMIN_EMAIL = 'sarah.halliday@gmail.com'; // Backup admin email
-      
-//       // Use the existing template functions
-//       const customerEmailContent = generateCustomerEmailTemplate(order);
-//       const buttonsEmailContent = generateButtonsEmailTemplate(order);
-      
-//       // Setup email messages
-//       const customerEmail = {
-//         to: order.customer.email,
-//         from: BUTTONS_EMAIL,
-//         subject: `Order Confirmation - ${orderId}`,
-//         html: customerEmailContent
-//       };
-      
-//       const buttonsEmail = {
-//         to: [BUTTONS_EMAIL, ADMIN_EMAIL],
-//         from: BUTTONS_EMAIL,
-//         subject: `New Order Received - ${orderId}`,
-//         html: buttonsEmailContent
-//       };
-      
-//       console.log(`Sending emails for order ${orderId} from database trigger`);
-//       const results = await Promise.all([
-//         sgMail.send(customerEmail),
-//         sgMail.send(buttonsEmail)
-//       ]);
-      
-//       console.log(`SendGrid response for ${orderId} (trigger - customer):`, 
-//         results[0]?.[0]?.statusCode, 
-//         results[0]?.[0]?.headers?.['x-message-id']
-//       );
-      
-//       console.log(`SendGrid response for ${orderId} (trigger - admin):`, 
-//         results[1]?.[0]?.statusCode, 
-//         results[1]?.[0]?.headers?.['x-message-id']
-//       );
-      
-//       // Mark the order as having sent email
-//       await snapshot.ref.update({
-//         emailSent: true,
-//         emailSentTimestamp: Date.now(),
-//         emailMessageIds: [
-//           results[0]?.[0]?.headers?.['x-message-id'],
-//           results[1]?.[0]?.headers?.['x-message-id']
-//         ]
-//       });
-      
-//       return { success: true };
-//     } catch (error) {
-//       console.error(`Error sending email in trigger for order ${orderId}:`, error);
-//       if (error.response) {
-//         console.error('SendGrid error details:', error.response.body);
-//       }
-//       return { success: false, error: error.message };
-//     }
-//   });
