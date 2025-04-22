@@ -199,10 +199,6 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         </div>
       </div>
 
-      <div className="thank-you-message">
-        Thanks for supporting our local farm! We appreciate your business and hope you enjoy your flowers.
-      </div>
-
       <div className="invoice-addresses">
         <div className="invoice-to">
           <h3>To</h3>
@@ -294,6 +290,10 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>
         )}
+      </div>
+
+      <div className="thank-you-message">
+        Thanks for supporting our local farm! We appreciate your business and hope you enjoy your flowers.
       </div>
 
       {type === 'print' && (
