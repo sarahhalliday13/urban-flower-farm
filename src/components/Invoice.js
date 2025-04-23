@@ -194,7 +194,7 @@ export const generateInvoiceHTML = (order) => {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</td>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</td>
                           </tr>
                         </table>
                         <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
@@ -434,7 +434,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</li>
+              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
             </ul>
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>

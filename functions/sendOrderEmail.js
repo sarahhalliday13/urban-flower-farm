@@ -12,7 +12,7 @@ if (!admin.apps.length) {
 }
 
 // Email configuration
-const BUTTONS_EMAIL = 'order@buttonsflowerfarm.ca';
+const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 // Initialize SendGrid with API key
 const apiKey = process.env.SENDGRID_API_KEY;
