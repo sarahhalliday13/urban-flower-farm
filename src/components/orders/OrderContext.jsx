@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory, updateOrder } from '../../services/firebase';
+import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory, updateOrder, getOrder } from '../../services/firebase';
 import { sendOrderConfirmationEmails } from '../../services/emailService';
 import { sendInvoiceEmail as invoiceEmailService } from '../../services/invoiceService';
 import { useToast } from '../../context/ToastContext';
@@ -243,12 +243,15 @@ export const OrderProvider = ({ children }) => {
     setEmailSending(prev => ({ ...prev, [order.id]: true }));
     
     try {
-      const result = await sendOrderConfirmationEmails(order);
+      // Explicitly set forceResend when order.emailSent is true
+      const result = await sendOrderConfirmationEmails({
+        ...order,
+        forceResend: order.emailSent === true
+      });
       
       if (result.success) {
-        addToast(result.alreadySent 
-          ? "Email was already sent for this order" 
-          : "Email sent successfully!", "success");
+        // Always show success toast for admin-triggered emails, even if previously sent
+        addToast("Email sent successfully!", "success");
         
         // Mark this order as having sent an email in localStorage
         const manualEmails = JSON.parse(localStorage.getItem('manualEmails') || '[]');
@@ -260,14 +263,58 @@ export const OrderProvider = ({ children }) => {
         });
         localStorage.setItem('manualEmails', JSON.stringify(updatedEmails));
         
-        // Update orders in state to reflect email was sent
-        const updatedOrders = orders.map(o => {
-          if (o.id === order.id) {
-            return { ...o, emailSent: true };
+        try {
+          // Fetch the updated order data from Firebase to get the correct timestamp
+          console.log(`Fetching fresh order data for ${order.id} after email sent`);
+          const updatedOrderData = await getOrder(order.id);
+          
+          if (updatedOrderData) {
+            // Update orders in state with the fresh data from Firebase
+            const updatedOrders = orders.map(o => {
+              if (o.id === order.id) {
+                return { 
+                  ...o, 
+                  ...updatedOrderData,
+                  emailSent: true,
+                  // Use the timestamp from Firebase if available, or fallback to current time
+                  emailSentTimestamp: updatedOrderData.emailSentTimestamp || Date.now()
+                };
+              }
+              return o;
+            });
+            setOrders(updatedOrders);
+            console.log(`Updated order data with fresh data from Firebase including timestamp: ${updatedOrderData.emailSentTimestamp}`);
+          } else {
+            // Fallback to local update if Firebase fetch fails
+            const updatedOrders = orders.map(o => {
+              if (o.id === order.id) {
+                return { 
+                  ...o, 
+                  emailSent: true,
+                  emailSentTimestamp: Date.now() // Fallback timestamp
+                };
+              }
+              return o;
+            });
+            setOrders(updatedOrders);
+            console.log(`Fallback: Updated order with local timestamp`);
           }
-          return o;
-        });
-        setOrders(updatedOrders);
+        } catch (fetchError) {
+          console.error(`Error fetching updated order data: ${fetchError}`);
+          // Still update local state as fallback
+          const updatedOrders = orders.map(o => {
+            if (o.id === order.id) {
+              return { 
+                ...o, 
+                emailSent: true,
+                emailSentTimestamp: Date.now() // Fallback timestamp
+              };
+            }
+            return o;
+          });
+          setOrders(updatedOrders);
+          console.log(`Error fallback: Updated order with local timestamp`);
+        }
         
         return { success: true };
       } else {
@@ -346,15 +393,59 @@ export const OrderProvider = ({ children }) => {
       if (result.success) {
         console.log('📧 ORDER CONTEXT SUCCESS - Invoice email sent via callable function');
         
-        // Update local state to reflect the email was sent
-        const updatedOrders = orders.map(o => {
-          if (o.id === order.id) {
-            return { ...o, invoiceEmailSent: true };
+        try {
+          // Fetch the updated order data from Firebase to get the correct timestamp
+          console.log(`📧 Fetching fresh order data for ${order.id} after invoice email sent`);
+          const updatedOrderData = await getOrder(order.id);
+          
+          if (updatedOrderData) {
+            // Update local state to reflect the email was sent with fresh data
+            const updatedOrders = orders.map(o => {
+              if (o.id === order.id) {
+                return { 
+                  ...o, 
+                  ...updatedOrderData,
+                  invoiceEmailSent: true,
+                  // Use the timestamp from Firebase if available, or fallback to current time
+                  invoiceEmailSentTimestamp: updatedOrderData.invoiceEmailSentTimestamp || Date.now()
+                };
+              }
+              return o;
+            });
+            setOrders(updatedOrders);
+            console.log(`📧 Updated order with fresh data including timestamp: ${updatedOrderData.invoiceEmailSentTimestamp}`);
+          } else {
+            // Fallback to local update if Firebase fetch fails
+            const updatedOrders = orders.map(o => {
+              if (o.id === order.id) {
+                return { 
+                  ...o, 
+                  invoiceEmailSent: true,
+                  invoiceEmailSentTimestamp: Date.now() // Fallback timestamp
+                };
+              }
+              return o;
+            });
+            setOrders(updatedOrders);
+            console.log(`📧 Fallback: Updated order with local timestamp for invoice`);
           }
-          return o;
-        });
+        } catch (fetchError) {
+          console.error(`📧 Error fetching updated order data after invoice: ${fetchError}`);
+          // Still update local state as fallback
+          const updatedOrders = orders.map(o => {
+            if (o.id === order.id) {
+              return { 
+                ...o, 
+                invoiceEmailSent: true,
+                invoiceEmailSentTimestamp: Date.now() // Fallback timestamp
+              };
+            }
+            return o;
+          });
+          setOrders(updatedOrders);
+          console.log(`📧 Error fallback: Updated order with local timestamp for invoice`);
+        }
         
-        setOrders(updatedOrders);
         setOrderEmailStatus({
           loading: false,
           success: true,

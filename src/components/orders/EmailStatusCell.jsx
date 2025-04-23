@@ -17,14 +17,28 @@ const EmailStatusCell = ({ order }) => {
   // Format the timestamp to show readable date and time
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return null;
-    const date = new Date(timestamp);
-    return date.toLocaleString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
+    
+    try {
+      // Handle timestamp as number (Date.now())
+      const date = new Date(parseInt(timestamp, 10) || timestamp);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.warn('Invalid timestamp format:', timestamp);
+        return 'Invalid date';
+      }
+      
+      return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Error formatting timestamp:', error);
+      return 'Date error';
+    }
   };
 
   return (

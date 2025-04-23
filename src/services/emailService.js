@@ -31,8 +31,11 @@ export const sendOrderConfirmationEmails = async (orderData) => {
     
     console.log(`Request to send ${isInvoiceEmail ? 'invoice' : 'order confirmation'} for order: ${orderData.id}`);
     
+    // Add forceResend flag if the email was already sent but admin is manually triggering a resend
+    const forceResend = orderData.emailSent === true;
+    
     // Only check emailSent flag for order confirmation emails, not for invoice emails
-    if (!isInvoiceEmail && orderData.emailSent === true) {
+    if (!isInvoiceEmail && orderData.emailSent === true && !forceResend) {
       console.log(`Email already sent for order ${orderData.id}, skipping frontend send`);
       return {
         success: true,
@@ -49,11 +52,13 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       // Ensure isInvoiceEmail flag is explicitly included at the top-level
       const dataToSend = {
         ...orderData,
-        isInvoiceEmail: isInvoiceEmail === true // Ensure boolean value
+        isInvoiceEmail: isInvoiceEmail === true, // Ensure boolean value
+        forceResend: forceResend === true // Add forceResend flag
       };
       
       // Log the actual payload being sent to check if isInvoiceEmail is included
       console.log('Sending payload with isInvoiceEmail flag:', JSON.stringify(dataToSend).includes('isInvoiceEmail'));
+      console.log('Sending payload with forceResend flag:', JSON.stringify(dataToSend).includes('forceResend'));
       
       const response = await fetch(`${apiUrl}/sendOrderEmail`, {
         method: 'POST',
@@ -72,7 +77,7 @@ export const sendOrderConfirmationEmails = async (orderData) => {
         console.log(`${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`);
         return {
           success: true,
-          message: data.alreadySent && !isInvoiceEmail 
+          message: data.alreadySent && !isInvoiceEmail && !forceResend
             ? 'Email was already sent for this order' 
             : `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`,
           data

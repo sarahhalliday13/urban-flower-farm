@@ -1,0 +1,67 @@
+.email-management {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.email-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.email-sent-indicator {
+  color: #27ae60;
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.email-sent-text {
+  font-weight: 500;
+}
+
+.email-timestamp {
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 4px;
+}
+
+.email-resend-btn {
+  margin-top: 8px;
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.email-resend-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.email-resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.email-send-btn {
+  padding: 6px 12px;
+  background-color: #2c5530;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.email-send-btn:hover {
+  background-color: #1e3d23;
+}
+
+.email-send-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+} 
