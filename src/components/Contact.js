@@ -218,7 +218,7 @@ function Contact() {
               <div className="info-text">
                 <h3>The Socials</h3>
                 <div className="social-icons">
-                  <a href="https://www.facebook.com/buttonsflowers" target="_blank" rel="noopener noreferrer">
+                  <a href="https://www.facebook.com/groups/buttonsflowerfarm" target="_blank" rel="noopener noreferrer">
                     Facebook
                   </a>
                 </div>

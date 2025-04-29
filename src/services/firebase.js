@@ -681,84 +681,11 @@ export const updateInventory = async (plantId, inventoryData) => {
     console.log(`[${process.env.NODE_ENV}] updateInventory - Data:`, inventoryData);
     
     const { featured, ...inventoryProps } = inventoryData;
-    
-    // First, update localStorage as a cache
-    try {
-      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating localStorage cache`);
-      const existingData = localStorage.getItem('plantInventory');
-      let storedInventory = {};
-      
-      if (existingData) {
-        storedInventory = JSON.parse(existingData);
-      }
-      
-      // Update the inventory for this plant
-      storedInventory[plantId] = {
-        ...inventoryProps,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      // Save back to localStorage
-      localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
-      console.log(`[${process.env.NODE_ENV}] updateInventory - Local storage updated successfully`);
-      
-      // Update cached plants data too, if it exists
-      try {
-        const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
-        if (cachedData) {
-          const parsedCache = JSON.parse(cachedData);
-          if (Array.isArray(parsedCache.data)) {
-            const updatedPlants = parsedCache.data.map(plant => {
-              if (plant.id === plantId) {
-                return {
-                  ...plant,
-                  inventory: {
-                    ...(plant.inventory || {}),
-                    ...inventoryProps,
-                    lastUpdated: new Date().toISOString()
-                  }
-                };
-              }
-              return plant;
-            });
-            
-            // Update the cache with the new data
-            localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
-              ...parsedCache,
-              data: updatedPlants,
-              lastInventoryUpdate: new Date().toISOString()
-            }));
-            console.log(`[${process.env.NODE_ENV}] updateInventory - Updated plants cache for ${plantId}`);
-          }
-        }
-      } catch (cacheError) {
-        console.error(`[${process.env.NODE_ENV}] updateInventory - Error updating plants cache:`, cacheError);
-        // Continue with Firebase update
-      }
-      
-      // If there's a featured flag, update the plant in localStorage
-      if (featured !== undefined) {
-        try {
-          const plantsData = JSON.parse(localStorage.getItem('plants') || '[]');
-          const updatedPlants = plantsData.map(plant => {
-            if (plant.id === plantId) {
-              return { ...plant, featured };
-            }
-            return plant;
-          });
-          localStorage.setItem('plants', JSON.stringify(updatedPlants));
-        } catch (e) {
-          console.error('Error updating plant featured status in localStorage:', e);
-        }
-      }
-    } catch (e) {
-      console.error('Error updating localStorage:', e);
-    }
-    
-    // Update Firebase inventory
+
+    // Update Firebase inventory first
     console.log(`[${process.env.NODE_ENV}] updateInventory - Sending update to Firebase for path: inventory/${plantId}`);
     const inventoryRef = ref(database, `inventory/${plantId}`);
-    await set(inventoryRef, {
+    await update(inventoryRef, {
       ...inventoryProps,
       lastUpdated: new Date().toISOString()
     });
@@ -771,10 +698,23 @@ export const updateInventory = async (plantId, inventoryData) => {
       await update(plantRef, { featured });
       console.log(`[${process.env.NODE_ENV}] updateInventory - Featured status update successful`);
     }
-    
-    // Clear the plants cache to force a refresh on next load
+
+    // Clear all caches to ensure fresh data
     localStorage.removeItem('cachedPlantsWithTimestamp');
-    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared plants cache to ensure fresh data on next load`);
+    localStorage.removeItem('plantInventory');
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared all caches to ensure fresh data on next load`);
+
+    // Fetch fresh data from Firebase to update local cache
+    const freshInventoryRef = ref(database, `inventory/${plantId}`);
+    const freshSnapshot = await get(freshInventoryRef);
+    if (freshSnapshot.exists()) {
+      // Update localStorage with fresh data
+      const existingData = localStorage.getItem('plantInventory');
+      let storedInventory = existingData ? JSON.parse(existingData) : {};
+      storedInventory[plantId] = freshSnapshot.val();
+      localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updated cache with fresh data from Firebase`);
+    }
     
     return {
       success: true,
@@ -881,7 +821,7 @@ export const processSyncQueue = async () => {
         
         // Update Firebase
         const inventoryRef = ref(database, `inventory/${item.plantId}`);
-        await set(inventoryRef, {
+        await update(inventoryRef, {
           ...item.inventoryData,
           lastUpdated: new Date().toISOString()
         });
