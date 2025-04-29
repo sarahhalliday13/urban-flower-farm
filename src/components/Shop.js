@@ -904,8 +904,14 @@ function Shop() {
   <MobilePagination
     currentIndex={currentPage - 1}
     totalItems={totalPages}
-    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-    onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+    onPrev={() => {
+      setCurrentPage((p) => Math.max(1, p - 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }}
+    onNext={() => {
+      setCurrentPage((p) => Math.min(totalPages, p + 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }}
   />
 
 </div>  {/* 👈 this is the closing tag for the wrapper div */}
