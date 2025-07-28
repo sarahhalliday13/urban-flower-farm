@@ -1,10 +1,14 @@
-const functions = require('firebase-functions');
-const sgMail = require('@sendgrid/mail');
-const cors = require('cors')({ 
-  origin: ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'], 
-  credentials: true 
+const functions = require("firebase-functions");
+const nodemailer = require("nodemailer");
+const cors = require("cors")({
+  origin: [
+    "https://buttonsflowerfarm-8a54d.web.app",
+    "https://urban-flower-farm-staging.web.app",
+    "http://localhost:3000",
+  ],
+  credentials: true,
 });
-const admin = require('firebase-admin');
+const admin = require("firebase-admin");
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -12,26 +16,39 @@ if (!admin.apps.length) {
 }
 
 // Email configuration
-const BUTTONS_EMAIL = 'order@buttonsflowerfarm.ca';
+const BUTTONS_EMAIL = "buttonsflowerfarm@telus.net";
 
-// Initialize SendGrid with API key
-const apiKey = process.env.SENDGRID_API_KEY;
-console.log('API Key status:', apiKey ? 'Found (length: ' + apiKey.length + ')' : 'Not found');
-sgMail.setApiKey(apiKey);
+// Create transporter for Nodemailer
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: BUTTONS_EMAIL,
+      pass: process.env.GMAIL_PASSWORD,
+    },
+    pool: true,
+    maxConnections: 1,
+    maxMessages: 10,
+    rateDelta: 1000,
+    rateLimit: 5,
+  });
+};
 
 // Export a handler function to be used with Express
 exports.handler = async (req, res) => {
   // Compatible with both direct function call and express router
   try {
     const incomingOrder = req.body || {};
-    console.log('🔥 Incoming order object:', JSON.stringify(incomingOrder, null, 2));
-    console.log('🔥 Received isInvoiceEmail flag:', incomingOrder?.isInvoiceEmail);
+    console.log("🔥 Incoming order object:", JSON.stringify(incomingOrder, null, 2));
+    console.log("🔥 Received isInvoiceEmail flag:", incomingOrder?.isInvoiceEmail);
 
     const isInvoiceEmail = incomingOrder.isInvoiceEmail === true;
     // Add support for forceResend flag
     const forceResend = incomingOrder.forceResend === true;
-    console.log('🔥 Final determined isInvoiceEmail:', isInvoiceEmail);
-    console.log('🔥 Force resend flag:', forceResend);
+    console.log("🔥 Final determined isInvoiceEmail:", isInvoiceEmail);
+    console.log("🔥 Force resend flag:", forceResend);
 
     const order = incomingOrder;
 
@@ -45,47 +62,58 @@ exports.handler = async (req, res) => {
         console.error(`Error saving order ${order.id}:`, saveError);
       }
     } else {
-      console.log(`Skipping database save for invoice email or test order: ${order.id}`);
-    }      
+      console.log(
+        `Skipping database save for invoice email or test order: ${order.id}`
+      );
+    }
 
-    // Only check emailSent flag for order confirmation emails, not for invoice emails or when forceResend is true
+    // Only check emailSent flag for order confirmation emails
     if (!isInvoiceEmail && !forceResend) {
       try {
         const orderRef = admin.database().ref(`orders/${order.id}`);
-        const orderSnapshot = await orderRef.once('value');
+        const orderSnapshot = await orderRef.once("value");
         const orderData = orderSnapshot.val();
         
         if (orderData && orderData.emailSent === true) {
-          console.log(`⛔️ Order email already sent, skipping`);
+          console.log("⛔️ Order email already sent, skipping");
           return res.status(200).send({
             success: true,
-            message: 'Order confirmation email already sent for this order',
-            alreadySent: true
+            message: "Order confirmation email already sent for this order",
+            alreadySent: true,
           });
         }
       } catch (dbError) {
         console.error(`Error checking email status for order ${order.id}:`, dbError);
-        // Continue with sending if we can't check - better to potentially send twice than not at all
       }
     }
+
+    // Create transporter
+    const transporter = createTransporter();
+
+    // Verify connection
+    await transporter.verify();
+    console.log("✅ SMTP connection verified");
 
     // Determine subject based on invoice flag
     const subject = isInvoiceEmail
       ? `Invoice for Order - ${order.id}`
       : `Order Confirmation - ${order.id}`;
       
-    console.log('⚠️ SUBJECT CHOSEN:', subject);
-    console.log('⚠️ TEMPLATE TYPE:', isInvoiceEmail ? 'INVOICE TEMPLATE' : 'ORDER CONFIRMATION TEMPLATE');
+    console.log("⚠️ SUBJECT CHOSEN:", subject);
+    console.log(
+      "⚠️ TEMPLATE TYPE:",
+      isInvoiceEmail ? "INVOICE TEMPLATE" : "ORDER CONFIRMATION TEMPLATE"
+    );
 
     // Build customer email
     const customerEmail = {
-      to: [order.customer.email, 'buttonsflowerfarm@gmail.com'],
+      to: [order.customer.email, BUTTONS_EMAIL],
       from: BUTTONS_EMAIL,
       replyTo: BUTTONS_EMAIL,
       subject: subject,
       html: isInvoiceEmail
         ? generateInvoiceEmailTemplate(order)
-        : generateCustomerEmailTemplate(order)
+        : generateCustomerEmailTemplate(order),
     };
 
     // Build admin email ONLY for non-invoice
@@ -96,7 +124,7 @@ exports.handler = async (req, res) => {
         from: BUTTONS_EMAIL,
         replyTo: BUTTONS_EMAIL,
         subject: `New Order Received - ${order.id}`,
-        html: generateButtonsEmailTemplate(order)
+        html: generateButtonsEmailTemplate(order),
       };
     }
 
@@ -105,7 +133,7 @@ exports.handler = async (req, res) => {
       to: customerEmail.to,
       from: customerEmail.from,
       subject: customerEmail.subject,
-      htmlLength: customerEmail.html?.length || 0
+      htmlLength: customerEmail.html?.length || 0,
     });
     
     if (adminEmail) {
@@ -113,34 +141,30 @@ exports.handler = async (req, res) => {
         to: adminEmail.to,
         from: adminEmail.from,
         subject: adminEmail.subject,
-        htmlLength: adminEmail.html?.length || 0
+        htmlLength: adminEmail.html?.length || 0,
       });
     }
     
     // Now send emails
-    console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order confirmation'} emails for ${order.id}...`);
+    console.log(
+      `Sending ${isInvoiceEmail ? "invoice" : "order confirmation"} emails for ${order.id}...`
+    );
     
     const sendEmailPromises = [];
-    sendEmailPromises.push(sgMail.send(customerEmail));
+    sendEmailPromises.push(transporter.sendMail(customerEmail));
     
     if (adminEmail) {
-      sendEmailPromises.push(sgMail.send(adminEmail));
+      sendEmailPromises.push(transporter.sendMail(adminEmail));
     }
     
     // Await all sends
     const results = await Promise.all(sendEmailPromises);
     
-    // Log the SendGrid responses with message IDs
-    console.log(`SendGrid response for ${order.id} (customer):`, 
-      results[0]?.[0]?.statusCode, 
-      results[0]?.[0]?.headers?.['x-message-id']
-    );
+    // Log the message IDs
+    console.log(`Email sent for ${order.id} (customer):`, results[0]?.messageId);
     
     if (!isInvoiceEmail) {
-      console.log(`SendGrid response for ${order.id} (admin):`, 
-        results[1]?.[0]?.statusCode, 
-        results[1]?.[0]?.headers?.['x-message-id']
-      );
+      console.log(`Email sent for ${order.id} (admin):`, results[1]?.messageId);
     }
     
     // For regular order confirmation emails, update the emailSent flag in the database
@@ -151,9 +175,9 @@ exports.handler = async (req, res) => {
           emailSent: true,
           emailSentTimestamp: Date.now(),
           emailMessageIds: [
-            results[0]?.[0]?.headers?.['x-message-id'],
-            results[1]?.[0]?.headers?.['x-message-id']
-          ]
+            results[0]?.messageId,
+            results[1]?.messageId,
+          ],
         });
         console.log(`✅ Email status and timestamp saved for order ${order.id}`);
       } catch (updateError) {
@@ -167,29 +191,32 @@ exports.handler = async (req, res) => {
           invoiceEmailSent: true,
           invoiceEmailSentTimestamp: Date.now(),
           invoiceEmailMessageIds: [
-            results[0]?.[0]?.headers?.['x-message-id']
-          ]
+            results[0]?.messageId,
+          ],
         });
         console.log(`✅ Invoice email status and timestamp saved for order ${order.id}`);
       } catch (updateError) {
-        console.error(`❌ Failed to save invoice email status for order ${order.id}`, updateError);
+        console.error(
+          `❌ Failed to save invoice email status for order ${order.id}`,
+          updateError
+        );
       }
     }
 
+    // Close the transporter
+    transporter.close();
+
     return res.status(200).send({ 
       success: true,
-      message: `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} emails sent successfully`
+      message: `${isInvoiceEmail ? "Invoice" : "Order confirmation"} emails sent successfully`,
     });
 
   } catch (error) {
-    console.error('❌ Error sending emails:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
+    console.error("❌ Error sending emails:", error);
     return res.status(500).send({ 
       success: false,
-      error: 'Failed to send emails',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: "Failed to send emails",
+      details: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
@@ -199,12 +226,15 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
   // Apply CORS middleware with our settings explicitly
   cors(req, res, async () => {
     // Handle preflight OPTIONS requests explicitly
-    if (req.method === 'OPTIONS') {
-      res.set('Access-Control-Allow-Origin', req.headers.origin || '*');
-      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-      res.set('Access-Control-Max-Age', '3600');
-      res.status(204).send('');
+    if (req.method === "OPTIONS") {
+      res.set("Access-Control-Allow-Origin", req.headers.origin || "*");
+      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, Accept, X-Requested-With"
+      );
+      res.set("Access-Control-Max-Age", "3600");
+      res.status(204).send("");
       return;
     }
     
@@ -214,7 +244,7 @@ exports.sendOrderEmail = functions.https.onRequest((req, res) => {
 });
 
 // Email template functions - now with isInvoice parameter
-function generateCustomerEmailTemplate(order, isInvoice = false) {
+function generateCustomerEmailTemplate(order) {
   const formatCurrency = (amount) => {
     return parseFloat(amount || 0).toFixed(2);
   };
@@ -325,7 +355,7 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: order@buttonsflowerfarm.ca</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                       </td>
                     </tr>
                   </table>
@@ -357,6 +387,26 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
                 </td>
               </tr>
 
+              <!-- Pickup Instructions - Moved to top priority position -->
+              <tr>
+                <td style="padding: 0 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f8f8f8; border-radius: 4px; border-left: 5px solid #2c5530;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">📍 Pickup Location & Instructions</h3>
+                        <p style="margin: 5px 0; font-size: 14px;"><strong>Farm Address:</strong> 349 9th Street East, North Vancouver</p>
+                        <p style="margin: 5px 0; font-size: 14px;"><strong>Requested Pickup:</strong> ${order.customer.pickupRequest || order.customer.notes}</p>
+                        <p style="margin: 10px 0 5px 0; font-size: 14px;">Important Notes:</p>
+                        <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
+                          <li style="margin: 5px 0;">We will text you at <strong>${order.customer.phone}</strong> to confirm your pickup date and time.</li>
+                          <li style="margin: 5px 0;">If you need to make changes to your pickup time after confirmation, please text us.</li>
+                        </ul>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
               ${order.customer.notes ? `
               <!-- Customer Notes Section -->
               <tr>
@@ -366,7 +416,6 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
                       <td style="padding: 15px;">
                         <h3 style="color: #27ae60; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Your Pickup Request</h3>
                         <p style="margin: 0; font-size: 14px; font-style: italic;">${order.customer.notes}</p>
-                        <p style="margin-top: 15px; font-size: 14px;">We will confirm your pickup date and time by text message to <strong>${order.customer.phone}</strong>.</p>
                       </td>
                     </tr>
                   </table>
@@ -387,10 +436,10 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to ${BUTTONS_EMAIL}</td>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
                           </tr>
                         </table>
-                        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id} <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.appspot.com/o/assets%2Fcopy-icon.png?alt=media" width="16" height="16" alt="Copy" style="vertical-align: middle; cursor: pointer;" />) in the payment notes.</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
                       </td>
                     </tr>
                   </table>
@@ -432,7 +481,7 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
   `;
 }
 
-function generateButtonsEmailTemplate(order, isInvoice = false) {
+function generateButtonsEmailTemplate(order) {
   const itemsList = order.items.map(item => `
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
@@ -486,6 +535,14 @@ function generateButtonsEmailTemplate(order, isInvoice = false) {
           <p style="margin-bottom: 0;">${order.customer.notes}</p>
         </div>
       ` : ''}
+
+      <!-- Pickup Details - Moved to top -->
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 5px solid #2c5530;">
+        <h3 style="color: #2c5530; margin-top: 0;">📍 Pickup Details</h3>
+        <p style="margin: 5px 0;"><strong>Customer Phone:</strong> ${order.customer.phone}</p>
+        <p style="margin: 5px 0;"><strong>Requested Pickup:</strong> ${order.customer.pickupRequest || order.customer.notes}</p>
+        <p style="margin: 5px 0;"><strong>Location:</strong> 349 9th Street East, North Vancouver</p>
+      </div>
     </div>
   `;
 }
