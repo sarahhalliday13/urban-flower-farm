@@ -387,7 +387,7 @@ function generateCustomerEmailTemplate(order, isInvoice = false) {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</td>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to ${BUTTONS_EMAIL}</td>
                           </tr>
                         </table>
                         <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id} <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.appspot.com/o/assets%2Fcopy-icon.png?alt=media" width="16" height="16" alt="Copy" style="vertical-align: middle; cursor: pointer;" />) in the payment notes.</p>
@@ -594,7 +594,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
         <div class="footer">
           <p>Thank you for your business!</p>
           <p>Buttons Urban Flower Farm</p>
-          <p>Email: invoice@buttonsflowerfarm.ca</p>
+          <p>Email: buttonsflowerfarm@gmail.com</p>
         </div>
       </div>
     </body>
