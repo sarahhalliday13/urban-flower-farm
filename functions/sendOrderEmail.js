@@ -1,249 +1,67 @@
-const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
-const cors = require("cors")({
-  origin: [
-    "https://buttonsflowerfarm-8a54d.web.app",
-    "https://urban-flower-farm-staging.web.app",
-    "http://localhost:3000",
+require("dotenv").config();
+
+const testOrder = {
+  id: "ORD-2025-1021-7995",
+  date: "2025-04-22",
+  customer: {
+    firstName: "Sarah",
+    lastName: "Halliday",
+    email: "buttonsflowerfarm@telus.net",
+    phone: "6043516605",
+    pickupRequest: "Friday afternoon between 2-4pm"
+  },
+  items: [
+    {
+      name: "Sarah's Basic",
+      quantity: 1,
+      price: 5.00
+    }
   ],
-  credentials: true,
-});
-const admin = require("firebase-admin");
+  total: 5.00
+};
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-// Email configuration
-const BUTTONS_EMAIL = "buttonsflowerfarm@telus.net";
-
-// Create transporter for Nodemailer
-const createTransporter = () => {
-  return nodemailer.createTransport({
+async function testOrderEmail() {
+  const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
     secure: false,
     auth: {
-      user: BUTTONS_EMAIL,
-      pass: process.env.GMAIL_PASSWORD,
-    },
-    pool: true,
-    maxConnections: 1,
-    maxMessages: 10,
-    rateDelta: 1000,
-    rateLimit: 5,
+      user: "buttonsflowerfarm@telus.net",
+      pass: process.env.GMAIL_PASSWORD
+    }
   });
-};
 
-// Export a handler function to be used with Express
-exports.handler = async (req, res) => {
-  // Compatible with both direct function call and express router
   try {
-    const incomingOrder = req.body || {};
-    console.log("🔥 Incoming order object:", JSON.stringify(incomingOrder, null, 2));
-    console.log("🔥 Received isInvoiceEmail flag:", incomingOrder?.isInvoiceEmail);
-
-    const isInvoiceEmail = incomingOrder.isInvoiceEmail === true;
-    // Add support for forceResend flag
-    const forceResend = incomingOrder.forceResend === true;
-    console.log("🔥 Final determined isInvoiceEmail:", isInvoiceEmail);
-    console.log("🔥 Force resend flag:", forceResend);
-
-    const order = incomingOrder;
-
-    // Save to database ONLY if not an invoice
-    if (!isInvoiceEmail && !order.isTestInvoice) {
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        await orderRef.set(order);
-        console.log(`Order ${order.id} saved to database`);
-      } catch (saveError) {
-        console.error(`Error saving order ${order.id}:`, saveError);
-      }
-    } else {
-      console.log(
-        `Skipping database save for invoice email or test order: ${order.id}`
-      );
-    }
-
-    // Only check emailSent flag for order confirmation emails
-    if (!isInvoiceEmail && !forceResend) {
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        const orderSnapshot = await orderRef.once("value");
-        const orderData = orderSnapshot.val();
-        
-        if (orderData && orderData.emailSent === true) {
-          console.log("⛔️ Order email already sent, skipping");
-          return res.status(200).send({
-            success: true,
-            message: "Order confirmation email already sent for this order",
-            alreadySent: true,
-          });
-        }
-      } catch (dbError) {
-        console.error(`Error checking email status for order ${order.id}:`, dbError);
-      }
-    }
-
-    // Create transporter
-    const transporter = createTransporter();
-
-    // Verify connection
     await transporter.verify();
-    console.log("✅ SMTP connection verified");
+    console.log("✅ SMTP connection successful");
 
-    // Determine subject based on invoice flag
-    const subject = isInvoiceEmail
-      ? `Invoice for Order - ${order.id}`
-      : `Order Confirmation - ${order.id}`;
-      
-    console.log("⚠️ SUBJECT CHOSEN:", subject);
-    console.log(
-      "⚠️ TEMPLATE TYPE:",
-      isInvoiceEmail ? "INVOICE TEMPLATE" : "ORDER CONFIRMATION TEMPLATE"
-    );
+    const customerEmailHtml = generateCustomerEmailTemplate(testOrder);
+    const buttonsEmailHtml = generateButtonsEmailTemplate(testOrder);
 
-    // Build customer email
-    const customerEmail = {
-      to: [order.customer.email, BUTTONS_EMAIL],
-      from: BUTTONS_EMAIL,
-      replyTo: BUTTONS_EMAIL,
-      subject: subject,
-      html: isInvoiceEmail
-        ? generateInvoiceEmailTemplate(order)
-        : generateCustomerEmailTemplate(order),
-    };
-
-    // Build admin email ONLY for non-invoice
-    let adminEmail;
-    if (!isInvoiceEmail) {
-      adminEmail = {
-        to: BUTTONS_EMAIL,
-        from: BUTTONS_EMAIL,
-        replyTo: BUTTONS_EMAIL,
-        subject: `New Order Received - ${order.id}`,
-        html: generateButtonsEmailTemplate(order),
-      };
-    }
-
-    // Log the exact email payloads before sending
-    console.log("📧 Customer Email Payload:", {
-      to: customerEmail.to,
-      from: customerEmail.from,
-      subject: customerEmail.subject,
-      htmlLength: customerEmail.html?.length || 0,
+    const customerInfo = await transporter.sendMail({
+      from: "buttonsflowerfarm@telus.net",
+      to: testOrder.customer.email,
+      subject: `Order Confirmation - ${testOrder.id}`,
+      html: customerEmailHtml
     });
-    
-    if (adminEmail) {
-      console.log("📧 Admin Email Payload:", {
-        to: adminEmail.to,
-        from: adminEmail.from,
-        subject: adminEmail.subject,
-        htmlLength: adminEmail.html?.length || 0,
-      });
-    }
-    
-    // Now send emails
-    console.log(
-      `Sending ${isInvoiceEmail ? "invoice" : "order confirmation"} emails for ${order.id}...`
-    );
-    
-    const sendEmailPromises = [];
-    sendEmailPromises.push(transporter.sendMail(customerEmail));
-    
-    if (adminEmail) {
-      sendEmailPromises.push(transporter.sendMail(adminEmail));
-    }
-    
-    // Await all sends
-    const results = await Promise.all(sendEmailPromises);
-    
-    // Log the message IDs
-    console.log(`Email sent for ${order.id} (customer):`, results[0]?.messageId);
-    
-    if (!isInvoiceEmail) {
-      console.log(`Email sent for ${order.id} (admin):`, results[1]?.messageId);
-    }
-    
-    // For regular order confirmation emails, update the emailSent flag in the database
-    if (!isInvoiceEmail) {
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        await orderRef.update({
-          emailSent: true,
-          emailSentTimestamp: Date.now(),
-          emailMessageIds: [
-            results[0]?.messageId,
-            results[1]?.messageId,
-          ],
-        });
-        console.log(`✅ Email status and timestamp saved for order ${order.id}`);
-      } catch (updateError) {
-        console.error(`❌ Failed to save email status for order ${order.id}`, updateError);
-      }
-    } else {
-      // For invoice emails, update a separate invoiceEmailSent property
-      try {
-        const orderRef = admin.database().ref(`orders/${order.id}`);
-        await orderRef.update({
-          invoiceEmailSent: true,
-          invoiceEmailSentTimestamp: Date.now(),
-          invoiceEmailMessageIds: [
-            results[0]?.messageId,
-          ],
-        });
-        console.log(`✅ Invoice email status and timestamp saved for order ${order.id}`);
-      } catch (updateError) {
-        console.error(
-          `❌ Failed to save invoice email status for order ${order.id}`,
-          updateError
-        );
-      }
-    }
 
-    // Close the transporter
-    transporter.close();
+    console.log("✅ Customer confirmation email sent:", customerInfo.messageId);
 
-    return res.status(200).send({ 
-      success: true,
-      message: `${isInvoiceEmail ? "Invoice" : "Order confirmation"} emails sent successfully`,
+    const buttonsInfo = await transporter.sendMail({
+      from: "buttonsflowerfarm@telus.net",
+      to: "buttonsflowerfarm@telus.net",
+      subject: `New Order Received - ${testOrder.id}`,
+      html: buttonsEmailHtml
     });
+
+    console.log("✅ Buttons notification email sent:", buttonsInfo.messageId);
 
   } catch (error) {
-    console.error("❌ Error sending emails:", error);
-    return res.status(500).send({ 
-      success: false,
-      error: "Failed to send emails",
-      details: process.env.NODE_ENV === "development" ? error.message : undefined,
-    });
+    console.error("❌ Error:", error.message);
   }
-};
+}
 
-// Export for direct function use
-exports.sendOrderEmail = functions.https.onRequest((req, res) => {
-  // Apply CORS middleware with our settings explicitly
-  cors(req, res, async () => {
-    // Handle preflight OPTIONS requests explicitly
-    if (req.method === "OPTIONS") {
-      res.set("Access-Control-Allow-Origin", req.headers.origin || "*");
-      res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      res.set(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, Accept, X-Requested-With"
-      );
-      res.set("Access-Control-Max-Age", "3600");
-      res.status(204).send("");
-      return;
-    }
-    
-    // For actual requests, forward to the handler
-    return exports.handler(req, res);
-  });
-});
-
-// Email template functions - now with isInvoice parameter
 function generateCustomerEmailTemplate(order) {
   const formatCurrency = (amount) => {
     return parseFloat(amount || 0).toFixed(2);
@@ -446,7 +264,7 @@ function generateCustomerEmailTemplate(order) {
                 </td>
               </tr>
 
-              <!-- Pickup Confirmation Message - Removed from here and moved to the notes box -->
+              <!-- Contact Info -->
               <tr>
                 <td style="padding: 0 30px 30px 30px;">
                   <table border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -495,6 +313,14 @@ function generateButtonsEmailTemplate(order) {
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 5px;">
       <h2 style="color: #4a7c59;">New Order Received!</h2>
       
+      <!-- Pickup Details - Moved to top -->
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 5px solid #2c5530;">
+        <h3 style="color: #2c5530; margin-top: 0;">📍 Pickup Details</h3>
+        <p style="margin: 5px 0;"><strong>Customer Phone:</strong> ${order.customer.phone}</p>
+        <p style="margin: 5px 0;"><strong>Requested Pickup:</strong> ${order.customer.pickupRequest || order.customer.notes}</p>
+        <p style="margin: 5px 0;"><strong>Location:</strong> 349 9th Street East, North Vancouver</p>
+      </div>
+      
       <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3 style="color: #4a7c59; margin-top: 0;">Order Information</h3>
         <p><strong>Order ID:</strong> ${order.id}</p>
@@ -531,133 +357,12 @@ function generateButtonsEmailTemplate(order) {
 
       ${order.customer.notes ? `
         <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px;">
-          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Your Pickup Request</h3>
+          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Customer Pickup Request</h3>
           <p style="margin-bottom: 0;">${order.customer.notes}</p>
         </div>
       ` : ''}
-
-      <!-- Pickup Details - Moved to top -->
-      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 5px solid #2c5530;">
-        <h3 style="color: #2c5530; margin-top: 0;">📍 Pickup Details</h3>
-        <p style="margin: 5px 0;"><strong>Customer Phone:</strong> ${order.customer.phone}</p>
-        <p style="margin: 5px 0;"><strong>Requested Pickup:</strong> ${order.customer.pickupRequest || order.customer.notes}</p>
-        <p style="margin: 5px 0;"><strong>Location:</strong> 349 9th Street East, North Vancouver</p>
-      </div>
     </div>
   `;
 }
 
-// Add new function for invoice email template
-function generateInvoiceEmailTemplate(order, isAdmin = false) {
-  // Extract needed data from order
-  const { id, items = [], total, customer = {}, date } = order;
-  const formattedDate = new Date(date).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  
-  // Format items for display in the email
-  const itemsList = items.map(item => {
-    return `
-      <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${parseFloat(item.price).toFixed(2)}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(parseFloat(item.price) * parseInt(item.quantity, 10)).toFixed(2)}</td>
-      </tr>
-    `;
-  }).join('');
-  
-  // Customize greeting based on whether this is for admin or customer
-  const greeting = isAdmin 
-    ? `<p>An invoice has been sent to ${customer.email} for order #${id}.</p>` 
-    : `<p>Dear ${customer.name || customer.firstName || 'Customer'},</p>
-       <p>Please find your invoice for order #${id} below.</p>`;
-  
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>Invoice for Order - ${id}</title>
-      <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { width: 100%; max-width: 600px; margin: 0 auto; }
-        .header { text-align: center; padding: 20px; background-color: #f5f5f5; }
-        .header img { max-width: 200px; }
-        .content { padding: 20px; }
-        .footer { text-align: center; font-size: 12px; color: #777; padding: 20px; background-color: #f5f5f5; }
-        .invoice-details { margin-bottom: 20px; }
-        .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .invoice-table th { background-color: #f5f5f5; text-align: left; padding: 10px; }
-        .invoice-total { font-weight: bold; text-align: right; }
-        .button { display: inline-block; padding: 10px 20px; background-color: #2c5530; color: white; text-decoration: none; border-radius: 4px; }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" alt="Buttons Urban Flower Farm">
-          <h1>Invoice</h1>
-        </div>
-        
-        <div class="content">
-          ${greeting}
-          
-          <div class="invoice-details">
-            <p><strong>Order #:</strong> ${id}</p>
-            <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Customer:</strong> ${customer.name || `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Not provided'}</p>
-            <p><strong>Email:</strong> ${customer.email || 'Not provided'}</p>
-          </div>
-          
-          <h2>Order Summary</h2>
-          <table class="invoice-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th style="text-align: center;">Quantity</th>
-                <th style="text-align: right;">Price</th>
-                <th style="text-align: right;">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsList}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td colspan="3" class="invoice-total">Total</td>
-                <td style="text-align: right; font-weight: bold;">$${parseFloat(total).toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          </table>
-          
-          <h2>Payment Information</h2>
-          <p>Please complete your payment using one of the following methods:</p>
-          <ul>
-            <li><strong>Cash:</strong> Available for in-person pickup</li>
-            <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
-          </ul>
-          <p>Please include your order number (${id}) in the payment notes.</p>
-          
-          ${isAdmin ? '' : `
-            <p style="text-align: center; margin-top: 30px;">
-              <a href="https://urban-flower-farm-staging.web.app/orders/${id}" class="button">View Order Online</a>
-            </p>
-          `}
-        </div>
-        
-        <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Buttons Urban Flower Farm</p>
-          <p>Email: buttonsflowerfarm@gmail.com</p>
-        </div>
-      </div>
-    </body>
-    </html>
-  `;
-}
-
-// Export the function for testing
-exports.generateInvoiceEmailTemplate = generateInvoiceEmailTemplate; 
+testOrderEmail(); 
