@@ -23,6 +23,7 @@ export const OrderProvider = ({ children }) => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState({ start: null, end: null });
   const [showInvoice, setShowInvoice] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(null);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
@@ -36,7 +37,25 @@ export const OrderProvider = ({ children }) => {
 
   // Helper to safely convert status to lowercase
   const statusToLowerCase = useCallback((status) => {
-    return status && typeof status === 'string' ? status.toLowerCase() : '';
+    if (!status) return 'pending';
+    if (typeof status === 'object' && status.label) {
+      return status.label.toLowerCase();
+    }
+    if (typeof status === 'string') {
+      // Normalize common status variations
+      const normalized = status.toLowerCase().trim();
+      switch (normalized) {
+        case 'pending':
+        case 'processing':
+        case 'shipped':
+        case 'completed':
+        case 'cancelled':
+          return normalized;
+        default:
+          return 'pending';
+      }
+    }
+    return 'pending';
   }, []);
   
   // Helper to safely check if status is cancelled
@@ -836,14 +855,22 @@ export const OrderProvider = ({ children }) => {
 
   // Get filtered orders based on search term and status filter
   const getFilteredOrders = useCallback(() => {
-    return orders.filter(order => {
+    // Calculate status counts first
+    const statusCounts = orders.reduce((acc, order) => {
+      const status = statusToLowerCase(order?.status || 'pending');
+      acc[status] = (acc[status] || 0) + 1;
+      acc.all = (acc.all || 0) + 1;
+      return acc;
+    }, {});
+
+    const filteredOrders = orders.filter(order => {
       // Ensure the order has required fields to prevent errors
       if (!order || !order.customer) return false;
       
       // Add defaults for missing fields to prevent errors
       const safeOrder = {
         ...order,
-        status: order.status || 'Pending',
+        status: order.status || 'pending', // Ensure new orders default to pending
         customer: {
           ...order.customer,
           name: order.customer.name || `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || 'No name provided',
@@ -852,26 +879,43 @@ export const OrderProvider = ({ children }) => {
         id: order.id || 'Unknown'
       };
       
-      // Filter by status
+      // Filter by status (case insensitive)
       if (filter !== 'all' && statusToLowerCase(safeOrder.status) !== statusToLowerCase(filter)) {
         return false;
       }
       
-      // Filter by search term (customer name, email, or order ID)
+      // Filter by date range if set
+      if (dateRange.start || dateRange.end) {
+        const orderDate = new Date(safeOrder.date);
+        if (dateRange.start && new Date(dateRange.start) > orderDate) return false;
+        if (dateRange.end && new Date(dateRange.end) < orderDate) return false;
+      }
+      
+      // Enhanced search matching (case insensitive, partial matches)
       if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        const customerName = safeOrder.customer.name.toLowerCase();
-        const email = safeOrder.customer.email.toLowerCase();
-        const orderId = safeOrder.id.toLowerCase();
+        const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+        const searchableFields = [
+          safeOrder.customer.name.toLowerCase(),
+          safeOrder.customer.email.toLowerCase(),
+          safeOrder.id.toLowerCase(),
+          (safeOrder.notes || '').toLowerCase(),
+          (safeOrder.customer.phone || '').toLowerCase()
+        ];
         
-        return customerName.includes(searchLower) || 
-               email.includes(searchLower) || 
-               orderId.includes(searchLower);
+        // All search terms must match at least one field
+        return searchTerms.every(term => 
+          searchableFields.some(field => field.includes(term))
+        );
       }
       
       return true;
     });
-  }, [orders, filter, searchTerm, statusToLowerCase]);
+
+    return {
+      orders: filteredOrders,
+      statusCounts
+    };
+  }, [orders, filter, searchTerm, dateRange, statusToLowerCase]);
 
   // Format date for display
   const formatDate = useCallback((dateString) => {
@@ -928,10 +972,13 @@ export const OrderProvider = ({ children }) => {
     setActiveOrder,
     filter,
     setFilter,
-    filteredOrders: getFilteredOrders(),
+    filteredOrders: getFilteredOrders().orders,
+    statusCounts: getFilteredOrders().statusCounts,
     refreshOrders,
     searchTerm,
     setSearchTerm,
+    dateRange,
+    setDateRange,
     handleStatusUpdate,
     confirmCancelOrder,
     showInvoice,
