@@ -105,7 +105,7 @@ export const generateInvoiceHTML = (order) => {
                       <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
                         <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
                         ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
                       </td>
                       <!-- From Info Right -->
