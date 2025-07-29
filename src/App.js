@@ -39,6 +39,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
+import { OrderProvider } from './components/orders/OrderContext';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -360,7 +361,11 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/invoice/:orderId" element={<InvoicePage />} />
+        <Route path="/invoice/:orderId" element={
+          <OrderProvider>
+            <InvoicePage />
+          </OrderProvider>
+        } />
         <Route 
           path="/admin" 
           element={
