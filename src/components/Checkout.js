@@ -319,7 +319,7 @@ const Checkout = () => {
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
               <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
-                buttonsflowerfarm@gmail.com
+                buttonsflowerfarm@telus.net
                 <button 
                   className="copy-email-btn" 
                   onClick={(e) => {
@@ -332,7 +332,7 @@ const Checkout = () => {
                     if (svgElement) svgElement.style.display = 'none';
                     if (textElement) textElement.style.display = 'inline';
                     
-                    navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                    navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                       .then(() => {
                         // Show tooltip
                         btn.classList.add('copied');
@@ -499,7 +499,7 @@ const Checkout = () => {
           <div className="order-note">
             <p>We accept cash at pick-up,</p>
             <p>or etransfer to&nbsp;<span className="email-with-copy">
-              buttonsflowerfarm@gmail.com
+              buttonsflowerfarm@telus.net
               <button 
                 className="copy-email-btn" 
                 onClick={(e) => {
@@ -512,7 +512,7 @@ const Checkout = () => {
                   if (svgElement) svgElement.style.display = 'none';
                   if (textElement) textElement.style.display = 'inline';
                   
-                  navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                  navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                     .then(() => {
                       // Show tooltip
                       btn.classList.add('copied');
