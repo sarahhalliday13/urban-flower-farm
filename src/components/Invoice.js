@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import '../styles/Invoice.css';
-import { useOrders } from './orders/OrderContext';
 import { toast } from 'react-hot-toast';
+import { sendInvoiceEmail } from '../services/invoiceService';
 
 // Add a function to generate invoice HTML that can be exported
 export const generateInvoiceHTML = (order) => {
@@ -235,12 +235,6 @@ export const generateInvoiceHTML = (order) => {
  * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
-  // Get order context functions with fallbacks for when the provider might not be fully available
-  const orderContext = useOrders();
-  const { sendInvoiceEmail = () => {}, 
-          emailSending = {}, 
-          orderEmailStatus = {} } = orderContext || {};
-          
   const invoiceContainerRef = useRef(null);
   
   // Guard against missing order data
@@ -294,36 +288,27 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
       return;
     }
     
-    // Use the callable function with standalone flag
-    if (typeof sendInvoiceEmail === 'function') {
-      await sendInvoiceEmail(order, standalone);
+    try {
+      const result = await sendInvoiceEmail(order, standalone);
       
-      // Show toast based on result
-      if (orderEmailStatus?.success) {
+      if (result?.success) {
         toast.success('Invoice email sent successfully!');
-      } else if (orderEmailStatus?.error) {
-        toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+      } else {
+        toast.error(`Failed to send invoice email: ${result?.error || 'Unknown error'}`);
       }
-    } else {
+    } catch (error) {
+      console.error('Error sending invoice:', error);
       toast.error('Email service is not available');
     }
   };
 
   // Check if the email button should be disabled
   const isEmailButtonDisabled = () => {
-    // If it's a standalone invoice, always allow sending if there's an email
-    if (standalone) {
-      return !order?.customer?.email || orderEmailStatus?.loading;
-    }
-    
-    // Otherwise, disable if already sent or no email or loading
-    return !order?.customer?.email || order.invoiceEmailSent || orderEmailStatus?.loading;
+    return !order?.customer?.email;
   };
 
   // Get email button text
   const getEmailButtonText = () => {
-    if (orderEmailStatus?.loading) return 'Sending...';
-    if (order.invoiceEmailSent && !standalone) return 'Invoice Already Sent';
     return 'Email Invoice';
   };
 
