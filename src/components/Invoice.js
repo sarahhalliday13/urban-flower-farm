@@ -349,16 +349,16 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
       </div>
 
       <div className="invoice-addresses">
-        <div className="invoice-to">
-          <h3>To</h3>
+        <div className="invoice-to" style={{ textAlign: 'left' }}>
+          <h3 style={{ textAlign: 'left' }}>To</h3>
           <p>{order.customer?.name || 'Customer'}</p>
           <p>Email: {order.customer?.email || 'Not provided'}</p>
           {order.customer?.phone && order.customer.phone !== 'Not provided' && (
             <p>Phone: {order.customer.phone}</p>
           )}
         </div>
-        <div className="invoice-from">
-          <h3>From</h3>
+        <div className="invoice-from" style={{ textAlign: 'left' }}>
+          <h3 style={{ textAlign: 'left' }}>From</h3>
           <p>Buttons Urban Flower Farm</p>
           <p>Email: buttonsflowerfarm@telus.net</p>
         </div>
@@ -368,7 +368,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         <table>
           <thead>
             <tr>
-              <th>Item</th>
+              <th style={{ textAlign: 'left' }}>Item</th>
               <th style={{ textAlign: 'center' }}>Quantity</th>
               <th style={{ textAlign: 'right' }}>Price</th>
               <th style={{ textAlign: 'right' }}>Total</th>
@@ -377,7 +377,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <tbody>
             {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td>{item.name || 'Product'}</td>
+                <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
                 <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
