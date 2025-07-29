@@ -23,12 +23,12 @@ const FAQ = () => {
     {
       id: 2,
       question: "How do I pay for my order?",
-      answer: "After placing your order, you'll receive instructions for e-transfer payment to buttonsflowerfarm@telus.net or cash payment at pickup."
+      answer: <>After placing your order, you'll receive instructions for e-transfer payment to <a href="mailto:buttonsflowerfarm@telus.net">buttonsflowerfarm@telus.net</a> or cash payment at pickup.</>
     },
     {
       id: 3,
       question: "Can I modify my order after placing it?",
-      answer: "Please contact us directly at buttonsflowerfarm@telus.net if you need to make changes to your order."
+      answer: <>Please contact us directly at <a href="mailto:buttonsflowerfarm@telus.net">buttonsflowerfarm@telus.net</a> if you need to make changes to your order.</>
     },
     {
       id: 4,
