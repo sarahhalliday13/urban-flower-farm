@@ -167,8 +167,9 @@ export const OrderProvider = ({ children }) => {
         return;
       }
 
-      // Update the order object to include the emailSent flag
-      const updatedOrderData = { 
+      // Create the update data object
+      const updatedOrderData = {
+        ...order,
         status: newStatus,
         ...(emailSent ? { emailSent: true } : {})
       };
@@ -195,11 +196,7 @@ export const OrderProvider = ({ children }) => {
       // Then update local state and localStorage
       const updatedOrders = orders.map(order => {
         if (order.id === orderId) {
-          return { 
-            ...order, 
-            status: newStatus,
-            ...(emailSent ? { emailSent: true } : {})
-          };
+          return updatedOrderData;
         }
         return order;
       });
@@ -210,11 +207,7 @@ export const OrderProvider = ({ children }) => {
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const updatedLocalOrders = localOrders.map(order => {
         if (order.id === orderId) {
-          return { 
-            ...order, 
-            status: newStatus,
-            ...(emailSent ? { emailSent: true } : {})
-          };
+          return updatedOrderData;
         }
         return order;
       });
