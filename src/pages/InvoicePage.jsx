@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import { sendInvoiceEmail } from '../services/invoiceService';
 import Invoice from '../components/Invoice';
-import { OrderProvider } from '../components/orders/OrderContext';
+import { useOrders } from '../components/orders/OrderContext';
 import { toast } from 'react-hot-toast';
 import '../styles/InvoicePage.css';
 
@@ -91,6 +91,7 @@ const Loading = () => (
 const InvoicePage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { orders, loading: ordersLoading } = useOrders();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -98,6 +99,15 @@ const InvoicePage = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       try {
+        // First try to find the order in the context
+        const contextOrder = orders.find(o => o.id === orderId);
+        if (contextOrder) {
+          setOrder(contextOrder);
+          setLoading(false);
+          return;
+        }
+
+        // If not found in context, fetch from Firebase
         const orderData = await getOrder(orderId);
         if (!orderData) {
           setError('Order not found');
@@ -112,8 +122,10 @@ const InvoicePage = () => {
       }
     };
 
-    fetchOrder();
-  }, [orderId]);
+    if (!ordersLoading) {
+      fetchOrder();
+    }
+  }, [orderId, orders, ordersLoading]);
 
   const handleBack = () => navigate(-1);
 
@@ -125,7 +137,7 @@ const InvoicePage = () => {
     }, 1000);
   };
 
-  if (loading) return <Loading />;
+  if (loading || ordersLoading) return <Loading />;
 
   if (error) {
     return (
@@ -140,25 +152,23 @@ const InvoicePage = () => {
   }
 
   return (
-    <OrderProvider>
-      <div className="invoice-page">
-        <div className="invoice-page-header non-printable">
-          <Button variant="secondary" onClick={handleBack}>
-            ← Back to Orders
+    <div className="invoice-page">
+      <div className="invoice-page-header non-printable">
+        <Button variant="secondary" onClick={handleBack}>
+          ← Back to Orders
+        </Button>
+        <div className="invoice-action-buttons">
+          <EmailButton order={order} />
+          <Button variant="secondary" onClick={handlePrint}>
+            Print Invoice
           </Button>
-          <div className="invoice-action-buttons">
-            <EmailButton order={order} />
-            <Button variant="secondary" onClick={handlePrint}>
-              Print Invoice
-            </Button>
-          </div>
-        </div>
-
-        <div className="invoice-page-body">
-          <Invoice order={order} standalone />
         </div>
       </div>
-    </OrderProvider>
+
+      <div className="invoice-page-body">
+        <Invoice order={order} standalone />
+      </div>
+    </div>
   );
 };
 
