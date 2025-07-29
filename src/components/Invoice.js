@@ -105,14 +105,14 @@ export const generateInvoiceHTML = (order) => {
                       <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
                         <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                         ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
                       </td>
                       <!-- From Info Right -->
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: invoice@buttonsflowerfarm.ca</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                       </td>
                     </tr>
                   </table>
@@ -194,7 +194,7 @@ export const generateInvoiceHTML = (order) => {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</td>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
                           </tr>
                         </table>
                         <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
@@ -360,7 +360,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         <div className="invoice-from">
           <h3>From</h3>
           <p>Buttons Urban Flower Farm</p>
-          <p>Email: invoice@buttonsflowerfarm.ca</p>
+          <p>Email: buttonsflowerfarm@telus.net</p>
         </div>
       </div>
 
@@ -434,7 +434,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to invoice@buttonsflowerfarm.ca</li>
+              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</li>
             </ul>
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>
