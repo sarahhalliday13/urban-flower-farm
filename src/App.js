@@ -361,11 +361,7 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
-        <Route path="/invoice/:orderId" element={
-          <OrderProvider>
-            <InvoicePage />
-          </OrderProvider>
-        } />
+        <Route path="/invoice/:orderId" element={<InvoicePage />} />
         <Route 
           path="/admin" 
           element={
@@ -449,28 +445,30 @@ function AppContent() {
   );
 }
 
-// Wrap AppContent with ScrollRestorationProvider and ToastProvider
+// Wrap AppContent with OrderProvider
 const App = () => (
   <Router>
     <ScrollRestorationProvider>
       <AuthProvider>
         <CartProvider>
           <AdminProvider>
-            <ToastProvider>
-              <Toaster 
-                position="top-center" 
-                reverseOrder={false}
-                toastOptions={{
-                  success: {
-                    iconTheme: {
-                      primary: 'transparent',
-                      secondary: 'transparent',
+            <OrderProvider>
+              <ToastProvider>
+                <Toaster 
+                  position="top-center" 
+                  reverseOrder={false}
+                  toastOptions={{
+                    success: {
+                      iconTheme: {
+                        primary: 'transparent',
+                        secondary: 'transparent',
+                      },
                     },
-                  },
-                }}
-              />
-              <AppContent />
-            </ToastProvider>
+                  }}
+                />
+                <AppContent />
+              </ToastProvider>
+            </OrderProvider>
           </AdminProvider>
         </CartProvider>
       </AuthProvider>
