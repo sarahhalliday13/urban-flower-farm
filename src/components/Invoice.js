@@ -341,7 +341,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <h2>INVOICE</h2>
           <p><strong>Order #:</strong> {order.id}</p>
           <p><strong>Date:</strong> {formatDate(order.date)}</p>
-          <p><strong>Status:</strong> {order.status}</p>
+          <p><strong>Status:</strong> {order.status || 'Processing'}</p>
           {orderVersion.versionNumber && (
             <p><strong>Version:</strong> {orderVersion.versionNumber}</p>
           )}
