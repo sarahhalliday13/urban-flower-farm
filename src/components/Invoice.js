@@ -25,10 +25,10 @@ export const generateInvoiceHTML = (order) => {
   // Create line items HTML
   const itemsHTML = order.items?.map(item => `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.name || item.title}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">$${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">$${formatCurrency(item.quantity * item.price)}</td>
     </tr>
   `).join('') || '';
   
@@ -103,16 +103,16 @@ export const generateInvoiceHTML = (order) => {
                     <tr>
                       <!-- To Info Left -->
                       <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
-                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
-                        <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
-                        ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-align: left;">To</h3>
+                        <p style="margin: 5px 0; font-size: 14px; text-align: left;">${order.customer?.name || 'Customer'}</p>
+                        <p style="margin: 5px 0; font-size: 14px; text-align: left;">Email: ${order.customer?.email || 'Not provided'}</p>
+                        ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px; text-align: left;">Phone: ${order.customer.phone}</p>` : ''}
                       </td>
                       <!-- From Info Right -->
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
-                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
-                        <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px; text-align: left;">From</h3>
+                        <p style="margin: 5px 0; font-size: 14px; text-align: left;">Buttons Urban Flower Farm</p>
+                        <p style="margin: 5px 0; font-size: 14px; text-align: left;">Email: buttonsflowerfarm@telus.net</p>
                       </td>
                     </tr>
                   </table>
@@ -126,9 +126,9 @@ export const generateInvoiceHTML = (order) => {
                     <thead>
                       <tr>
                         <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Item</th>
-                        <th style="background-color: #f9f9f9; padding: 10px; text-align: center; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Quantity</th>
-                        <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Price</th>
-                        <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Total</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Quantity</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Price</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Total</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -369,18 +369,18 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <thead>
             <tr>
               <th>Item</th>
-              <th style={{ textAlign: 'center' }}>Quantity</th>
-              <th style={{ textAlign: 'right' }}>Price</th>
-              <th style={{ textAlign: 'right' }}>Total</th>
+              <th style={{ textAlign: 'left' }}>Quantity</th>
+              <th style={{ textAlign: 'left' }}>Price</th>
+              <th style={{ textAlign: 'left' }}>Total</th>
             </tr>
           </thead>
           <tbody>
             {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td>{item.name || 'Product'}</td>
-                <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
-                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
-                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
+                <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
+                <td style={{ textAlign: 'left' }}>{item.quantity || 0}</td>
+                <td style={{ textAlign: 'left' }}>${formatCurrency(item.price)}</td>
+                <td style={{ textAlign: 'left' }}>${formatCurrency(item.price * item.quantity)}</td>
               </tr>
             ))}
           </tbody>
