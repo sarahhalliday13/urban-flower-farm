@@ -74,16 +74,23 @@ export const OrderProvider = ({ children }) => {
 
       // Process orders to ensure consistent format
       const processedOrders = firebaseOrders.map(order => {
-        if (order.customer && (order.customer.firstName || order.customer.lastName)) {
-          return {
-            ...order,
-            customer: {
-              ...order.customer,
-              name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
-            }
-          };
+        // Normalize customer data
+        const processedOrder = {
+          ...order,
+          customer: {
+            ...order.customer,
+            name: order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(),
+            email: order.customer?.email || '',
+            phone: order.customer?.phone || order.customerPhone || '' // Normalize phone field
+          }
+        };
+
+        // Clean up legacy phone field if it exists
+        if ('customerPhone' in processedOrder) {
+          delete processedOrder.customerPhone;
         }
-        return order;
+
+        return processedOrder;
       });
       
       // Sort by date (newest first)
@@ -855,6 +862,9 @@ export const OrderProvider = ({ children }) => {
 
   // Get filtered orders based on search term and status filter
   const getFilteredOrders = useCallback(() => {
+    // Define archived statuses
+    const archivedStatuses = ['completed', 'cancelled'];
+
     // Calculate status counts first
     const statusCounts = orders.reduce((acc, order) => {
       const status = statusToLowerCase(order?.status || 'pending');
@@ -874,13 +884,23 @@ export const OrderProvider = ({ children }) => {
         customer: {
           ...order.customer,
           name: order.customer.name || `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || 'No name provided',
-          email: order.customer.email || 'Not provided'
+          email: order.customer.email || 'Not provided',
+          phone: order.customer.phone || order.customerPhone || '' // Support both phone field formats
         },
-        id: order.id || 'Unknown'
+        id: order.id || 'Unknown',
+        notes: order.notes || '' // Ensure notes field exists
       };
       
       // Filter by status (case insensitive)
-      if (filter !== 'all' && statusToLowerCase(safeOrder.status) !== statusToLowerCase(filter)) {
+      const orderStatus = statusToLowerCase(safeOrder.status);
+      
+      if (filter === 'all') {
+        // When 'all' is selected, exclude archived orders
+        return !archivedStatuses.includes(orderStatus);
+      } else if (filter === 'archived') {
+        // When 'archived' is selected, show only completed and cancelled orders
+        return archivedStatuses.includes(orderStatus);
+      } else if (filter !== orderStatus) {
         return false;
       }
       
@@ -900,7 +920,7 @@ export const OrderProvider = ({ children }) => {
           safeOrder.id.toLowerCase(),
           (safeOrder.notes || '').toLowerCase(),
           (safeOrder.customer.phone || '').toLowerCase()
-        ];
+        ].filter(Boolean); // Remove empty strings
         
         // All search terms must match at least one field
         return searchTerms.every(term => 

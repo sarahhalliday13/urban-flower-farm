@@ -15,14 +15,16 @@ const OrderFilterControls = () => {
     statusCounts = {} // Get status counts from context
   } = useOrders();
 
+  // Calculate archive count (completed + cancelled)
+  const archiveCount = (statusCounts.completed || 0) + (statusCounts.cancelled || 0);
+
   // Status options with their display names
   const statusOptions = [
-    { value: 'all', label: 'All Orders' },
+    { value: 'all', label: 'Active Orders' },
     { value: 'pending', label: 'Pending' },
     { value: 'processing', label: 'Processing' },
     { value: 'shipped', label: 'Shipped' },
-    { value: 'completed', label: 'Completed' },
-    { value: 'cancelled', label: 'Cancelled' }
+    { value: 'archived', label: 'Archive' }
   ];
 
   return (
@@ -35,7 +37,7 @@ const OrderFilterControls = () => {
         >
           {statusOptions.map(({ value, label }) => (
             <option key={value} value={value}>
-              {label} ({statusCounts[value] || 0})
+              {label} ({value === 'archived' ? archiveCount : (statusCounts[value] || 0)})
             </option>
           ))}
         </select>
