@@ -45,15 +45,29 @@ const PlantSelector = ({ onAddItem }) => {
   // Filter plants based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setFilteredPlants([]);
+      setFilteredPlants(plants); // Show all plants when no search query
       return;
     }
     
     const searchTerm = searchQuery.toLowerCase().trim();
     const filtered = plants.filter(plant => {
-      const nameMatch = plant.name && plant.name.toLowerCase().includes(searchTerm);
+      // First check if the plant name starts with the search term
+      const nameStartsWith = plant.name && plant.name.toLowerCase().startsWith(searchTerm);
+      if (nameStartsWith) return true;
+
+      // Then check for includes in name or scientific name
+      const nameIncludes = plant.name && plant.name.toLowerCase().includes(searchTerm);
       const scientificMatch = plant.scientificName && plant.scientificName.toLowerCase().includes(searchTerm);
-      return nameMatch || scientificMatch;
+      return nameIncludes || scientificMatch;
+    });
+    
+    // Sort results: items that start with the search term come first
+    filtered.sort((a, b) => {
+      const aStartsWith = a.name.toLowerCase().startsWith(searchTerm);
+      const bStartsWith = b.name.toLowerCase().startsWith(searchTerm);
+      if (aStartsWith && !bStartsWith) return -1;
+      if (!aStartsWith && bStartsWith) return 1;
+      return a.name.localeCompare(b.name);
     });
     
     setFilteredPlants(filtered);
@@ -105,7 +119,7 @@ const PlantSelector = ({ onAddItem }) => {
             placeholder="Add a flower"
             value={searchQuery}
             onChange={handleSearchChange}
-            onFocus={() => searchQuery && setIsDropdownOpen(true)}
+            onFocus={() => setIsDropdownOpen(true)}
           />
           {searchQuery && (
             <button 
@@ -121,24 +135,22 @@ const PlantSelector = ({ onAddItem }) => {
           )}
         </div>
         
-        {isDropdownOpen && filteredPlants.length > 0 && (
+        {isDropdownOpen && (
           <div className="predictive-dropdown">
-            {filteredPlants.map(plant => (
-              <div 
-                key={plant.id} 
-                className="dropdown-item"
-                onClick={() => handleSelectPlant(plant)}
-              >
-                <span className="plant-name">{plant.name}</span>
-                <span className="plant-price">${Math.round(parseFloat(plant.price || 0))}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {isDropdownOpen && searchQuery && filteredPlants.length === 0 && (
-          <div className="predictive-dropdown">
-            <div className="no-results">No plants found</div>
+            {filteredPlants.length > 0 ? (
+              filteredPlants.map(plant => (
+                <div 
+                  key={plant.id} 
+                  className="dropdown-item"
+                  onClick={() => handleSelectPlant(plant)}
+                >
+                  <span className="plant-name">{plant.name}</span>
+                  <span className="plant-price">${Math.round(parseFloat(plant.price || 0))}</span>
+                </div>
+              ))
+            ) : (
+              <div className="no-results">No plants found</div>
+            )}
           </div>
         )}
       </div>
