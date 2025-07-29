@@ -39,7 +39,6 @@ import AdminDashboard from './components/AdminDashboard';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
-import { OrderProvider } from './components/orders/OrderContext';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -445,30 +444,28 @@ function AppContent() {
   );
 }
 
-// Wrap AppContent with OrderProvider
+// Wrap AppContent with ScrollRestorationProvider and ToastProvider
 const App = () => (
   <Router>
     <ScrollRestorationProvider>
       <AuthProvider>
         <CartProvider>
           <AdminProvider>
-            <OrderProvider>
-              <ToastProvider>
-                <Toaster 
-                  position="top-center" 
-                  reverseOrder={false}
-                  toastOptions={{
-                    success: {
-                      iconTheme: {
-                        primary: 'transparent',
-                        secondary: 'transparent',
-                      },
+            <ToastProvider>
+              <Toaster 
+                position="top-center" 
+                reverseOrder={false}
+                toastOptions={{
+                  success: {
+                    iconTheme: {
+                      primary: 'transparent',
+                      secondary: 'transparent',
                     },
-                  }}
-                />
-                <AppContent />
-              </ToastProvider>
-            </OrderProvider>
+                  },
+                }}
+              />
+              <AppContent />
+            </ToastProvider>
           </AdminProvider>
         </CartProvider>
       </AuthProvider>

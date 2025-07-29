@@ -25,10 +25,10 @@ export const generateInvoiceHTML = (order) => {
   // Create line items HTML
   const itemsHTML = order.items?.map(item => `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.name || item.title}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">$${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: left;">$${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
     </tr>
   `).join('') || '';
   
@@ -102,14 +102,14 @@ export const generateInvoiceHTML = (order) => {
                   <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
                     <tr>
                       <!-- To Info Left -->
-                      <td width="48%" class="stack-column" valign="top" style="padding-right: 20px; text-align: left;">
+                      <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
                         <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                         ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
                       </td>
                       <!-- From Info Right -->
-                      <td width="48%" class="stack-column" valign="top" style="padding-left: 4%; text-align: left;">
+                      <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
                         <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
@@ -341,7 +341,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <h2>INVOICE</h2>
           <p><strong>Order #:</strong> {order.id}</p>
           <p><strong>Date:</strong> {formatDate(order.date)}</p>
-          <p><strong>Status:</strong> {order.status || 'Processing'}</p>
+          <p><strong>Status:</strong> {order.status}</p>
           {orderVersion.versionNumber && (
             <p><strong>Version:</strong> {orderVersion.versionNumber}</p>
           )}
@@ -349,7 +349,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
       </div>
 
       <div className="invoice-addresses">
-        <div className="invoice-to" style={{ textAlign: 'left' }}>
+        <div className="invoice-to">
           <h3>To</h3>
           <p>{order.customer?.name || 'Customer'}</p>
           <p>Email: {order.customer?.email || 'Not provided'}</p>
@@ -357,7 +357,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Phone: {order.customer.phone}</p>
           )}
         </div>
-        <div className="invoice-from" style={{ textAlign: 'left' }}>
+        <div className="invoice-from">
           <h3>From</h3>
           <p>Buttons Urban Flower Farm</p>
           <p>Email: buttonsflowerfarm@telus.net</p>
@@ -368,7 +368,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         <table>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left' }}>Item</th>
+              <th>Item</th>
               <th style={{ textAlign: 'center' }}>Quantity</th>
               <th style={{ textAlign: 'right' }}>Price</th>
               <th style={{ textAlign: 'right' }}>Total</th>
@@ -377,7 +377,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <tbody>
             {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
+                <td>{item.name || 'Product'}</td>
                 <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
