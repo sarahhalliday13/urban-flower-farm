@@ -456,44 +456,66 @@ export const OrderProvider = ({ children }) => {
    * @param {Object} discountData - The discount data (amount, reason, type)
    */
   const updateOrderDiscount = useCallback(async (orderId, discountData) => {
-    if (!orderId) {
-      console.error('Invalid order ID');
-      addToast('Error updating discount: Invalid order ID', 'error');
-      return false;
-    }
-    
     try {
-      // Update in Firebase 
-      await updateOrder(orderId, { discount: discountData });
+      // Get the current order
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        console.error('Order not found:', orderId);
+        return false;
+      }
+
+      // Calculate the subtotal from items
+      const subtotal = order.items.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0);
       
-      // Update in local state
-      const updatedOrders = orders.map(order => {
-        if (order.id === orderId) {
-          return { ...order, discount: discountData };
+      // Calculate the new total by subtracting discount from subtotal
+      const discountAmount = parseFloat(discountData.amount) || 0;
+      const newTotal = Math.max(0, subtotal - discountAmount); // Ensure total doesn't go negative
+
+      // Update order with new discount and total
+      const updatedOrderData = {
+        ...order,
+        discount: discountData,
+        subtotal: subtotal,
+        total: newTotal, // This is now correctly calculated from subtotal - discount
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Update in Firebase
+      const success = await updateOrder(orderId, updatedOrderData);
+      if (!success) {
+        console.error('Failed to update order discount in Firebase');
+        return false;
+      }
+
+      // Update local state
+      const updatedOrders = orders.map(o => {
+        if (o.id === orderId) {
+          return updatedOrderData;
         }
-        return order;
+        return o;
       });
-      
       setOrders(updatedOrders);
-      
-      // Update in localStorage
+
+      // Update localStorage
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const updatedLocalOrders = localOrders.map(order => {
-        if (order.id === orderId) {
-          return { ...order, discount: discountData };
+      const updatedLocalOrders = localOrders.map(o => {
+        if (o.id === orderId) {
+          return updatedOrderData;
         }
-        return order;
+        return o;
       });
       localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
-      
-      addToast('Discount updated successfully', 'success');
+
       return true;
     } catch (error) {
-      console.error('Error updating discount:', error);
-      addToast('Error updating discount', 'error');
+      console.error('Error updating order discount:', error);
       return false;
     }
-  }, [orders, addToast]);
+  }, [orders]);
   
   /**
    * Update the payment method for an order
