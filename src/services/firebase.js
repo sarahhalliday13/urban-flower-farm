@@ -1345,8 +1345,28 @@ export const getOrder = async (orderId) => {
 
 export const updateOrderStatus = async (orderId, newStatus) => {
   try {
+    console.log(`Updating status for order ${orderId} to ${newStatus}`);
+    
+    // First get the current order data
     const orderRef = ref(database, `orders/${orderId}`);
-    await update(orderRef, { status: newStatus });
+    const snapshot = await get(orderRef);
+    
+    if (!snapshot.exists()) {
+      console.error(`Order ${orderId} not found`);
+      return false;
+    }
+    
+    // Get current order data
+    const currentOrder = snapshot.val();
+    
+    // Update only the status while preserving all other fields
+    await update(orderRef, {
+      ...currentOrder,
+      status: newStatus,
+      lastUpdated: new Date().toISOString()
+    });
+    
+    console.log(`Successfully updated status for order ${orderId}`);
     return true;
   } catch (error) {
     console.error('Error updating order status in Firebase:', error);

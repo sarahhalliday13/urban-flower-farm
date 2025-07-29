@@ -164,32 +164,14 @@ export const OrderProvider = ({ children }) => {
       const order = orders.find(o => o.id === orderId);
       if (!order) {
         console.error('Order not found:', orderId);
-        return;
+        return false;
       }
 
-      // Update the order object to include the emailSent flag
-      const updatedOrderData = { 
-        status: newStatus,
-        ...(emailSent ? { emailSent: true } : {})
-      };
-
       // Update in Firebase first
-      await updateFirebaseOrderStatus(orderId, updatedOrderData);
-      
-      // If the order is being cancelled, restore the inventory
-      if (isStatusCancelled(newStatus)) {
-        try {
-          // Restore inventory for each item in the order
-          for (const item of order.items) {
-            await updateInventory(item.id, {
-              currentStock: (item.inventory?.currentStock || 0) + item.quantity,
-              lastUpdated: new Date().toISOString()
-            });
-          }
-        } catch (inventoryError) {
-          console.error('Error restoring inventory:', inventoryError);
-          // Continue with order status update even if inventory restoration fails
-        }
+      const success = await updateFirebaseOrderStatus(orderId, newStatus);
+      if (!success) {
+        console.error('Failed to update order status in Firebase');
+        return false;
       }
       
       // Then update local state and localStorage
@@ -198,6 +180,7 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             status: newStatus,
+            lastUpdated: new Date().toISOString(),
             ...(emailSent ? { emailSent: true } : {})
           };
         }
@@ -213,6 +196,7 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             status: newStatus,
+            lastUpdated: new Date().toISOString(),
             ...(emailSent ? { emailSent: true } : {})
           };
         }
@@ -225,7 +209,7 @@ export const OrderProvider = ({ children }) => {
       console.error('Error updating order status:', error);
       return false;
     }
-  }, [orders, isStatusCancelled]);
+  }, [orders]);
 
   // Send order confirmation email
   const sendOrderEmail = useCallback(async (order) => {
@@ -801,14 +785,19 @@ export const OrderProvider = ({ children }) => {
 
   // Handle order status update with confirmation for cancellation
   const handleStatusUpdate = useCallback((orderId, newStatus) => {
-    if (isStatusCancelled(newStatus)) {
+    // Ensure newStatus is a string
+    const statusString = typeof newStatus === 'object' && newStatus.label 
+      ? newStatus.label 
+      : String(newStatus);
+
+    if (isStatusCancelled(statusString)) {
       // Show confirmation dialog for cancellation
       setShowCancelConfirm(orderId);
-      setPendingStatusUpdate(newStatus);
+      setPendingStatusUpdate(statusString);
       return false;
     } else {
       // For other status updates, proceed directly
-      return updateOrderStatus(orderId, newStatus);
+      return updateOrderStatus(orderId, statusString);
     }
   }, [updateOrderStatus, isStatusCancelled]);
 
@@ -870,11 +859,15 @@ export const OrderProvider = ({ children }) => {
 
   // Get CSS class for status
   const getStatusClass = useCallback((status) => {
-    if (!status || typeof status !== 'string') {
-      return 'status-pending'; // Default if status is undefined, null, or not a string
-    }
-    
-    switch (statusToLowerCase(status)) {
+    // Get the status string in a consistent format
+    const normalizedStatus = (() => {
+      if (!status) return 'pending';
+      if (typeof status === 'string') return status.toLowerCase();
+      if (typeof status === 'object' && status.label) return status.label.toLowerCase();
+      return 'pending';
+    })();
+
+    switch (normalizedStatus) {
       case 'completed':
         return 'status-completed';
       case 'processing':
@@ -886,7 +879,7 @@ export const OrderProvider = ({ children }) => {
       default:
         return 'status-pending';
     }
-  }, [statusToLowerCase]);
+  }, []);
 
   // Load orders on mount
   useEffect(() => {
