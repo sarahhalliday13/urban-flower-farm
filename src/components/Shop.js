@@ -36,6 +36,14 @@ function Shop() {
   // eslint-disable-next-line no-unused-vars
   const searchInputRef = useRef(null);
   
+  // New state for predictive search
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const dropdownRef = useRef(null);
+  
+  // Add a new state for the displayed search term (used for filtering)
+  const [displayedSearchTerm, setDisplayedSearchTerm] = useState('');
+  
   // Update currentPage from URL when location.search changes
   useEffect(() => {
     const search = new URLSearchParams(location.search);
@@ -57,6 +65,7 @@ function Shop() {
     const searchParam = params.get('search');
     if (searchParam) {
       setSearchTerm(searchParam);
+      setDisplayedSearchTerm(searchParam); // Also set the displayed search term
     }
   }, [location.search]);
   
@@ -120,10 +129,8 @@ function Shop() {
   // Add status counts calculation
   const getStatusCounts = useMemo(() => {
     const counts = {
-      'all': plants.length,
+      'all': 0,
       'In Stock': 0,
-      'Low Stock': 0,
-      'Sold Out': 0,
       'Coming Soon': 0,
       'Pre-order': 0
     };
@@ -135,65 +142,103 @@ function Shop() {
         return;
       }
       
+      // Skip plants with zero inventory (except Coming Soon and Pre-order)
+      if (!plant.inventory?.currentStock && 
+          plant.inventory?.status !== 'Coming Soon' && 
+          plant.inventory?.status !== 'Pre-order' && 
+          plant.inventory?.status !== 'Pre-Order') {
+        return;
+      }
+      
+      // Count this plant in the total
+      counts['all']++;
+      
       const status = plant.inventory?.status;
+      
+      // Handle special statuses
       if (status === 'Pre-order' || status === 'Pre-Order') {
         counts['Pre-order']++;
-      } else if (status && counts[status] !== undefined) {
-        counts[status]++;
-      } else if (!status && plant.inventory?.currentStock > 0) {
+      } else if (status === 'Coming Soon') {
+        counts['Coming Soon']++;
+      } else if (status === 'Low Stock' || (plant.inventory?.currentStock > 0 && (!status || status === 'In Stock'))) {
+        // Count both "Low Stock" and "In Stock" in the same category
         counts['In Stock']++;
-      } else if (!status) {
-        counts['Sold Out']++;
       }
     });
-    
-    // Update all count to be the sum of visible plants
-    counts['all'] = Object.values(counts).reduce((sum, count) => sum + count, 0) - counts['all'];
     
     return counts;
   }, [plants]);
 
   // Sort plants based on selected option
   const sortedPlants = useMemo(() => {
-    // First filter out hidden plants
+    // First filter out hidden plants and out of stock plants
     const visiblePlants = plants.filter(plant => 
-      plant.hidden !== true && 
+      // Filter out hidden plants
+      (plant.hidden !== true && 
       plant.hidden !== 'true' && 
       plant.hidden !== 1 && 
-      plant.hidden !== '1'
+      plant.hidden !== '1') &&
+      // Only show plants with inventory > 0
+      ((plant.inventory?.currentStock > 0) || 
+      (plant.inventory?.status === 'Coming Soon') || 
+      (plant.inventory?.status === 'Pre-order') || 
+      (plant.inventory?.status === 'Pre-Order'))
     );
     
-    console.log('Total visible plants (not hidden):', visiblePlants.length);
+    console.log('Total visible plants (not hidden or out of stock):', visiblePlants.length);
     
-    // Then apply search filter
+    // Then apply search filter - USING displayedSearchTerm INSTEAD OF searchTerm
     const filteredPlants = visiblePlants.filter(plant => {
-      if (!searchTerm.trim()) return true;
+      if (!displayedSearchTerm.trim()) return true;
       
       // Split search terms by spaces and filter out empty strings
-      const searchTerms = searchTerm.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      const searchTerms = displayedSearchTerm.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       
       // Define special keywords and their corresponding filters
       const specialKeywords = {
         'perennial': (plant) => plant.plantType?.toLowerCase() === 'perennial',
         'annual': (plant) => plant.plantType?.toLowerCase() === 'annual',
-        'pink': (plant) => plant.name?.toLowerCase().includes('pink') || 
-                          plant.description?.toLowerCase().includes('pink') ||
-                          plant.shortDescription?.toLowerCase().includes('pink'),
-        'red': (plant) => plant.name?.toLowerCase().includes('red') || 
-                         plant.description?.toLowerCase().includes('red') ||
-                         plant.shortDescription?.toLowerCase().includes('red'),
-        'white': (plant) => plant.name?.toLowerCase().includes('white') || 
-                           plant.description?.toLowerCase().includes('white') ||
-                           plant.shortDescription?.toLowerCase().includes('white'),
-        'purple': (plant) => plant.name?.toLowerCase().includes('purple') || 
-                            plant.description?.toLowerCase().includes('purple') ||
-                            plant.shortDescription?.toLowerCase().includes('purple'),
-        'yellow': (plant) => plant.name?.toLowerCase().includes('yellow') || 
-                            plant.description?.toLowerCase().includes('yellow') ||
-                            plant.shortDescription?.toLowerCase().includes('yellow'),
-        'blue': (plant) => plant.name?.toLowerCase().includes('blue') || 
-                          plant.description?.toLowerCase().includes('blue') ||
-                          plant.shortDescription?.toLowerCase().includes('blue')
+        // Color matching - check both dedicated color field and text mentions
+        'pink': (plant) => 
+          plant.color?.toLowerCase().includes('pink') ||
+          plant.name?.toLowerCase().includes('pink') || 
+          plant.description?.toLowerCase().includes('pink') ||
+          plant.shortDescription?.toLowerCase().includes('pink'),
+        'red': (plant) => 
+          plant.color?.toLowerCase().includes('red') ||
+          plant.name?.toLowerCase().includes('red') || 
+          plant.description?.toLowerCase().includes('red') ||
+          plant.shortDescription?.toLowerCase().includes('red'),
+        'white': (plant) => 
+          plant.color?.toLowerCase().includes('white') ||
+          plant.name?.toLowerCase().includes('white') || 
+          plant.description?.toLowerCase().includes('white') ||
+          plant.shortDescription?.toLowerCase().includes('white'),
+        'purple': (plant) => 
+          plant.color?.toLowerCase().includes('purple') ||
+          plant.name?.toLowerCase().includes('purple') || 
+          plant.description?.toLowerCase().includes('purple') ||
+          plant.shortDescription?.toLowerCase().includes('purple'),
+        'yellow': (plant) => 
+          plant.color?.toLowerCase().includes('yellow') ||
+          plant.name?.toLowerCase().includes('yellow') || 
+          plant.description?.toLowerCase().includes('yellow') ||
+          plant.shortDescription?.toLowerCase().includes('yellow'),
+        'blue': (plant) => 
+          plant.color?.toLowerCase().includes('blue') ||
+          plant.name?.toLowerCase().includes('blue') || 
+          plant.description?.toLowerCase().includes('blue') ||
+          plant.shortDescription?.toLowerCase().includes('blue'),
+        'orange': (plant) => 
+          plant.color?.toLowerCase().includes('orange') ||
+          plant.name?.toLowerCase().includes('orange') || 
+          plant.description?.toLowerCase().includes('orange') ||
+          plant.shortDescription?.toLowerCase().includes('orange'),
+        'green': (plant) => 
+          plant.color?.toLowerCase().includes('green') ||
+          plant.name?.toLowerCase().includes('green') || 
+          plant.description?.toLowerCase().includes('green') ||
+          plant.shortDescription?.toLowerCase().includes('green')
       };
 
       // Separate special keywords from regular search terms
@@ -215,6 +260,7 @@ function Shop() {
         plant.name?.toLowerCase().includes(fullSearchTerm) ||
         plant.scientificName?.toLowerCase().includes(fullSearchTerm) ||
         plant.commonName?.toLowerCase().includes(fullSearchTerm) ||
+        plant.color?.toLowerCase().includes(fullSearchTerm) ||
         plant.plantType?.toLowerCase().includes(fullSearchTerm);
 
       // If full match works, return true (and check special filters)
@@ -225,6 +271,7 @@ function Shop() {
         plant.name?.toLowerCase().includes(term) ||
         plant.scientificName?.toLowerCase().includes(term) ||
         plant.commonName?.toLowerCase().includes(term) ||
+        plant.color?.toLowerCase().includes(term) ||
         plant.plantType?.toLowerCase().includes(term)
       );
 
@@ -241,10 +288,6 @@ function Shop() {
         plant.inventory?.status === 'Low Stock' ||
         (plant.inventory?.currentStock > 0 && !plant.inventory?.status)
       );
-    } else if (sortOption === 'status-sold-out') {
-      statusFilteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status === 'Sold Out' || (!plant.inventory?.status && !plant.inventory?.currentStock)
-      );
     } else if (sortOption === 'status-coming-soon') {
       statusFilteredPlants = filteredPlants.filter(plant => 
         plant.inventory?.status === 'Coming Soon'
@@ -253,25 +296,27 @@ function Shop() {
       statusFilteredPlants = filteredPlants.filter(plant => 
         plant.inventory?.status === 'Pre-order' || plant.inventory?.status === 'Pre-Order'
       );
-    } else if (sortOption === 'all') {
-      statusFilteredPlants = filteredPlants;
+    } else {
+      // Default to in-stock if no valid option selected
+      statusFilteredPlants = filteredPlants.filter(plant => 
+        plant.inventory?.status === 'In Stock' || 
+        plant.inventory?.status === 'Low Stock' ||
+        (plant.inventory?.currentStock > 0 && !plant.inventory?.status)
+      );
     }
     
     console.log('Plants after status filter:', statusFilteredPlants.length, 'with sortOption:', sortOption);
     
     // Apply sorting
     switch (sortOption) {
-      case 'all':
-        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'status-in-stock':
-      case 'status-sold-out':
       case 'status-coming-soon':
       case 'status-pre-order':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  }, [plants, sortOption, searchTerm]);
+  }, [plants, sortOption, displayedSearchTerm]);
 
   // Calculate items per page based on screen width
   useEffect(() => {
@@ -342,7 +387,10 @@ function Shop() {
 
   // Generate pagination controls
   const renderPaginationControls = () => {
-    if (totalPages <= 1) return null;
+    if (totalPages <= 1) {
+      // Return empty container to maintain layout
+      return <div className="pagination-controls"></div>;
+    }
 
     const pageNumbers = [];
     
@@ -432,13 +480,8 @@ function Shop() {
       <div key={plant.id} className="plant-card" id={`plant-${plant.id}`}>
         <Link 
           to={`/plant/${plant.id}`}
-          className="plant-card-link"
-          onClick={(e) => {
-            // Prevent navigation if clicking on buttons
-            if (e.target.closest('.plant-actions')) {
-              e.preventDefault();
-              return;
-            }
+          style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+          onClick={() => {
             // Store current page for when user comes back
             localStorage.setItem('shopCurrentPage', currentPage.toString());
             // Store which plant was clicked (for anchor navigation)
@@ -456,9 +499,15 @@ function Shop() {
             <div className="badge-container">
               {plant.inventory?.status ? (
                 <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
-                  <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
-                    {plant.inventory.status}
-                  </span>
+                  {plant.inventory.status.toLowerCase() === 'low stock' ? (
+                    <span className="status-badge in-stock" style={{ display: 'flex', alignItems: 'center' }}>
+                      In Stock
+                    </span>
+                  ) : (
+                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(/\s+/g, '-') || 'unknown'}`} style={{ display: 'flex', alignItems: 'center' }}>
+                      {plant.inventory.status}
+                    </span>
+                  )}
                 </div>
               ) : (
                 <div className="plant-status" style={{ marginTop: '0px', marginBottom: '0px' }}>
@@ -508,8 +557,10 @@ function Shop() {
       const searchParam = params.get('search');
       if (searchParam !== null) {
         setSearchTerm(searchParam);
+        setDisplayedSearchTerm(searchParam); // Also update displayed search term
       } else {
         setSearchTerm('');
+        setDisplayedSearchTerm(''); // Also update displayed search term
       }
       
       // Update page number from URL
@@ -531,6 +582,143 @@ function Shop() {
     };
   }, []);
 
+  // Generate search suggestions based on plants data and search term
+  useEffect(() => {
+    if (!searchTerm.trim() || searchTerm.length < 2) {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // First, filter plants to match the visible plants criteria
+    const visiblePlants = plants.filter(plant => 
+      // Filter out hidden plants
+      (plant.hidden !== true && 
+      plant.hidden !== 'true' && 
+      plant.hidden !== 1 && 
+      plant.hidden !== '1') &&
+      // Only show plants with inventory > 0 or with Coming Soon/Pre-order status
+      ((plant.inventory?.currentStock > 0) || 
+      (plant.inventory?.status === 'Coming Soon') || 
+      (plant.inventory?.status === 'Pre-order') || 
+      (plant.inventory?.status === 'Pre-Order'))
+    );
+    
+    console.log('Generating suggestions from visible plants:', visiblePlants.length, 'out of', plants.length, 'total plants');
+    
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Use visiblePlants instead of all plants for suggestions
+    const nameMatches = visiblePlants.filter(plant => 
+      plant.name?.toLowerCase().includes(searchLower)
+    ).slice(0, 3).map(plant => ({
+      text: plant.name,
+      category: 'Plant Name',
+      type: 'plant',
+      id: plant.id
+    }));
+    
+    const scientificMatches = visiblePlants.filter(plant => 
+      plant.scientificName?.toLowerCase().includes(searchLower)
+    ).slice(0, 2).map(plant => ({
+      text: plant.scientificName,
+      category: 'Scientific Name',
+      type: 'scientific',
+      id: plant.id
+    }));
+    
+    const commonMatches = visiblePlants.filter(plant => 
+      plant.commonName?.toLowerCase().includes(searchLower) && 
+      plant.commonName?.toLowerCase() !== plant.name?.toLowerCase()
+    ).slice(0, 2).map(plant => ({
+      text: plant.commonName,
+      category: 'Common Name',
+      type: 'common',
+      id: plant.id
+    }));
+    
+    // Collect color suggestions
+    const colorTerms = ['red', 'blue', 'purple', 'pink', 'white', 'yellow', 'orange', 'green'];
+    const colorMatches = colorTerms
+      .filter(color => color.includes(searchLower))
+      .map(color => ({
+        text: color.charAt(0).toUpperCase() + color.slice(1),
+        category: 'Color',
+        type: 'color'
+      }));
+    
+    // Collect plant type suggestions
+    const typeTerms = ['annual', 'perennial', 'biennial', 'shrub', 'tree', 'bulb'];
+    const typeMatches = typeTerms
+      .filter(type => type.includes(searchLower))
+      .map(type => ({
+        text: type.charAt(0).toUpperCase() + type.slice(1),
+        category: 'Plant Type',
+        type: 'plantType'
+      }));
+    
+    // Combine all matches and remove duplicates
+    const allSuggestions = [
+      ...nameMatches, 
+      ...scientificMatches,
+      ...commonMatches,
+      ...colorMatches,
+      ...typeMatches
+    ].slice(0, 8); // Limit to 8 total suggestions
+    
+    setSearchSuggestions(allSuggestions);
+    setShowSuggestions(allSuggestions.length > 0);
+  }, [searchTerm, plants]);
+
+  // Handle clicking outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Handle search suggestion selection
+  const handleSuggestionClick = (suggestion) => {
+    if (suggestion.type === 'plant' || suggestion.type === 'scientific' || suggestion.type === 'common') {
+      // Navigate to plant detail if it's a specific plant
+      localStorage.setItem('lastViewedPlantId', suggestion.id.toString());
+      setShowSuggestions(false); // Ensure dropdown is hidden
+      navigate(`/plant/${suggestion.id}`);
+    } else {
+      // Set search term for colors or plant types
+      setSearchTerm(suggestion.text.toLowerCase());
+      setShowSuggestions(false); // Ensure dropdown is hidden
+      // Update URL and navigate to page 1
+      navigate(`/shop?page=1&sort=${sortOption}&search=${suggestion.text.toLowerCase()}`);
+    }
+  };
+
+  // Handle form submission
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    
+    // Force close dropdown and prevent it from reopening
+    setShowSuggestions(false);
+    
+    // Update the displayed search term with the value from the input
+    setDisplayedSearchTerm(searchTerm); 
+    
+    // Blur the input to prevent the onFocus handler from reopening the dropdown
+    if (searchInputRef.current) {
+      searchInputRef.current.blur();
+    }
+    
+    // Update the URL and navigate
+    navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
+  };
+
   if (loading) return <div className="loading">Loading plants...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plants || plants.length === 0) return <div className="error">No plants available</div>;
@@ -539,69 +727,122 @@ function Shop() {
     <div className="shop-main">
       <section className="featured-plants">
         <div className="shop-header">
-          <h2>Shop</h2>
-          
-          <div className="shop-controls">
-            <div className="filter-wrapper">
-              <div className="sort-control">
-                <label htmlFor="sort-select">Sort by:</label>
-                <form method="get" action="/shop" style={{ display: 'inline' }}>
-                  <select 
-                    id="sort-select" 
-                    name="sort"
-                    value={sortOption} 
-                    onChange={(e) => e.target.form.submit()}
-                    className="sort-select"
-                    aria-label="Sort plants by selected option"
-                  >
-                    <option value="all">All ({getStatusCounts.all})</option>
-                    <option value="status-in-stock">In Stock ({getStatusCounts['In Stock'] + getStatusCounts['Low Stock']})</option>
-                    <option value="status-sold-out">Sold Out ({getStatusCounts['Sold Out']})</option>
-                    <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
-                    <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
-                  </select>
-                  <input type="hidden" name="page" value="1" />
-                  {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
-                </form>
-              </div>
-              
-              <div className="search-bar">
-                <form className="search-input-container" method="get" action="/shop">
-                  <label htmlFor="search-input">Search:</label>
-                  <div style={{ position: 'relative', flex: '1', minWidth: 0 }}>
-                    <input 
-                      type="text" 
-                      id="search-input"
-                      name="search"
-                      placeholder="Search plants..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="search-input"
-                      aria-label="Search plants"
-                    />
-                    {searchTerm && (
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          setSearchTerm('');
-                          window.location.href = `/shop?page=1&sort=${sortOption}`;
+          <div className="shop-header-left">
+            <h2>Shop</h2>
+            <div className="shop-controls">
+              <div className="filter-wrapper">
+                <div className="sort-control">
+                  <label htmlFor="sort-select">Sort by:</label>
+                  <form method="get" action="/shop" style={{ display: 'inline' }}>
+                    <select 
+                      id="sort-select" 
+                      name="sort"
+                      value={sortOption} 
+                      onChange={(e) => e.target.form.submit()}
+                      className="sort-select"
+                      aria-label="Sort plants by selected option"
+                    >
+                      <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
+                      <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
+                      <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
+                    </select>
+                    <input type="hidden" name="page" value="1" />
+                    {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
+                  </form>
+                </div>
+                
+                <div className="search-bar">
+                  <form className="search-input-container" method="get" action="/shop" onSubmit={handleSearchSubmit} style={{ marginBottom: "0px" }}>
+                    <label htmlFor="search-input">
+                      Search:
+                    </label>
+                    <div className="search-wrapper" ref={dropdownRef}>
+                      <input 
+                        type="text" 
+                        id="search-input"
+                        name="search"
+                        placeholder="Search plants..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onFocus={() => {
+                          if (searchSuggestions.length > 0) {
+                            setShowSuggestions(true);
+                          }
                         }}
-                        className="clear-search"
-                        aria-label="Clear search"
-                        tabIndex="-1"
+                        onBlur={(e) => {
+                          // Only hide if the click isn't on a suggestion
+                          if (!e.relatedTarget || !e.relatedTarget.closest('.search-dropdown')) {
+                            setTimeout(() => setShowSuggestions(false), 150);
+                          }
+                        }}
+                        className="search-input"
+                        aria-label="Search plants"
+                        ref={searchInputRef}
+                      />
+                      {searchTerm && (
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setSearchTerm('');
+                            setDisplayedSearchTerm(''); // Also update displayed search term
+                            setShowSuggestions(false);
+                            window.location.href = `/shop?page=1&sort=${sortOption}`;
+                          }}
+                          className="clear-search"
+                          aria-label="Clear search"
+                          tabIndex="-1"
+                        >
+                          ×
+                        </button>
+                      )}
+                      <button 
+                        type="submit" 
+                        className="search-go-button"
+                        aria-label="Search"
+                        onClick={() => setShowSuggestions(false)}
                       >
-                        ×
+                        Go
                       </button>
-                    )}
-                  </div>
-                  <input type="hidden" name="page" value="1" />
-                  <input type="hidden" name="sort" value={sortOption} />
-                  <button type="submit" style={{display: 'none'}}>Search</button>
-                </form>
+                      
+                      {/* Predictive search dropdown */}
+                      {showSuggestions && (
+                        <div 
+                          className={`search-dropdown ${showSuggestions ? 'active' : ''}`}
+                          tabIndex="-1" // Make the dropdown focusable for blur handling
+                        >
+                          {searchSuggestions.map((suggestion, index) => (
+                            <div 
+                              key={index} 
+                              className="search-dropdown-item"
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent event bubbling
+                                handleSuggestionClick(suggestion);
+                              }}
+                              tabIndex="0" // Make each item focusable
+                            >
+                              <span className="search-icon">🔍</span>
+                              <span className="search-text">{suggestion.text}</span>
+                              <span className="search-category">{suggestion.category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="search-help-icon">
+                      ?
+                      <div className="search-help-tooltip">
+                        Search by plant name, scientific name, common name, or color (e.g., "purple", "red", "pink")
+                      </div>
+                    </div>
+                    <input type="hidden" name="page" value="1" />
+                    <input type="hidden" name="sort" value={sortOption} />
+                  </form>
+                </div>
               </div>
             </div>
-            
-            {/* Top pagination moved inside shop-controls */}
+          </div>
+          
+          <div className="shop-header-right">
             {renderPaginationControls()}
           </div>
         </div>
@@ -648,9 +889,6 @@ function Shop() {
         {sortedPlants.length > 0 && (
           <div className="pagination-info">
             Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, sortedPlants.length)} of {sortedPlants.length} items
-            {sortOption !== 'all' && (
-              <span> (filtered from {getStatusCounts.all} total)</span>
-            )}
           </div>
         )}
         

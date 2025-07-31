@@ -29,9 +29,6 @@ function Login() {
     }
   }, [location, navigate]);
   
-  // Get the page the user was trying to access
-  const from = location.state?.from?.pathname || '/admin';
-  
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');

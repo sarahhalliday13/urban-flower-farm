@@ -1,0 +1,14 @@
+[
+  {
+    "origin": [
+      "https://buttonsflowerfarm-8a54d.web.app",
+      "https://urban-flower-farm-staging.web.app",
+      "http://localhost:3000",
+      "https://firebasestorage.googleapis.com",
+      "*"
+    ],
+    "method": ["GET", "PUT", "POST", "DELETE", "HEAD", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Access-Control-Allow-Origin", "Content-Length", "Accept-Ranges", "Cache-Control", "Content-Disposition", "Content-Encoding", "Content-Language", "Content-Range", "ETag", "Expires", "Last-Modified", "X-Firebase-Storage-Bucket"]
+  }
+] 

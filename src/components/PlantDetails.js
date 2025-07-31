@@ -94,29 +94,69 @@ function PlantDetails() {
         
         console.log(`Found plant with ID ${id}:`, plant.name);
         
-        // Simplify image handling - just use the mainImage with a fallback
-        const plantImages = [];
+        // Debug logs to investigate image structure
+        console.log('Raw plant data images:', plant.images);
+        console.log('Image type:', typeof plant.images);
+        console.log('Is images array?', Array.isArray(plant.images));
+        console.log('Main image:', plant.mainImage);
+        console.log('mainImageIndex:', plant.mainImageIndex);
+        console.log('Additional images:', plant.additionalImages);
         
-        // Add the main image if available
-        if (plant.mainImage) {
-          plantImages.push(plant.mainImage);
-        }
+        // Comprehensive image handling to account for all possible data structures
+        let plantImages = [];
         
-        // Try to add additional images (only if they exist)
+        // Handle images based on the data structure
         if (Array.isArray(plant.images) && plant.images.length > 0) {
-          // Skip the first image if it's the same as mainImage
-          const additionalImages = plant.images.filter(img => img !== plant.mainImage);
-          plantImages.push(...additionalImages);
-        } else if (Array.isArray(plant.additionalImages)) {
-          plantImages.push(...plant.additionalImages);
+          // Images is already an array, use it directly
+          plantImages = [...plant.images];
+          console.log('Using images from array, found', plantImages.length, 'images');
+        } else if (typeof plant.images === 'object' && plant.images !== null) {
+          // Images is an object (common in Firebase), convert to array
+          plantImages = Object.values(plant.images)
+            .filter(img => typeof img === 'string' && img.trim() !== '');
+          console.log('Extracted images from object, found', plantImages.length, 'images');
         }
+        
+        // If we found the main image and it's not already in the array, add it first
+        if (plant.mainImage && plantImages.indexOf(plant.mainImage) === -1) {
+          plantImages.unshift(plant.mainImage);
+          console.log('Added main image to the beginning of the array');
+        } else if (plant.mainImage && plant.mainImageIndex !== undefined) {
+          // If we have a main image and a main image index, make sure it's first in the array
+          const mainImageIndex = Number(plant.mainImageIndex);
+          if (!isNaN(mainImageIndex) && mainImageIndex >= 0 && mainImageIndex < plantImages.length) {
+            // Remove the main image from its current position
+            const mainImage = plantImages[mainImageIndex];
+            plantImages.splice(mainImageIndex, 1);
+            // Add it to the beginning
+            plantImages.unshift(mainImage);
+            console.log('Moved main image to the beginning based on mainImageIndex');
+          }
+        }
+        
+        // As a fallback, check for additionalImages if images array is still empty
+        if (plantImages.length === 0 && Array.isArray(plant.additionalImages) && plant.additionalImages.length > 0) {
+          plantImages = [...plant.additionalImages];
+          console.log('Using additionalImages, found', plantImages.length, 'images');
+        }
+        
+        // If we found the main image and it's in the array multiple times, deduplicate
+        if (plant.mainImage) {
+          plantImages = plantImages.filter((img, index) => 
+            img !== plant.mainImage || index === plantImages.indexOf(plant.mainImage)
+          );
+        }
+        
+        // Remove any empty or null entries
+        plantImages = plantImages.filter(img => img && typeof img === 'string' && img.trim() !== '');
         
         // Ensure we have at least a placeholder
         if (plantImages.length === 0) {
           plantImages.push('/images/placeholder.jpg');
+          console.log('No images found, using placeholder');
         }
         
-        console.log(`Plant ${plant.name} has ${plantImages.length} images`);
+        console.log(`Final result: Plant ${plant.name} has ${plantImages.length} images:`, plantImages);
         
         setPlant(plant);
         setImages(plantImages);
@@ -174,7 +214,7 @@ function PlantDetails() {
 
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>
-      <div className="navigation-container">
+      <div className="navigation-container" style={{ padding: 0, margin: 0 }}>
         <a 
           href="/shop"
           onClick={(e) => {
@@ -214,16 +254,55 @@ function PlantDetails() {
             className="nav-button"
             onClick={() => handleNavigation('prev')}
             disabled={!hasPrevious}
+            style={{
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              color: '#333',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              textDecoration: 'none',
+              minWidth: '12px',
+              height: '36px',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              whiteSpace: 'nowrap'
+            }}
           >
-            Previous
+            ← Previous
           </button>
-          <span className="nav-separator">|</span>
           <button
             className="nav-button"
             onClick={() => handleNavigation('next')}
             disabled={!hasNext}
+            style={{
+              padding: '6px 8px',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              color: '#333',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              textDecoration: 'none',
+              minWidth: '12px',
+              height: '36px',
+              boxSizing: 'border-box',
+              textAlign: 'center',
+              whiteSpace: 'nowrap'
+            }}
           >
-            Next
+            Next →
           </button>
         </div>
       </div>
@@ -424,34 +503,54 @@ function PlantDetails() {
           )}
         </div>
         <div className="plant-details-info">
-          <div className="plant-info">
+          <div className="plant-info" style={{ padding: 0, margin: 0, paddingLeft: 0, paddingRight: 0 }}>
             <div className="name-and-status">
               <h1 className="plant-common-name">{plant.name}</h1>
               {(() => {
                 // Get the current stock
                 const currentStock = plant.inventory?.currentStock || 0;
                 
+                // Common inline styles for all status badges
+                const statusBadgeStyle = {
+                  paddingBottom: 0,
+                  marginBottom: 0,
+                  alignSelf: 'flex-start',
+                  position: 'relative',
+                  top: '0.4rem'
+                };
+                
                 if (currentStock <= 0) {
+                  // Standardize on "Out of Stock" terminology
                   return (
-                    <span className="status-badge sold-out">
+                    <span className="status-badge sold-out" style={statusBadgeStyle}>
                       Out of Stock
                     </span>
                   );
                 } else if (currentStock < 10) {
+                  // Show as "In Stock" instead of "Low Stock"
                   return (
-                    <span className="status-badge low-stock">
-                      Low Stock ({currentStock} left)
+                    <span className="status-badge in-stock" style={statusBadgeStyle}>
+                      In Stock
                     </span>
                   );
                 } else if (plant.inventory?.status) {
+                  // For other statuses like 'Coming Soon' or custom ones
+                  // If it happens to be "Sold Out", standardize to "Out of Stock"
+                  if (plant.inventory.status.toLowerCase() === 'sold out') {
+                    return (
+                      <span className="status-badge sold-out" style={statusBadgeStyle}>
+                        Out of Stock
+                      </span>
+                    );
+                  }
                   return (
-                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`}>
+                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`} style={statusBadgeStyle}>
                       {plant.inventory.status}
                     </span>
                   );
                 } else {
                   return (
-                    <span className="status-badge in-stock">
+                    <span className="status-badge in-stock" style={statusBadgeStyle}>
                       In Stock
                     </span>
                   );
@@ -461,13 +560,6 @@ function PlantDetails() {
             {(plant.scientificName || plant.latinname) && (
               <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
             )}
-            <div className="plant-meta">
-              {(plant.commonName || plant.commonname) && (plant.scientificName || plant.latinname) && (
-                <p className="plant-names">
-                  {plant.commonName || plant.commonname} <span className="latin-name">({plant.scientificName || plant.latinname})</span>
-                </p>
-              )}
-            </div>
           </div>
           
           <p className="description">{plant.description}</p>

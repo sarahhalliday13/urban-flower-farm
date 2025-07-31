@@ -1,7 +1,22 @@
 {
   "projects": {
-    "default": "buttonsflowerfarm-8a54d"
+    "default": "buttonsflowerfarm-8a54d",
+    "production": "buttonsflowerfarm-8a54d"
   },
-  "targets": {},
+  "targets": {
+    "buttonsflowerfarm-8a54d": {
+      "hosting": {
+        "production": [
+          "buttonsflowerfarm-8a54d"
+        ],
+        "staging": [
+          "urban-flower-farm-staging"
+        ],
+        "live": [
+          "buttonsflowerfarm-8a54d"
+        ]
+      }
+    }
+  },
   "etags": {}
 }

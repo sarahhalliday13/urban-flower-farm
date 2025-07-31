@@ -4,12 +4,46 @@ const PlantImage = ({ plant, height = 200, width = "100%", style }) => {
   const [imageSrc, setImageSrc] = useState('/images/placeholder.jpg');
 
   useEffect(() => {
-    // Get a suitable image - use the first available option in order of preference
-    const sourceImage = plant.mainImage || 
-                       (Array.isArray(plant.images) && plant.images.length > 0 ? plant.images[0] : null) ||
-                       plant.imageURL ||
-                       '/images/placeholder.jpg';
+    // More robust image source selection algorithm
+    let sourceImage = '/images/placeholder.jpg';
     
+    // First try to use mainImage explicitly
+    if (plant.mainImage) {
+      sourceImage = plant.mainImage;
+    } 
+    // If no mainImage but have images array and mainImageIndex
+    else if (Array.isArray(plant.images) && plant.images.length > 0) {
+      if (plant.mainImageIndex !== undefined && 
+          plant.mainImageIndex >= 0 && 
+          plant.mainImageIndex < plant.images.length) {
+        // Use the image at the specified mainImageIndex
+        sourceImage = plant.images[plant.mainImageIndex];
+      } else {
+        // If no valid mainImageIndex, just use the first image
+        sourceImage = plant.images[0];
+      }
+    } 
+    // If images is an object (common in Firebase)
+    else if (typeof plant.images === 'object' && plant.images !== null) {
+      const imageArray = Object.values(plant.images)
+        .filter(img => typeof img === 'string' && img.trim() !== '');
+      
+      if (imageArray.length > 0) {
+        if (plant.mainImageIndex !== undefined && 
+            plant.mainImageIndex >= 0 && 
+            plant.mainImageIndex < imageArray.length) {
+          sourceImage = imageArray[plant.mainImageIndex];
+        } else {
+          sourceImage = imageArray[0];
+        }
+      }
+    }
+    // Fallback options if we still don't have an image
+    else if (plant.imageURL) {
+      sourceImage = plant.imageURL;
+    }
+    
+    // Set the image source
     setImageSrc(sourceImage);
     
     // Debug-only logging for Firebase URLs without tokens
@@ -17,7 +51,6 @@ const PlantImage = ({ plant, height = 200, width = "100%", style }) => {
         sourceImage && 
         sourceImage.includes('firebasestorage.googleapis.com') && 
         !sourceImage.includes('token=')) {
-      // Silently log to console
       console.debug('Firebase URL missing token:', plant.name);
     }
   }, [plant]);

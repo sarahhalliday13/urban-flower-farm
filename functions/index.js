@@ -8,100 +8,123 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {onRequest} = require("firebase-functions/v2/https");
-const logger = require("firebase-functions/logger");
+// Updated to use firebase-functions v4
 const functions = require('firebase-functions');
-const sgMail = require('@sendgrid/mail');
+const logger = functions.logger; // Use built-in functions logger
+const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
+const corsLib = require('cors');
+const { v4: uuidv4 } = require('uuid');
+const Busboy = require('busboy');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const { simpleContactFunction } = require('./simplifiedContact');
+const { sendContactEmail } = require('./sendContactEmail');
+const { directContactEmail } = require('./simple-contact-email');
+
+// Import our email functions directly - CRITICAL: use destructuring syntax to get the actual function
+const sendOrderEmailFunction = require('./sendOrderEmail');
+const invoiceEmailModule = require('./sendInvoiceEmail');
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Initialize express app
-const sendEmailApp = express();
-const sendOrderEmailApp = express();
-const sendContactEmailApp = express();
+// Create the main Express app
+const app = express();
 
-// Use CORS middleware for all apps
-sendEmailApp.use(cors({ origin: true }));
-sendEmailApp.use(express.json());
-sendOrderEmailApp.use(cors({ origin: true }));
-sendOrderEmailApp.use(express.json());
-sendContactEmailApp.use(cors({ origin: true }));
-sendContactEmailApp.use(express.json());
+// Setup CORS for all routes (staging + prod + localhost)
+const allowedOrigins = [
+  'https://buttonsflowerfarm-8a54d.web.app',
+  'https://urban-flower-farm-staging.web.app',
+  'http://localhost:3000',
+  'http://localhost:4000'  // Add port 4000 since that's what we're using
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'Access-Control-Request-Method', 'Access-Control-Request-Headers']
+}));
+
+// Parse JSON
+app.use(express.json());
+
+// Configure email settings
+const BUTTONS_EMAIL = 'buttonsflowerfarm@telus.net';
+
+// Create transporter with Gmail SMTP settings
+const createTransporter = async () => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: BUTTONS_EMAIL,
+      pass: process.env.GMAIL_PASSWORD,
+    },
+  });
+
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP connection successful");
+    return transporter;
+  } catch (error) {
+    console.error("❌ SMTP connection failed:", error);
+    throw error;
+  }
+};
 
 // Health check endpoints - CRITICAL for container healthcheck
-sendEmailApp.get('/', (req, res) => {
-  res.status(200).send('Email service is healthy');
-  logger.info('Health check request received and responded to successfully');
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'healthy',
+    message: 'API service is running',
+    timestamp: new Date().toISOString()
+  });
 });
 
-sendOrderEmailApp.get('/', (req, res) => {
-  res.status(200).send('Order email service is healthy');
-  logger.info('Order email health check request received and responded to successfully');
+// Add a debug endpoint that always succeeds
+app.post('/debug', (req, res) => {
+  console.log('📊 DEBUG ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
+  
+  // Always return success
+  res.status(200).json({
+    success: true,
+    debug: true,
+    message: 'Debug endpoint successful',
+    receivedPayload: req.body,
+    note: 'This endpoint always succeeds and does not attempt to send real emails'
+  });
 });
-
-sendContactEmailApp.get('/', (req, res) => {
-  res.status(200).send('Contact email service is healthy');
-  logger.info('Contact email health check request received and responded to successfully');
-});
-
-// Initialize SendGrid with API key from environment variables
-let apiKeyConfigured = false;
-try {
-  // First try to get API key from Firebase config
-  let apiKey = null;
-  
-  try {
-    // Try to get from Firebase config
-    apiKey = functions.config().sendgrid?.api_key;
-    if (apiKey) {
-      logger.info('Using SendGrid API key from Firebase config');
-      apiKeyConfigured = true;
-    }
-  } catch (configError) {
-    logger.error('Error accessing Firebase config:', configError);
-  }
-  
-  // If not in Firebase config, try environment variables (for local development)
-  if (!apiKey) {
-    apiKey = process.env.SENDGRID_API_KEY;
-    if (apiKey) {
-      logger.info('Using SendGrid API key from environment variables');
-      apiKeyConfigured = true;
-    }
-  }
-  
-  if (!apiKey) {
-    logger.error('SendGrid API key is not defined in Firebase config or environment variables');
-  } else {
-    // Set the API key
-    sgMail.setApiKey(apiKey);
-    logger.info('SendGrid API key set successfully');
-  }
-} catch (error) {
-  logger.error('Error initializing SendGrid:', error);
-}
-
-const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 // General email endpoint
-sendEmailApp.post('/', async (req, res) => {
+app.post('/', async (req, res) => {
   try {
     const { to, subject, text, html } = req.body;
     logger.info('Received email request:', { to, subject });
     
-    if (!apiKeyConfigured) {
-      throw new Error('SendGrid API key is not configured');
-    }
-    
     if (!to || !subject || (!text && !html)) {
       throw new Error('Missing required fields');
     }
+
+    const transporter = await createTransporter();
 
     const msg = {
       to,
@@ -111,10 +134,10 @@ sendEmailApp.post('/', async (req, res) => {
       html: html || text,
     };
 
-    await sgMail.send(msg);
-    logger.info('General email sent successfully');
+    const result = await transporter.sendMail(msg);
+    logger.info('General email sent successfully:', result.messageId);
     
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, messageId: result.messageId });
   } catch (error) {
     logger.error('Error sending email:', error);
     res.status(500).json({ 
@@ -125,222 +148,64 @@ sendEmailApp.post('/', async (req, res) => {
 });
 
 // Keep the old route for backward compatibility
-sendEmailApp.post('/send-email', (req, res) => {
-  sendEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+app.post('/send-email', (req, res) => {
+  app._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
 });
 
-// Order email endpoint
-sendOrderEmailApp.post('/', async (req, res) => {
-  let orderSaved = false;
-  let emailsSent = false;
-  let orderId = null;
-
-  try {
-    const order = req.body;
-    orderId = order.id;
-    logger.info('Processing order email:', order);
-
-    if (!apiKeyConfigured) {
-      throw new Error('SendGrid API key is not configured');
-    }
-
-    // Check what fields might be missing and log them
-    const missingFields = [];
-    if (!order.customer) missingFields.push('customer');
-    else if (!order.customer.email) missingFields.push('customer.email');
-    if (!order.items) missingFields.push('items');
-    
-    // Log detailed information about missing fields
-    if (missingFields.length > 0) {
-      logger.error('Order validation failed, missing fields:', {
-        missingFields,
-        orderData: order
-      });
-      
-      // Try to use a more lenient approach - construct missing pieces if possible
-      if (!order.customer) {
-        order.customer = { email: 'buttonsflowerfarm@gmail.com' };
-        logger.info('Created fallback customer object');
-      } else if (!order.customer.email) {
-        order.customer.email = 'buttonsflowerfarm@gmail.com';
-        logger.info('Added fallback email to customer');
-      }
-      
-      if (!order.items) {
-        order.items = [];
-        logger.info('Created empty items array');
-      }
-    }
-
-    // Make sure order has all required fields
-    const validatedOrder = {
-      ...order,
-      id: order.id || `manual-${Date.now()}`,
-      date: order.date || new Date().toISOString(),
-      status: order.status || 'pending',
-      total: order.total || calculateTotal(order.items)
-    };
-
-    // Server-side save order to database
-    try {
-      logger.info('Saving order to database from server-side:', validatedOrder.id);
-      // Check if order already exists
-      const existingOrder = await admin.database().ref(`orders/${validatedOrder.id}`).once('value');
-      
-      if (existingOrder.exists()) {
-        logger.info('Order already exists in database, updating:', validatedOrder.id);
-      }
-      
-      await admin.database().ref(`orders/${validatedOrder.id}`).set({
-        ...validatedOrder,
-        _serverSaveTimestamp: Date.now(),
-        _serverSaved: true
-      });
-      
-      orderSaved = true;
-      logger.info('Order saved to database from server-side successfully:', validatedOrder.id);
-    } catch (dbError) {
-      logger.error('Error saving order to database from server-side:', {
-        error: dbError.message,
-        orderId: validatedOrder.id,
-        stack: dbError.stack
-      });
-      // Continue with email sending even if database save fails
-    }
-
-    // Send email to customer
-    const customerEmail = {
-      to: validatedOrder.customer.email,
-      from: BUTTONS_EMAIL,
-      subject: `Order Confirmation - ${validatedOrder.id}`,
-      html: generateCustomerEmailTemplate(validatedOrder)
-    };
-
-    // Send email to Buttons
-    const buttonsEmail = {
-      to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL,
-      subject: `New Order Received - ${validatedOrder.id}`,
-      html: generateButtonsEmailTemplate(validatedOrder)
-    };
-
-    logger.info('Sending order confirmation emails...');
-    try {
-      await sgMail.send(customerEmail);
-      logger.info('Customer confirmation email sent successfully');
-      
-      await sgMail.send(buttonsEmail);
-      logger.info('Admin notification email sent successfully');
-      
-      emailsSent = true;
-    } catch (emailError) {
-      logger.error('Error sending confirmation emails:', {
-        message: emailError.message,
-        response: emailError.response?.body,
-        code: emailError.code
-      });
-      throw emailError; // Re-throw to be caught by the outer catch block
-    }
-    
-    res.status(200).json({ 
-      success: true,
-      orderSaved,
-      emailsSent,
-      message: `Order ${orderSaved ? 'saved to database' : 'not saved to database'} and confirmation emails ${emailsSent ? 'sent' : 'not sent'}`
-    });
-  } catch (error) {
-    logger.error('Error processing order:', {
-      message: error.message,
-      code: error.code,
-      stack: error.stack,
-      orderId
-    });
-    res.status(500).json({ 
-      success: false,
-      orderSaved,
-      emailsSent,
-      error: 'Failed to process order',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
+// Move the debug endpoint here
+app.get('/debug', (req, res) => {
+  // Simple debug check endpoint
+  console.log('🔍 Debug check endpoint called');
+  res.status(200).json({
+    success: true,
+    message: 'Debug endpoint is working',
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Keep the old route for backward compatibility
-sendOrderEmailApp.post('/send-order-email', (req, res) => {
-  sendOrderEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+// Add a debug endpoint for testing email structure
+app.post('/debug-email', (req, res) => {
+  console.log('📊 DEBUG EMAIL ENDPOINT CALLED with payload:', JSON.stringify(req.body, null, 2));
+  
+  // Always return success
+  res.status(200).json({
+    success: true,
+    debug: true,
+    message: 'Debug email endpoint successful',
+    receivedPayload: req.body,
+    note: 'This endpoint validates email data without sending actual emails'
+  });
+});
+
+// Explicit OPTIONS handler for the old route path too
+app.options('/send-order-email', (req, res) => {
+  // Force 204 No Content response with CORS headers
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.set('Access-Control-Max-Age', '86400'); // 24 hours
+  res.status(204).send('');
 });
 
 // Contact form email endpoint
-sendContactEmailApp.post('/', async (req, res) => {
+app.post('/sendContactEmail', async (req, res) => {
+  // Forward the request to the contact email handler
   try {
-    const { name, email, phone, subject, message } = req.body;
-    logger.info('Received contact form submission:', { name, email });
-
-    if (!apiKeyConfigured) {
-      throw new Error('SendGrid API key is not configured');
-    }
-
-    // Validate required fields
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const msg = {
-      to: BUTTONS_EMAIL,
-      from: BUTTONS_EMAIL, // Must be verified sender
-      replyTo: email,
-      subject: subject || `New message from ${name}`,
-      text: `
-Name: ${name}
-Email: ${email}
-Phone: ${phone || 'Not provided'}
-
-Message:
-${message}
-      `,
-      html: `
-<h3>New Contact Form Submission</h3>
-<p><strong>Name:</strong> ${name}</p>
-<p><strong>Email:</strong> ${email}</p>
-<p><strong>Phone:</strong> ${phone || 'Not provided'}</p>
-<br>
-<p><strong>Message:</strong></p>
-<p>${message.replace(/\n/g, '<br>')}</p>
-      `
-    };
-
-    logger.info('Sending contact form email...');
-    await sgMail.send(msg);
-    logger.info('Contact form email sent successfully');
-
-    res.status(200).json({ 
-      success: true,
-      message: 'Contact form email sent successfully' 
-    });
+    await sendContactEmail.handler(req, res);
   } catch (error) {
-    logger.error('Error sending contact form email:', {
-      message: error.message,
-      response: error.response?.body,
-      code: error.code,
-      stack: error.stack
-    });
+    console.error('Error in sendContactEmail route:', error);
     res.status(500).json({ 
-      success: false,
-      error: 'Failed to send contact form email',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      success: false, 
+      error: 'Failed to process contact email request',
+      message: error.message
     });
   }
 });
 
 // Keep the old route for backward compatibility
-sendContactEmailApp.post('/send-contact-email', (req, res) => {
-  sendContactEmailApp._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
+app.post('/send-contact-email', (req, res) => {
+  app._router.handle(Object.assign({}, req, {url: '/', originalUrl: '/'}), res);
 });
-
-// Export the functions
-exports.sendEmail = onRequest(sendEmailApp);
-exports.sendOrderEmail = onRequest(sendOrderEmailApp);
-exports.sendContactEmail = onRequest(sendContactEmailApp);
 
 // Helper function to calculate total
 function calculateTotal(items) {
@@ -378,167 +243,85 @@ function getOrderNotes(order) {
   }
 }
 
-// Email template functions
-function generateCustomerEmailTemplate(order) {
-  // Ensure items exists and is an array
-  const items = Array.isArray(order.items) ? order.items : [];
+// Create the express app for image upload with CORS
+const uploadImageApp = express();
+uploadImageApp.use(cors({ 
+  origin: ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 3600
+}));
+
+// Add a simple test endpoint to verify the function is accessible
+uploadImageApp.get('/', (req, res) => {
+  res.status(200).json({ success: true, message: 'Upload function is available' });
+});
+
+// Handle image uploads - placeholder until we create a proper handler
+uploadImageApp.post('/uploadImage', (req, res) => {
+  // Set CORS headers manually to ensure they're present
+  const origin = req.headers.origin;
   
-  const itemsList = items.map(item => {
-    // Handle potential missing values
-    const name = item.name || 'Item';
-    const quantity = item.quantity || 1;
-    const price = parseFloat(item.price) || 0;
-    
-    return `
-    <tr>
-      <td>${name}</td>
-      <td>${quantity}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${(price * quantity).toFixed(2)}</td>
-    </tr>
-    `;
-  }).join('');
-
-  // Ensure customer exists
-  const customer = order.customer || {};
-  const firstName = customer.firstName || 'Customer';
-  const lastName = customer.lastName || '';
-  const email = customer.email || 'N/A';
-  const phone = customer.phone || 'N/A';
-
-  // VERY IMPORTANT: Get notes from all possible locations
-  const notes = getOrderNotes(order);
-
-  // Ensure total is a number
-  const total = parseFloat(order.total) || 0;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #27ae60;">Thank You for Your Order!</h2>
-      <p>Dear ${firstName},</p>
-      <p>We've received your order and are excited to prepare it for you. Here are your order details:</p>
-      
-      <h3>Order Information</h3>
-      <p><strong>Order ID:</strong> ${order.id}</p>
-      
-      ${notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px;">
-          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Your Pickup Request</h3>
-          <p style="margin-bottom: 0;">${notes}</p>
-        </div>
-      ` : ''}
-      
-      <h3>Order Items</h3>
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <thead>
-          <tr style="background-color: #f8f9fa;">
-            <th style="padding: 10px; text-align: left;">Item</th>
-            <th style="padding: 10px; text-align: left;">Quantity</th>
-            <th style="padding: 10px; text-align: left;">Price</th>
-            <th style="padding: 10px; text-align: left;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsList || '<tr><td colspan="4">No items</td></tr>'}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Total:</strong></td>
-            <td style="padding: 10px;"><strong>$${total.toFixed(2)}</strong></td>
-          </tr>
- 
-      </table>
-
-      <h3>Payment Information</h3>
-      <p>Please complete your payment using one of the following methods:</p>
-      <ul>
-        <li><strong>Cash:</strong> Available for in-person pickup</li>
-        <li><strong>E-Transfer:</strong> Send to ${BUTTONS_EMAIL}</li>
-      </ul>
-      <p>Please include your order number (${order.id}) in the payment notes.</p>
-
-      <p>We will confirm your pickup date and time by text message to <strong>${phone}</strong>.</p>
-
-      <p>If you have any questions, please don't hesitate to contact us.</p>
-      
-      <p>Best regards,<br>The Buttons Flower Farm Team</p>
-    </div>
-  `;
-}
-
-function generateButtonsEmailTemplate(order) {
-  // Ensure items exists and is an array
-  const items = Array.isArray(order.items) ? order.items : [];
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
   
-  const itemsList = items.map(item => {
-    // Handle potential missing values
-    const name = item.name || 'Item';
-    const quantity = item.quantity || 1;
-    const price = parseFloat(item.price) || 0;
-    
-    return `
-    <tr>
-      <td>${name}</td>
-      <td>${quantity}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${(price * quantity).toFixed(2)}</td>
-    </tr>
-    `;
-  }).join('');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
-  // Ensure customer exists
-  const customer = order.customer || {};
-  const firstName = customer.firstName || 'Customer';
-  const lastName = customer.lastName || '';
-  const email = customer.email || 'N/A';
-  const phone = customer.phone || 'N/A';
+  // For now, just return success
+  res.status(200).json({ 
+    success: true, 
+    message: 'Upload endpoint is working, but actual upload functionality is under maintenance',
+    url: 'https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fplaceholder.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739',
+    path: 'images/placeholder.jpg'
+  });
+});
 
-  // VERY IMPORTANT: Get notes from all possible locations
-  const notes = getOrderNotes(order);
+// Handle OPTIONS preflight request
+uploadImageApp.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = ['https://buttonsflowerfarm-8a54d.web.app', 'https://urban-flower-farm-staging.web.app', 'http://localhost:3000'];
+  
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  } else {
+    res.set('Access-Control-Allow-Origin', '*');
+  }
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.status(204).send('');
+});
 
-  // Ensure total is a number
-  const total = parseFloat(order.total) || 0;
+// Export the API
+exports.api = functions.region('us-central1').https.onRequest(app);
 
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #27ae60;">New Order Received!</h2>
-      
-      ${notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #e74c3c; margin: 20px 0; border-radius: 4px;">
-          <h3 style="color: #e74c3c; margin-top: 0;">⚠️ IMPORTANT: Customer Notes/Pickup Request</h3>
-          <p style="margin-bottom: 0;">${notes}</p>
-        </div>
-      ` : ''}
-      
-      <h3>Order Information</h3>
-      <p><strong>Order ID:</strong> ${order.id}</p>
-      <p><strong>Date:</strong> ${new Date(order.date || new Date()).toLocaleDateString()}</p>
-      
-      <h3>Customer Information</h3>
-      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      
-      <h3>Order Items</h3>
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <thead>
-          <tr style="background-color: #f8f9fa;">
-            <th style="padding: 10px; text-align: left;">Item</th>
-            <th style="padding: 10px; text-align: left;">Quantity</th>
-            <th style="padding: 10px; text-align: left;">Price</th>
-            <th style="padding: 10px; text-align: left;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsList || '<tr><td colspan="4">No items</td></tr>'}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Total:</strong></td>
-            <td style="padding: 10px;"><strong>$${total.toFixed(2)}</strong></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  `;
-}
+// Export the uploadImage function
+exports.uploadImage = functions.region('us-central1').https.onRequest(uploadImageApp);
+
+// Export sendOrderEmail directly with simplified CORS
+exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
+  // Set CORS headers for all requests
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+  res.set('Access-Control-Max-Age', '3600');
+
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  // Forward to the actual function
+  return sendOrderEmailFunction.sendOrderEmail(req, res);
+});
+
+// Export sendInvoiceEmail function
+exports.sendInvoiceEmail = invoiceEmailModule.sendInvoiceEmail;
+
+// Export other functions
+exports.simpleContactFunction = simpleContactFunction;
+exports.directContactEmail = directContactEmail;

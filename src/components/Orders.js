@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOrders } from '../services/firebase';
 import '../styles/Orders.css';
@@ -12,6 +12,16 @@ const Orders = () => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [firebaseUnavailable, setFirebaseUnavailable] = useState(false);
   const navigate = useNavigate();
+  
+  // Add mounted ref to prevent state updates after unmounting
+  const isMountedRef = useRef(true);
+
+  // Add cleanup for the mounted ref when component unmounts
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Sample data for demonstration - only used as fallback
   const createSampleOrders = () => {
@@ -200,12 +210,16 @@ const Orders = () => {
         setEmailInput(sampleEmail);
         loadOrders(sampleEmail);
       } else {
-        setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     }
   }, []);
 
   const loadOrders = async (email) => {
+    if (!isMountedRef.current) return;
+    
     setLoading(true);
     try {
       // First attempt to get orders from Firebase
@@ -215,13 +229,19 @@ const Orders = () => {
       try {
         allOrders = await getOrders();
         console.log('Successfully fetched orders from Firebase:', allOrders.length);
-        setFirebaseUnavailable(false);
+        
+        if (isMountedRef.current) {
+          setFirebaseUnavailable(false);
+        }
         
         // Cache the orders in localStorage for offline access
         localStorage.setItem('orders', JSON.stringify(allOrders));
       } catch (firebaseError) {
         console.error('Error fetching orders from Firebase:', firebaseError);
-        setFirebaseUnavailable(true);
+        
+        if (isMountedRef.current) {
+          setFirebaseUnavailable(true);
+        }
         
         // Fallback to localStorage if Firebase fails
         console.log('Falling back to localStorage for orders');
@@ -232,8 +252,12 @@ const Orders = () => {
       const userOrders = allOrders.filter(
         order => {
           // Handle different customer object structures
-          const orderEmail = order.customer.email || (order.customer.firstName ? `${order.customer.firstName}.${order.customer.lastName}@example.com` : null);
-          return orderEmail && orderEmail.toLowerCase() === email.toLowerCase();
+          const orderEmail = order.customer?.email || (order.customer?.firstName ? `${order.customer.firstName}.${order.customer.lastName}@example.com` : null);
+          
+          // Ensure email is a string before comparing
+          return orderEmail && typeof orderEmail === 'string' && 
+                 email && typeof email === 'string' && 
+                 orderEmail.toLowerCase() === email.toLowerCase();
         }
       );
       
@@ -242,16 +266,23 @@ const Orders = () => {
       // Sort by date (newest first)
       userOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
       
-      setOrders(userOrders);
-      setUserEmail(email);
-      localStorage.setItem('userEmail', email);
-      setError('');
+      if (isMountedRef.current) {
+        setOrders(userOrders);
+        setUserEmail(email);
+        localStorage.setItem('userEmail', email);
+        setError('');
+      }
     } catch (error) {
       console.error('Error loading orders:', error);
-      setError('Failed to load orders. Please try again.');
-      setOrders([]);
+      
+      if (isMountedRef.current) {
+        setError('Failed to load orders. Please try again.');
+        setOrders([]);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -276,6 +307,11 @@ const Orders = () => {
   };
 
   const getStatusClass = (status) => {
+    // Ensure status is a string before calling toLowerCase
+    if (!status || typeof status !== 'string') {
+      return 'status-pending'; // Default status class if status is not valid
+    }
+
     switch (status.toLowerCase()) {
       case 'completed':
         return 'status-completed';
@@ -405,7 +441,7 @@ const Orders = () => {
                             <h3>Order Details</h3>
                             <p><strong>Order ID:</strong> #{order.id}</p>
                             <p><strong>Date:</strong> {formatDate(order.date)}</p>
-                            <p><strong>Status:</strong> {order.status}</p>
+                            <p><strong>Status:</strong> {order.status || 'Pending'}</p>
                             {order.notes && (
                               <div className="order-notes">
                                 <p><strong>Notes:</strong> {order.notes}</p>
@@ -425,38 +461,44 @@ const Orders = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {order.items.map(item => (
-                                  <tr key={item.id}>
+                                {order.items && Array.isArray(order.items) ? order.items.map(item => (
+                                  <tr key={item.id || `item-${Math.random()}`}>
                                     <td data-label="Item">{item.name}</td>
-                                    <td data-label="Price">${parseFloat(item.price).toFixed(2)}</td>
-                                    <td data-label="Quantity">{item.quantity}</td>
-                                    <td data-label="Subtotal">${(item.price * item.quantity).toFixed(2)}</td>
+                                    <td data-label="Price">${parseFloat(item.price || 0).toFixed(2)}</td>
+                                    <td data-label="Quantity">{item.quantity || 1}</td>
+                                    <td data-label="Subtotal">${parseFloat((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
                                   </tr>
-                                ))}
+                                )) : (
+                                  <tr>
+                                    <td colSpan="4">No items available</td>
+                                  </tr>
+                                )}
                               </tbody>
                               <tfoot>
                                 <tr>
-                                  <td colSpan="3">Total</td>
-                                  <td>${
-                                    // Calculate total from items as backup if stored total seems wrong
-                                    (() => {
-                                      const storedTotal = parseFloat(order.total);
-                                      // If stored total is valid and not exactly 150, use it
-                                      if (!isNaN(storedTotal) && storedTotal !== 150) {
-                                        return storedTotal.toFixed(2);
-                                      }
-                                      // Otherwise calculate from items
-                                      const calculatedTotal = order.items.reduce((sum, item) => {
-                                        const price = parseFloat(item.price) || 0;
-                                        const quantity = parseInt(item.quantity, 10) || 0;
-                                        return sum + (price * quantity);
-                                      }, 0);
-                                      return calculatedTotal.toFixed(2);
-                                    })()
-                                  }</td>
+                                  <td colSpan="3" className="total-label">Total:</td>
+                                  <td className="total-amount">${parseFloat(order.total || 0).toFixed(2)}</td>
                                 </tr>
                               </tfoot>
                             </table>
+                          </div>
+                          
+                          <div className="customer-info">
+                            <h3>Customer Information</h3>
+                            {order.customer ? (
+                              <>
+                                <p><strong>Name:</strong> {order.customer.name || `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || 'Not provided'}</p>
+                                <p><strong>Email:</strong> {order.customer.email || 'Not provided'}</p>
+                                <p><strong>Phone:</strong> {order.customer.phone || 'Not provided'}</p>
+                                <p><strong>Address:</strong> {[
+                                  order.customer.address,
+                                  order.customer.city,
+                                  order.customer.postalCode
+                                ].filter(Boolean).join(', ') || 'Not provided'}</p>
+                              </>
+                            ) : (
+                              <p>No customer information available</p>
+                            )}
                           </div>
                         </div>
                       </td>

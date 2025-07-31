@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
-import { sendOrderConfirmationEmails } from '../services/emailService';
 import { getCustomerData, saveCustomerData } from '../services/customerService';
+import { sendOrderConfirmationEmails } from '../services/emailService';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -23,48 +23,7 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
 
-  // Check if we're on the confirmation page
-  useEffect(() => {
-    if (location.pathname === '/checkout/confirmation') {
-      // Get the latest order ID from localStorage
-      const latestOrderId = localStorage.getItem('latestOrderId');
-      
-      if (latestOrderId) {
-        // Find the order in the orders array
-        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-        const foundOrder = allOrders.find(order => order.id === latestOrderId);
-        
-        if (foundOrder) {
-          // Set state with the found order
-          setOrderComplete(true);
-          setOrderId(foundOrder.id);
-          setFormData(prevData => ({
-            ...prevData,
-            firstName: foundOrder.customer.firstName,
-            lastName: foundOrder.customer.lastName,
-            email: foundOrder.customer.email,
-            phone: foundOrder.customer.phone,
-            notes: foundOrder.customer.notes || ''
-          }));
-        } else {
-          // No order found, redirect to shop
-          navigate('/shop');
-        }
-      } else {
-        // No order ID in localStorage, redirect to shop
-        navigate('/shop');
-      }
-    }
-  }, [location, navigate]);
-
-  useEffect(() => {
-    // Redirect to shop if cart is empty and not on confirmation page
-    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
-      navigate('/shop');
-    }
-  }, [cartItems, navigate, orderComplete, location.pathname]);
-
-  // Add useEffect to load saved customer data
+  // Move all useEffect hooks before conditional return
   useEffect(() => {
     const savedCustomerData = getCustomerData();
     if (savedCustomerData) {
@@ -78,19 +37,50 @@ const Checkout = () => {
     }
   }, []);
 
+  useEffect(() => {
+    // Always check cart status
+    if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+      navigate('/shop');
+    }
+  }, [cartItems, navigate, orderComplete, location.pathname]);
+
+  useEffect(() => {
+    // Always check if on confirmation page
+    if (location.pathname === '/checkout/confirmation') {
+      const latestOrderId = localStorage.getItem('latestOrderId');
+      if (latestOrderId) {
+        const allOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const foundOrder = allOrders.find(order => order.id === latestOrderId);
+        if (foundOrder) {
+          setOrderComplete(true);
+          setOrderId(foundOrder.id);
+          setFormData(prevData => ({
+            ...prevData,
+            firstName: foundOrder.customer.firstName,
+            lastName: foundOrder.customer.lastName,
+            email: foundOrder.customer.email,
+            phone: foundOrder.customer.phone,
+            notes: foundOrder.customer.notes || ''
+          }));
+        } else {
+          navigate('/shop');
+        }
+      } else {
+        navigate('/shop');
+      }
+    }
+  }, [location.pathname, navigate]);
+
+  // Early return to prevent rendering with empty cart - AFTER all hooks
+  if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
+    return null; // Don't render broken page, wait for navigate
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when field is edited
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: null
-      }));
+      setErrors(prev => ({ ...prev, [name]: null }));
     }
   };
 
@@ -207,13 +197,18 @@ const Checkout = () => {
       try {
         await saveOrder(newOrderData);
         
-        // Send confirmation emails
-        await sendOrderConfirmationEmails(newOrderData);
-        
         // Also save to localStorage for client-side access
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
+        
+        // Send order confirmation emails
+        try {
+          await sendOrderConfirmationEmails(newOrderData);
+          console.log('✅ Order confirmation emails sent successfully');
+        } catch (emailError) {
+          console.error('❌ Error sending order confirmation emails:', emailError);
+        }
         
         // Dispatch the orderCreated event to update the navigation
         window.dispatchEvent(new Event('orderCreated'));
@@ -223,6 +218,14 @@ const Checkout = () => {
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
+        
+        // Still try to send emails even if Firebase fails
+        try {
+          await sendOrderConfirmationEmails(newOrderData);
+          console.log('✅ Order confirmation emails sent successfully (after Firebase error)');
+        } catch (emailError) {
+          console.error('❌ Error sending order confirmation emails:', emailError);
+        }
         
         // Still dispatch the event even if Firebase fails, since we saved to localStorage
         window.dispatchEvent(new Event('orderCreated'));
@@ -240,7 +243,7 @@ const Checkout = () => {
           });
         }
       } catch (inventoryError) {
-        console.error('Error updating inventory:', inventoryError);
+        console.error('⚠️ Inventory update error:', inventoryError);
         setInventoryUpdateStatus('warning');
       }
       
@@ -251,7 +254,9 @@ const Checkout = () => {
       // Navigate to confirmation page
       navigate('/checkout/confirmation');
     } catch (error) {
-      console.error('Error processing order:', error);
+      console.error('❌ Error during checkout:', error);
+      setErrors({ ...errors, submit: 'There was an error processing your order. Please try again.' });
+    } finally {
       setIsSubmitting(false);
       setErrors({
         ...errors,
@@ -331,7 +336,7 @@ const Checkout = () => {
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
               <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
-                buttonsflowerfarm@gmail.com
+                buttonsflowerfarm@telus.net
                 <button 
                   className="copy-email-btn" 
                   onClick={(e) => {
@@ -344,7 +349,7 @@ const Checkout = () => {
                     if (svgElement) svgElement.style.display = 'none';
                     if (textElement) textElement.style.display = 'inline';
                     
-                    navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                    navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                       .then(() => {
                         // Show tooltip
                         btn.classList.add('copied');
@@ -386,12 +391,6 @@ const Checkout = () => {
           </div>
           
           <div className="order-actions">
-            <button 
-              onClick={() => navigate('/orders')} 
-              className="view-orders-btn"
-            >
-              View Your Orders
-            </button>
             <button 
               onClick={() => navigate('/shop')} 
               className="continue-shopping-btn"
@@ -517,7 +516,7 @@ const Checkout = () => {
           <div className="order-note">
             <p>We accept cash at pick-up,</p>
             <p>or etransfer to&nbsp;<span className="email-with-copy">
-              buttonsflowerfarm@gmail.com
+              buttonsflowerfarm@telus.net
               <button 
                 className="copy-email-btn" 
                 onClick={(e) => {
@@ -530,7 +529,7 @@ const Checkout = () => {
                   if (svgElement) svgElement.style.display = 'none';
                   if (textElement) textElement.style.display = 'inline';
                   
-                  navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                  navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                     .then(() => {
                       // Show tooltip
                       btn.classList.add('copied');
@@ -563,4 +562,4 @@ const Checkout = () => {
   );
 };
 
-export default Checkout; 
+export default Checkout;

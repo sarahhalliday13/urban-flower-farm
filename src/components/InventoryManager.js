@@ -27,6 +27,9 @@ import '../styles/InventoryManager.css';
 import '../styles/PlantManagement.css';
 import '../styles/FirebaseMigration.css';
 import ImageWithFallback from './ImageWithFallback';
+import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage, auth } from '../services/firebase';
 
 // Helper function to verify Firebase configuration
 const checkFirebaseConfig = () => {
@@ -780,18 +783,92 @@ const InventoryManager = () => {
         });
       }, 500);
       
+      // Create a direct storage reference approach as a standalone function
+      const directUploadToStorage = async () => {
+        try {
+          console.log('Attempting direct upload to Firebase Storage...');
+          
+          // Try anonymous authentication first
+          try {
+            await signInAnonymously(auth);
+            console.log('Anonymous authentication successful');
+          } catch (authError) {
+            console.warn('Anonymous auth failed:', authError);
+          }
+          
+          // Create storage reference
+          const fileRef = storageRef(storage, path);
+          console.log('Created storage reference:', path);
+          
+          // Upload file
+          await uploadBytes(fileRef, file);
+          console.log('File uploaded, getting download URL');
+          
+          // Get download URL
+          const downloadURL = await getDownloadURL(fileRef);
+          console.log('Got download URL:', downloadURL);
+          
+          return downloadURL;
+        } catch (error) {
+          console.error('Direct upload failed:', error);
+          throw error;
+        }
+      };
+      
+      // Try multiple upload methods
       try {
-        // Upload the file to Firebase Storage
-        console.log('Calling uploadImageToFirebase...');
-        const downloadUrl = await uploadImageToFirebase(file, path);
+        // First approach: Try direct storage upload (most reliable)
+        let downloadUrl = null;
         
-        // If we got back a local URL, set the flag to show the warning
-        if (downloadUrl && downloadUrl.startsWith('local:')) {
-          setUseLocalStorage(true);
-          setShowFirebasePermissionWarning(true);
+        try {
+          downloadUrl = await directUploadToStorage();
+          if (downloadUrl) {
+            console.log('Direct upload successful:', downloadUrl);
+          }
+        } catch (directError) {
+          console.warn('Direct upload failed:', directError);
+          
+          // Second approach: Try using uploadImageToFirebase (which attempts Cloud Function first)
+          try {
+            console.log('Falling back to uploadImageToFirebase...');
+            downloadUrl = await uploadImageToFirebase(file, path);
+            console.log('uploadImageToFirebase returned URL:', downloadUrl);
+          } catch (uploadError) {
+            console.warn('uploadImageToFirebase failed:', uploadError);
+            
+            // Last resort: Create local URL fallback
+            console.log('Creating local URL fallback...');
+            const objectUrl = URL.createObjectURL(file);
+            
+            // Store in session storage
+            const timestamp = new Date().toISOString();
+            const fileInfo = {
+              url: objectUrl,
+              filename: file.name,
+              size: file.size,
+              type: file.type,
+              path,
+              timestamp
+            };
+            
+            // Get existing cache or create new one
+            const existingCache = sessionStorage.getItem('localImageCache');
+            const imageCache = existingCache ? JSON.parse(existingCache) : {};
+            
+            // Add to cache
+            imageCache[path] = fileInfo;
+            sessionStorage.setItem('localImageCache', JSON.stringify(imageCache));
+            
+            // Set flags for local storage
+            setUseLocalStorage(true);
+            setShowFirebasePermissionWarning(true);
+            
+            downloadUrl = objectUrl;
+            console.log('Using local URL fallback:', downloadUrl);
+          }
         }
         
-        // Ensure the URL has a token parameter
+        // Ensure the URL has a token parameter for Firebase Storage URLs
         let finalUrl = downloadUrl;
         if (downloadUrl && downloadUrl.includes('firebasestorage.googleapis.com') && !downloadUrl.includes('token=')) {
           console.log('Firebase URL is missing token parameter, adding default token');
@@ -807,59 +884,33 @@ const InventoryManager = () => {
         setUploadProgress(100);
         setIsUploading(false);
         
-        console.log('Image uploaded successfully:', finalUrl);
+        console.log('Image upload successful:', finalUrl);
         return finalUrl;
-      } catch (firebaseError) {
+      } catch (error) {
+        console.error('All upload methods failed:', error);
+        
+        // Show error toast
+        const errorEvent = new CustomEvent('show-toast', {
+          detail: {
+            message: `Upload failed: ${error.message}`,
+            type: 'error',
+            duration: 5000
+          }
+        });
+        window.dispatchEvent(errorEvent);
+        
+        // Clear interval and reset progress
         clearInterval(progressInterval);
-        console.error('Firebase upload error:', firebaseError);
+        setUploadProgress(0);
+        setIsUploading(false);
         
-        // Check if it's a permission error
-        if (firebaseError.code === 'storage/unauthorized') {
-          setShowFirebasePermissionWarning(true);
-        }
-        
-        // Handle specific Firebase errors
-        let errorMessage = 'Error uploading image. Please try again.';
-        if (firebaseError.code === 'storage/unauthorized') {
-          errorMessage = 'You do not have permission to upload images.';
-        } else if (firebaseError.code === 'storage/canceled') {
-          errorMessage = 'Upload was canceled.';
-        } else if (firebaseError.code === 'storage/unknown') {
-          errorMessage = 'Unknown error occurred during upload.';
-        } else if (firebaseError.code === 'storage/quota-exceeded') {
-          errorMessage = 'Storage quota exceeded. Please contact admin.';
-        } else if (firebaseError.code === 'storage/invalid-format') {
-          errorMessage = 'Invalid image format. Please try a different image.';
-        } else if (firebaseError.code === 'storage/object-not-found') {
-          errorMessage = 'The upload location could not be found.';
-        } else if (firebaseError.code === 'storage/retry-limit-exceeded') {
-          errorMessage = 'Network unstable. Upload retry limit exceeded.';
-        }
-        
-        // Show diagnostic info
-        console.error(errorMessage, 'Original error:', firebaseError.message);
-        
-        throw new Error(`${errorMessage} (${firebaseError.code || 'unknown error'})`);
+        throw error;
       }
     } catch (error) {
-      console.error('Error in uploadImageFile:', error);
-      setUploadProgress(0);
+      console.error('Error in image upload process:', error);
       setIsUploading(false);
-      
-      // Use toast notification first
-      const errorEvent = new CustomEvent('show-toast', {
-        detail: {
-          message: `Upload failed: ${error.message}`,
-          type: 'error',
-          duration: 4000
-        }
-      });
-      window.dispatchEvent(errorEvent);
-      
-      // Don't alert if we already showed a toast
-      // alert(`Upload failed: ${error.message}`);
-      
-      return null;
+      setUploadProgress(0);
+      throw error;
     }
   };
 

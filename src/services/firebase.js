@@ -14,6 +14,8 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 // Import auth functions only when needed
 
 // Your web app's Firebase configuration
@@ -33,9 +35,62 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
+const auth = getAuth(app);
+const functions = getFunctions(app, 'us-central1');
 
 // Export Firebase utilities
-export { set, get, onValue, update, remove, storage, db };
+export { set, get, onValue, update, remove, storage, db, auth, functions };
+
+// Utility to ensure user is authenticated before database operations
+export const ensureAuthenticated = () => {
+  return new Promise((resolve, reject) => {
+    const auth = getAuth();
+    
+    // Check if already authenticated
+    if (auth.currentUser) {
+      console.log('🔒 Already authenticated:', auth.currentUser.uid);
+      // Ensure we get a fresh token
+      auth.currentUser.getIdToken(true)
+        .then((token) => {
+          console.log('✅ Token refreshed successfully. Token length:', token.length);
+          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
+          resolve(auth.currentUser);
+        })
+        .catch((error) => {
+          console.error('❌ Error refreshing token:', error.message);
+          signInAnonymously(auth)
+            .then((userCredential) => {
+              console.log('✅ Anonymous auth successful after token refresh failed:', userCredential.user.uid);
+              userCredential.user.getIdToken(true).then(token => {
+                console.log('✅ New token obtained after re-auth. Token length:', token.length);
+                console.log('✅ New token first 10 chars:', token.substring(0, 10) + '...');
+                resolve(userCredential.user);
+              });
+            })
+            .catch((error) => {
+              console.error('❌ Anonymous auth failed:', error.message);
+              reject(error);
+            });
+        });
+      return;
+    }
+    
+    // Try to sign in anonymously
+    signInAnonymously(auth)
+      .then((userCredential) => {
+        console.log('✅ Anonymous auth successful:', userCredential.user.uid);
+        userCredential.user.getIdToken(true).then(token => {
+          console.log('✅ New token obtained. Token length:', token.length);
+          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
+          resolve(userCredential.user);
+        });
+      })
+      .catch((error) => {
+        console.error('❌ Anonymous auth failed:', error.message);
+        reject(error);
+      });
+  });
+};
 
 // Utility to get a reference to the database
 export const getDatabaseRef = (path) => {
@@ -60,23 +115,83 @@ export const uploadImageToFirebase = async (file, path) => {
   try {
     console.log('Starting image upload to Firebase:', { fileName: file.name, fileSize: file.size, path });
     
+    // BYPASS Cloud Function - Directly use Firebase Storage
+    // This is more reliable and removes the dependency on Cloud Functions
+    
     // Check if storage is properly initialized
     if (!storage) {
       console.error('Firebase storage is not initialized!');
       throw new Error('Firebase storage not initialized');
     }
     
-    const fileRef = storageRef(storage, path);
-    console.log('Created storage reference:', path);
+    // Try anonymous authentication to get an auth token
+    try {
+      console.log('Trying anonymous authentication for storage access...');
+      await signInAnonymously(auth);
+      console.log('Anonymous auth successful');
+    } catch (authError) {
+      console.warn('Anonymous auth failed (continuing anyway):', authError);
+    }
     
-    console.log('Uploading bytes to Firebase...');
-    await uploadBytes(fileRef, file);
-    console.log('Upload successful, getting download URL...');
+    // Use plants folder structure with file name if no path is provided
+    const storagePath = path || `plants/${file.name}`;
     
-    const downloadURL = await getDownloadURL(fileRef);
-    console.log('Download URL obtained:', downloadURL);
-    
-    return downloadURL;
+    try {
+      // Try the standard Firebase SDK approach first
+      console.log('Trying direct Firebase SDK upload...');
+      const fileRef = storageRef(storage, storagePath);
+      console.log('Created storage reference:', storagePath);
+      
+      console.log('Uploading bytes to Firebase...');
+      await uploadBytes(fileRef, file);
+      console.log('Upload successful, getting download URL...');
+      
+      const downloadURL = await getDownloadURL(fileRef);
+      console.log('Download URL obtained:', downloadURL);
+      
+      return downloadURL;
+    } catch (sdkError) {
+      console.warn('Firebase SDK upload failed, trying direct API approach:', sdkError);
+      
+      // Fallback to direct REST API approach
+      console.log('Attempting direct REST API upload as fallback...');
+      
+      // Construct the API URL
+      const bucket = process.env.REACT_APP_FIREBASE_STORAGE_BUCKET;
+      const encodedPath = encodeURIComponent(storagePath);
+      const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?name=${encodedPath}`;
+      
+      // Get the file content as an array buffer
+      const fileContent = await file.arrayBuffer();
+      
+      // Make the request
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': file.type,
+          'X-Goog-Upload-Protocol': 'raw'
+        },
+        body: fileContent
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Direct upload failed with status: ${response.status}`);
+      }
+      
+      // Parse the response to get the download URL
+      const data = await response.json();
+      const downloadToken = data.downloadTokens;
+      
+      if (!downloadToken) {
+        throw new Error('No download token received from Firebase');
+      }
+      
+      // Construct the download URL
+      const directDownloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+      console.log('Direct upload successful, download URL:', directDownloadUrl);
+      
+      return directDownloadUrl;
+    }
   } catch (error) {
     console.error('Error uploading file to Firebase:', error);
     console.error('Error details:', error.code, error.message);
@@ -96,7 +211,101 @@ export const uploadImageToFirebase = async (file, path) => {
       console.error('Unknown error occurred, check Firebase console');
     }
     
-    // Rethrow to handle in the calling function
+    // Fallback to local storage in case all Firebase approaches fail
+    console.log('All Firebase upload methods failed, using local storage fallback...');
+    return createLocalImageUrl(file);
+  }
+};
+
+/**
+ * Upload file via the Cloud Function to bypass CORS
+ * @param {File} file - The file to upload
+ * @param {string} path - Optional path in storage
+ * @returns {Promise<string>} The download URL
+ */
+const uploadViaCloudFunction = async (file, path) => {
+  try {
+    console.log('Preparing upload via Cloud Function');
+    
+    // Determine environment and set correct function URL
+    let functionUrl;
+    if (process.env.NODE_ENV === 'production') {
+      functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/uploadImage';
+    } else {
+      // Use emulator if in development or local URL for staging
+      functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/uploadImage';
+    }
+
+    // Log full configuration for debugging
+    console.log('Current environment:', process.env.NODE_ENV);
+    console.log('Using Cloud Function URL:', functionUrl);
+    console.log('Firebase config:', {
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY?.substring(0, 5) + '...',
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET
+    });
+    
+    // Create form data to send to the function
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // Add path if provided
+    if (path) {
+      // Extract folder part from the path (Cloud Function expects 'folder' parameter)
+      const folder = path.split('/')[0];
+      formData.append('folder', folder);
+    } else {
+      formData.append('folder', 'plants');
+    }
+    
+    console.log(`Uploading to Cloud Function at ${functionUrl}`);
+    
+    // First try a simple GET request to check if the function is available
+    try {
+      const checkResponse = await fetch(`${functionUrl}?check=true`, {
+        method: 'GET',
+        mode: 'cors',
+      });
+      console.log('Function availability check:', checkResponse.status, checkResponse.statusText);
+    } catch (checkError) {
+      console.warn('Function availability check failed:', checkError.message);
+    }
+    
+    // Send the request to the Cloud Function
+    const response = await fetch(functionUrl, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      body: formData,
+      // Don't set Content-Type header, the browser will set it with the correct boundary
+    });
+    
+    if (!response.ok) {
+      const statusCode = response.status;
+      let errorMessage;
+      
+      try {
+        const errorData = await response.text();
+        errorMessage = `Cloud Function error (${statusCode}): ${errorData}`;
+      } catch (textError) {
+        errorMessage = `Cloud Function error (${statusCode}): ${response.statusText}`;
+      }
+      
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    
+    // Parse the response
+    const result = await response.json();
+    
+    if (!result.success || !result.url) {
+      throw new Error('Cloud Function did not return a valid URL');
+    }
+    
+    console.log('Cloud Function upload successful, received URL:', result.url);
+    return result.url;
+  } catch (error) {
+    console.error('Error in Cloud Function upload:', error);
     throw error;
   }
 };
@@ -152,11 +361,15 @@ export const fetchPlants = async () => {
         
         console.log(`[${environment}] fetchPlants - Found cached plants data (${cacheAgeMinutes.toFixed(1)} minutes old)`);
         
-        // Use cache if it's less than 5 minutes old
-        if (cacheAgeMinutes < 5 && Array.isArray(parsedCache.data) && parsedCache.data.length > 0) {
+        // Use cache if it's less than 2 minutes old (reduced from 5 to ensure fresher data)
+        if (cacheAgeMinutes < 2 && Array.isArray(parsedCache.data) && parsedCache.data.length > 0) {
           console.log(`[${environment}] fetchPlants - Using cached plants data (${parsedCache.data.length} plants)`);
           return parsedCache.data;
+        } else {
+          console.log(`[${environment}] fetchPlants - Cache is too old or invalid, fetching fresh data`);
         }
+      } else {
+        console.log(`[${environment}] fetchPlants - No cache found, fetching fresh data`);
       }
     } catch (cacheError) {
       console.error(`[${environment}] fetchPlants - Error reading cached plants:`, cacheError);
@@ -210,12 +423,20 @@ export const fetchPlants = async () => {
           id: plantId, // Use the plant's ID or the Firebase key
           inventory: inventoryData[plantId] || {
             currentStock: 0,
-            status: "Unknown",
+            status: "Out of Stock",
             restockDate: "",
             notes: ""
           }
         };
       });
+      
+      // Update local inventory cache with the fetched data
+      try {
+        localStorage.setItem('plantInventory', JSON.stringify(inventoryData));
+        console.log(`[${environment}] fetchPlants - Updated local inventory cache`);
+      } catch (e) {
+        console.error(`[${environment}] fetchPlants - Error updating inventory cache:`, e);
+      }
       
       console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
       // Log a sample plant for verification
@@ -458,12 +679,14 @@ export const updatePlant = async (plantId, plantData) => {
  */
 export const updateInventory = async (plantId, inventoryData) => {
   try {
-    console.log(`Updating inventory for plant ${plantId}:`, inventoryData);
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Starting update for plant ${plantId}`);
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Data:`, inventoryData);
     
     const { featured, ...inventoryProps } = inventoryData;
     
     // First, update localStorage as a cache
     try {
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating localStorage cache`);
       const existingData = localStorage.getItem('plantInventory');
       let storedInventory = {};
       
@@ -479,6 +702,41 @@ export const updateInventory = async (plantId, inventoryData) => {
       
       // Save back to localStorage
       localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Local storage updated successfully`);
+      
+      // Update cached plants data too, if it exists
+      try {
+        const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
+        if (cachedData) {
+          const parsedCache = JSON.parse(cachedData);
+          if (Array.isArray(parsedCache.data)) {
+            const updatedPlants = parsedCache.data.map(plant => {
+              if (plant.id === plantId) {
+                return {
+                  ...plant,
+                  inventory: {
+                    ...(plant.inventory || {}),
+                    ...inventoryProps,
+                    lastUpdated: new Date().toISOString()
+                  }
+                };
+              }
+              return plant;
+            });
+            
+            // Update the cache with the new data
+            localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
+              ...parsedCache,
+              data: updatedPlants,
+              lastInventoryUpdate: new Date().toISOString()
+            }));
+            console.log(`[${process.env.NODE_ENV}] updateInventory - Updated plants cache for ${plantId}`);
+          }
+        }
+      } catch (cacheError) {
+        console.error(`[${process.env.NODE_ENV}] updateInventory - Error updating plants cache:`, cacheError);
+        // Continue with Firebase update
+      }
       
       // If there's a featured flag, update the plant in localStorage
       if (featured !== undefined) {
@@ -500,17 +758,25 @@ export const updateInventory = async (plantId, inventoryData) => {
     }
     
     // Update Firebase inventory
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Sending update to Firebase for path: inventory/${plantId}`);
     const inventoryRef = ref(database, `inventory/${plantId}`);
     await set(inventoryRef, {
       ...inventoryProps,
       lastUpdated: new Date().toISOString()
     });
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Firebase inventory update successful`);
     
     // Update featured status if provided
     if (featured !== undefined) {
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating featured status for plant ${plantId}`);
       const plantRef = ref(database, `plants/${plantId}`);
       await update(plantRef, { featured });
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Featured status update successful`);
     }
+    
+    // Clear the plants cache to force a refresh on next load
+    localStorage.removeItem('cachedPlantsWithTimestamp');
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared plants cache to ensure fresh data on next load`);
     
     return {
       success: true,
@@ -521,7 +787,8 @@ export const updateInventory = async (plantId, inventoryData) => {
       }
     };
   } catch (error) {
-    console.error('Error updating inventory in Firebase:', error);
+    console.error(`[${process.env.NODE_ENV}] Error updating inventory in Firebase:`, error);
+    console.error(`[${process.env.NODE_ENV}] Error details:`, error.code, error.message, error.stack);
     
     // Add to sync queue for failed updates
     addToSyncQueue(plantId, inventoryData);
@@ -1010,15 +1277,15 @@ export const loadSamplePlants = async () => {
 // Order related functions
 export const saveOrder = async (orderData) => {
   try {
-    console.log('Saving order to Firebase:', orderData.id);
+    console.log('📦 Attempting to save order:', orderData.id);
     
-    // Store order by ID for direct lookup
     const orderRef = ref(database, `orders/${orderData.id}`);
     await set(orderRef, orderData);
-    
+    console.log('✅ Order saved successfully to Firebase:', orderData.id);
+
     return true;
   } catch (error) {
-    console.error('Error saving order to Firebase:', error);
+    console.error('❌ Error saving order:', error);
     return false;
   }
 };
@@ -1026,6 +1293,10 @@ export const saveOrder = async (orderData) => {
 export const getOrders = async () => {
   try {
     console.log('Fetching all orders from Firebase');
+    
+    // Ensure user is authenticated before reading orders
+    await ensureAuthenticated();
+    
     const ordersRef = ref(database, 'orders');
     const snapshot = await get(ordersRef);
     
@@ -1048,13 +1319,78 @@ export const getOrders = async () => {
   }
 };
 
+/**
+ * Fetches a single order by ID from Firebase
+ * @param {string} orderId - The ID of the order to fetch
+ * @returns {Promise<Object|null>} The order data or null if not found
+ */
+export const getOrder = async (orderId) => {
+  try {
+    console.log(`Fetching order ${orderId} from Firebase`);
+    
+    const orderRef = ref(database, `orders/${orderId}`);
+    const snapshot = await get(orderRef);
+    
+    if (snapshot.exists()) {
+      const orderData = snapshot.val();
+      console.log(`Found order ${orderId} in Firebase`);
+      return orderData;
+    }
+    
+    console.log(`Order ${orderId} not found in Firebase`);
+    return null;
+  } catch (error) {
+    console.error(`Error fetching order ${orderId} from Firebase:`, error);
+    return null;
+  }
+};
+
 export const updateOrderStatus = async (orderId, newStatus) => {
   try {
+    console.log(`Updating status for order ${orderId} to ${newStatus}`);
+    
+    // First get the current order data
     const orderRef = ref(database, `orders/${orderId}`);
-    await update(orderRef, { status: newStatus });
+    const snapshot = await get(orderRef);
+    
+    if (!snapshot.exists()) {
+      console.error(`Order ${orderId} not found`);
+      return false;
+    }
+    
+    // Get current order data
+    const currentOrder = snapshot.val();
+    
+    // Update only the status while preserving all other fields
+    await update(orderRef, {
+      ...currentOrder,
+      status: newStatus,
+      lastUpdated: new Date().toISOString()
+    });
+    
+    console.log(`Successfully updated status for order ${orderId}`);
     return true;
   } catch (error) {
     console.error('Error updating order status in Firebase:', error);
+    return false;
+  }
+};
+
+/**
+ * Update an order in Firebase
+ * @param {string} orderId - The ID of the order to update
+ * @param {Object} orderData - The complete order data to save
+ * @returns {Promise<boolean>} Success status
+ */
+export const updateOrder = async (orderId, orderData) => {
+  try {
+    console.log(`Updating order ${orderId} with data:`, orderData);
+    const orderRef = ref(database, `orders/${orderId}`);
+    await set(orderRef, orderData);  // Use set instead of update to replace the entire order
+    console.log(`Order ${orderId} updated successfully`);
+    return true;
+  } catch (error) {
+    console.error('Error updating order in Firebase:', error);
     return false;
   }
 };
@@ -1297,6 +1633,7 @@ const firebaseService = {
   loadSamplePlants,
   saveOrder,
   getOrders,
+  getOrder,
   updateOrderStatus,
   repairInventoryData,
   deletePlant,

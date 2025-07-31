@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getDatabaseRef, onValue, get } from '../services/firebase';
+import { getDatabaseRef } from '../services/firebase';
+import { onValue, get } from 'firebase/database';
 import '../styles/PlantSalesTracker.css';
 
 const PlantSalesTracker = () => {
@@ -15,7 +16,8 @@ const PlantSalesTracker = () => {
   const [summary, setSummary] = useState({
     totalUnitsSold: 0,
     topSellingPlant: '',
-    averageSalesPerDay: 0
+    averageSalesPerDay: 0,
+    totalFreebies: 0
   });
   const [displayLimit, setDisplayLimit] = useState(20);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -32,6 +34,9 @@ const PlantSalesTracker = () => {
     const filterDays = parseInt(filters.dateRange, 10) || 30;
     const filterDate = new Date(currentDate);
     filterDate.setDate(filterDate.getDate() - filterDays);
+    
+    // Track total freebies
+    let totalFreebies = 0;
 
     // Process orders
     orders.forEach(order => {
@@ -57,29 +62,44 @@ const PlantSalesTracker = () => {
           const quantity = parseInt(item.quantity, 10) || 0;
           const price = parseFloat(item.price) || 0;
           const total = quantity * price;
+          const isFreebie = item.isFreebie || false;
+          
+          // Count freebies
+          if (isFreebie) {
+            totalFreebies += quantity;
+          }
           
           // Add to existing data or create new entry
           if (salesByPlant.has(plantId)) {
             const plantData = salesByPlant.get(plantId);
             plantData.unitsSold += quantity;
-            plantData.revenue += total;
+            if (isFreebie) {
+              plantData.freebies += quantity;
+            } else {
+              plantData.revenue += total;
+              plantData.paidUnits += quantity;
+            }
             plantData.orders.push({
               orderId: order.id,
               date: order.date,
               quantity,
-              price
+              price,
+              isFreebie
             });
           } else {
             salesByPlant.set(plantId, {
               id: plantId,
               name: plantName,
               unitsSold: quantity,
-              revenue: total,
+              paidUnits: isFreebie ? 0 : quantity,
+              freebies: isFreebie ? quantity : 0,
+              revenue: isFreebie ? 0 : total,
               orders: [{
                 orderId: order.id,
                 date: order.date,
                 quantity,
-                price
+                price,
+                isFreebie
               }]
             });
           }
@@ -97,30 +117,33 @@ const PlantSalesTracker = () => {
       salesArray.sort((a, b) => b.revenue - a.revenue);
     } else if (filters.sortBy === 'name') {
       salesArray.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (filters.sortBy === 'freebies') {
+      salesArray.sort((a, b) => b.freebies - a.freebies);
     }
     
     // Calculate summary data
-    const totalUnitsSold = salesArray.reduce((sum, plant) => sum + plant.unitsSold, 0);
+    const totalUnitsSold = salesArray.reduce((sum, plant) => sum + plant.paidUnits, 0);
     const topSellingPlant = salesArray.length > 0 ? salesArray[0].name : 'No data';
     const averageSalesPerDay = totalUnitsSold / filterDays;
     
     setSummary({
       totalUnitsSold,
       topSellingPlant,
-      averageSalesPerDay: parseFloat(averageSalesPerDay.toFixed(2))
+      averageSalesPerDay: parseFloat(averageSalesPerDay.toFixed(2)),
+      totalFreebies: totalFreebies || 0
     });
     
     return salesArray;
   }, [filters.dateRange, filters.plantType, filters.sortBy]);
 
-  // Load orders from Firebase
+  // Function to load orders from Firebase - use the correct import
   const loadOrdersFromFirebase = useCallback(() => {
     setIsLoading(true);
     setError(null);
     
     const ordersRef = getDatabaseRef('orders');
     
-    // Listen for orders from Firebase
+    // Listen for orders from Firebase - use onValue from firebase/database
     const unsubscribe = onValue(ordersRef, (snapshot) => {
       try {
         if (!snapshot.exists()) {
@@ -257,6 +280,11 @@ const PlantSalesTracker = () => {
           <div className="plant-summary-value">{summary.totalUnitsSold}</div>
           <div className="plant-summary-label">Across all plants</div>
         </div>
+        <div className="plant-summary-card freebies">
+          <h3>Total Freebies</h3>
+          <div className="plant-summary-value">n/a</div>
+          <div className="plant-summary-label">Given away for free</div>
+        </div>
       </div>
       
       {/* Filters */}
@@ -303,6 +331,7 @@ const PlantSalesTracker = () => {
             <option value="unitsSold">Units Sold</option>
             <option value="revenue">Revenue</option>
             <option value="name">Plant Name</option>
+            <option value="freebies">Freebies</option>
           </select>
         </div>
       </div>
@@ -322,6 +351,7 @@ const PlantSalesTracker = () => {
                 <tr>
                   <th>Plant Name</th>
                   <th>Units Sold</th>
+                  <th>Freebies</th>
                   <th>Revenue</th>
                   <th>Last Sold</th>
                 </tr>
@@ -337,7 +367,8 @@ const PlantSalesTracker = () => {
                   return (
                     <tr key={plant.id}>
                       <td>{plant.name}</td>
-                      <td>{plant.unitsSold}</td>
+                      <td>{plant.paidUnits}</td>
+                      <td>n/a</td>
                       <td>${plant.revenue.toFixed(2)}</td>
                       <td>
                         {lastOrder 

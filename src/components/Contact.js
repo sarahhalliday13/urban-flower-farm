@@ -140,7 +140,7 @@ function Contact() {
     if (svgElement) svgElement.style.display = 'none';
     if (textElement) textElement.style.display = 'inline';
     
-    navigator.clipboard.writeText('Buttonsflowerfarm@gmail.com')
+    navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
       .then(() => {
         // Show tooltip
         btn.classList.add('copied');
@@ -181,7 +181,7 @@ function Contact() {
                 <h3>Email</h3>
                 <div className="email-container">
                   <p className="email-with-copy">
-                    <a href="mailto:Buttonsflowerfarm@gmail.com">Buttonsflowerfarm@gmail.com</a>
+                    <a href="mailto:buttonsflowerfarm@telus.net">buttonsflowerfarm@telus.net</a>
                     <button 
                       className="copy-email-btn" 
                       onClick={handleCopyEmail}
@@ -218,7 +218,7 @@ function Contact() {
               <div className="info-text">
                 <h3>The Socials</h3>
                 <div className="social-icons">
-                  <a href="https://www.facebook.com/buttonsflowers" target="_blank" rel="noopener noreferrer">
+                  <a href="https://www.facebook.com/groups/buttonsflowerfarm" target="_blank" rel="noopener noreferrer">
                     Facebook
                   </a>
                 </div>

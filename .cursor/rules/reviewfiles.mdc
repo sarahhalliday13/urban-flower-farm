@@ -1,0 +1,9 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+Hello, we are working on the development branch in our staging environment. You MUST review the PROJECT_SUMMARY.md, DEVELOPER.md and admin-refactor.md, order-refactor.md files carefully before you *touch* anything. Do not make changes, commit changes to GitHub or to Production unless directed. Seriously, don’t even think about it. 

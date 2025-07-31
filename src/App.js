@@ -1,5 +1,5 @@
 import './App.css';
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import About from './components/About';
@@ -12,12 +12,15 @@ import Orders from './components/Orders';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/ToastManager';
+// Import Toaster from react-hot-toast
+import { Toaster } from 'react-hot-toast';
 // eslint-disable-next-line no-unused-vars
 import { CartProvider, useCart } from './context/CartContext';
 // eslint-disable-next-line no-unused-vars
 import { AuthProvider, useAuth } from './context/AuthContext';
 // eslint-disable-next-line no-unused-vars
 import { AdminProvider } from './context/AdminContext';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import './cart-styles.css';
 import FAQ from './components/FAQ';
 import UpdatesPage from './components/UpdatesPage';
@@ -28,18 +31,46 @@ import { ScrollRestorationProvider } from './hooks/ScrollRestorationContext';
 import BackToTop from './components/BackToTop';
 import DatabaseDebug from './DatabaseDebug';
 import ErrorBoundary from './components/ErrorBoundary';
-
 // Import admin components directly instead of lazy loading
-import InventoryManager from './components/InventoryManager';
+// import InventoryManager from './components/InventoryManager';
+import ModularInventoryManager from './components/inventory/ModularInventoryManager';
 import AdminDashboard from './components/AdminDashboard';
-import AdminOrders from './components/AdminOrders';
-import AdminUtilities from './components/AdminUtilities';
+// import AdminOrders from './components/AdminOrders';
+import { ModularOrderManager } from './components/orders/index';
+import { ModularPlantEditor } from './components/plant-editor';
+import InvoicePage from './pages/InvoicePage';
+
+// Initialize Firebase Anonymous Auth
+const auth = getAuth();
+signInAnonymously(auth)
+  .then(() => {
+    console.log('✅ Anonymous auth successful');
+  })
+  .catch((error) => {
+    console.error('❌ Anonymous auth failed:', error.message);
+  });
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    console.log('🆔 Firebase user ID:', user.uid);
+  } else {
+    console.warn('⚠️ Not authenticated!');
+  }
+});
 
 // Custom wrapper for plant details
 const PlantDetailsWrapper = ({ children }) => {
   return (
     <div className="plant-details-section">
-      {children}
+      <div className="shop-main" style={{ 
+        width: "100%", 
+        maxWidth: "1200px", 
+        margin: "0 auto", 
+        padding: "16px 1rem 2rem 1rem",
+        boxSizing: "border-box" 
+      }}>
+        {children}
+      </div>
     </div>
   );
 };
@@ -69,13 +100,13 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
   const { isAuthenticated, logout } = useAuth();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [, forceUpdate] = useState();
-  const [hasOrders, setHasOrders] = useState(false);
   
   // Calculate cart count using getItemCount function
   const cartCount = getItemCount();
 
   // Function to check if user has orders
   const checkForUserOrders = () => {
+    // This function now just checks for user orders but doesn't set state
     const userEmail = localStorage.getItem('userEmail');
     const orders = JSON.parse(localStorage.getItem('orders') || '[]');
     
@@ -84,9 +115,9 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
       const userOrders = orders.filter(
         order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
       );
-      setHasOrders(userOrders.length > 0);
+      return userOrders.length > 0;
     } else {
-      setHasOrders(false);
+      return false;
     }
   };
 
@@ -109,11 +140,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
       window.removeEventListener('orderCreated', handleOrderCreated);
     };
   }, []);
-
-  // Force re-render when cart count changes
-  useEffect(() => {
-    // This empty dependency array ensures the effect runs when cartCount changes
-  }, [cartCount]);
 
   const toggleCart = () => {
     setIsCartOpen(!isCartOpen);
@@ -151,9 +177,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
-              {hasOrders && (
-                <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
-              )}
             </>
           )}
         </div>
@@ -191,13 +214,6 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
                 onClick={() => setIsMenuOpen(false)}
               >
                 News
-              </AdminNavLink>
-              <AdminNavLink 
-                to="/admin/utilities" 
-                currentPath={currentPath}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Utilities
               </AdminNavLink>
               <button className="logout-button" onClick={handleLogout}>
                 Logout
@@ -320,42 +336,8 @@ const AdminContentWrapper = ({ children }) => {
 
 // Separate component for the app content that can safely use hooks within the providers
 function AppContent() {
-  // Now useAuth is safely inside the AuthProvider
-  const { isAuthenticated: isAdmin } = useAuth();
-  const [hasOrders, setHasOrders] = useState(false);
   // Add state for mobile menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // Function to check if user has orders
-  const checkForUserOrders = () => {
-    const userEmail = localStorage.getItem('userEmail');
-    const orders = JSON.parse(localStorage.getItem('orders') || '[]');
-    
-    if (userEmail && orders.length > 0) {
-      // Check if any orders belong to this user
-      const userOrders = orders.filter(
-        order => order.customer?.email?.toLowerCase() === userEmail.toLowerCase()
-      );
-      setHasOrders(userOrders.length > 0);
-    } else {
-      setHasOrders(false);
-    }
-  };
-
-  // Check for orders when component mounts
-  useEffect(() => {
-    checkForUserOrders();
-  }, []);
-  
-  // Listen for the 'orderCreated' event to update the orders display
-  useEffect(() => {
-    const handleOrderCreated = () => {
-      checkForUserOrders();
-    };
-    
-    window.addEventListener('orderCreated', handleOrderCreated);
-    return () => window.removeEventListener('orderCreated', handleOrderCreated);
-  }, []);
   
   return (
     <div className="App">
@@ -378,6 +360,7 @@ function AppContent() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
+        <Route path="/invoice/:orderId" element={<InvoicePage />} />
         <Route 
           path="/admin" 
           element={
@@ -393,7 +376,27 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <InventoryManager />
+                <ModularInventoryManager />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/editplant/:id" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <ModularPlantEditor />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/admin/addplant" 
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <ModularPlantEditor />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
@@ -403,22 +406,12 @@ function AppContent() {
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <AdminOrders />
+                <ModularOrderManager />
               </AdminContentWrapper>
             </ProtectedRoute>
           } 
         />
         <Route
-          path="/admin/utilities"
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <AdminUtilities />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route 
           path="/admin/updates"
           element={
             <ProtectedRoute>
@@ -441,7 +434,6 @@ function AppContent() {
           <Link to="/faq">FAQ</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
-          {hasOrders && <Link to="/orders">My Orders</Link>}
           <Link to="/admin">Manage</Link>
         </div>
         <p>© 2025 Buttons Urban Flower Farm. All rights reserved.</p>
@@ -460,6 +452,18 @@ const App = () => (
         <CartProvider>
           <AdminProvider>
             <ToastProvider>
+              <Toaster 
+                position="top-center" 
+                reverseOrder={false}
+                toastOptions={{
+                  success: {
+                    iconTheme: {
+                      primary: 'transparent',
+                      secondary: 'transparent',
+                    },
+                  },
+                }}
+              />
               <AppContent />
             </ToastProvider>
           </AdminProvider>
