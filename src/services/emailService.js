@@ -5,15 +5,8 @@
 
 // Define the API base URL based on environment
 const getApiUrl = () => {
-  const hostname = window.location.hostname;
-
-  if (hostname.includes('localhost')) {
-    return 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1';
-  } else if (hostname.includes('urban-flower-farm-staging.web.app')) {
-    return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
-  } else {
-    return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
-  }
+  // Always use production endpoint since we don't have emulators
+  return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
 };
 
 // Send order confirmation emails

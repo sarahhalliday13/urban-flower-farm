@@ -1,20 +1,15 @@
 const functions = require('firebase-functions');
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Initialize Admin
 if (!admin.apps.length) {
   admin.initializeApp();
-}
-
-// SendGrid Setup
-const SENDGRID_API_KEY = functions.config().sendgrid?.api_key || process.env.SENDGRID_API_KEY;
-const VERIFIED_SENDER = 'invoice@buttonsflowerfarm.ca';
-
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
-} else {
-  console.error('❌ SendGrid API Key missing! Invoice emails will fail.');
 }
 
 // 💥 Your fixed callable function starts here:
@@ -34,16 +29,31 @@ exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'Missing or invalid order ID');
     }
 
+    // Create transporter with Gmail SMTP settings
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
+      auth: {
+        user: "buttonsflowerfarm@telus.net",
+        pass: process.env.GMAIL_PASSWORD,
+      },
+    });
+
+    // Verify SMTP connection
+    await transporter.verify();
+    console.log("✅ SMTP connection successful");
+
     const msg = {
       to,
-      from: VERIFIED_SENDER,
+      from: "buttonsflowerfarm@telus.net",
       subject,
       html,
     };
 
     console.log('📬 Sending Invoice Email:', JSON.stringify(msg, null, 2));
 
-    const result = await sgMail.send(msg);
+    const result = await transporter.sendMail(msg);
 
     console.log('✅ Invoice Email Sent Successfully!', result);
 

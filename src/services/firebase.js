@@ -15,6 +15,7 @@ import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/da
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 // Import auth functions only when needed
 
 // Your web app's Firebase configuration
@@ -35,9 +36,10 @@ const database = getDatabase(app);
 const storage = getStorage(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const functions = getFunctions(app, 'us-central1');
 
 // Export Firebase utilities
-export { set, get, onValue, update, remove, storage, db, auth };
+export { set, get, onValue, update, remove, storage, db, auth, functions };
 
 // Utility to ensure user is authenticated before database operations
 export const ensureAuthenticated = () => {
@@ -1315,16 +1317,16 @@ export const updateOrderStatus = async (orderId, newStatus) => {
 };
 
 /**
- * Update an order in Firebase with new data
+ * Update an order in Firebase
  * @param {string} orderId - The ID of the order to update
- * @param {Object} orderData - The data to update (partial update)
+ * @param {Object} orderData - The complete order data to save
  * @returns {Promise<boolean>} Success status
  */
 export const updateOrder = async (orderId, orderData) => {
   try {
     console.log(`Updating order ${orderId} with data:`, orderData);
     const orderRef = ref(database, `orders/${orderId}`);
-    await update(orderRef, orderData);
+    await set(orderRef, orderData);  // Use set instead of update to replace the entire order
     console.log(`Order ${orderId} updated successfully`);
     return true;
   } catch (error) {
