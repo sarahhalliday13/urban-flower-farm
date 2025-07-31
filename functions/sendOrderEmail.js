@@ -1,7 +1,11 @@
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
 const admin = require("firebase-admin");
-require("dotenv").config();
+const dotenv = require("dotenv");
+const path = require("path");
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -490,47 +494,37 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
 
 // Export the Cloud Function
 exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
+  // Set CORS headers for all requests
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+  res.set('Access-Control-Max-Age', '3600');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
   // Only allow POST requests
-  if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
+  if (req.method !== 'POST') {
+    res.status(405).json({
+      success: false,
+      error: 'Method not allowed'
+    });
     return;
   }
 
   try {
     const orderData = req.body;
     console.log("📦 Received order data:", orderData.id);
-    console.log("📧 Is invoice email?", orderData.isInvoiceEmail === true);
-    console.log("🔄 Force resend?", orderData.forceResend === true);
 
     // Validate customer email
     if (!orderData.customer?.email) {
       throw new Error("Customer email is required");
     }
 
-    const isInvoiceEmail = orderData.isInvoiceEmail === true;
-    const forceResend = orderData.forceResend === true;
-
-    // Check if email was already sent (unless it's a force resend or invoice)
-    if (!isInvoiceEmail && !forceResend) {
-      try {
-        const orderRef = admin.database().ref(`orders/${orderData.id}`);
-        const orderSnapshot = await orderRef.once("value");
-        const existingOrder = orderSnapshot.val();
-        
-        if (existingOrder && existingOrder.emailSent === true) {
-          console.log(`✉️ Order confirmation email already sent for order ${orderData.id}, skipping send`);
-          return res.status(200).json({
-            success: true,
-            message: "Order confirmation email already sent",
-            alreadySent: true
-          });
-        }
-      } catch (dbError) {
-        console.error(`❌ Error checking email status for order ${orderData.id}:`, dbError);
-        // Continue with sending if we can't check - better to potentially send twice than not at all
-      }
-    }
-
+    // Create transporter with Gmail SMTP settings
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
@@ -541,60 +535,41 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
       },
     });
 
+    // Verify SMTP connection
     await transporter.verify();
     console.log("✅ SMTP connection successful");
 
-    // Generate appropriate email template based on type
-    const customerEmailHtml = isInvoiceEmail 
-      ? generateInvoiceEmailTemplate(orderData, false)
-      : generateCustomerEmailTemplate(orderData);
+    const customerEmailHtml = generateCustomerEmailTemplate(orderData);
+    const buttonsEmailHtml = generateButtonsEmailTemplate(orderData);
 
-    const buttonsEmailHtml = isInvoiceEmail
-      ? generateInvoiceEmailTemplate(orderData, true)
-      : generateButtonsEmailTemplate(orderData);
-
-    // Send customer email
+    // Send customer confirmation email
     const customerInfo = await transporter.sendMail({
       from: "buttonsflowerfarm@telus.net",
       to: orderData.customer.email,
-      subject: isInvoiceEmail 
-        ? `Invoice for Order - ${orderData.id}`
-        : `Order Confirmation - ${orderData.id}`,
+      subject: `Order Confirmation - ${orderData.id}`,
       html: customerEmailHtml,
     });
 
-    console.log("✅ Customer email sent to", orderData.customer.email, ":", customerInfo.messageId);
+    console.log("✅ Customer confirmation email sent to", orderData.customer.email, ":", customerInfo.messageId);
 
-    // Send business notification (always send for new orders, only send admin copy for forced invoice resends)
-    if (!isInvoiceEmail || forceResend) {
-      const buttonsInfo = await transporter.sendMail({
-        from: "buttonsflowerfarm@telus.net",
-        to: "buttonsflowerfarm@telus.net",
-        subject: isInvoiceEmail
-          ? `Invoice Sent - ${orderData.id}`
-          : `New Order Received - ${orderData.id}`,
-        html: buttonsEmailHtml,
-      });
+    // Send business notification
+    const buttonsInfo = await transporter.sendMail({
+      from: "buttonsflowerfarm@telus.net",
+      to: "buttonsflowerfarm@telus.net",
+      subject: `New Order Received - ${orderData.id}`,
+      html: buttonsEmailHtml,
+    });
 
-      console.log("✅ Business notification email sent:", buttonsInfo.messageId);
-    }
+    console.log("✅ Business notification email sent:", buttonsInfo.messageId);
 
     // Update email status in database
     try {
       const orderRef = admin.database().ref(`orders/${orderData.id}`);
-      if (isInvoiceEmail) {
-        await orderRef.update({
-          invoiceEmailSent: true,
-          invoiceEmailSentTimestamp: Date.now(),
-          lastInvoiceEmailId: customerInfo.messageId
-        });
-      } else {
-        await orderRef.update({
-          emailSent: true,
-          emailSentTimestamp: Date.now(),
-          lastEmailId: customerInfo.messageId
-        });
-      }
+      await orderRef.update({
+        emailSent: true,
+        emailSentTimestamp: Date.now(),
+        lastEmailId: customerInfo.messageId
+      });
       console.log(`✅ Updated order ${orderData.id} with email status`);
     } catch (updateError) {
       console.error(`❌ Error updating email status for order ${orderData.id}:`, updateError);
@@ -602,8 +577,9 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `${isInvoiceEmail ? "Invoice" : "Order confirmation"} email${forceResend ? " resent" : " sent"} successfully`,
-      customerEmailId: customerInfo.messageId
+      message: "Emails sent successfully",
+      customerEmailId: customerInfo.messageId,
+      buttonsEmailId: buttonsInfo.messageId,
     });
 
   } catch (error) {
