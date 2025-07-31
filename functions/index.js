@@ -11,7 +11,7 @@
 // Updated to use firebase-functions v4
 const functions = require('firebase-functions');
 const logger = functions.logger; // Use built-in functions logger
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 const admin = require('firebase-admin');
 const express = require('express');
 const cors = require('cors');
@@ -21,6 +21,11 @@ const Busboy = require('busboy');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const dotenv = require('dotenv');
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
 const { simpleContactFunction } = require('./simplifiedContact');
 const { sendContactEmail } = require('./sendContactEmail');
 const { directContactEmail } = require('./simple-contact-email');
@@ -41,8 +46,10 @@ const app = express();
 const allowedOrigins = [
   'https://buttonsflowerfarm-8a54d.web.app',
   'https://urban-flower-farm-staging.web.app',
-  'http://localhost:3000'
+  'http://localhost:3000',
+  'http://localhost:4000'  // Add port 4000 since that's what we're using
 ];
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -52,42 +59,37 @@ app.use(cors({
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Accept', 'Origin', 'Access-Control-Request-Method', 'Access-Control-Request-Headers']
 }));
 
 // Parse JSON
 app.use(express.json());
 
-// Configure SendGrid
-let apiKeyConfigured = false;
-const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
+// Configure email settings
+const BUTTONS_EMAIL = 'buttonsflowerfarm@telus.net';
 
-try {
-  // Try to get API key from Firebase config (production)
-  const sendgridConfig = functions.config().sendgrid;
-  if (sendgridConfig && sendgridConfig.api_key) {
-    sgMail.setApiKey(sendgridConfig.api_key);
-    console.log('API Key status: Found (length: ' + sendgridConfig.api_key.length + ')');
-    console.log('SendGrid API initialized');
-    apiKeyConfigured = true;
-  } else {
-    // Try environment variable (development)
-    const apiKey = process.env.SENDGRID_API_KEY;
-    if (apiKey) {
-      sgMail.setApiKey(apiKey);
-      console.log('API Key status: Found from env (length: ' + apiKey.length + ')');
-      console.log('SendGrid API initialized from environment');
-      apiKeyConfigured = true;
-    } else {
-      console.error('API Key status: MISSING - SendGrid will not work!');
-      // TEMPORARY DEBUG FIX - Set a fake API key for testing routes
-      sgMail.setApiKey('SG.fakeKeyForTestingPurposesOnly');
-      console.warn('TESTING MODE: Using fake API key for route testing only');
-      apiKeyConfigured = true; // Enable for testing routes only
-    }
+// Create transporter with Gmail SMTP settings
+const createTransporter = async () => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: BUTTONS_EMAIL,
+      pass: process.env.GMAIL_PASSWORD,
+    },
+  });
+
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP connection successful");
+    return transporter;
+  } catch (error) {
+    console.error("❌ SMTP connection failed:", error);
+    throw error;
   }
-} catch (error) {
-  console.error('Error configuring SendGrid:', error.message);
-}
+};
 
 // Health check endpoints - CRITICAL for container healthcheck
 app.get('/', (req, res) => {
@@ -118,13 +120,11 @@ app.post('/', async (req, res) => {
     const { to, subject, text, html } = req.body;
     logger.info('Received email request:', { to, subject });
     
-    if (!apiKeyConfigured) {
-      throw new Error('SendGrid API key is not configured');
-    }
-    
     if (!to || !subject || (!text && !html)) {
       throw new Error('Missing required fields');
     }
+
+    const transporter = await createTransporter();
 
     const msg = {
       to,
@@ -134,10 +134,10 @@ app.post('/', async (req, res) => {
       html: html || text,
     };
 
-    await sgMail.send(msg);
-    logger.info('General email sent successfully');
+    const result = await transporter.sendMail(msg);
+    logger.info('General email sent successfully:', result.messageId);
     
-    res.status(200).json({ success: true });
+    res.status(200).json({ success: true, messageId: result.messageId });
   } catch (error) {
     logger.error('Error sending email:', error);
     res.status(500).json({ 
@@ -301,15 +301,13 @@ exports.api = functions.region('us-central1').https.onRequest(app);
 // Export the uploadImage function
 exports.uploadImage = functions.region('us-central1').https.onRequest(uploadImageApp);
 
-// Export sendOrderEmail directly, letting it handle its own CORS
+// Export sendOrderEmail directly with simplified CORS
 exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
-  // Set CORS headers
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.set('Access-Control-Allow-Origin', origin);
-  }
-  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Set CORS headers for all requests
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', '*');
+  res.set('Access-Control-Max-Age', '3600');
 
   // Handle OPTIONS request
   if (req.method === 'OPTIONS') {

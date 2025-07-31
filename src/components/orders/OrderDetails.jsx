@@ -28,7 +28,9 @@ const OrderDetails = () => {
     updateOrderDiscount,
     updateOrderPayment,
     updateOrderItems,
-    finalizeOrder
+    finalizeOrder,
+    refreshOrders, // Added refreshOrders to the context
+    addToast // Added addToast to the context
   } = useOrders();
   
   const navigate = useNavigate();
@@ -83,49 +85,54 @@ const OrderDetails = () => {
   // Scroll to order details when opened or reopened
   useEffect(() => {
     if (orderDetailsRef.current && activeOrder) {
-      // Scroll to the top of order details when it becomes visible
-      orderDetailsRef.current.scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start'
+      // Get the header height for offset
+      const headerHeight = 165; // Height of the fixed header
+      const elementTop = orderDetailsRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementTop + window.pageYOffset - headerHeight;
+
+      // Scroll with smooth behavior
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
       });
     }
   }, [activeOrder, isEditingOrder]);
-  
+
   // Handle closing the edit modal with refresh
   const closeModalWithRefresh = async () => {
     // First close the modal immediately to avoid UI glitches
     setIsEditingOrder(false);
-    
-    // Flag that we should reopen after refresh
     setShouldReopenAfterRefresh(true);
     
-    // Then refresh the orders data
-    if (window.orderContext && typeof window.orderContext.refreshOrders === 'function') {
-      try {
-        // Pass true for silent mode to avoid duplicate toast notifications
-        await window.orderContext.refreshOrders(true);
-        console.log("Orders refreshed after editing");
-      } catch (refreshError) {
-        console.error("Error refreshing orders:", refreshError);
-      } finally {
-        // Reopen the edit modal after a short delay to ensure state is updated
-        setTimeout(() => {
-          if (shouldReopenAfterRefresh) {
-            // Increment editor key to force remount
-            setEditorKey(prev => prev + 1);
-            setIsEditingOrder(true);
-            setShouldReopenAfterRefresh(false);
-            
-            // Ensure element scrolls into view after reopening
-            if (orderDetailsRef.current) {
-              orderDetailsRef.current.scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'start'
-              });
-            }
-          }
-        }, 100);
+    // Wait a bit for the modal to close
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Then refresh orders
+    try {
+      await refreshOrders(true);
+      console.log("Orders refreshed after edit");
+      
+      // After refresh, reopen if needed
+      if (shouldReopenAfterRefresh) {
+        setIsEditingOrder(true);
+        setShouldReopenAfterRefresh(false);
+        
+        // Get the header height for offset
+        const headerHeight = 165; // Height of the fixed header
+        const elementTop = orderDetailsRef.current?.getBoundingClientRect().top;
+        if (elementTop !== undefined) {
+          const offsetPosition = elementTop + window.pageYOffset - headerHeight;
+          
+          // Scroll with smooth behavior
+          window.scrollTo({
+            top: offsetPosition,
+            behavior: 'smooth'
+          });
+        }
       }
+    } catch (error) {
+      console.error("Error refreshing orders:", error);
+      addToast("Failed to refresh orders", "error");
     }
   };
   
