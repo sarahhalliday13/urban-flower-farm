@@ -1,6 +1,12 @@
 const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
+const admin = require("firebase-admin");
 require("dotenv").config();
+
+// Initialize Firebase Admin SDK if not already initialized
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 /**
  * Email templates and sending function for order confirmations
@@ -319,6 +325,169 @@ function generateButtonsEmailTemplate(order) {
   `;
 }
 
+function generateInvoiceEmailTemplate(order, isAdmin = false) {
+  const formatCurrency = (amount) => {
+    return parseFloat(amount || 0).toFixed(2);
+  };
+
+  const formatDate = (dateString) => {
+    try {
+      const options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    } catch (error) {
+      return new Date().toLocaleDateString();
+    }
+  };
+
+  const itemsList = order.items.map(item => `
+    <tr>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
+    </tr>
+  `).join('');
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invoice - ${order.id}</title>
+      <style type="text/css">
+        /* Base styles */
+        body, table, td, div, p, a { font-family: Arial, Helvetica, sans-serif; }
+        body { margin: 0; padding: 0; width: 100% !important; }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
+        .ReadMsgBody { width: 100%; }
+        .ExternalClass { width: 100%; }
+        .ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div { line-height: 100%; }
+        
+        /* Responsive styles */
+        @media screen and (max-width: 600px) {
+          .email-container { width: 100% !important; }
+          .fluid { max-width: 100% !important; height: auto !important; margin-left: auto !important; margin-right: auto !important; }
+          .stack-column, .stack-column-center { display: block !important; width: 100% !important; max-width: 100% !important; direction: ltr !important; }
+          .stack-column-center { text-align: center !important; }
+          .center-on-mobile { text-align: center !important; }
+          .hide-on-mobile { display: none !important; max-height: 0 !important; overflow: hidden !important; }
+          .mobile-padding { padding-left: 10px !important; padding-right: 10px !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f7f7f7;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7f7f7;">
+        <tr>
+          <td align="center" valign="top">
+            <table border="0" cellpadding="0" cellspacing="0" width="600" class="email-container" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <tr>
+                <td style="padding: 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-bottom: 2px solid #2c5530; padding-bottom: 20px;">
+                    <tr>
+                      <td width="50%" class="stack-column-center" style="vertical-align: top;">
+                        <img src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" 
+                             width="160" height="auto" alt="Buttons Urban Flower Farm" 
+                             style="margin: 0; display: block; max-width: 160px;">
+                      </td>
+                      <td width="50%" class="stack-column-center" style="vertical-align: top; text-align: right;">
+                        <h2 style="color: #2c5530; margin-top: 0; margin-bottom: 15px; font-size: 24px;">INVOICE</h2>
+                        <p style="margin: 5px 0; font-size: 14px;"><strong>Order #:</strong> ${order.id}</p>
+                        <p style="margin: 5px 0; font-size: 14px;"><strong>Date:</strong> ${formatDate(order.date)}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 0 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
+                    <tr>
+                      <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
+                        <p style="margin: 5px 0; font-size: 14px;">${order.customer.firstName} ${order.customer.lastName}</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer.email}</p>
+                        ${order.customer.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
+                      </td>
+                      <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
+                        <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 0 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; border-collapse: collapse;">
+                    <thead>
+                      <tr>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Item</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: center; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Quantity</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Price</th>
+                        <th style="background-color: #f9f9f9; padding: 10px; text-align: right; border-bottom: 2px solid #ddd; font-weight: 600; font-size: 14px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsList}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
+                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </td>
+              </tr>
+
+              <tr>
+                <td style="padding: 0 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f8f8f8; border-radius: 4px;">
+                    <tr>
+                      <td style="padding: 15px;">
+                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Payment Information</h3>
+                        <p style="margin: 5px 0; font-size: 14px;">Please complete your payment using one of the following methods:</p>
+                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 10px 0;">
+                          <tr>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
+                          </tr>
+                          <tr>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
+                          </tr>
+                        </table>
+                        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              ${!isAdmin ? `
+              <tr>
+                <td style="padding: 0 30px 30px 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-left: 4px solid #2c5530;">
+                    <tr>
+                      <td style="padding: 15px; font-size: 16px; font-style: italic; color: #2c5530;">
+                        Thanks for supporting our local farm! We appreciate your business.
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              ` : ''}
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
 // Export the Cloud Function
 exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
   // Only allow POST requests
@@ -330,10 +499,36 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
   try {
     const orderData = req.body;
     console.log("📦 Received order data:", orderData.id);
+    console.log("📧 Is invoice email?", orderData.isInvoiceEmail === true);
+    console.log("🔄 Force resend?", orderData.forceResend === true);
 
     // Validate customer email
     if (!orderData.customer?.email) {
       throw new Error("Customer email is required");
+    }
+
+    const isInvoiceEmail = orderData.isInvoiceEmail === true;
+    const forceResend = orderData.forceResend === true;
+
+    // Check if email was already sent (unless it's a force resend or invoice)
+    if (!isInvoiceEmail && !forceResend) {
+      try {
+        const orderRef = admin.database().ref(`orders/${orderData.id}`);
+        const orderSnapshot = await orderRef.once("value");
+        const existingOrder = orderSnapshot.val();
+        
+        if (existingOrder && existingOrder.emailSent === true) {
+          console.log(`✉️ Order confirmation email already sent for order ${orderData.id}, skipping send`);
+          return res.status(200).json({
+            success: true,
+            message: "Order confirmation email already sent",
+            alreadySent: true
+          });
+        }
+      } catch (dbError) {
+        console.error(`❌ Error checking email status for order ${orderData.id}:`, dbError);
+        // Continue with sending if we can't check - better to potentially send twice than not at all
+      }
     }
 
     const transporter = nodemailer.createTransport({
@@ -349,34 +544,66 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
     await transporter.verify();
     console.log("✅ SMTP connection successful");
 
-    const customerEmailHtml = generateCustomerEmailTemplate(orderData);
-    const buttonsEmailHtml = generateButtonsEmailTemplate(orderData);
+    // Generate appropriate email template based on type
+    const customerEmailHtml = isInvoiceEmail 
+      ? generateInvoiceEmailTemplate(orderData, false)
+      : generateCustomerEmailTemplate(orderData);
 
-    // Send customer confirmation email to the customer's email address
+    const buttonsEmailHtml = isInvoiceEmail
+      ? generateInvoiceEmailTemplate(orderData, true)
+      : generateButtonsEmailTemplate(orderData);
+
+    // Send customer email
     const customerInfo = await transporter.sendMail({
       from: "buttonsflowerfarm@telus.net",
-      to: orderData.customer.email, // Send to customer's email
-      subject: `Order Confirmation - ${orderData.id}`,
-      html: customerEmailHtml, // Use customer template
+      to: orderData.customer.email,
+      subject: isInvoiceEmail 
+        ? `Invoice for Order - ${orderData.id}`
+        : `Order Confirmation - ${orderData.id}`,
+      html: customerEmailHtml,
     });
 
-    console.log("✅ Customer confirmation email sent to", orderData.customer.email, ":", customerInfo.messageId);
+    console.log("✅ Customer email sent to", orderData.customer.email, ":", customerInfo.messageId);
 
-    // Send business notification to the business email
-    const buttonsInfo = await transporter.sendMail({
-      from: "buttonsflowerfarm@telus.net",
-      to: "buttonsflowerfarm@telus.net", // Send to business email
-      subject: `New Order Received - ${orderData.id}`,
-      html: buttonsEmailHtml, // Use business template
-    });
+    // Send business notification (always send for new orders, only send admin copy for forced invoice resends)
+    if (!isInvoiceEmail || forceResend) {
+      const buttonsInfo = await transporter.sendMail({
+        from: "buttonsflowerfarm@telus.net",
+        to: "buttonsflowerfarm@telus.net",
+        subject: isInvoiceEmail
+          ? `Invoice Sent - ${orderData.id}`
+          : `New Order Received - ${orderData.id}`,
+        html: buttonsEmailHtml,
+      });
 
-    console.log("✅ Business notification email sent:", buttonsInfo.messageId);
+      console.log("✅ Business notification email sent:", buttonsInfo.messageId);
+    }
+
+    // Update email status in database
+    try {
+      const orderRef = admin.database().ref(`orders/${orderData.id}`);
+      if (isInvoiceEmail) {
+        await orderRef.update({
+          invoiceEmailSent: true,
+          invoiceEmailSentTimestamp: Date.now(),
+          lastInvoiceEmailId: customerInfo.messageId
+        });
+      } else {
+        await orderRef.update({
+          emailSent: true,
+          emailSentTimestamp: Date.now(),
+          lastEmailId: customerInfo.messageId
+        });
+      }
+      console.log(`✅ Updated order ${orderData.id} with email status`);
+    } catch (updateError) {
+      console.error(`❌ Error updating email status for order ${orderData.id}:`, updateError);
+    }
 
     res.status(200).json({
       success: true,
-      message: "Emails sent successfully",
-      customerEmailId: customerInfo.messageId,
-      buttonsEmailId: buttonsInfo.messageId,
+      message: `${isInvoiceEmail ? "Invoice" : "Order confirmation"} email${forceResend ? " resent" : " sent"} successfully`,
+      customerEmailId: customerInfo.messageId
     });
 
   } catch (error) {
@@ -387,3 +614,8 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
     });
   }
 }); 
+
+// Export template functions for testing
+exports.generateCustomerEmailTemplate = generateCustomerEmailTemplate;
+exports.generateButtonsEmailTemplate = generateButtonsEmailTemplate;
+exports.generateInvoiceEmailTemplate = generateInvoiceEmailTemplate; 
