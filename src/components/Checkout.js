@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
 import { getCustomerData, saveCustomerData } from '../services/customerService';
+import { sendOrderConfirmationEmails } from '../services/emailService';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -201,6 +202,14 @@ const Checkout = () => {
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
         
+        // Send order confirmation emails
+        try {
+          await sendOrderConfirmationEmails(newOrderData);
+          console.log('✅ Order confirmation emails sent successfully');
+        } catch (emailError) {
+          console.error('❌ Error sending order confirmation emails:', emailError);
+        }
+        
         // Dispatch the orderCreated event to update the navigation
         window.dispatchEvent(new Event('orderCreated'));
       } catch (firebaseError) {
@@ -209,6 +218,14 @@ const Checkout = () => {
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
+        
+        // Still try to send emails even if Firebase fails
+        try {
+          await sendOrderConfirmationEmails(newOrderData);
+          console.log('✅ Order confirmation emails sent successfully (after Firebase error)');
+        } catch (emailError) {
+          console.error('❌ Error sending order confirmation emails:', emailError);
+        }
         
         // Still dispatch the event even if Firebase fails, since we saved to localStorage
         window.dispatchEvent(new Event('orderCreated'));
