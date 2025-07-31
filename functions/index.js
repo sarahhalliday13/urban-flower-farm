@@ -26,7 +26,7 @@ const { sendContactEmail } = require('./sendContactEmail');
 const { directContactEmail } = require('./simple-contact-email');
 
 // Import our email functions directly - CRITICAL: use destructuring syntax to get the actual function
-const { sendOrderEmail } = require('./sendOrderEmail');
+const sendOrderEmailFunction = require('./sendOrderEmail');
 const invoiceEmailModule = require('./sendInvoiceEmail');
 
 // Initialize Firebase Admin SDK if not already initialized
@@ -243,171 +243,6 @@ function getOrderNotes(order) {
   }
 }
 
-// Email template functions
-function generateCustomerEmailTemplate(order) {
-  // Ensure items exists and is an array
-  const items = Array.isArray(order.items) ? order.items : [];
-  
-  const itemsList = items.map(item => {
-    // Handle potential missing values
-    const name = item.name || 'Item';
-    const quantity = item.quantity || 1;
-    const price = parseFloat(item.price) || 0;
-    
-    return `
-    <tr>
-      <td>${name}</td>
-      <td>${quantity}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${(price * quantity).toFixed(2)}</td>
-    </tr>
-    `;
-  }).join('');
-
-  // Ensure customer exists
-  const customer = order.customer || {};
-  const firstName = customer.firstName || 'Customer';
-  const lastName = customer.lastName || '';
-  const email = customer.email || 'N/A';
-  const phone = customer.phone || 'N/A';
-
-  // VERY IMPORTANT: Get notes from all possible locations
-  const notes = getOrderNotes(order);
-
-  // Ensure total is a number
-  const total = parseFloat(order.total) || 0;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #27ae60;">Thank You for Your Order!</h2>
-      <p>Dear ${firstName},</p>
-      <p>We've received your order and are excited to prepare it for you. Here are your order details:</p>
-      
-      <h3>Order Information</h3>
-      <p><strong>Order ID:</strong> ${order.id}</p>
-      
-      ${notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #27ae60; margin: 20px 0; border-radius: 4px;">
-          <h3 style="color: #27ae60; margin-top: 0;">IMPORTANT: Your Pickup Request</h3>
-          <p style="margin-bottom: 0;">${notes}</p>
-        </div>
-      ` : ''}
-      
-      <h3>Order Items</h3>
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <thead>
-          <tr style="background-color: #f8f9fa;">
-            <th style="padding: 10px; text-align: left;">Item</th>
-            <th style="padding: 10px; text-align: left;">Quantity</th>
-            <th style="padding: 10px; text-align: left;">Price</th>
-            <th style="padding: 10px; text-align: left;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsList || '<tr><td colspan="4">No items</td></tr>'}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Total:</strong></td>
-            <td style="padding: 10px;"><strong>$${total.toFixed(2)}</strong></td>
-          </tr>
- 
-      </table>
-
-      <h3>Payment Information</h3>
-      <p>Please complete your payment using one of the following methods:</p>
-      <ul>
-        <li><strong>Cash:</strong> Available for in-person pickup</li>
-        <li><strong>E-Transfer:</strong> Send to ${BUTTONS_EMAIL}</li>
-      </ul>
-      <p>Please include your order number (${order.id}) in the payment notes.</p>
-
-      <p>We will confirm your pickup date and time by text message to <strong>${phone}</strong>.</p>
-
-      <p>If you have any questions, please don't hesitate to contact us.</p>
-      
-      <p>Best regards,<br>The Buttons Flower Farm Team</p>
-    </div>
-  `;
-}
-
-function generateButtonsEmailTemplate(order) {
-  // Ensure items exists and is an array
-  const items = Array.isArray(order.items) ? order.items : [];
-  
-  const itemsList = items.map(item => {
-    // Handle potential missing values
-    const name = item.name || 'Item';
-    const quantity = item.quantity || 1;
-    const price = parseFloat(item.price) || 0;
-    
-    return `
-    <tr>
-      <td>${name}</td>
-      <td>${quantity}</td>
-      <td>$${price.toFixed(2)}</td>
-      <td>$${(price * quantity).toFixed(2)}</td>
-    </tr>
-    `;
-  }).join('');
-
-  // Ensure customer exists
-  const customer = order.customer || {};
-  const firstName = customer.firstName || 'Customer';
-  const lastName = customer.lastName || '';
-  const email = customer.email || 'N/A';
-  const phone = customer.phone || 'N/A';
-
-  // VERY IMPORTANT: Get notes from all possible locations
-  const notes = getOrderNotes(order);
-
-  // Ensure total is a number
-  const total = parseFloat(order.total) || 0;
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #27ae60;">New Order Received!</h2>
-      
-      ${notes ? `
-        <div style="background-color: #f8f9fa; padding: 15px; border-left: 5px solid #e74c3c; margin: 20px 0; border-radius: 4px;">
-          <h3 style="color: #e74c3c; margin-top: 0;">⚠️ IMPORTANT: Customer Notes/Pickup Request</h3>
-          <p style="margin-bottom: 0;">${notes}</p>
-        </div>
-      ` : ''}
-      
-      <h3>Order Information</h3>
-      <p><strong>Order ID:</strong> ${order.id}</p>
-      <p><strong>Date:</strong> ${new Date(order.date || new Date()).toLocaleDateString()}</p>
-      
-      <h3>Customer Information</h3>
-      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${phone}</p>
-      
-      <h3>Order Items</h3>
-      <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-        <thead>
-          <tr style="background-color: #f8f9fa;">
-            <th style="padding: 10px; text-align: left;">Item</th>
-            <th style="padding: 10px; text-align: left;">Quantity</th>
-            <th style="padding: 10px; text-align: left;">Price</th>
-            <th style="padding: 10px; text-align: left;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsList || '<tr><td colspan="4">No items</td></tr>'}
-        </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;"><strong>Total:</strong></td>
-            <td style="padding: 10px;"><strong>$${total.toFixed(2)}</strong></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  `;
-}
-
 // Create the express app for image upload with CORS
 const uploadImageApp = express();
 uploadImageApp.use(cors({ 
@@ -467,7 +302,24 @@ exports.api = functions.region('us-central1').https.onRequest(app);
 exports.uploadImage = functions.region('us-central1').https.onRequest(uploadImageApp);
 
 // Export sendOrderEmail directly, letting it handle its own CORS
-exports.sendOrderEmail = sendOrderEmail;
+exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
+  // Set CORS headers
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.set('Access-Control-Allow-Origin', origin);
+  }
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+  // Handle OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
+
+  // Forward to the actual function
+  return sendOrderEmailFunction.sendOrderEmail(req, res);
+});
 
 // Export sendInvoiceEmail function
 exports.sendInvoiceEmail = invoiceEmailModule.sendInvoiceEmail;

@@ -1,16 +1,67 @@
-const functions = require("firebase-functions");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
-/**
- * Email templates and sending function for order confirmations
- */
+const testOrder = {
+  id: "ORD-2025-1021-7995",
+  date: "2025-04-22",
+  customer: {
+    firstName: "Sarah",
+    lastName: "Halliday",
+    email: "buttonsflowerfarm@telus.net",
+    phone: "6043516605",
+    pickupRequest: "Friday afternoon between 2-4pm"
+  },
+  items: [
+    {
+      name: "Sarah's Basic",
+      quantity: 1,
+      price: 5.00
+    }
+  ],
+  total: 5.00
+};
 
-/**
- * Generates the HTML template for customer order confirmation emails
- * @param {Object} order - The order data
- * @return {string} The generated HTML template
- */
+async function testOrderEmail() {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: "buttonsflowerfarm@telus.net",
+      pass: process.env.GMAIL_PASSWORD
+    }
+  });
+
+  try {
+    await transporter.verify();
+    console.log("✅ SMTP connection successful");
+
+    const customerEmailHtml = generateCustomerEmailTemplate(testOrder);
+    const buttonsEmailHtml = generateButtonsEmailTemplate(testOrder);
+
+    const customerInfo = await transporter.sendMail({
+      from: "buttonsflowerfarm@telus.net",
+      to: testOrder.customer.email,
+      subject: `Order Confirmation - ${testOrder.id}`,
+      html: customerEmailHtml
+    });
+
+    console.log("✅ Customer confirmation email sent:", customerInfo.messageId);
+
+    const buttonsInfo = await transporter.sendMail({
+      from: "buttonsflowerfarm@telus.net",
+      to: "buttonsflowerfarm@telus.net",
+      subject: `New Order Received - ${testOrder.id}`,
+      html: buttonsEmailHtml
+    });
+
+    console.log("✅ Buttons notification email sent:", buttonsInfo.messageId);
+
+  } catch (error) {
+    console.error("❌ Error:", error.message);
+  }
+}
+
 function generateCustomerEmailTemplate(order) {
   const formatCurrency = (amount) => {
     return parseFloat(amount || 0).toFixed(2);
@@ -248,11 +299,6 @@ function generateCustomerEmailTemplate(order) {
   `;
 }
 
-/**
- * Generates the HTML template for admin order notification emails
- * @param {Object} order - The order data
- * @return {string} The generated HTML template
- */
 function generateButtonsEmailTemplate(order) {
   const itemsList = order.items.map(item => `
     <tr>
@@ -319,71 +365,4 @@ function generateButtonsEmailTemplate(order) {
   `;
 }
 
-// Export the Cloud Function
-exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
-  // Only allow POST requests
-  if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
-  }
-
-  try {
-    const orderData = req.body;
-    console.log("📦 Received order data:", orderData.id);
-
-    // Validate customer email
-    if (!orderData.customer?.email) {
-      throw new Error("Customer email is required");
-    }
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: "buttonsflowerfarm@telus.net",
-        pass: process.env.GMAIL_PASSWORD,
-      },
-    });
-
-    await transporter.verify();
-    console.log("✅ SMTP connection successful");
-
-    const customerEmailHtml = generateCustomerEmailTemplate(orderData);
-    const buttonsEmailHtml = generateButtonsEmailTemplate(orderData);
-
-    // Send customer confirmation email to the customer's email address
-    const customerInfo = await transporter.sendMail({
-      from: "buttonsflowerfarm@telus.net",
-      to: orderData.customer.email, // Send to customer's email
-      subject: `Order Confirmation - ${orderData.id}`,
-      html: customerEmailHtml, // Use customer template
-    });
-
-    console.log("✅ Customer confirmation email sent to", orderData.customer.email, ":", customerInfo.messageId);
-
-    // Send business notification to the business email
-    const buttonsInfo = await transporter.sendMail({
-      from: "buttonsflowerfarm@telus.net",
-      to: "buttonsflowerfarm@telus.net", // Send to business email
-      subject: `New Order Received - ${orderData.id}`,
-      html: buttonsEmailHtml, // Use business template
-    });
-
-    console.log("✅ Business notification email sent:", buttonsInfo.messageId);
-
-    res.status(200).json({
-      success: true,
-      message: "Emails sent successfully",
-      customerEmailId: customerInfo.messageId,
-      buttonsEmailId: buttonsInfo.messageId,
-    });
-
-  } catch (error) {
-    console.error("❌ Error sending emails:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-}); 
+testOrderEmail(); 

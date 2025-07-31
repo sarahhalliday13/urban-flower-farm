@@ -23,6 +23,7 @@ export const OrderProvider = ({ children }) => {
   const [activeOrder, setActiveOrder] = useState(null);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateRange, setDateRange] = useState({ start: null, end: null });
   const [showInvoice, setShowInvoice] = useState(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(null);
   const [pendingStatusUpdate, setPendingStatusUpdate] = useState(null);
@@ -36,7 +37,25 @@ export const OrderProvider = ({ children }) => {
 
   // Helper to safely convert status to lowercase
   const statusToLowerCase = useCallback((status) => {
-    return status && typeof status === 'string' ? status.toLowerCase() : '';
+    if (!status) return 'pending';
+    if (typeof status === 'object' && status.label) {
+      return status.label.toLowerCase();
+    }
+    if (typeof status === 'string') {
+      // Normalize common status variations
+      const normalized = status.toLowerCase().trim();
+      switch (normalized) {
+        case 'pending':
+        case 'processing':
+        case 'shipped':
+        case 'completed':
+        case 'cancelled':
+          return normalized;
+        default:
+          return 'pending';
+      }
+    }
+    return 'pending';
   }, []);
   
   // Helper to safely check if status is cancelled
@@ -55,16 +74,23 @@ export const OrderProvider = ({ children }) => {
 
       // Process orders to ensure consistent format
       const processedOrders = firebaseOrders.map(order => {
-        if (order.customer && (order.customer.firstName || order.customer.lastName)) {
-          return {
-            ...order,
-            customer: {
-              ...order.customer,
-              name: `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim()
-            }
-          };
+        // Normalize customer data
+        const processedOrder = {
+          ...order,
+          customer: {
+            ...order.customer,
+            name: order.customer?.name || `${order.customer?.firstName || ''} ${order.customer?.lastName || ''}`.trim(),
+            email: order.customer?.email || '',
+            phone: order.customer?.phone || order.customerPhone || '' // Normalize phone field
+          }
+        };
+
+        // Clean up legacy phone field if it exists
+        if ('customerPhone' in processedOrder) {
+          delete processedOrder.customerPhone;
         }
-        return order;
+
+        return processedOrder;
       });
       
       // Sort by date (newest first)
@@ -164,32 +190,14 @@ export const OrderProvider = ({ children }) => {
       const order = orders.find(o => o.id === orderId);
       if (!order) {
         console.error('Order not found:', orderId);
-        return;
+        return false;
       }
 
-      // Update the order object to include the emailSent flag
-      const updatedOrderData = { 
-        status: newStatus,
-        ...(emailSent ? { emailSent: true } : {})
-      };
-
       // Update in Firebase first
-      await updateFirebaseOrderStatus(orderId, updatedOrderData);
-      
-      // If the order is being cancelled, restore the inventory
-      if (isStatusCancelled(newStatus)) {
-        try {
-          // Restore inventory for each item in the order
-          for (const item of order.items) {
-            await updateInventory(item.id, {
-              currentStock: (item.inventory?.currentStock || 0) + item.quantity,
-              lastUpdated: new Date().toISOString()
-            });
-          }
-        } catch (inventoryError) {
-          console.error('Error restoring inventory:', inventoryError);
-          // Continue with order status update even if inventory restoration fails
-        }
+      const success = await updateFirebaseOrderStatus(orderId, newStatus);
+      if (!success) {
+        console.error('Failed to update order status in Firebase');
+        return false;
       }
       
       // Then update local state and localStorage
@@ -198,6 +206,7 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             status: newStatus,
+            lastUpdated: new Date().toISOString(),
             ...(emailSent ? { emailSent: true } : {})
           };
         }
@@ -213,6 +222,7 @@ export const OrderProvider = ({ children }) => {
           return { 
             ...order, 
             status: newStatus,
+            lastUpdated: new Date().toISOString(),
             ...(emailSent ? { emailSent: true } : {})
           };
         }
@@ -225,7 +235,7 @@ export const OrderProvider = ({ children }) => {
       console.error('Error updating order status:', error);
       return false;
     }
-  }, [orders, isStatusCancelled]);
+  }, [orders]);
 
   // Send order confirmation email
   const sendOrderEmail = useCallback(async (order) => {
@@ -472,44 +482,66 @@ export const OrderProvider = ({ children }) => {
    * @param {Object} discountData - The discount data (amount, reason, type)
    */
   const updateOrderDiscount = useCallback(async (orderId, discountData) => {
-    if (!orderId) {
-      console.error('Invalid order ID');
-      addToast('Error updating discount: Invalid order ID', 'error');
-      return false;
-    }
-    
     try {
-      // Update in Firebase 
-      await updateOrder(orderId, { discount: discountData });
+      // Get the current order
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        console.error('Order not found:', orderId);
+        return false;
+      }
+
+      // Calculate the subtotal from items
+      const subtotal = order.items.reduce((sum, item) => {
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0);
       
-      // Update in local state
-      const updatedOrders = orders.map(order => {
-        if (order.id === orderId) {
-          return { ...order, discount: discountData };
+      // Calculate the new total by subtracting discount from subtotal
+      const discountAmount = parseFloat(discountData.amount) || 0;
+      const newTotal = Math.max(0, subtotal - discountAmount); // Ensure total doesn't go negative
+
+      // Update order with new discount and total
+      const updatedOrderData = {
+        ...order,
+        discount: discountData,
+        subtotal: subtotal,
+        total: newTotal, // This is now correctly calculated from subtotal - discount
+        lastUpdated: new Date().toISOString()
+      };
+
+      // Update in Firebase
+      const success = await updateOrder(orderId, updatedOrderData);
+      if (!success) {
+        console.error('Failed to update order discount in Firebase');
+        return false;
+      }
+
+      // Update local state
+      const updatedOrders = orders.map(o => {
+        if (o.id === orderId) {
+          return updatedOrderData;
         }
-        return order;
+        return o;
       });
-      
       setOrders(updatedOrders);
-      
-      // Update in localStorage
+
+      // Update localStorage
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-      const updatedLocalOrders = localOrders.map(order => {
-        if (order.id === orderId) {
-          return { ...order, discount: discountData };
+      const updatedLocalOrders = localOrders.map(o => {
+        if (o.id === orderId) {
+          return updatedOrderData;
         }
-        return order;
+        return o;
       });
       localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
-      
-      addToast('Discount updated successfully', 'success');
+
       return true;
     } catch (error) {
-      console.error('Error updating discount:', error);
-      addToast('Error updating discount', 'error');
+      console.error('Error updating order discount:', error);
       return false;
     }
-  }, [orders, addToast]);
+  }, [orders]);
   
   /**
    * Update the payment method for an order
@@ -801,14 +833,19 @@ export const OrderProvider = ({ children }) => {
 
   // Handle order status update with confirmation for cancellation
   const handleStatusUpdate = useCallback((orderId, newStatus) => {
-    if (isStatusCancelled(newStatus)) {
+    // Ensure newStatus is a string
+    const statusString = typeof newStatus === 'object' && newStatus.label 
+      ? newStatus.label 
+      : String(newStatus);
+
+    if (isStatusCancelled(statusString)) {
       // Show confirmation dialog for cancellation
       setShowCancelConfirm(orderId);
-      setPendingStatusUpdate(newStatus);
+      setPendingStatusUpdate(statusString);
       return false;
     } else {
       // For other status updates, proceed directly
-      return updateOrderStatus(orderId, newStatus);
+      return updateOrderStatus(orderId, statusString);
     }
   }, [updateOrderStatus, isStatusCancelled]);
 
@@ -825,42 +862,80 @@ export const OrderProvider = ({ children }) => {
 
   // Get filtered orders based on search term and status filter
   const getFilteredOrders = useCallback(() => {
-    return orders.filter(order => {
+    // Define archived statuses
+    const archivedStatuses = ['completed', 'cancelled'];
+
+    // Calculate status counts first
+    const statusCounts = orders.reduce((acc, order) => {
+      const status = statusToLowerCase(order?.status || 'pending');
+      acc[status] = (acc[status] || 0) + 1;
+      acc.all = (acc.all || 0) + 1;
+      return acc;
+    }, {});
+
+    const filteredOrders = orders.filter(order => {
       // Ensure the order has required fields to prevent errors
       if (!order || !order.customer) return false;
       
       // Add defaults for missing fields to prevent errors
       const safeOrder = {
         ...order,
-        status: order.status || 'Pending',
+        status: order.status || 'pending', // Ensure new orders default to pending
         customer: {
           ...order.customer,
           name: order.customer.name || `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() || 'No name provided',
-          email: order.customer.email || 'Not provided'
+          email: order.customer.email || 'Not provided',
+          phone: order.customer.phone || order.customerPhone || '' // Support both phone field formats
         },
-        id: order.id || 'Unknown'
+        id: order.id || 'Unknown',
+        notes: order.notes || '' // Ensure notes field exists
       };
       
-      // Filter by status
-      if (filter !== 'all' && statusToLowerCase(safeOrder.status) !== statusToLowerCase(filter)) {
+      // Filter by status (case insensitive)
+      const orderStatus = statusToLowerCase(safeOrder.status);
+      
+      if (filter === 'all') {
+        // When 'all' is selected, exclude archived orders
+        return !archivedStatuses.includes(orderStatus);
+      } else if (filter === 'archived') {
+        // When 'archived' is selected, show only completed and cancelled orders
+        return archivedStatuses.includes(orderStatus);
+      } else if (filter !== orderStatus) {
         return false;
       }
       
-      // Filter by search term (customer name, email, or order ID)
+      // Filter by date range if set
+      if (dateRange.start || dateRange.end) {
+        const orderDate = new Date(safeOrder.date);
+        if (dateRange.start && new Date(dateRange.start) > orderDate) return false;
+        if (dateRange.end && new Date(dateRange.end) < orderDate) return false;
+      }
+      
+      // Enhanced search matching (case insensitive, partial matches)
       if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        const customerName = safeOrder.customer.name.toLowerCase();
-        const email = safeOrder.customer.email.toLowerCase();
-        const orderId = safeOrder.id.toLowerCase();
+        const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+        const searchableFields = [
+          safeOrder.customer.name.toLowerCase(),
+          safeOrder.customer.email.toLowerCase(),
+          safeOrder.id.toLowerCase(),
+          (safeOrder.notes || '').toLowerCase(),
+          (safeOrder.customer.phone || '').toLowerCase()
+        ].filter(Boolean); // Remove empty strings
         
-        return customerName.includes(searchLower) || 
-               email.includes(searchLower) || 
-               orderId.includes(searchLower);
+        // All search terms must match at least one field
+        return searchTerms.every(term => 
+          searchableFields.some(field => field.includes(term))
+        );
       }
       
       return true;
     });
-  }, [orders, filter, searchTerm, statusToLowerCase]);
+
+    return {
+      orders: filteredOrders,
+      statusCounts
+    };
+  }, [orders, filter, searchTerm, dateRange, statusToLowerCase]);
 
   // Format date for display
   const formatDate = useCallback((dateString) => {
@@ -870,11 +945,15 @@ export const OrderProvider = ({ children }) => {
 
   // Get CSS class for status
   const getStatusClass = useCallback((status) => {
-    if (!status || typeof status !== 'string') {
-      return 'status-pending'; // Default if status is undefined, null, or not a string
-    }
-    
-    switch (statusToLowerCase(status)) {
+    // Get the status string in a consistent format
+    const normalizedStatus = (() => {
+      if (!status) return 'pending';
+      if (typeof status === 'string') return status.toLowerCase();
+      if (typeof status === 'object' && status.label) return status.label.toLowerCase();
+      return 'pending';
+    })();
+
+    switch (normalizedStatus) {
       case 'completed':
         return 'status-completed';
       case 'processing':
@@ -886,7 +965,7 @@ export const OrderProvider = ({ children }) => {
       default:
         return 'status-pending';
     }
-  }, [statusToLowerCase]);
+  }, []);
 
   // Load orders on mount
   useEffect(() => {
@@ -913,10 +992,13 @@ export const OrderProvider = ({ children }) => {
     setActiveOrder,
     filter,
     setFilter,
-    filteredOrders: getFilteredOrders(),
+    filteredOrders: getFilteredOrders().orders,
+    statusCounts: getFilteredOrders().statusCounts,
     refreshOrders,
     searchTerm,
     setSearchTerm,
+    dateRange,
+    setDateRange,
     handleStatusUpdate,
     confirmCancelOrder,
     showInvoice,
