@@ -12,6 +12,22 @@ import StatusCell from './StatusCell';
 const OrderTableRow = ({ order }) => {
   const { activeOrder, setActiveOrder, statusToLowerCase } = useOrders();
   
+  // Calculate final total with discount
+  const getFinalTotal = () => {
+    // Get the subtotal from items
+    const subtotal = order.items.reduce((sum, item) => {
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity, 10) || 0;
+      return sum + (price * quantity);
+    }, 0);
+    
+    // Apply discount if any
+    const discount = parseFloat(order.discount?.amount || 0);
+    const total = Math.max(0, subtotal - discount); // Ensure total doesn't go negative
+    
+    return total.toFixed(2);
+  };
+
   const toggleOrderDetails = () => {
     setActiveOrder(activeOrder === order.id ? null : order.id);
     
@@ -21,9 +37,12 @@ const OrderTableRow = ({ order }) => {
         // Find the order details container and scroll to it
         const orderDetailsElement = document.querySelector('.order-details-container');
         if (orderDetailsElement) {
-          orderDetailsElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start'
+          const yOffset = -165; // Increased to -165px to show order header row
+          const y = orderDetailsElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          
+          window.scrollTo({
+            top: y,
+            behavior: 'smooth'
           });
         }
       }, 100);
@@ -48,9 +67,7 @@ const OrderTableRow = ({ order }) => {
       <StatusCell status={getDisplayStatus(order.status)} />
       <td data-label="Total">
         <span className="order-total">
-          ${typeof order.total === 'number' 
-            ? order.total.toFixed(2) 
-            : parseFloat(order.total || 0).toFixed(2)}
+          ${getFinalTotal()}
         </span>
       </td>
       <td data-label="Actions">

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import '../styles/Invoice.css';
-import { useOrders } from './orders/OrderContext';
 import { toast } from 'react-hot-toast';
+import { sendInvoiceEmail } from '../services/invoiceService';
 
 // Add a function to generate invoice HTML that can be exported
 export const generateInvoiceHTML = (order) => {
@@ -105,14 +105,14 @@ export const generateInvoiceHTML = (order) => {
                       <td width="48%" class="stack-column" valign="top" style="padding-right: 20px;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">To</h3>
                         <p style="margin: 5px 0; font-size: 14px;">${order.customer?.name || 'Customer'}</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: ${order.customer?.email || 'Not provided'}</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                         ${order.customer?.phone ? `<p style="margin: 5px 0; font-size: 14px;">Phone: ${order.customer.phone}</p>` : ''}
                       </td>
                       <!-- From Info Right -->
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: invoice@buttonsflowerfarm.ca</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
                       </td>
                     </tr>
                   </table>
@@ -194,7 +194,8 @@ export const generateInvoiceHTML = (order) => {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</td>
+
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
                           </tr>
                         </table>
                         <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
@@ -235,12 +236,6 @@ export const generateInvoiceHTML = (order) => {
  * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
 const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
-  // Get order context functions with fallbacks for when the provider might not be fully available
-  const orderContext = useOrders();
-  const { sendInvoiceEmail = () => {}, 
-          emailSending = {}, 
-          orderEmailStatus = {} } = orderContext || {};
-          
   const invoiceContainerRef = useRef(null);
   
   // Guard against missing order data
@@ -294,36 +289,27 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
       return;
     }
     
-    // Use the callable function with standalone flag
-    if (typeof sendInvoiceEmail === 'function') {
-      await sendInvoiceEmail(order, standalone);
+    try {
+      const result = await sendInvoiceEmail(order, standalone);
       
-      // Show toast based on result
-      if (orderEmailStatus?.success) {
+      if (result?.success) {
         toast.success('Invoice email sent successfully!');
-      } else if (orderEmailStatus?.error) {
-        toast.error(`Failed to send invoice email: ${orderEmailStatus.error}`);
+      } else {
+        toast.error(`Failed to send invoice email: ${result?.error || 'Unknown error'}`);
       }
-    } else {
+    } catch (error) {
+      console.error('Error sending invoice:', error);
       toast.error('Email service is not available');
     }
   };
 
   // Check if the email button should be disabled
   const isEmailButtonDisabled = () => {
-    // If it's a standalone invoice, always allow sending if there's an email
-    if (standalone) {
-      return !order?.customer?.email || orderEmailStatus?.loading;
-    }
-    
-    // Otherwise, disable if already sent or no email or loading
-    return !order?.customer?.email || order.invoiceEmailSent || orderEmailStatus?.loading;
+    return !order?.customer?.email;
   };
 
   // Get email button text
   const getEmailButtonText = () => {
-    if (orderEmailStatus?.loading) return 'Sending...';
-    if (order.invoiceEmailSent && !standalone) return 'Invoice Already Sent';
     return 'Email Invoice';
   };
 
@@ -349,18 +335,18 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
       </div>
 
       <div className="invoice-addresses">
-        <div className="invoice-to">
-          <h3>To</h3>
+        <div className="invoice-to" style={{ textAlign: 'left' }}>
+          <h3 style={{ textAlign: 'left' }}>To</h3>
           <p>{order.customer?.name || 'Customer'}</p>
           <p>Email: {order.customer?.email || 'Not provided'}</p>
           {order.customer?.phone && order.customer.phone !== 'Not provided' && (
             <p>Phone: {order.customer.phone}</p>
           )}
         </div>
-        <div className="invoice-from">
-          <h3>From</h3>
+        <div className="invoice-from" style={{ textAlign: 'left' }}>
+          <h3 style={{ textAlign: 'left' }}>From</h3>
           <p>Buttons Urban Flower Farm</p>
-          <p>Email: invoice@buttonsflowerfarm.ca</p>
+          <p>Email: buttonsflowerfarm@telus.net</p>
         </div>
       </div>
 
@@ -368,7 +354,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
         <table>
           <thead>
             <tr>
-              <th>Item</th>
+              <th style={{ textAlign: 'left' }}>Item</th>
               <th style={{ textAlign: 'center' }}>Quantity</th>
               <th style={{ textAlign: 'right' }}>Price</th>
               <th style={{ textAlign: 'right' }}>Total</th>
@@ -377,7 +363,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <tbody>
             {(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
-                <td>{item.name || 'Product'}</td>
+                <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
                 <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
                 <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
@@ -434,7 +420,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             <p>Please complete your payment using one of the following methods:</p>
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</li>
+              <li><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</li>
             </ul>
             <p>Please include your order number ({order.id}) in the payment notes.</p>
           </>

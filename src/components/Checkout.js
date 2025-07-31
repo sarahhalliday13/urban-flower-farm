@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
-import { sendOrderConfirmationEmails } from '../services/emailService';
 import { getCustomerData, saveCustomerData } from '../services/customerService';
 import '../styles/Checkout.css';
 
@@ -197,9 +196,6 @@ const Checkout = () => {
       try {
         await saveOrder(newOrderData);
         
-        // Send confirmation emails
-        await sendOrderConfirmationEmails(newOrderData);
-        
         // Also save to localStorage for client-side access
         const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
@@ -323,7 +319,7 @@ const Checkout = () => {
             <ul>
               <li><strong>Cash:</strong> Available for in-person pickup</li>
               <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
-                buttonsflowerfarm@gmail.com
+                buttonsflowerfarm@telus.net
                 <button 
                   className="copy-email-btn" 
                   onClick={(e) => {
@@ -336,7 +332,7 @@ const Checkout = () => {
                     if (svgElement) svgElement.style.display = 'none';
                     if (textElement) textElement.style.display = 'inline';
                     
-                    navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                    navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                       .then(() => {
                         // Show tooltip
                         btn.classList.add('copied');
@@ -503,7 +499,7 @@ const Checkout = () => {
           <div className="order-note">
             <p>We accept cash at pick-up,</p>
             <p>or etransfer to&nbsp;<span className="email-with-copy">
-              buttonsflowerfarm@gmail.com
+              buttonsflowerfarm@telus.net
               <button 
                 className="copy-email-btn" 
                 onClick={(e) => {
@@ -516,7 +512,7 @@ const Checkout = () => {
                   if (svgElement) svgElement.style.display = 'none';
                   if (textElement) textElement.style.display = 'inline';
                   
-                  navigator.clipboard.writeText('buttonsflowerfarm@gmail.com')
+                  navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                     .then(() => {
                       // Show tooltip
                       btn.classList.add('copied');

@@ -27,39 +27,12 @@ export const sendOrderConfirmationEmails = async (orderData) => {
       };
     }
     
-    const isInvoiceEmail = orderData.isInvoiceEmail === true;
-    
-    console.log(`Request to send ${isInvoiceEmail ? 'invoice' : 'order confirmation'} for order: ${orderData.id}`);
-    
-    // Add forceResend flag if the email was already sent but admin is manually triggering a resend
-    const forceResend = orderData.emailSent === true;
-    
-    // Only check emailSent flag for order confirmation emails, not for invoice emails
-    if (!isInvoiceEmail && orderData.emailSent === true && !forceResend) {
-      console.log(`Email already sent for order ${orderData.id}, skipping frontend send`);
-      return {
-        success: true,
-        message: 'Email already sent for this order',
-        alreadySent: true
-      };
-    }
-    
     // Try to send email via Firebase Function
     try {
       const apiUrl = getApiUrl();
-      console.log(`Sending ${isInvoiceEmail ? 'invoice' : 'order'} email via: ${apiUrl}/sendOrderEmail`);
+      console.log(`Sending order confirmation email via: ${apiUrl}/sendOrderEmail`);
       
-      // Ensure isInvoiceEmail flag is explicitly included at the top-level
-      const dataToSend = {
-        ...orderData,
-        isInvoiceEmail: isInvoiceEmail === true, // Ensure boolean value
-        forceResend: forceResend === true // Add forceResend flag
-      };
-      
-      // Log the actual payload being sent to check if isInvoiceEmail is included
-      console.log('Sending payload with isInvoiceEmail flag:', JSON.stringify(dataToSend).includes('isInvoiceEmail'));
-      console.log('Sending payload with forceResend flag:', JSON.stringify(dataToSend).includes('forceResend'));
-      
+      // Send the order data without any special flags
       const response = await fetch(`${apiUrl}/sendOrderEmail`, {
         method: 'POST',
         headers: {
@@ -67,29 +40,27 @@ export const sendOrderConfirmationEmails = async (orderData) => {
           'Accept': 'application/json'
         },
         mode: 'cors',
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(orderData),
       });
       
       const data = await response.json();
       console.log('Email API response:', data);
       
       if (response.ok && data.success) {
-        console.log(`${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`);
+        console.log('Order confirmation email sent successfully');
         return {
           success: true,
-          message: data.alreadySent && !isInvoiceEmail && !forceResend
-            ? 'Email was already sent for this order' 
-            : `${isInvoiceEmail ? 'Invoice' : 'Order confirmation'} email sent successfully`,
+          message: 'Order confirmation email sent successfully',
           data
         };
       } else {
-        throw new Error(data.error || data.details || `Failed to send ${isInvoiceEmail ? 'invoice' : 'order'} email`);
+        throw new Error(data.error || data.details || 'Failed to send order confirmation email');
       }
     } catch (error) {
-      console.error(`Error sending ${isInvoiceEmail ? 'invoice' : 'order'} email:`, error);
+      console.error('Error sending order confirmation email:', error);
       return {
         success: false,
-        message: error.message || `Failed to send ${isInvoiceEmail ? 'invoice' : 'order'} email`,
+        message: error.message || 'Failed to send order confirmation email',
       };
     }
   } catch (error) {

@@ -1221,30 +1221,9 @@ export const saveOrder = async (orderData) => {
     await set(orderRef, orderData);
     console.log('✅ Order saved successfully to Firebase:', orderData.id);
 
-    // After saving the order, trigger the cloud function directly
-    const functionUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/sendOrderEmail';
-    console.log('📧 Sending order email via POST to:', functionUrl);
-
-    const response = await fetch(functionUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(orderData)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Failed to send email via cloud function:', response.status, errorText);
-      return false;
-    }
-
-    const responseData = await response.json();
-    console.log('📧 Email function responded successfully:', responseData);
-    
     return true;
   } catch (error) {
-    console.error('❌ Error saving order and sending email:', error);
+    console.error('❌ Error saving order:', error);
     return false;
   }
 };
@@ -1306,8 +1285,28 @@ export const getOrder = async (orderId) => {
 
 export const updateOrderStatus = async (orderId, newStatus) => {
   try {
+    console.log(`Updating status for order ${orderId} to ${newStatus}`);
+    
+    // First get the current order data
     const orderRef = ref(database, `orders/${orderId}`);
-    await update(orderRef, { status: newStatus });
+    const snapshot = await get(orderRef);
+    
+    if (!snapshot.exists()) {
+      console.error(`Order ${orderId} not found`);
+      return false;
+    }
+    
+    // Get current order data
+    const currentOrder = snapshot.val();
+    
+    // Update only the status while preserving all other fields
+    await update(orderRef, {
+      ...currentOrder,
+      status: newStatus,
+      lastUpdated: new Date().toISOString()
+    });
+    
+    console.log(`Successfully updated status for order ${orderId}`);
     return true;
   } catch (error) {
     console.error('Error updating order status in Firebase:', error);
