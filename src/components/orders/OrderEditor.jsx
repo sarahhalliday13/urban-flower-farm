@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import PlantSelector from './PlantSelector';
 import { useToast } from '../../context/ToastContext';
 import SaveCancelButtons from './SaveCancelButtons';
-import { ensureAuthenticated } from '../../services/firebase';
+import { ensureAuthenticated, updateOrder } from '../../services/firebase';
 import './OrderEditor.css';
 
 /**
@@ -160,51 +160,41 @@ const OrderEditor = ({ orderId, closeModal }) => {
     return String(value);
   };
   
-  // The simplest save function with direct REST API
+  // Save function using Firebase SDK
   const handleSaveOrder = async () => {
-    console.log("Starting direct save with REST API");
+    console.log("Starting order save");
     setSaveInProgress(true);
     
     try {
       // First ensure we're authenticated
-      const userCredential = await ensureAuthenticated();
-      // Get the authentication token
-      const idToken = await userCredential.getIdToken();
+      await ensureAuthenticated();
       
-      // Preserve existing payment and discount information
-      const paymentInfo = currentOrder?.payment || orderData?.payment;
-      const discountInfo = currentOrder?.discount || orderData?.discount;
+      // Calculate the new total
+      const newTotal = calculateTotal();
+      console.log("New total calculated:", newTotal);
       
-      // Prepare update object
+      // Prepare the complete order data
       const updateData = {
-        id: orderId,
-        items: items,
-        total: calculateTotal(),
+        ...currentOrder,
+        items: items.map(item => ({
+          ...item,
+          quantity: parseInt(item.quantity, 10),
+          price: parseFloat(item.price)
+        })),
+        total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
-        // Preserve payment and discount information
-        payment: paymentInfo,
-        discount: discountInfo
       };
       
-      console.log("Saving order with payment and discount data:", {
-        paymentInfo,
-        discountInfo
-      });
+      console.log("Saving order with data:", updateData);
       
-      // Make direct REST API call with auth token
-      const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderId}.json?auth=${idToken}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updateData),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      // Use Firebase SDK to update order
+      const success = await updateOrder(orderId, updateData);
       
-      if (!response.ok) {
-        throw new Error(`Firebase responded with status ${response.status}`);
+      if (!success) {
+        throw new Error('Failed to update order');
       }
       
-      console.log("Order saved successfully via REST API");
+      console.log("Order saved successfully");
       addToast?.("Order updated successfully", "success");
       
       // Close the modal - the parent will handle reopening after refresh

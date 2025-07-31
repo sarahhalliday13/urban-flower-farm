@@ -14,8 +14,16 @@ const OrderTableRow = ({ order }) => {
   
   // Calculate final total with discount
   const getFinalTotal = () => {
+    // If order has a total property, use it
+    if (typeof order.total === 'number') {
+      return order.total.toFixed(2);
+    }
+
+    // Otherwise calculate from items
+    const items = Array.isArray(order.items) ? order.items : [];
+    
     // Get the subtotal from items
-    const subtotal = order.items.reduce((sum, item) => {
+    const subtotal = items.reduce((sum, item) => {
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return sum + (price * quantity);

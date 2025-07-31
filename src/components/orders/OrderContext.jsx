@@ -138,7 +138,7 @@ export const OrderProvider = ({ children }) => {
     console.log('Manually refreshing orders...');
     setLoading(true);
     
-    getOrders()
+    return getOrders()  // Return the promise for chaining
       .then(firebaseOrders => {
         console.log(`Refreshed ${firebaseOrders.length} orders from Firebase`);
         
@@ -170,6 +170,8 @@ export const OrderProvider = ({ children }) => {
         
         // Check for any pending orders that need emails
         checkPendingEmails(processedOrders);
+        
+        return processedOrders;  // Return the orders for chaining
       })
       .catch(error => {
         console.error('Error refreshing orders:', error);
@@ -177,11 +179,24 @@ export const OrderProvider = ({ children }) => {
         if (!silent) {
           addToast('Failed to refresh orders', 'error');
         }
+        throw error;  // Re-throw for error handling
       })
       .finally(() => {
         setLoading(false);
       });
   }, [addToast]);
+  
+  // Expose refreshOrders to window object
+  useEffect(() => {
+    window.orderContext = {
+      ...window.orderContext,
+      refreshOrders
+    };
+    
+    return () => {
+      delete window.orderContext?.refreshOrders;
+    };
+  }, [refreshOrders]);
 
   // Update order status in Firebase and local state
   const updateOrderStatus = useCallback(async (orderId, newStatus, emailSent = false) => {

@@ -9,17 +9,7 @@ import OrderDetails from './OrderDetails';
  * Handles the loading state and empty states
  */
 const OrderTable = () => {
-  const { loading, filteredOrders, activeOrder } = useOrders();
-
-  // Loading state
-  if (loading) {
-    return <div className="loading">Loading orders...</div>;
-  }
-
-  // No orders found
-  if (filteredOrders.length === 0) {
-    return <div className="no-orders">No orders found</div>;
-  }
+  const { filteredOrders, activeOrder } = useOrders();
 
   return (
     <div className="orders-list">
@@ -30,7 +20,7 @@ const OrderTable = () => {
             <React.Fragment key={order.id}>
               <OrderTableRow order={order} />
               {activeOrder === order.id && (
-                <tr className="details-row">
+                <tr key={`details-${order.id}`} className="details-row">
                   <td colSpan="6">
                     <OrderDetails />
                   </td>
