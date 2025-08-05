@@ -1,6 +1,41 @@
 {
   "rules": {
-    ".read": true,
-    ".write": true
+    ".read": false,
+    ".write": false,
+
+    "plants": {
+      ".read": true,
+      ".write": true
+    },
+    "inventory": {
+      ".read": true,
+      ".write": true
+    },
+    "news": {
+      ".read": true
+    },
+    "orders": {
+      ".read": true,
+      ".write": true
+    },
+    "contactMessages": {
+      ".write": true
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth !== null && auth.uid === $uid",
+        ".write": "auth !== null && auth.uid === $uid",
+        "role": {
+          ".validate": "newData.isString() && (newData.val() === 'admin' || newData.val() === 'user')"
+        },
+        "$other": {
+          ".validate": true
+        }
+      }
+    },
+    "orderCounter": {
+      ".read": "auth !== null",
+      ".write": true
+    }
   }
 }
