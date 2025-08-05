@@ -1101,8 +1101,17 @@
   .discount-section h3,
   .payment-section h3,
   .items-header h3,
-  .version-info h3 {
+  .version-info h3,
+  .admin-notes-display h3 {
     text-align: left;
+  }
+  
+  /* Admin notes left alignment on mobile */
+  .admin-notes-display,
+  .admin-note-item,
+  .admin-note-item .note-header,
+  .admin-note-item .note-content {
+    text-align: left !important;
   }
   
   /* Status badge styling for mobile */
