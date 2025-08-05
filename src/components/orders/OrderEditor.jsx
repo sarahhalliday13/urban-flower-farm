@@ -58,12 +58,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
             adminNotes: orderDetails.adminNotes || []
           });
           
-          // Initialize admin notes state if there are existing notes
-          if (orderDetails.adminNotes && orderDetails.adminNotes.length > 0) {
-            // Use the latest admin note as initial value
-            const latestNote = orderDetails.adminNotes[orderDetails.adminNotes.length - 1];
-            setAdminNotes(latestNote.note || '');
-          }
+          // DO NOT pre-populate admin notes - keep it empty for new entries
+          // This prevents duplicate notes when saving without changes
+          setAdminNotes('');
           
           // Initialize items
           if (orderDetails.items && Array.isArray(orderDetails.items)) {
@@ -98,12 +95,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
               adminNotes: orderData.adminNotes || []
             });
             
-            // Initialize admin notes state if there are existing notes
-            if (orderData.adminNotes && orderData.adminNotes.length > 0) {
-              // Use the latest admin note as initial value
-              const latestNote = orderData.adminNotes[orderData.adminNotes.length - 1];
-              setAdminNotes(latestNote.note || '');
-            }
+            // DO NOT pre-populate admin notes - keep it empty for new entries
+            // This prevents duplicate notes when saving without changes
+            setAdminNotes('');
             
             if (orderData.items && Array.isArray(orderData.items)) {
               // Simplify items, remove freebie functionality
@@ -300,7 +294,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
               <div className="admin-notes-section">
                 <textarea
                   className="admin-notes-input"
-                  placeholder="Add an internal note about this order edit (optional)"
+                  placeholder="Add a new internal note about this order edit (optional)"
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   rows={3}
