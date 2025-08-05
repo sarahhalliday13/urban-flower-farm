@@ -1,9 +1,73 @@
-CLAUDE.md
-Standard Workflow
-1. First think through the problem, read the codebase for relevant files, and write a plan to projectplan.md
-2. The plan should have a list of todo items that you can check off as you complete them
-3. Before you begin working, check in with me and I will verify the plan.
-4. Then, begin working on the todo items, marking them as complete as you go.
-5. Please every step of the way just give me a high level explanation of what changes you made
-6. Make every task and code change you do as simple as possible. We want to avoid making any massive or complex changes. Every change should impact as little code as possible. Everything is about simplicity.
-7. Finally, add a review section to the projectplan.md file with a summary of the changes you made and any other relevant information.
+# Claude Code Project Context
+
+## Project Overview
+**Name**: Urban Flower Farm (Buttons Flower Farm)
+**Type**: E-commerce React application for local flower farm
+**Last Updated**: 2025-08-05
+
+## Tech Stack
+- **Frontend**: React 17.0.2 with React Router v6
+- **Backend**: Firebase (Realtime Database, Auth, Storage, Functions)
+- **Deployment**: Firebase Hosting (staging and production)
+- **Email**: SendGrid for order confirmations
+- **Payments**: Stripe integration
+
+## Key Features
+1. **Shop**: Browse and purchase flowers with inventory management
+2. **Admin Dashboard**: Order management, inventory control, news updates
+3. **Order System**: Cart, checkout, email confirmations with invoices
+4. **Authentication**: Firebase Auth with admin role management
+
+## Recent Changes (2025-08-05)
+- Fixed news creation permissions in Firebase rules
+- Added discount itemization to order confirmation emails
+- Implemented admin notes system for order management
+- Enhanced shop sorting with plant type filters
+- Fixed mobile alignment for admin notes display
+
+## Project Structure
+```
+/src
+  /components
+    /orders      # Order management components
+    /inventory   # Inventory management
+    /plant-editor # Plant editing interface
+  /services
+    firebase.js  # Firebase configuration and helpers
+  /context       # React context providers
+/functions       # Firebase Cloud Functions
+/public          # Static assets
+```
+
+## Development Workflow
+1. **Branches**: 
+   - `main` (production)
+   - `working-build` (pre-production)
+   - `staging` (testing)
+   - `development` (active development)
+
+2. **Deploy Commands**:
+   - Build: `npm run build`
+   - Deploy staging: `firebase deploy`
+   - Test locally: `npm start`
+
+## Important Notes
+- **Authentication**: No anonymous auth - admin sign-in required
+- **Images**: Must use Firebase Storage URLs, not local paths
+- **Orders**: Email confirmations sent automatically on order creation
+- **Database**: Using Firebase Realtime Database (not Firestore for main data)
+
+## Common Tasks
+- Run tests: `npm test`
+- Update inventory: Through Admin Dashboard > Inventory
+- Add news: Admin Dashboard > Updates
+- Process orders: Admin Dashboard > Orders
+
+## Environment Variables Required
+- Firebase configuration (API keys, project ID, etc.)
+- SendGrid API key
+- Stripe keys
+
+## Known Issues
+- React Router v7 warnings (can be ignored)
+- Node.js 18 deprecation warning in Firebase Functions
