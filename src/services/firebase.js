@@ -14,7 +14,12 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged 
+} from "firebase/auth";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 // Import auth functions only when needed
 
@@ -41,6 +46,54 @@ const functions = getFunctions(app, 'us-central1');
 // Export Firebase utilities
 export { set, get, onValue, update, remove, storage, db, auth, functions };
 
+// Sign in with email and password
+export const signInWithEmail = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const idTokenResult = await userCredential.user.getIdTokenResult();
+    
+    // Check if user has admin claim
+    const isAdmin = idTokenResult.claims.admin === true;
+    
+    if (!isAdmin) {
+      await firebaseSignOut(auth);
+      throw new Error('User is not an admin');
+    }
+    
+    return {
+      user: userCredential.user,
+      isAdmin
+    };
+  } catch (error) {
+    console.error('Sign in error:', error);
+    throw error;
+  }
+};
+
+// Sign out
+export const signOut = async () => {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Sign out error:', error);
+    throw error;
+  }
+};
+
+// Get current user's admin status
+export const checkAdminStatus = async () => {
+  const user = auth.currentUser;
+  if (!user) return false;
+  
+  try {
+    const idTokenResult = await user.getIdTokenResult();
+    return idTokenResult.claims.admin === true;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
 // Utility to ensure user is authenticated before database operations
 export const ensureAuthenticated = () => {
   return new Promise((resolve, reject) => {
@@ -58,33 +111,16 @@ export const ensureAuthenticated = () => {
         })
         .catch((error) => {
           console.error('❌ Error refreshing token:', error.message);
-          signInAnonymously(auth)
-            .then((userCredential) => {
-              console.log('✅ Anonymous auth successful after token refresh failed:', userCredential.user.uid);
-              userCredential.user.getIdToken(true).then(token => {
-                console.log('✅ New token obtained after re-auth. Token length:', token.length);
-                console.log('✅ New token first 10 chars:', token.substring(0, 10) + '...');
-                resolve(userCredential.user);
-              });
-            })
-            .catch((error) => {
-              console.error('❌ Anonymous auth failed:', error.message);
-              reject(error);
-            });
+          // Don't fall back to anonymous auth - require proper authentication
+          console.error('❌ Authentication required. Please sign in.');
+          reject(new Error('Authentication required'));
         });
       return;
     }
     
-    // Try to sign in anonymously
-    signInAnonymously(auth)
-      .then((userCredential) => {
-        console.log('✅ Anonymous auth successful:', userCredential.user.uid);
-        userCredential.user.getIdToken(true).then(token => {
-          console.log('✅ New token obtained. Token length:', token.length);
-          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
-          resolve(userCredential.user);
-        });
-      })
+    // Require authentication - no anonymous access
+    console.error('❌ No authenticated user found. Please sign in.');
+    reject(new Error('Authentication required'))
       .catch((error) => {
         console.error('❌ Anonymous auth failed:', error.message);
         reject(error);
@@ -124,13 +160,10 @@ export const uploadImageToFirebase = async (file, path) => {
       throw new Error('Firebase storage not initialized');
     }
     
-    // Try anonymous authentication to get an auth token
-    try {
-      console.log('Trying anonymous authentication for storage access...');
-      await signInAnonymously(auth);
-      console.log('Anonymous auth successful');
-    } catch (authError) {
-      console.warn('Anonymous auth failed (continuing anyway):', authError);
+    // Check if user is authenticated before allowing storage access
+    if (!auth.currentUser) {
+      console.warn('No authenticated user for storage access');
+      // Continue anyway as storage might have public read access
     }
     
     // Use plants folder structure with file name if no path is provided

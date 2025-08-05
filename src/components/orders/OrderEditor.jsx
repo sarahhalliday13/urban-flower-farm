@@ -28,6 +28,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
   const [orderData, setOrderData] = useState(currentOrder || {});
   const [saveInProgress, setSaveInProgress] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [adminNotes, setAdminNotes] = useState('');
   
   // Load order details
   useEffect(() => {
@@ -53,8 +54,13 @@ const OrderEditor = ({ orderId, closeModal }) => {
             shippingAddress: orderDetails.shippingAddress || '',
             notes: orderDetails.notes || '',
             paymentMethod: orderDetails.paymentMethod || 'card',
-            total: orderDetails.total || '0.00'
+            total: orderDetails.total || '0.00',
+            adminNotes: orderDetails.adminNotes || []
           });
+          
+          // DO NOT pre-populate admin notes - keep it empty for new entries
+          // This prevents duplicate notes when saving without changes
+          setAdminNotes('');
           
           // Initialize items
           if (orderDetails.items && Array.isArray(orderDetails.items)) {
@@ -85,8 +91,13 @@ const OrderEditor = ({ orderId, closeModal }) => {
               shippingAddress: orderData.shippingAddress || '',
               notes: orderData.notes || '',
               paymentMethod: orderData.paymentMethod || 'card',
-              total: orderData.total || '0.00'
+              total: orderData.total || '0.00',
+              adminNotes: orderData.adminNotes || []
             });
+            
+            // DO NOT pre-populate admin notes - keep it empty for new entries
+            // This prevents duplicate notes when saving without changes
+            setAdminNotes('');
             
             if (orderData.items && Array.isArray(orderData.items)) {
               // Simplify items, remove freebie functionality
@@ -173,6 +184,17 @@ const OrderEditor = ({ orderId, closeModal }) => {
       const newTotal = calculateTotal();
       console.log("New total calculated:", newTotal);
       
+      // Prepare admin notes update if any
+      let adminNotesArray = currentOrder?.adminNotes || [];
+      if (adminNotes.trim()) {
+        // Add new admin note to the array
+        adminNotesArray = [...adminNotesArray, {
+          note: adminNotes.trim(),
+          timestamp: new Date().toISOString(),
+          addedBy: 'admin' // You might want to get actual admin user info here
+        }];
+      }
+      
       // Prepare the complete order data
       const updateData = {
         ...currentOrder,
@@ -183,6 +205,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
         })),
         total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
+        adminNotes: adminNotesArray
       };
       
       console.log("Saving order with data:", updateData);
@@ -266,6 +289,30 @@ const OrderEditor = ({ orderId, closeModal }) => {
           
           {/* Right Column - Actions */}
           <div className="editor-column">            
+            <div className="editor-card">
+              <h3>Admin Notes</h3>
+              <div className="admin-notes-section">
+                <textarea
+                  className="admin-notes-input"
+                  placeholder="Add a new internal note about this order edit (optional)"
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  rows={3}
+                />
+                {orderData.adminNotes && orderData.adminNotes.length > 0 && (
+                  <div className="previous-notes">
+                    <h4>Previous Notes:</h4>
+                    {orderData.adminNotes.map((note, index) => (
+                      <div key={index} className="note-entry">
+                        <span className="note-date">{new Date(note.timestamp).toLocaleString()}</span>
+                        <p className="note-text">{note.note}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <div className="editor-card">
               <h3>Review & Save</h3>
               <p className="order-summary">
