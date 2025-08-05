@@ -1,0 +1,89 @@
+
+# 💻 BUFF Development Standards
+
+Welcome to the Buttons Urban Flower Farm dev repo! This ruleset defines how we work together using Cursor and Git to keep things clean, testable, and future-proof.
+
+---
+
+## 📁 Folder Structure
+- Reusable components go in `src/components/`
+- Screens/views go in `src/app/`
+- Shared utilities → `src/utils/`
+- Shared hooks → `src/hooks/`
+- Global styles live in `src/styles/global.css`
+- Strings for localization (optional) → `src/localization/en.json`
+- Theme tokens → `src/theme/`
+
+### Test Structure
+- Component tests → `src/components/ComponentName/__tests__/`
+- Integration tests → `src//__tests__/`
+- Test utilities → `src/__tests__/testUtils.js`
+- Test docs → `docs/testing/`
+  - Manual test cases → `docs/testing/manual/`
+  - Test fixes → `docs/testing/fixes/`
+
+---
+
+## 🎨 Styling Rules
+- Use variables from the global stylesheet: **no hardcoded colors, font sizes, or spacing**
+- All new components should use theme-based tokens and spacing
+- Prefer `{...style1, ...style2}` over `[style1, style2]` if combining styles inline
+
+---
+
+## 🧪 Testing Standards
+- Every component must have unit tests in its `__tests__` directory
+- Tests must follow this structure:
+  ```javascript
+  describe('ComponentName', () => {
+    describe('functionality', () => {
+      // Core functionality tests
+    });
+    
+    describe('accessibility', () => {
+      // A11y compliance tests
+    });
+    
+    describe('snapshot', () => {  // Optional
+      // Snapshot tests if needed
+    });
+  });
+  ```
+- Integration/screen tests go in `/src/__tests__/`
+- Use shared test utilities from `testUtils.js`
+- Document manual test procedures in `docs/testing/manual/`
+- Run **all tests locally** before committing or merging
+
+---
+
+## 🌀 Cursor + Git Rules
+- Work only in `development` branch unless instructed otherwise
+- `main` and `working-build` are protected — **do not commit directly**
+- Do not deploy to staging or production without team approval
+- Review these files before major work:
+  - `PROJECT_SUMMARY.md`
+  - `DEVELOPER.md`
+  - `docs/project-guardrails/` directory
+
+---
+
+## 🧠 Project Guardrails Reference
+These rules defer to domain-specific guardrails stored in `docs/project-guardrails/`. Key areas include:
+- Admin system architecture and workflows
+- Order processing and management
+- Email system requirements
+- Deployment and branching policies
+- Security protocols
+
+If in doubt, ask. Cursor is helpful — but you are the human in charge.
+
+---
+
+## ✅ Enforcement Suggestions
+- Use ESLint + Prettier with repo defaults
+- Enable `jest --watch` or pre-commit hooks for testing
+- Track migration to global styles via TODOs or backlog
+
+---
+
+Happy gardening 🌼
