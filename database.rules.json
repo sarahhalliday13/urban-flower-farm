@@ -12,7 +12,8 @@
       ".write": true
     },
     "news": {
-      ".read": true
+      ".read": true,
+      ".write": true
     },
     "orders": {
       ".read": true,

@@ -297,12 +297,8 @@ function Shop() {
         plant.inventory?.status === 'Pre-order' || plant.inventory?.status === 'Pre-Order'
       );
     } else {
-      // Default to in-stock if no valid option selected
-      statusFilteredPlants = filteredPlants.filter(plant => 
-        plant.inventory?.status === 'In Stock' || 
-        plant.inventory?.status === 'Low Stock' ||
-        (plant.inventory?.currentStock > 0 && !plant.inventory?.status)
-      );
+      // For non-status sorts, include all filtered plants
+      statusFilteredPlants = filteredPlants;
     }
     
     console.log('Plants after status filter:', statusFilteredPlants.length, 'with sortOption:', sortOption);
@@ -313,6 +309,32 @@ function Shop() {
       case 'status-coming-soon':
       case 'status-pre-order':
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'name-az':
+        return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'name-za':
+        return [...statusFilteredPlants].sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+      case 'price-low-high':
+        return [...statusFilteredPlants].sort((a, b) => (parseFloat(a.price) || 0) - (parseFloat(b.price) || 0));
+      case 'price-high-low':
+        return [...statusFilteredPlants].sort((a, b) => (parseFloat(b.price) || 0) - (parseFloat(a.price) || 0));
+      case 'type-featured':
+        return [...statusFilteredPlants]
+          .filter(plant => 
+            plant.featured === 'yes' || 
+            plant.featured === 'true' || 
+            plant.featured === true || 
+            plant.featured === '1' || 
+            plant.featured === 1
+          )
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'type-annual':
+        return [...statusFilteredPlants]
+          .filter(plant => plant.plantType?.toLowerCase() === 'annual')
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      case 'type-perennial':
+        return [...statusFilteredPlants]
+          .filter(plant => plant.plantType?.toLowerCase() === 'perennial')
+          .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
@@ -742,9 +764,24 @@ function Shop() {
                       className="sort-select"
                       aria-label="Sort plants by selected option"
                     >
-                      <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
-                      <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
-                      <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
+                      <optgroup label="By Status">
+                        <option value="status-in-stock">In Stock ({getStatusCounts['In Stock']})</option>
+                        <option value="status-coming-soon">Coming Soon ({getStatusCounts['Coming Soon']})</option>
+                        <option value="status-pre-order">Pre-order ({getStatusCounts['Pre-order']})</option>
+                      </optgroup>
+                      <optgroup label="By Name">
+                        <option value="name-az">Name (A-Z)</option>
+                        <option value="name-za">Name (Z-A)</option>
+                      </optgroup>
+                      <optgroup label="By Price">
+                        <option value="price-low-high">Price (Low to High)</option>
+                        <option value="price-high-low">Price (High to Low)</option>
+                      </optgroup>
+                      <optgroup label="By Plant Type">
+                        <option value="type-featured">Featured</option>
+                        <option value="type-annual">Annuals</option>
+                        <option value="type-perennial">Perennials</option>
+                      </optgroup>
                     </select>
                     <input type="hidden" name="page" value="1" />
                     {searchTerm && <input type="hidden" name="search" value={searchTerm} />}
@@ -848,7 +885,7 @@ function Shop() {
         </div>
         
         {/* Add type headings when sorting by type */}
-        {sortOption === 'type-a-z' ? (
+        {sortOption === 'type-all-removed' ? (
           <>
             {/* Group plants by type */}
             {Object.entries(

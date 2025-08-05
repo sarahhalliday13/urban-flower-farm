@@ -111,33 +111,16 @@ export const ensureAuthenticated = () => {
         })
         .catch((error) => {
           console.error('❌ Error refreshing token:', error.message);
-          signInAnonymously(auth)
-            .then((userCredential) => {
-              console.log('✅ Anonymous auth successful after token refresh failed:', userCredential.user.uid);
-              userCredential.user.getIdToken(true).then(token => {
-                console.log('✅ New token obtained after re-auth. Token length:', token.length);
-                console.log('✅ New token first 10 chars:', token.substring(0, 10) + '...');
-                resolve(userCredential.user);
-              });
-            })
-            .catch((error) => {
-              console.error('❌ Anonymous auth failed:', error.message);
-              reject(error);
-            });
+          // Don't fall back to anonymous auth - require proper authentication
+          console.error('❌ Authentication required. Please sign in.');
+          reject(new Error('Authentication required'));
         });
       return;
     }
     
-    // Try to sign in anonymously
-    signInAnonymously(auth)
-      .then((userCredential) => {
-        console.log('✅ Anonymous auth successful:', userCredential.user.uid);
-        userCredential.user.getIdToken(true).then(token => {
-          console.log('✅ New token obtained. Token length:', token.length);
-          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
-          resolve(userCredential.user);
-        });
-      })
+    // Require authentication - no anonymous access
+    console.error('❌ No authenticated user found. Please sign in.');
+    reject(new Error('Authentication required'))
       .catch((error) => {
         console.error('❌ Anonymous auth failed:', error.message);
         reject(error);
@@ -177,13 +160,10 @@ export const uploadImageToFirebase = async (file, path) => {
       throw new Error('Firebase storage not initialized');
     }
     
-    // Try anonymous authentication to get an auth token
-    try {
-      console.log('Trying anonymous authentication for storage access...');
-      await signInAnonymously(auth);
-      console.log('Anonymous auth successful');
-    } catch (authError) {
-      console.warn('Anonymous auth failed (continuing anyway):', authError);
+    // Check if user is authenticated before allowing storage access
+    if (!auth.currentUser) {
+      console.warn('No authenticated user for storage access');
+      // Continue anyway as storage might have public read access
     }
     
     // Use plants folder structure with file name if no path is provided
