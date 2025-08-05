@@ -5,8 +5,8 @@
 
 // Define the API base URL based on environment
 const getApiUrl = () => {
-  // Always use production endpoint since we don't have emulators
-  return 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
+  // Use the environment variable if available, fallback to production URL
+  return process.env.REACT_APP_FIREBASE_FUNCTIONS_URL || 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
 };
 
 // Send order confirmation emails

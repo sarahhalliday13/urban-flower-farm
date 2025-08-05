@@ -194,6 +194,7 @@ export const generateInvoiceHTML = (order) => {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
+
                             <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
                           </tr>
                         </table>

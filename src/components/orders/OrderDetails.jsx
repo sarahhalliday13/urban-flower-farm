@@ -346,6 +346,24 @@ const OrderDetails = () => {
               )}
             </div>
             
+            {/* Admin Notes Section */}
+            {orderDetails.adminNotes && orderDetails.adminNotes.length > 0 && (
+              <div className="admin-notes-display">
+                <h3>Admin Notes</h3>
+                <div className="admin-notes-list">
+                  {orderDetails.adminNotes.map((note, index) => (
+                    <div key={index} className="admin-note-item">
+                      <div className="note-header">
+                        <span className="note-date">{new Date(note.timestamp).toLocaleString()}</span>
+                        {note.addedBy && <span className="note-author"> - {note.addedBy}</span>}
+                      </div>
+                      <div className="note-content">{note.note}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             <div className="email-summary">
               <button 
                 className="email-invoice-btn"

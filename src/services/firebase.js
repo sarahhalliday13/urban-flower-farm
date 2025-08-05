@@ -14,7 +14,12 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { 
+  getAuth, 
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged 
+} from "firebase/auth";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 // Import auth functions only when needed
 
@@ -41,6 +46,54 @@ const functions = getFunctions(app, 'us-central1');
 // Export Firebase utilities
 export { set, get, onValue, update, remove, storage, db, auth, functions };
 
+// Sign in with email and password
+export const signInWithEmail = async (email, password) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const idTokenResult = await userCredential.user.getIdTokenResult();
+    
+    // Check if user has admin claim
+    const isAdmin = idTokenResult.claims.admin === true;
+    
+    if (!isAdmin) {
+      await firebaseSignOut(auth);
+      throw new Error('User is not an admin');
+    }
+    
+    return {
+      user: userCredential.user,
+      isAdmin
+    };
+  } catch (error) {
+    console.error('Sign in error:', error);
+    throw error;
+  }
+};
+
+// Sign out
+export const signOut = async () => {
+  try {
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error('Sign out error:', error);
+    throw error;
+  }
+};
+
+// Get current user's admin status
+export const checkAdminStatus = async () => {
+  const user = auth.currentUser;
+  if (!user) return false;
+  
+  try {
+    const idTokenResult = await user.getIdTokenResult();
+    return idTokenResult.claims.admin === true;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+};
+
 // Utility to ensure user is authenticated before database operations
 export const ensureAuthenticated = () => {
   return new Promise((resolve, reject) => {
@@ -58,33 +111,16 @@ export const ensureAuthenticated = () => {
         })
         .catch((error) => {
           console.error('❌ Error refreshing token:', error.message);
-          signInAnonymously(auth)
-            .then((userCredential) => {
-              console.log('✅ Anonymous auth successful after token refresh failed:', userCredential.user.uid);
-              userCredential.user.getIdToken(true).then(token => {
-                console.log('✅ New token obtained after re-auth. Token length:', token.length);
-                console.log('✅ New token first 10 chars:', token.substring(0, 10) + '...');
-                resolve(userCredential.user);
-              });
-            })
-            .catch((error) => {
-              console.error('❌ Anonymous auth failed:', error.message);
-              reject(error);
-            });
+          // Don't fall back to anonymous auth - require proper authentication
+          console.error('❌ Authentication required. Please sign in.');
+          reject(new Error('Authentication required'));
         });
       return;
     }
     
-    // Try to sign in anonymously
-    signInAnonymously(auth)
-      .then((userCredential) => {
-        console.log('✅ Anonymous auth successful:', userCredential.user.uid);
-        userCredential.user.getIdToken(true).then(token => {
-          console.log('✅ New token obtained. Token length:', token.length);
-          console.log('✅ Token first 10 chars:', token.substring(0, 10) + '...');
-          resolve(userCredential.user);
-        });
-      })
+    // Require authentication - no anonymous access
+    console.error('❌ No authenticated user found. Please sign in.');
+    reject(new Error('Authentication required'))
       .catch((error) => {
         console.error('❌ Anonymous auth failed:', error.message);
         reject(error);
@@ -124,13 +160,10 @@ export const uploadImageToFirebase = async (file, path) => {
       throw new Error('Firebase storage not initialized');
     }
     
-    // Try anonymous authentication to get an auth token
-    try {
-      console.log('Trying anonymous authentication for storage access...');
-      await signInAnonymously(auth);
-      console.log('Anonymous auth successful');
-    } catch (authError) {
-      console.warn('Anonymous auth failed (continuing anyway):', authError);
+    // Check if user is authenticated before allowing storage access
+    if (!auth.currentUser) {
+      console.warn('No authenticated user for storage access');
+      // Continue anyway as storage might have public read access
     }
     
     // Use plants folder structure with file name if no path is provided
@@ -683,84 +716,11 @@ export const updateInventory = async (plantId, inventoryData) => {
     console.log(`[${process.env.NODE_ENV}] updateInventory - Data:`, inventoryData);
     
     const { featured, ...inventoryProps } = inventoryData;
-    
-    // First, update localStorage as a cache
-    try {
-      console.log(`[${process.env.NODE_ENV}] updateInventory - Updating localStorage cache`);
-      const existingData = localStorage.getItem('plantInventory');
-      let storedInventory = {};
-      
-      if (existingData) {
-        storedInventory = JSON.parse(existingData);
-      }
-      
-      // Update the inventory for this plant
-      storedInventory[plantId] = {
-        ...inventoryProps,
-        lastUpdated: new Date().toISOString()
-      };
-      
-      // Save back to localStorage
-      localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
-      console.log(`[${process.env.NODE_ENV}] updateInventory - Local storage updated successfully`);
-      
-      // Update cached plants data too, if it exists
-      try {
-        const cachedData = localStorage.getItem('cachedPlantsWithTimestamp');
-        if (cachedData) {
-          const parsedCache = JSON.parse(cachedData);
-          if (Array.isArray(parsedCache.data)) {
-            const updatedPlants = parsedCache.data.map(plant => {
-              if (plant.id === plantId) {
-                return {
-                  ...plant,
-                  inventory: {
-                    ...(plant.inventory || {}),
-                    ...inventoryProps,
-                    lastUpdated: new Date().toISOString()
-                  }
-                };
-              }
-              return plant;
-            });
-            
-            // Update the cache with the new data
-            localStorage.setItem('cachedPlantsWithTimestamp', JSON.stringify({
-              ...parsedCache,
-              data: updatedPlants,
-              lastInventoryUpdate: new Date().toISOString()
-            }));
-            console.log(`[${process.env.NODE_ENV}] updateInventory - Updated plants cache for ${plantId}`);
-          }
-        }
-      } catch (cacheError) {
-        console.error(`[${process.env.NODE_ENV}] updateInventory - Error updating plants cache:`, cacheError);
-        // Continue with Firebase update
-      }
-      
-      // If there's a featured flag, update the plant in localStorage
-      if (featured !== undefined) {
-        try {
-          const plantsData = JSON.parse(localStorage.getItem('plants') || '[]');
-          const updatedPlants = plantsData.map(plant => {
-            if (plant.id === plantId) {
-              return { ...plant, featured };
-            }
-            return plant;
-          });
-          localStorage.setItem('plants', JSON.stringify(updatedPlants));
-        } catch (e) {
-          console.error('Error updating plant featured status in localStorage:', e);
-        }
-      }
-    } catch (e) {
-      console.error('Error updating localStorage:', e);
-    }
-    
-    // Update Firebase inventory
+
+    // Update Firebase inventory first
     console.log(`[${process.env.NODE_ENV}] updateInventory - Sending update to Firebase for path: inventory/${plantId}`);
     const inventoryRef = ref(database, `inventory/${plantId}`);
-    await set(inventoryRef, {
+    await update(inventoryRef, {
       ...inventoryProps,
       lastUpdated: new Date().toISOString()
     });
@@ -773,10 +733,23 @@ export const updateInventory = async (plantId, inventoryData) => {
       await update(plantRef, { featured });
       console.log(`[${process.env.NODE_ENV}] updateInventory - Featured status update successful`);
     }
-    
-    // Clear the plants cache to force a refresh on next load
+
+    // Clear all caches to ensure fresh data
     localStorage.removeItem('cachedPlantsWithTimestamp');
-    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared plants cache to ensure fresh data on next load`);
+    localStorage.removeItem('plantInventory');
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Cleared all caches to ensure fresh data on next load`);
+
+    // Fetch fresh data from Firebase to update local cache
+    const freshInventoryRef = ref(database, `inventory/${plantId}`);
+    const freshSnapshot = await get(freshInventoryRef);
+    if (freshSnapshot.exists()) {
+      // Update localStorage with fresh data
+      const existingData = localStorage.getItem('plantInventory');
+      let storedInventory = existingData ? JSON.parse(existingData) : {};
+      storedInventory[plantId] = freshSnapshot.val();
+      localStorage.setItem('plantInventory', JSON.stringify(storedInventory));
+      console.log(`[${process.env.NODE_ENV}] updateInventory - Updated cache with fresh data from Firebase`);
+    }
     
     return {
       success: true,
@@ -883,7 +856,7 @@ export const processSyncQueue = async () => {
         
         // Update Firebase
         const inventoryRef = ref(database, `inventory/${item.plantId}`);
-        await set(inventoryRef, {
+        await update(inventoryRef, {
           ...item.inventoryData,
           lastUpdated: new Date().toISOString()
         });
