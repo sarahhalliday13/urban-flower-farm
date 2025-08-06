@@ -210,6 +210,8 @@ const InventoryImportExport = () => {
         setInventoryFile(null);
         setPreviewData(null);
         setShowPreview(false);
+        // Refresh available IDs
+        setAvailableIds(null);
       } else {
         throw new Error(result.message);
       }
@@ -345,13 +347,10 @@ const InventoryImportExport = () => {
             {/* Available IDs Info */}
             {availableIds && (
               <div className="info-box info">
-                <h3>📊 Available Plant IDs</h3>
-                <p><strong>Next Available ID:</strong> {availableIds.nextAvailable}</p>
-                <p><strong>Suggested IDs:</strong> {availableIds.suggestedIds.join(', ')}</p>
-                {availableIds.gaps.length > 0 && (
-                  <p><strong>Gaps in sequence:</strong> {availableIds.gaps.join(', ')}</p>
-                )}
-                <p className="help-text">Currently {availableIds.totalPlants} plants in database (highest ID: {availableIds.highestUsed})</p>
+                <h3>💡 Available Plant IDs</h3>
+                <p><strong>Next Available ID:</strong> {availableIds.highestUsed + 1}</p>
+                <p><strong>Suggested Range:</strong> {availableIds.highestUsed + 1} - {availableIds.highestUsed + 10}</p>
+                <p className="help-text">You have {availableIds.totalPlants} plants in your database</p>
               </div>
             )}
             
