@@ -1,0 +1,391 @@
+import React, { useState } from 'react';
+import { downloadBackup, importPlantsFromSheets, updateInventoryStock } from '../services/firebase';
+import { useToast } from '../context/ToastContext';
+import '../styles/InventoryImportExport.css';
+
+const InventoryImportExport = () => {
+  const [activeTab, setActiveTab] = useState('export');
+  const { addToast } = useToast();
+  
+  // Export/Backup state
+  const [isBackingUp, setIsBackingUp] = useState(false);
+  
+  // Import Plants state
+  const [plantsFile, setPlantsFile] = useState(null);
+  const [inventoryFile, setInventoryFile] = useState(null);
+  const [importStatus, setImportStatus] = useState({ loading: false, message: '' });
+  
+  // Update Inventory state
+  const [updateFile, setUpdateFile] = useState(null);
+  const [updateStatus, setUpdateStatus] = useState({ loading: false, message: '' });
+
+  // Helper function to parse CSV
+  const parseCSV = (csvText) => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length === 0) throw new Error('CSV file is empty');
+    
+    const headers = lines[0].split(',').map(header => 
+      header.trim().toLowerCase().replace(/[\"']/g, '')
+    );
+    
+    const data = [];
+    for (let i = 1; i < lines.length; i++) {
+      let line = lines[i];
+      const values = [];
+      let inQuotes = false;
+      let currentValue = '';
+      
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        
+        if (char === '"' && (j === 0 || line[j-1] !== '\\')) {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentValue.trim().replace(/^"|"$/g, ''));
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      }
+      
+      values.push(currentValue.trim().replace(/^"|"$/g, ''));
+      
+      if (values.length === headers.length) {
+        const obj = {};
+        headers.forEach((header, index) => {
+          if (header) obj[header] = values[index];
+        });
+        data.push(obj);
+      }
+    }
+    
+    return data;
+  };
+
+  const readFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const csvText = event.target.result;
+          const parsedData = parseCSV(csvText);
+          resolve(parsedData);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = () => reject(new Error('Error reading file'));
+      reader.readAsText(file);
+    });
+  };
+
+  // Export/Backup handler
+  const handleBackup = async () => {
+    setIsBackingUp(true);
+    try {
+      const result = await downloadBackup();
+      if (result.success) {
+        addToast(`Backup downloaded! ${result.stats.plants} plants, ${result.stats.inventory} inventory items, ${result.stats.orders} orders`, 'success');
+      } else {
+        addToast(result.message, 'error');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      addToast('Failed to create backup', 'error');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
+  // Import Plants handler
+  const handleImportPlants = async (e) => {
+    e.preventDefault();
+    
+    if (!plantsFile) {
+      setImportStatus({ loading: false, message: 'Please select a plants CSV file' });
+      return;
+    }
+    
+    try {
+      setImportStatus({ loading: true, message: 'Reading files...' });
+      
+      // Read plants data
+      const plantsData = await readFile(plantsFile);
+      
+      // Read inventory data if provided
+      let inventoryData = [];
+      if (inventoryFile) {
+        inventoryData = await readFile(inventoryFile);
+      }
+      
+      // Transform plant data
+      const transformedPlantsData = plantsData.map(plant => ({
+        id: parseInt(plant.plant_id) || 0,
+        name: plant.name || '',
+        scientificName: plant.latinname || '',
+        commonName: plant.commonname || '',
+        price: plant.price || 0,
+        featured: plant.featured === 'true',
+        plantType: plant.type || '',
+        description: plant.description || '',
+        bloomSeason: plant.bloom_season || '',
+        colour: plant.colour || plant.color || '',
+        light: plant.sunlight || '',
+        spacing: plant.spread_inches || '',
+        height: plant.height_inches || '',
+        hardinessZone: plant.hardiness_zones || '',
+        specialFeatures: plant.special_features || '',
+        uses: plant.uses || '',
+        aroma: plant.aroma || '',
+        gardeningTips: plant.gardening_tips || '',
+        careTips: plant.care_tips || '',
+        mainImage: plant.mainimage || plant.main_image || '',
+        additionalImages: plant.additionalimage || plant.additional_image || ''
+      }));
+      
+      setImportStatus({ loading: true, message: `Importing ${transformedPlantsData.length} plants...` });
+      
+      const result = await importPlantsFromSheets(transformedPlantsData, inventoryData);
+      
+      if (result.success) {
+        setImportStatus({ 
+          loading: false, 
+          message: `Success! Added ${result.plantsCount} new plants. ${result.skippedCount > 0 ? `(${result.skippedCount} existing plants preserved)` : ''}`,
+          success: true
+        });
+        addToast(result.message, 'success');
+        // Reset form
+        setPlantsFile(null);
+        setInventoryFile(null);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      setImportStatus({ 
+        loading: false, 
+        message: `Error: ${error.message}`,
+        error: true
+      });
+      addToast(error.message, 'error');
+    }
+  };
+
+  // Update Inventory handler
+  const handleUpdateInventory = async (e) => {
+    e.preventDefault();
+    
+    if (!updateFile) {
+      setUpdateStatus({ loading: false, message: 'Please select an inventory CSV file' });
+      return;
+    }
+    
+    try {
+      setUpdateStatus({ loading: true, message: 'Reading inventory file...' });
+      
+      const inventoryData = await readFile(updateFile);
+      
+      setUpdateStatus({ loading: true, message: `Updating ${inventoryData.length} inventory records...` });
+      
+      const result = await updateInventoryStock(inventoryData);
+      
+      if (result.success) {
+        setUpdateStatus({ 
+          loading: false, 
+          message: result.message,
+          success: true
+        });
+        addToast(result.message, 'success');
+        setUpdateFile(null);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      setUpdateStatus({ 
+        loading: false, 
+        message: `Error: ${error.message}`,
+        error: true
+      });
+      addToast(error.message, 'error');
+    }
+  };
+
+  return (
+    <div className="inventory-import-export">
+      <h1>Inventory Import & Export</h1>
+      <p className="subtitle">Manage bulk operations for your plant inventory</p>
+      
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === 'export' ? 'active' : ''}`}
+          onClick={() => setActiveTab('export')}
+        >
+          📥 Export / Backup
+        </button>
+        <button 
+          className={`tab ${activeTab === 'import' ? 'active' : ''}`}
+          onClick={() => setActiveTab('import')}
+        >
+          📤 Import New Plants
+        </button>
+        <button 
+          className={`tab ${activeTab === 'update' ? 'active' : ''}`}
+          onClick={() => setActiveTab('update')}
+        >
+          🔄 Update Stock Levels
+        </button>
+      </div>
+      
+      <div className="tab-content">
+        {/* Export/Backup Tab */}
+        {activeTab === 'export' && (
+          <div className="export-section">
+            <div className="info-box success">
+              <h3>🛡️ Protect Your Data</h3>
+              <p>Download a complete backup of your plants, inventory, and orders.</p>
+              <p className="tip">💡 Tip: Create a backup before any major changes!</p>
+            </div>
+            
+            <div className="action-box">
+              <button 
+                onClick={handleBackup}
+                disabled={isBackingUp}
+                className="primary-button large"
+              >
+                {isBackingUp ? 'Creating Backup...' : '📥 Download Full Backup'}
+              </button>
+              <p className="help-text">
+                Downloads a JSON file with all your data that can be used for recovery
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {/* Import New Plants Tab */}
+        {activeTab === 'import' && (
+          <div className="import-section">
+            <div className="info-box warning">
+              <h3>⚠️ Import Behavior</h3>
+              <p>This tool will:</p>
+              <ul>
+                <li>✅ Add plants with new IDs</li>
+                <li>✅ Skip existing plants (preserving your data)</li>
+                <li>✅ Show preview before importing</li>
+              </ul>
+            </div>
+            
+            <form onSubmit={handleImportPlants}>
+              <div className="form-group">
+                <label>
+                  <h4>📋 Plants CSV File (Required)</h4>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setPlantsFile(e.target.files[0])}
+                    className="file-input"
+                  />
+                  <p className="help-text">
+                    Should include: plant_id, name, price, mainimage, etc.
+                  </p>
+                </label>
+              </div>
+              
+              <div className="form-group">
+                <label>
+                  <h4>📦 Inventory CSV File (Optional)</h4>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setInventoryFile(e.target.files[0])}
+                    className="file-input"
+                  />
+                  <p className="help-text">
+                    Should include: plant_id, current_stock, status
+                  </p>
+                </label>
+              </div>
+              
+              <button 
+                type="submit"
+                disabled={importStatus.loading || !plantsFile}
+                className="primary-button"
+              >
+                {importStatus.loading ? 'Importing...' : 'Import Plants'}
+              </button>
+            </form>
+            
+            {importStatus.message && (
+              <div className={`status-message ${importStatus.error ? 'error' : importStatus.success ? 'success' : ''}`}>
+                {importStatus.message}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Update Inventory Tab */}
+        {activeTab === 'update' && (
+          <div className="update-section">
+            <div className="info-box info">
+              <h3>🔄 Update Stock Levels</h3>
+              <p>Update inventory quantities for existing plants only.</p>
+              <p>Use this after importing plants to set their stock levels.</p>
+            </div>
+            
+            <form onSubmit={handleUpdateInventory}>
+              <div className="form-group">
+                <label>
+                  <h4>📊 Inventory CSV File</h4>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    onChange={(e) => setUpdateFile(e.target.files[0])}
+                    className="file-input"
+                  />
+                  <p className="help-text">
+                    Should include: plant_id, current_stock (or stock/quantity)
+                  </p>
+                </label>
+              </div>
+              
+              <button 
+                type="submit"
+                disabled={updateStatus.loading || !updateFile}
+                className="primary-button"
+              >
+                {updateStatus.loading ? 'Updating...' : 'Update Stock Levels'}
+              </button>
+            </form>
+            
+            {updateStatus.message && (
+              <div className={`status-message ${updateStatus.error ? 'error' : updateStatus.success ? 'success' : ''}`}>
+                {updateStatus.message}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      
+      {/* CSV Format Reference */}
+      <div className="format-reference">
+        <h3>📋 CSV Format Reference</h3>
+        <div className="format-grid">
+          <div className="format-box">
+            <h4>Plants CSV</h4>
+            <code>
+              plant_id, name, latinname, price, mainimage, type, description...
+            </code>
+          </div>
+          <div className="format-box">
+            <h4>Inventory CSV</h4>
+            <code>
+              plant_id, current_stock, status, restock_date, notes
+            </code>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default InventoryImportExport;

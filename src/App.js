@@ -39,8 +39,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
-import SheetMigration from './components/SheetMigration';
-import InventoryUpdater from './components/InventoryUpdater';
+import InventoryImportExport from './components/InventoryImportExport';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -424,21 +423,11 @@ function AppContent() {
           }
         />
         <Route
-          path="/admin/bulk-upload"
+          path="/admin/import-export"
           element={
             <ProtectedRoute>
               <AdminContentWrapper>
-                <SheetMigration />
-              </AdminContentWrapper>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/update-inventory"
-          element={
-            <ProtectedRoute>
-              <AdminContentWrapper>
-                <InventoryUpdater />
+                <InventoryImportExport />
               </AdminContentWrapper>
             </ProtectedRoute>
           }
