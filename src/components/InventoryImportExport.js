@@ -14,6 +14,8 @@ const InventoryImportExport = () => {
   const [plantsFile, setPlantsFile] = useState(null);
   const [inventoryFile, setInventoryFile] = useState(null);
   const [importStatus, setImportStatus] = useState({ loading: false, message: '' });
+  const [previewData, setPreviewData] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   // Update Inventory state
   const [updateFile, setUpdateFile] = useState(null);
@@ -97,8 +99,8 @@ const InventoryImportExport = () => {
     }
   };
 
-  // Import Plants handler
-  const handleImportPlants = async (e) => {
+  // Generate preview data
+  const handleGeneratePreview = async (e) => {
     e.preventDefault();
     
     if (!plantsFile) {
@@ -118,8 +120,53 @@ const InventoryImportExport = () => {
         inventoryData = await readFile(inventoryFile);
       }
       
-      // Transform plant data
+      // Transform plant data for preview
       const transformedPlantsData = plantsData.map(plant => ({
+        id: parseInt(plant.plant_id) || 0,
+        name: plant.name || '',
+        price: plant.price || 0,
+        mainImage: plant.mainimage || plant.main_image || '',
+        inventoryCount: 0 // Will be updated from inventory data
+      }));
+      
+      // Add inventory counts if available
+      if (inventoryData.length > 0) {
+        inventoryData.forEach(item => {
+          const plant = transformedPlantsData.find(p => p.id.toString() === item.plant_id);
+          if (plant) {
+            plant.inventoryCount = parseInt(item.current_stock || item.stock || 0);
+          }
+        });
+      }
+      
+      // Store full data for actual import
+      setPreviewData({
+        plants: plantsData,
+        inventory: inventoryData,
+        preview: transformedPlantsData.slice(0, 10) // Show first 10 items
+      });
+      
+      setShowPreview(true);
+      setImportStatus({ loading: false, message: '' });
+    } catch (error) {
+      console.error('Preview error:', error);
+      setImportStatus({ 
+        loading: false, 
+        message: `Error reading files: ${error.message}`,
+        error: true
+      });
+    }
+  };
+
+  // Import Plants handler (after preview confirmation)
+  const handleConfirmImport = async () => {
+    if (!previewData) return;
+    
+    try {
+      setImportStatus({ loading: true, message: 'Processing import...' });
+      
+      // Transform plant data
+      const transformedPlantsData = previewData.plants.map(plant => ({
         id: parseInt(plant.plant_id) || 0,
         name: plant.name || '',
         scientificName: plant.latinname || '',
@@ -145,7 +192,7 @@ const InventoryImportExport = () => {
       
       setImportStatus({ loading: true, message: `Importing ${transformedPlantsData.length} plants...` });
       
-      const result = await importPlantsFromSheets(transformedPlantsData, inventoryData);
+      const result = await importPlantsFromSheets(transformedPlantsData, previewData.inventory);
       
       if (result.success) {
         setImportStatus({ 
@@ -157,6 +204,8 @@ const InventoryImportExport = () => {
         // Reset form
         setPlantsFile(null);
         setInventoryFile(null);
+        setPreviewData(null);
+        setShowPreview(false);
       } else {
         throw new Error(result.message);
       }
@@ -274,7 +323,7 @@ const InventoryImportExport = () => {
               </p>
             </div>
             
-            <form onSubmit={handleImportPlants}>
+            <form onSubmit={handleGeneratePreview}>
               <div className="form-group">
                 <h4>📋 Plants CSV File (Required)</h4>
                 <p className="help-text">
@@ -324,9 +373,64 @@ const InventoryImportExport = () => {
                 disabled={importStatus.loading || !plantsFile}
                 className="primary-button"
               >
-                {importStatus.loading ? 'Importing...' : 'Import Plants'}
+                {importStatus.loading ? 'Loading...' : 'Preview Import'}
               </button>
             </form>
+            
+            {/* Preview Modal */}
+            {showPreview && previewData && (
+              <div className="preview-modal">
+                <div className="preview-content">
+                  <h3>Import Preview</h3>
+                  <p>Found {previewData.plants.length} plants to import. Showing first {Math.min(10, previewData.plants.length)}:</p>
+                  
+                  <div className="preview-table">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Name</th>
+                          <th>Price</th>
+                          <th>Stock</th>
+                          <th>Image</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewData.preview.map((plant, index) => (
+                          <tr key={index}>
+                            <td>{plant.id}</td>
+                            <td>{plant.name}</td>
+                            <td>${plant.price}</td>
+                            <td>{plant.inventoryCount}</td>
+                            <td>{plant.mainImage ? '✓' : '✗'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div className="preview-actions">
+                    <button 
+                      onClick={handleConfirmImport}
+                      disabled={importStatus.loading}
+                      className="primary-button"
+                    >
+                      {importStatus.loading ? 'Importing...' : 'Confirm Import'}
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setShowPreview(false);
+                        setPreviewData(null);
+                        setImportStatus({ loading: false, message: '' });
+                      }}
+                      className="secondary-button"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
             
             {importStatus.message && (
               <div className={`status-message ${importStatus.error ? 'error' : importStatus.success ? 'success' : ''}`}>
