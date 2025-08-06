@@ -25,7 +25,7 @@ const InventoryImportExport = () => {
     if (lines.length === 0) throw new Error('CSV file is empty');
     
     const headers = lines[0].split(',').map(header => 
-      header.trim().toLowerCase().replace(/[\"']/g, '')
+      header.trim().toLowerCase().replace(/["']/g, '')
     );
     
     const data = [];
