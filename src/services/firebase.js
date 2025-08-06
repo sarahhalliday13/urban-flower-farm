@@ -1110,6 +1110,68 @@ export const downloadBackup = async () => {
 };
 
 /**
+ * Get available plant IDs
+ * @returns {Promise<Object>} Object with next available ID and list of gaps
+ */
+export const getAvailablePlantIds = async () => {
+  try {
+    const plantsSnapshot = await get(ref(database, 'plants'));
+    
+    if (!plantsSnapshot.exists()) {
+      return {
+        nextAvailable: 1,
+        gaps: [],
+        highestUsed: 0,
+        suggestedIds: [1, 2, 3, 4, 5]
+      };
+    }
+    
+    const plants = plantsSnapshot.val();
+    const usedIds = Object.keys(plants).map(id => parseInt(id)).sort((a, b) => a - b);
+    
+    // Find the highest used ID
+    const highestUsed = Math.max(...usedIds);
+    
+    // Find gaps in the sequence
+    const gaps = [];
+    for (let i = 1; i < highestUsed; i++) {
+      if (!usedIds.includes(i)) {
+        gaps.push(i);
+      }
+    }
+    
+    // Next available is either the first gap or highest + 1
+    const nextAvailable = gaps.length > 0 ? gaps[0] : highestUsed + 1;
+    
+    // Suggest some IDs (first gap, next few after highest)
+    const suggestedIds = [];
+    if (gaps.length > 0) {
+      suggestedIds.push(...gaps.slice(0, 3));
+    }
+    for (let i = highestUsed + 1; i <= highestUsed + 5 && suggestedIds.length < 5; i++) {
+      suggestedIds.push(i);
+    }
+    
+    return {
+      nextAvailable,
+      gaps: gaps.slice(0, 10), // Show first 10 gaps
+      highestUsed,
+      suggestedIds: suggestedIds.slice(0, 5),
+      totalPlants: usedIds.length
+    };
+  } catch (error) {
+    console.error('Error getting available plant IDs:', error);
+    return {
+      nextAvailable: 1,
+      gaps: [],
+      highestUsed: 0,
+      suggestedIds: [1, 2, 3, 4, 5],
+      error: error.message
+    };
+  }
+};
+
+/**
  * Update inventory for existing plants
  * @param {Array} inventoryData - Array of inventory objects with plant_id and stock info
  */

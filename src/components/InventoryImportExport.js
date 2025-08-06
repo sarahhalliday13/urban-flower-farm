@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { downloadBackup, importPlantsFromSheets, updateInventoryStock } from '../services/firebase';
+import React, { useState, useEffect } from 'react';
+import { downloadBackup, importPlantsFromSheets, updateInventoryStock, getAvailablePlantIds } from '../services/firebase';
 import { useToast } from '../context/ToastContext';
 import '../styles/InventoryImportExport.css';
 
@@ -20,6 +20,10 @@ const InventoryImportExport = () => {
   // Update Inventory state
   const [updateFile, setUpdateFile] = useState(null);
   const [updateStatus, setUpdateStatus] = useState({ loading: false, message: '' });
+  
+  // Available IDs state
+  const [availableIds, setAvailableIds] = useState(null);
+  const [loadingIds, setLoadingIds] = useState(false);
 
   // Helper function to parse CSV
   const parseCSV = (csvText) => {
@@ -124,7 +128,7 @@ const InventoryImportExport = () => {
       const transformedPlantsData = plantsData.map(plant => ({
         id: parseInt(plant.plant_id) || 0,
         name: plant.name || '',
-        price: plant.price || 0,
+        price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
         mainImage: plant.mainimage || plant.main_image || '',
         inventoryCount: 0 // Will be updated from inventory data
       }));
@@ -171,7 +175,7 @@ const InventoryImportExport = () => {
         name: plant.name || '',
         scientificName: plant.latinname || '',
         commonName: plant.commonname || '',
-        price: plant.price || 0,
+        price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
         featured: plant.featured === 'true',
         plantType: plant.type || '',
         description: plant.description || '',
@@ -260,6 +264,22 @@ const InventoryImportExport = () => {
     }
   };
 
+  // Load available IDs when on import tab
+  useEffect(() => {
+    if (activeTab === 'import' && !availableIds && !loadingIds) {
+      setLoadingIds(true);
+      getAvailablePlantIds()
+        .then(data => {
+          setAvailableIds(data);
+          setLoadingIds(false);
+        })
+        .catch(error => {
+          console.error('Error loading available IDs:', error);
+          setLoadingIds(false);
+        });
+    }
+  }, [activeTab, availableIds, loadingIds]);
+
   return (
     <div className="inventory-import-export">
       <h1>Inventory Import & Export</h1>
@@ -321,6 +341,19 @@ const InventoryImportExport = () => {
               <p>✅ Skip existing plants (preserving your data)</p>
               <p>✅ Show preview before importing</p>
             </div>
+            
+            {/* Available IDs Info */}
+            {availableIds && (
+              <div className="info-box info">
+                <h3>📊 Available Plant IDs</h3>
+                <p><strong>Next Available ID:</strong> {availableIds.nextAvailable}</p>
+                <p><strong>Suggested IDs:</strong> {availableIds.suggestedIds.join(', ')}</p>
+                {availableIds.gaps.length > 0 && (
+                  <p><strong>Gaps in sequence:</strong> {availableIds.gaps.join(', ')}</p>
+                )}
+                <p className="help-text">Currently {availableIds.totalPlants} plants in database (highest ID: {availableIds.highestUsed})</p>
+              </div>
+            )}
             
             <form onSubmit={handleGeneratePreview}>
               <div className="form-group">
