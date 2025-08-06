@@ -1030,6 +1030,86 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
 };
 
 /**
+ * Export all plants and inventory data as JSON
+ * @returns {Promise<Object>} Object containing plants and inventory data
+ */
+export const exportAllData = async () => {
+  try {
+    console.log('Exporting all data from Firebase...');
+    
+    // Get all plants
+    const plantsSnapshot = await get(ref(database, 'plants'));
+    const plants = plantsSnapshot.exists() ? plantsSnapshot.val() : {};
+    
+    // Get all inventory
+    const inventorySnapshot = await get(ref(database, 'inventory'));
+    const inventory = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+    
+    // Get all orders (for complete backup)
+    const ordersSnapshot = await get(ref(database, 'orders'));
+    const orders = ordersSnapshot.exists() ? ordersSnapshot.val() : {};
+    
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      plantCount: Object.keys(plants).length,
+      inventoryCount: Object.keys(inventory).length,
+      orderCount: Object.keys(orders).length,
+      plants,
+      inventory,
+      orders
+    };
+    
+    console.log(`Exported ${exportData.plantCount} plants, ${exportData.inventoryCount} inventory items, ${exportData.orderCount} orders`);
+    
+    return exportData;
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create and download a backup file
+ */
+export const downloadBackup = async () => {
+  try {
+    const data = await exportAllData();
+    const jsonString = JSON.stringify(data, null, 2);
+    
+    // Create blob and download
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    link.href = url;
+    link.download = `urban-flower-farm-backup-${timestamp}.json`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    URL.revokeObjectURL(url);
+    
+    return {
+      success: true,
+      message: `Backup downloaded: ${link.download}`,
+      stats: {
+        plants: data.plantCount,
+        inventory: data.inventoryCount,
+        orders: data.orderCount
+      }
+    };
+  } catch (error) {
+    console.error('Error downloading backup:', error);
+    return {
+      success: false,
+      message: 'Failed to download backup: ' + error.message
+    };
+  }
+};
+
+/**
  * Initialize default inventory data if none exists
  */
 export const initializeDefaultInventory = async () => {

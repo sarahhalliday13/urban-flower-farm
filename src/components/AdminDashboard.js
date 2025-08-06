@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/AdminDashboard.css';
 import { useAdmin } from '../context/AdminContext';
-import { getOrders, getDatabaseRef } from '../services/firebase';
+import { getOrders, getDatabaseRef, downloadBackup } from '../services/firebase';
 import { onValue, off } from 'firebase/database';
 import PlantSalesTracker from './PlantSalesTracker';
+import { useToast } from '../context/ToastContext';
 
 const AdminDashboard = () => {
   const { plants } = useAdmin();
+  const { addToast } = useToast();
   const [lowStockItems, setLowStockItems] = useState([]);
   const [salesData, setSalesData] = useState({
     pending: 0,
@@ -18,6 +20,7 @@ const AdminDashboard = () => {
   const [pendingEmails, setPendingEmails] = useState([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [orders, setOrders] = useState([]);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   // Setup real-time listener for orders
   useEffect(() => {
@@ -261,9 +264,60 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBackup = async () => {
+    setIsBackingUp(true);
+    try {
+      const result = await downloadBackup();
+      if (result.success) {
+        addToast(`Backup downloaded successfully! ${result.stats.plants} plants, ${result.stats.inventory} inventory items, ${result.stats.orders} orders`, 'success');
+      } else {
+        addToast(result.message, 'error');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      addToast('Failed to create backup', 'error');
+    } finally {
+      setIsBackingUp(false);
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <p className="welcome-message">Welcome to Button's Admin Dashboard!</p>
+      
+      {/* Backup Section */}
+      <div style={{ 
+        marginBottom: '20px', 
+        padding: '15px', 
+        backgroundColor: '#e8f5e9',
+        border: '1px solid #4caf50',
+        borderRadius: '5px',
+        textAlign: 'center'
+      }}>
+        <h3 style={{ marginTop: 0, color: '#2e7d32' }}>🛡️ Data Backup</h3>
+        <p style={{ marginBottom: '10px', color: '#2e7d32' }}>
+          Protect your data by downloading a backup of all plants, inventory, and orders
+        </p>
+        <button 
+          onClick={handleBackup}
+          disabled={isBackingUp}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: isBackingUp ? '#ccc' : '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: isBackingUp ? 'not-allowed' : 'pointer',
+            fontSize: '16px',
+            fontWeight: 'bold'
+          }}
+        >
+          {isBackingUp ? 'Creating Backup...' : '📥 Download Backup'}
+        </button>
+        <p style={{ marginTop: '10px', fontSize: '14px', color: '#666' }}>
+          Recommended: Create a backup before bulk operations
+        </p>
+      </div>
       
       {/* Pending Emails Alert - show only if there are pending emails */}
       {pendingEmails.length > 0 && (
