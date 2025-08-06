@@ -316,11 +316,10 @@ const InventoryImportExport = () => {
           <div className="import-section">
             <div className="info-box warning">
               <h3>⚠️ Import Behaviour</h3>
-              <p>This tool will:
-                ✅ Add plants with new IDs
-                ✅ Skip existing plants (preserving your data)
-                ✅ Show preview before importing
-              </p>
+              <p>This tool will:</p>
+              <p>✅ Add plants with new IDs</p>
+              <p>✅ Skip existing plants (preserving your data)</p>
+              <p>✅ Show preview before importing</p>
             </div>
             
             <form onSubmit={handleGeneratePreview}>

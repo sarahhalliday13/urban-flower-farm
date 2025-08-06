@@ -71,6 +71,15 @@
   margin-bottom: 10px;
 }
 
+.info-box p {
+  margin: 5px 0;
+  line-height: 1.5;
+}
+
+.info-box p:last-child {
+  margin-bottom: 0;
+}
+
 .info-box.success {
   background-color: #e8f5e9;
   border-color: #4caf50;
