@@ -235,7 +235,7 @@ const SheetMigration = () => {
       
       setStatus({ 
         loading: false, 
-        message: `Successfully imported ${result.plantsCount} plants and ${result.inventoryCount} inventory items to Firebase! (${skippedCount} blank/invalid plants were skipped)`,
+        message: `Successfully added ${result.plantsCount} new plants! ${result.skippedCount > 0 ? `(${result.skippedCount} existing plants were preserved)` : ''} Total plants in inventory: ${result.totalPlants}`,
         success: true
       });
     } catch (error) {
@@ -250,7 +250,28 @@ const SheetMigration = () => {
   
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-      <h1>Google Sheets to Firebase Migration</h1>
+      <h1>Bulk Upload - Add New Plants</h1>
+      
+      <div style={{ 
+        padding: '15px', 
+        backgroundColor: '#fff3cd', 
+        border: '1px solid #ffeaa7',
+        borderRadius: '5px',
+        marginBottom: '20px'
+      }}>
+        <h3 style={{ marginTop: 0, color: '#856404' }}>⚠️ Important Safety Information</h3>
+        <p style={{ color: '#856404', marginBottom: '10px' }}>
+          This tool is now configured to <strong>ADD NEW PLANTS ONLY</strong>. It will:
+        </p>
+        <ul style={{ color: '#856404', marginBottom: '10px' }}>
+          <li>✅ Add plants with new IDs that don't exist in your inventory</li>
+          <li>✅ Skip any plants that already exist (preserving your current data)</li>
+          <li>✅ Show you exactly what will be added before making changes</li>
+        </ul>
+        <p style={{ color: '#856404', fontWeight: 'bold', marginBottom: 0 }}>
+          Your existing inventory is safe and will NOT be replaced.
+        </p>
+      </div>
       
       <div style={{ marginBottom: '20px' }}>
         <h2>Instructions</h2>

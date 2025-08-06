@@ -928,9 +928,21 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
     console.log('Plants data:', plantsData.length, 'items');
     console.log('Inventory data:', inventoryData.length, 'items');
     
+    // CRITICAL: Get existing data first to preserve it
+    const existingPlantsSnapshot = await get(ref(database, 'plants'));
+    const existingInventorySnapshot = await get(ref(database, 'inventory'));
+    
+    const existingPlants = existingPlantsSnapshot.exists() ? existingPlantsSnapshot.val() : {};
+    const existingInventory = existingInventorySnapshot.exists() ? existingInventorySnapshot.val() : {};
+    
+    console.log(`Found ${Object.keys(existingPlants).length} existing plants and ${Object.keys(existingInventory).length} existing inventory items`);
+    
     // Prepare plants data for Firebase
-    const plantsObject = {};
-    const inventoryObject = {};
+    const plantsObject = { ...existingPlants }; // Start with existing data
+    const inventoryObject = { ...existingInventory }; // Start with existing data
+    
+    let newPlantsCount = 0;
+    let updatedPlantsCount = 0;
     
     // Process plant data
     plantsData.forEach(plant => {
@@ -941,11 +953,19 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
         return;
       }
       
-      // Store plant in plantsObject with the correct ID
+      // Check if plant already exists
+      if (plantsObject[plantId]) {
+        console.log(`Plant ${plantId} already exists - skipping to preserve existing data`);
+        updatedPlantsCount++;
+        return; // Skip existing plants in Phase 1
+      }
+      
+      // Store new plant
       plantsObject[plantId] = {
         ...plant,
         id: plantId // Make sure id is set consistently
       };
+      newPlantsCount++;
     });
     
     // Process inventory data
@@ -959,31 +979,36 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
           return;
         }
         
-        // Create inventory object
-        inventoryObject[plantId] = {
-          currentStock: parseInt(item.current_stock) || 0,
-          status: item.status || 'Unknown',
-          restockDate: item.restock_date || '',
-          notes: item.notes || '',
-          lastUpdated: new Date().toISOString()
-        };
+        // Only add inventory for new plants
+        if (!existingInventory[plantId]) {
+          inventoryObject[plantId] = {
+            currentStock: parseInt(item.current_stock) || 0,
+            status: item.status || 'Unknown',
+            restockDate: item.restock_date || '',
+            notes: item.notes || '',
+            lastUpdated: new Date().toISOString()
+          };
+        }
       });
     } else {
-      // If no inventory data provided, create default entries for each plant
-      Object.keys(plantsObject).forEach(plantId => {
-        inventoryObject[plantId] = {
-          currentStock: 0,
-          status: 'Out of Stock',
-          restockDate: '',
-          notes: 'Auto-generated during migration',
-          lastUpdated: new Date().toISOString()
-        };
+      // If no inventory data provided, create default entries for NEW plants only
+      plantsData.forEach(plant => {
+        const plantId = plant.id || plant.plant_id;
+        if (plantId && !existingPlants[plantId] && !inventoryObject[plantId]) {
+          inventoryObject[plantId] = {
+            currentStock: 0,
+            status: 'Out of Stock',
+            restockDate: '',
+            notes: 'Auto-generated during migration',
+            lastUpdated: new Date().toISOString()
+          };
+        }
       });
     }
     
-    console.log(`Prepared ${Object.keys(plantsObject).length} plants and ${Object.keys(inventoryObject).length} inventory items for import`);
+    console.log(`Will add ${newPlantsCount} new plants (${updatedPlantsCount} existing plants skipped)`);
     
-    // Update Firebase
+    // Update Firebase - this still uses set() but now includes existing data
     const plantsRef = ref(database, 'plants');
     const inventoryRef = ref(database, 'inventory');
     
@@ -992,9 +1017,11 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
     
     return {
       success: true,
-      message: `Imported ${Object.keys(plantsObject).length} plants and ${Object.keys(inventoryObject).length} inventory items to Firebase`,
-      plantsCount: Object.keys(plantsObject).length,
-      inventoryCount: Object.keys(inventoryObject).length
+      message: `Added ${newPlantsCount} new plants (${updatedPlantsCount} existing plants preserved)`,
+      plantsCount: newPlantsCount,
+      inventoryCount: Object.keys(inventoryObject).length,
+      skippedCount: updatedPlantsCount,
+      totalPlants: Object.keys(plantsObject).length
     };
   } catch (error) {
     console.error('Error importing plants to Firebase:', error);
