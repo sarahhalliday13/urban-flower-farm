@@ -266,44 +266,57 @@ const InventoryImportExport = () => {
         {activeTab === 'import' && (
           <div className="import-section">
             <div className="info-box warning">
-              <h3>⚠️ Import Behavior</h3>
-              <p>This tool will:</p>
-              <ul>
-                <li>✅ Add plants with new IDs</li>
-                <li>✅ Skip existing plants (preserving your data)</li>
-                <li>✅ Show preview before importing</li>
-              </ul>
+              <h3>⚠️ Import Behaviour</h3>
+              <p>This tool will:
+                ✅ Add plants with new IDs
+                ✅ Skip existing plants (preserving your data)
+                ✅ Show preview before importing
+              </p>
             </div>
             
             <form onSubmit={handleImportPlants}>
               <div className="form-group">
-                <label>
-                  <h4>📋 Plants CSV File (Required)</h4>
+                <h4>📋 Plants CSV File (Required)</h4>
+                <p className="help-text">
+                  Should include: plant_id, name, price, mainimage, etc.
+                </p>
+                <div className="file-input-wrapper">
                   <input
                     type="file"
                     accept=".csv"
                     onChange={(e) => setPlantsFile(e.target.files[0])}
                     className="file-input"
+                    id="plants-file"
                   />
-                  <p className="help-text">
-                    Should include: plant_id, name, price, mainimage, etc.
-                  </p>
-                </label>
+                  <label htmlFor="plants-file" className="file-label">
+                    {plantsFile ? plantsFile.name : 'No file chosen'}
+                  </label>
+                  <button type="button" className="select-button" onClick={() => document.getElementById('plants-file').click()}>
+                    Select
+                  </button>
+                </div>
               </div>
               
               <div className="form-group">
-                <label>
-                  <h4>📦 Inventory CSV File (Optional)</h4>
+                <h4>📦 Inventory CSV File (Optional)</h4>
+                <p className="help-text">
+                  Should include: plant_id, current_stock, status
+                </p>
+                <div className="file-input-wrapper">
                   <input
                     type="file"
                     accept=".csv"
                     onChange={(e) => setInventoryFile(e.target.files[0])}
                     className="file-input"
+                    id="inventory-file"
                   />
-                  <p className="help-text">
-                    Should include: plant_id, current_stock, status
-                  </p>
-                </label>
+                  <label htmlFor="inventory-file" className="file-label">
+                    {inventoryFile ? inventoryFile.name : 'No file chosen'}
+                  </label>
+                  <button type="button" className="select-button" onClick={() => document.getElementById('inventory-file').click()}>
+                    Select
+                  </button>
+                </div>
               </div>
               
               <button 
@@ -334,18 +347,25 @@ const InventoryImportExport = () => {
             
             <form onSubmit={handleUpdateInventory}>
               <div className="form-group">
-                <label>
-                  <h4>📊 Inventory CSV File</h4>
+                <h4>📊 Inventory CSV File</h4>
+                <p className="help-text">
+                  Should include: plant_id, current_stock (or stock/quantity)
+                </p>
+                <div className="file-input-wrapper">
                   <input
                     type="file"
                     accept=".csv"
                     onChange={(e) => setUpdateFile(e.target.files[0])}
                     className="file-input"
+                    id="update-file"
                   />
-                  <p className="help-text">
-                    Should include: plant_id, current_stock (or stock/quantity)
-                  </p>
-                </label>
+                  <label htmlFor="update-file" className="file-label">
+                    {updateFile ? updateFile.name : 'No file chosen'}
+                  </label>
+                  <button type="button" className="select-button" onClick={() => document.getElementById('update-file').click()}>
+                    Select
+                  </button>
+                </div>
               </div>
               
               <button 
@@ -366,24 +386,26 @@ const InventoryImportExport = () => {
         )}
       </div>
       
-      {/* CSV Format Reference */}
-      <div className="format-reference">
-        <h3>📋 CSV Format Reference</h3>
-        <div className="format-grid">
-          <div className="format-box">
-            <h4>Plants CSV</h4>
-            <code>
-              plant_id, name, latinname, price, mainimage, type, description...
-            </code>
-          </div>
-          <div className="format-box">
-            <h4>Inventory CSV</h4>
-            <code>
-              plant_id, current_stock, status, restock_date, notes
-            </code>
+      {/* CSV Format Reference - only show on import/update tabs */}
+      {activeTab !== 'export' && (
+        <div className="format-reference">
+          <h3>📋 CSV Format Reference</h3>
+          <div className="format-grid">
+            <div className="format-box">
+              <h4>Plants CSV</h4>
+              <code>
+                plant_id, name, latinname, price, mainimage, type, description...
+              </code>
+            </div>
+            <div className="format-box">
+              <h4>Inventory CSV</h4>
+              <code>
+                plant_id, current_stock, status, restock_date, notes
+              </code>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
