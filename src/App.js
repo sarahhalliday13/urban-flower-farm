@@ -40,6 +40,7 @@ import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
 import SheetMigration from './components/SheetMigration';
+import InventoryUpdater from './components/InventoryUpdater';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -428,6 +429,16 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <SheetMigration />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/update-inventory"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <InventoryUpdater />
               </AdminContentWrapper>
             </ProtectedRoute>
           }

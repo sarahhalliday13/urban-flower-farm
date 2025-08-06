@@ -1110,6 +1110,53 @@ export const downloadBackup = async () => {
 };
 
 /**
+ * Update inventory for existing plants
+ * @param {Array} inventoryData - Array of inventory objects with plant_id and stock info
+ */
+export const updateInventoryStock = async (inventoryData) => {
+  try {
+    console.log(`Updating inventory for ${inventoryData.length} items...`);
+    
+    const inventoryRef = ref(database, 'inventory');
+    const updates = {};
+    
+    inventoryData.forEach(item => {
+      const plantId = item.plant_id;
+      if (!plantId) {
+        console.warn('Inventory item missing plant_id, skipping:', item);
+        return;
+      }
+      
+      // Update inventory data
+      updates[plantId] = {
+        currentStock: parseInt(item.current_stock || item.stock || item.quantity || 0),
+        status: item.status || (parseInt(item.current_stock || 0) > 0 ? 'In Stock' : 'Out of Stock'),
+        restockDate: item.restock_date || '',
+        notes: item.notes || '',
+        lastUpdated: new Date().toISOString()
+      };
+    });
+    
+    // Update all inventory items at once
+    await update(inventoryRef, updates);
+    
+    console.log(`Successfully updated inventory for ${Object.keys(updates).length} plants`);
+    
+    return {
+      success: true,
+      message: `Updated inventory for ${Object.keys(updates).length} plants`,
+      updatedCount: Object.keys(updates).length
+    };
+  } catch (error) {
+    console.error('Error updating inventory:', error);
+    return {
+      success: false,
+      message: 'Failed to update inventory: ' + error.message
+    };
+  }
+};
+
+/**
  * Initialize default inventory data if none exists
  */
 export const initializeDefaultInventory = async () => {
