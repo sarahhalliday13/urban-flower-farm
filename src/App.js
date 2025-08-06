@@ -39,6 +39,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
+import SheetMigration from './components/SheetMigration';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -417,6 +418,16 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <AdminUpdates />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/bulk-upload"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <SheetMigration />
               </AdminContentWrapper>
             </ProtectedRoute>
           }

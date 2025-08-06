@@ -396,6 +396,14 @@ const AdminDashboard = () => {
             Manage Orders
           </Link>
         </div>
+        
+        <div className="admin-card">
+          <h2>Beta - Bulk Upload</h2>
+          <p>Import multiple plants at once from CSV files or Google Sheets. Perfect for seasonal inventory updates.</p>
+          <Link to="/admin/bulk-upload" className="admin-button">
+            Bulk Import Plants
+          </Link>
+        </div>
       </div>
       
       {/* Plant Sales Tracking */}
