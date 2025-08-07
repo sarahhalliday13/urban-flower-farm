@@ -336,35 +336,32 @@ const InventoryImportExport = () => {
         {/* Import New Plants Tab */}
         {activeTab === 'import' && (
           <div className="import-section">
-            <div className="info-box warning">
-              <h3>⚠️ Import Behaviour</h3>
-              <p>This tool will:</p>
-              <p>✅ Add plants with new IDs</p>
-              <p>✅ Skip existing plants (preserving your data)</p>
-              <p>✅ Show preview before importing</p>
-            </div>
-            
-            {/* Available IDs Info */}
-            {availableIds && (
+            <div className="info-boxes-row">
+              {/* Database Status & Import Info */}
               <div className="info-box info">
-                <h3>💡 Available Plant IDs</h3>
-                <p>You have <strong>{availableIds.totalPlants} plants</strong> in your database</p>
-                <p><strong>Next Available ID:</strong> {availableIds.highestUsed + 1}</p>
-                <p><strong>Suggested Range:</strong> {availableIds.highestUsed + 1} - {availableIds.highestUsed + 10}</p>
+                <h3>📊 Database Status</h3>
+                {availableIds && (
+                  <>
+                    <p>You have <strong>{availableIds.totalPlants} plants</strong> in your database</p>
+                    <p><strong>Next ID:</strong> {availableIds.highestUsed + 1} • <strong>Suggested Range:</strong> {availableIds.highestUsed + 1} - {availableIds.highestUsed + 10}</p>
+                  </>
+                )}
+                <hr className="info-divider" />
+                <p className="small-text"><strong>Import Mode:</strong> Add-only • Skips existing • Preview first</p>
               </div>
-            )}
-            
-            {/* Template Download */}
-            <div className="info-box template">
-              <h3>📄 Need a Template?</h3>
-              <p>Download our Excel template with the correct column format:</p>
-              <a 
-                href="/templates/plants_inventory.xlsx" 
-                download="plants_inventory_template.xlsx"
-                className="template-download-link"
-              >
-                📥 Download Excel Template
-              </a>
+              
+              {/* Template Download */}
+              <div className="info-box template">
+                <h3>📄 Excel Template</h3>
+                <p>Get the correct format for easy importing:</p>
+                <a 
+                  href="/templates/plants_inventory.xlsx" 
+                  download="plants_inventory_template.xlsx"
+                  className="template-download-link"
+                >
+                  📥 Download Template
+                </a>
+              </div>
             </div>
             
             <form onSubmit={handleGeneratePreview}>

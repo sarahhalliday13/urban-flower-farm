@@ -104,6 +104,31 @@
   color: #6a1b9a;
 }
 
+/* Info Boxes Row Layout */
+.info-boxes-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 768px) {
+  .info-boxes-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-divider {
+  margin: 15px 0;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.small-text {
+  font-size: 0.9rem;
+  color: #666;
+}
+
 .info-box ul {
   margin: 10px 0 0 20px;
   padding: 0;
@@ -201,12 +226,13 @@
 .template-download-link {
   display: inline-block;
   margin-top: 10px;
-  padding: 10px 20px;
+  padding: 8px 16px;
   background-color: #6a1b9a;
   color: white;
   text-decoration: none;
   border-radius: 5px;
   font-weight: 500;
+  font-size: 0.95rem;
   transition: background-color 0.3s ease;
 }
 
