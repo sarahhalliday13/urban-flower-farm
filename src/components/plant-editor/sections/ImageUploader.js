@@ -195,7 +195,7 @@ const ImageUploader = ({
                     checked={mainImageIndex === index}
                     onChange={() => onMainSelect(index)}
                   />
-                  Main Image
+                  {mainImageIndex === index ? 'Main Image' : 'Set as Main'}
                 </label>
                 
                 <button 

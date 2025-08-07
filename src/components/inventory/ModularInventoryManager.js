@@ -381,6 +381,22 @@ const ModularInventoryManager = () => {
     // Instead of navigating to a different URL, we'll set up edit mode with this plant's data
     setCurrentPlant(plant);
     
+    // Convert mainImage to images array if needed
+    let images = plant.images || [];
+    if ((!images || images.length === 0) && plant.mainImage) {
+      images = [plant.mainImage];
+      // Also check for additionalImages
+      if (plant.additionalImages) {
+        if (typeof plant.additionalImages === 'string') {
+          // If it's a comma-separated string
+          const additionalArr = plant.additionalImages.split(',').map(img => img.trim()).filter(img => img);
+          images = [...images, ...additionalArr];
+        } else if (Array.isArray(plant.additionalImages)) {
+          images = [...images, ...plant.additionalImages];
+        }
+      }
+    }
+    
     setPlantFormData({
       id: plant.id || '',
       name: plant.name || '',
@@ -388,7 +404,7 @@ const ModularInventoryManager = () => {
       commonName: plant.commonName || '',
       price: plant.price || '',
       description: plant.description || '',
-      images: plant.images || [],
+      images: images,
       mainImageIndex: plant.mainImageIndex || 0,
       mainImage: plant.mainImage || '',
       colour: plant.colour || '',
@@ -931,9 +947,15 @@ const ModularInventoryManager = () => {
                       status: standardizeInventoryStatus(plantFormData.inventory.status)
                     };
                     
+                    // Ensure mainImage is set from images array
+                    const mainImage = plantFormData.images && plantFormData.images.length > 0 
+                      ? plantFormData.images[plantFormData.mainImageIndex || 0] 
+                      : plantFormData.mainImage || '';
+                    
                     const plantData = {
                       ...plantFormData,
                       id: plantId,
+                      mainImage: mainImage,
                       inventory: standardizedInventory
                     };
                     
@@ -1354,9 +1376,15 @@ const ModularInventoryManager = () => {
                       status: standardizeInventoryStatus(plantFormData.inventory.status)
                     };
                     
+                    // Ensure mainImage is set from images array
+                    const mainImage = plantFormData.images && plantFormData.images.length > 0 
+                      ? plantFormData.images[plantFormData.mainImageIndex || 0] 
+                      : plantFormData.mainImage || '';
+                    
                     const plantData = {
                       ...plantFormData,
                       id: plantId,
+                      mainImage: mainImage,
                       inventory: standardizedInventory
                     };
                     
