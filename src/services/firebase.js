@@ -1267,10 +1267,20 @@ export const getAvailablePlantIds = async () => {
     }
     
     const plants = plantsSnapshot.val();
-    const usedIds = Object.keys(plants).map(id => parseInt(id)).sort((a, b) => a - b);
+    const allIds = Object.keys(plants).map(id => parseInt(id)).sort((a, b) => a - b);
     
-    // Find the highest used ID
-    const highestUsed = Math.max(...usedIds);
+    // Filter out anomalously high IDs (anything above 1000 is considered anomalous)
+    // This prevents test data with IDs like 9001 from affecting suggestions
+    const usedIds = allIds.filter(id => id < 1000);
+    const anomalousIds = allIds.filter(id => id >= 1000);
+    
+    // Find the highest used ID (excluding anomalous ones)
+    const highestUsed = usedIds.length > 0 ? Math.max(...usedIds) : 0;
+    
+    // Log if we found anomalous IDs
+    if (anomalousIds.length > 0) {
+      console.log(`Found ${anomalousIds.length} plants with IDs >= 1000:`, anomalousIds);
+    }
     
     // Find gaps in the sequence
     const gaps = [];
@@ -1297,7 +1307,9 @@ export const getAvailablePlantIds = async () => {
       gaps: gaps.slice(0, 10), // Show first 10 gaps
       highestUsed,
       suggestedIds: suggestedIds.slice(0, 5),
-      totalPlants: usedIds.length
+      totalPlants: allIds.length, // Total includes all plants
+      normalPlants: usedIds.length, // Plants with IDs < 1000
+      anomalousCount: anomalousIds.length
     };
   } catch (error) {
     console.error('Error getting available plant IDs:', error);
