@@ -872,28 +872,26 @@ const ModularInventoryManager = () => {
           />
 
           {/* Inventory Tab Content */}
-          <div className="tab-content">
-            {apiRetryCount > 0 && (
-              <div className="api-warning">
-                <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
-              </div>
-            )}
-            
-            <InventoryTable
-              filteredPlants={filteredPlants}
-              editMode={editMode}
-              editValues={editValues}
-              sortConfig={sortConfig}
-              handleSort={handleSort}
-              handleChange={handleChange}
-              handleEdit={handleEdit}
-              handleSave={handleSave}
-              handleCancel={handleCancel}
-              saveStatus={saveStatus}
-              onEditPlant={handleEditPlant}
-              fixUnknownStatuses={fixUnknownStatuses}
-            />
-          </div>
+          {apiRetryCount > 0 && (
+            <div className="api-warning">
+              <p><span role="img" aria-label="Warning">⚠️</span> API connection issues detected. Your changes are being saved locally and will sync when the connection is restored.</p>
+            </div>
+          )}
+          
+          <InventoryTable
+            filteredPlants={filteredPlants}
+            editMode={editMode}
+            editValues={editValues}
+            sortConfig={sortConfig}
+            handleSort={handleSort}
+            handleChange={handleChange}
+            handleEdit={handleEdit}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            saveStatus={saveStatus}
+            onEditPlant={handleEditPlant}
+            fixUnknownStatuses={fixUnknownStatuses}
+          />
         </>
       ) : (
         /* Plant Edit Mode */
