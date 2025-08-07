@@ -348,11 +348,24 @@ const InventoryImportExport = () => {
             {availableIds && (
               <div className="info-box info">
                 <h3>💡 Available Plant IDs</h3>
+                <p>You have <strong>{availableIds.totalPlants} plants</strong> in your database</p>
                 <p><strong>Next Available ID:</strong> {availableIds.highestUsed + 1}</p>
                 <p><strong>Suggested Range:</strong> {availableIds.highestUsed + 1} - {availableIds.highestUsed + 10}</p>
-                <p className="help-text">You have {availableIds.totalPlants} plants in your database</p>
               </div>
             )}
+            
+            {/* Template Download */}
+            <div className="info-box template">
+              <h3>📄 Need a Template?</h3>
+              <p>Download our Excel template with the correct column format:</p>
+              <a 
+                href="/templates/plants_inventory.xlsx" 
+                download="plants_inventory_template.xlsx"
+                className="template-download-link"
+              >
+                📥 Download Excel Template
+              </a>
+            </div>
             
             <form onSubmit={handleGeneratePreview}>
               <div className="form-group">

@@ -98,6 +98,12 @@
   color: #1565c0;
 }
 
+.info-box.template {
+  background-color: #f3e5f5;
+  border-color: #9c27b0;
+  color: #6a1b9a;
+}
+
 .info-box ul {
   margin: 10px 0 0 20px;
   padding: 0;
@@ -189,6 +195,25 @@
 
 .select-button:hover {
   background-color: #1976d2;
+}
+
+/* Template Download Link */
+.template-download-link {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 10px 20px;
+  background-color: #6a1b9a;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.template-download-link:hover {
+  background-color: #4a148c;
+  color: white;
+  text-decoration: none;
 }
 
 .help-text {
