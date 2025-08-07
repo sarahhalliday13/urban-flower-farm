@@ -5,6 +5,11 @@ export const identifyPlant = async (imageUrl, organ = 'auto') => {
   try {
     console.log('Identifying plant with URL:', imageUrl);
     console.log('Using organ:', organ);
+    console.log('API Key available:', !!PLANTNET_API_KEY);
+    
+    if (!PLANTNET_API_KEY) {
+      throw new Error('PlantNet API key not configured');
+    }
     
     // Always use direct API call since we're not using Netlify
     // Development - try direct API call
@@ -28,7 +33,8 @@ export const identifyPlant = async (imageUrl, organ = 'auto') => {
       
       const response = await fetch(apiUrl, {
         method: 'POST',
-        body: formData
+        body: formData,
+        mode: 'cors'
       });
       
       console.log('Response status:', response.status);

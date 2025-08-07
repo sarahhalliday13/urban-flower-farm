@@ -33,9 +33,14 @@ const ImageRecovery = () => {
         
         if (age < CACHE_DURATION) {
           const parsed = JSON.parse(cachedData);
-          setAllImages(parsed.images || []);
-          setImages(filterUnused ? (parsed.images || []).filter(img => !img.inUse) : parsed.images || []);
-          setFolders(parsed.folders || []);
+          const cachedImages = parsed.images || [];
+          const cachedFolders = parsed.folders || [];
+          
+          console.log(`Loading ${cachedImages.length} images from cache`);
+          
+          setAllImages(cachedImages);
+          setImages(cachedImages); // Don't filter on initial load
+          setFolders(cachedFolders);
           setLastScanTime(timestamp);
           setUsingCache(true);
           return true;
@@ -70,7 +75,11 @@ const ImageRecovery = () => {
 
   // Load cache on component mount
   React.useEffect(() => {
-    loadFromCache();
+    const cacheLoaded = loadFromCache();
+    if (!cacheLoaded) {
+      // Only auto-scan if no cache exists
+      console.log('No cache found, ready for manual scan');
+    }
   }, []);
 
   const handleFilterToggle = () => {
