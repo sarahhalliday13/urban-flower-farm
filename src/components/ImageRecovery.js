@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { listFirebaseImages } from '../services/firebase';
-import { identifyPlant, detectPlantOrgan } from '../services/plantNetApi';
 import '../styles/ImageRecovery.css';
 
 const ImageRecovery = () => {
@@ -12,8 +11,6 @@ const ImageRecovery = () => {
   const [scanProgress, setScanProgress] = useState('');
   const [filterUnused, setFilterUnused] = useState(false);
   const [allImages, setAllImages] = useState([]); // Store all images before filtering
-  const [identifyingImage, setIdentifyingImage] = useState(null);
-  const [identificationResults, setIdentificationResults] = useState({});
   const [lastScanTime, setLastScanTime] = useState(null);
   const [usingCache, setUsingCache] = useState(false);
 
@@ -89,41 +86,6 @@ const ImageRecovery = () => {
     // Apply filter to existing results
     if (allImages.length > 0) {
       setImages(newFilterState ? allImages.filter(img => !img.inUse) : allImages);
-    }
-  };
-
-  const handleIdentifyPlant = async (image) => {
-    setIdentifyingImage(image.url);
-    
-    try {
-      const organ = detectPlantOrgan(image.name);
-      const result = await identifyPlant(image.url, organ);
-      
-      setIdentificationResults(prev => ({
-        ...prev,
-        [image.url]: result
-      }));
-    } catch (error) {
-      console.error('Error identifying plant:', error);
-      let errorMessage = 'Failed to identify plant';
-      
-      if (error.message.includes('403')) {
-        errorMessage = 'API access denied. Please check API key and domain settings.';
-      } else if (error.message.includes('429')) {
-        errorMessage = 'API rate limit exceeded. Please try again later.';
-      } else if (error.message.includes('Failed to fetch image')) {
-        errorMessage = 'Could not access image. CORS issue with Firebase.';
-      }
-      
-      setIdentificationResults(prev => ({
-        ...prev,
-        [image.url]: {
-          success: false,
-          error: errorMessage
-        }
-      }));
-    } finally {
-      setIdentifyingImage(null);
     }
   };
 
@@ -316,47 +278,6 @@ const ImageRecovery = () => {
                     })}
                   </p>
                   <p className="image-source">Source: {image.source}</p>
-                  
-                  {/* Plant Identification */}
-                  <div className="plant-identification">
-                    {!identificationResults[image.url] && (
-                      <button 
-                        className="identify-button"
-                        onClick={() => handleIdentifyPlant(image)}
-                        disabled={identifyingImage === image.url}
-                      >
-                        {identifyingImage === image.url ? (
-                          <>🔄 Identifying...</>
-                        ) : (
-                          <>🌿 Identify Plant</>
-                        )}
-                      </button>
-                    )}
-                    
-                    {identificationResults[image.url] && (
-                      <div className="identification-results">
-                        {identificationResults[image.url].success ? (
-                          <>
-                            <h5>🎯 Plant Identification:</h5>
-                            {identificationResults[image.url].results.map((result, idx) => (
-                              <div key={idx} className="plant-match">
-                                <strong>{result.score}% match:</strong> {result.scientificName}
-                                {result.commonNames.length > 0 && (
-                                  <span className="common-names"> ({result.commonNames[0]})</span>
-                                )}
-                                <small>Family: {result.family}</small>
-                              </div>
-                            ))}
-                          </>
-                        ) : (
-                          <div className="identification-error">
-                            ❌ {identificationResults[image.url].error || identificationResults[image.url].message}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  
                   {/* Show any custom metadata */}
                   {Object.keys(image.customMetadata).length > 0 && (
                     <div className="custom-metadata">
