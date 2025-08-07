@@ -392,6 +392,12 @@ const AdminDashboard = () => {
               Import/Export
             </Link>
           </div>
+          
+          <div className="secondary-action" style={{ marginTop: '10px' }}>
+            <Link to="/admin/image-recovery" className="secondary-link">
+              🔍 Image Recovery Tool
+            </Link>
+          </div>
         </div>
         
         <div className="admin-card">

@@ -12,7 +12,7 @@
 
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, set, get, onValue, update, remove } from "firebase/database";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, listAll, getMetadata } from "firebase/storage";
 import { getFirestore } from "firebase/firestore";
 import { 
   getAuth, 
@@ -146,8 +146,136 @@ export const getFirebaseStorageURL = async (path) => {
   }
 };
 
+// Utility to list images from Firebase Storage (for recovery)
+export const listFirebaseImages = async (folderPath = 'images/', checkUsage = false) => {
+  try {
+    console.log('Listing images from Firebase Storage:', folderPath);
+    
+    // Create a reference to the folder
+    const listRef = storageRef(storage, folderPath);
+    
+    // List all items in the folder
+    const result = await listAll(listRef);
+    
+    // Get all plants if we need to check usage
+    let plantsData = [];
+    let usedImageUrls = new Set();
+    
+    if (checkUsage) {
+      try {
+        const plants = await fetchPlants();
+        plantsData = plants;
+        
+        // Collect all image URLs from plants
+        plants.forEach(plant => {
+          // Check mainImage
+          if (plant.mainImage) {
+            usedImageUrls.add(plant.mainImage);
+          }
+          
+          // Check images array
+          if (Array.isArray(plant.images)) {
+            plant.images.forEach(img => usedImageUrls.add(img));
+          }
+          
+          // Check additionalImages (string or array)
+          if (plant.additionalImages) {
+            if (typeof plant.additionalImages === 'string') {
+              plant.additionalImages.split(',').forEach(img => {
+                const trimmed = img.trim();
+                if (trimmed) usedImageUrls.add(trimmed);
+              });
+            } else if (Array.isArray(plant.additionalImages)) {
+              plant.additionalImages.forEach(img => usedImageUrls.add(img));
+            }
+          }
+        });
+        
+        console.log(`Found ${usedImageUrls.size} unique images in use by ${plants.length} plants`);
+      } catch (error) {
+        console.warn('Could not fetch plants for usage check:', error);
+      }
+    }
+    
+    const images = [];
+    
+    // Get details for each item
+    for (const item of result.items) {
+      try {
+        // Get download URL
+        const url = await getDownloadURL(item);
+        
+        // Get metadata
+        const metadata = await getMetadata(item);
+        
+        // Check if this image is being used
+        const isInUse = checkUsage ? usedImageUrls.has(url) : null;
+        
+        // Find which plant(s) use this image
+        let usedBy = [];
+        if (checkUsage && isInUse) {
+          usedBy = plantsData.filter(plant => {
+            return plant.mainImage === url ||
+                   (Array.isArray(plant.images) && plant.images.includes(url)) ||
+                   (typeof plant.additionalImages === 'string' && plant.additionalImages.includes(url)) ||
+                   (Array.isArray(plant.additionalImages) && plant.additionalImages.includes(url));
+          }).map(plant => ({ id: plant.id, name: plant.name }));
+        }
+        
+        images.push({
+          name: item.name,
+          fullPath: item.fullPath,
+          url: url,
+          size: metadata.size,
+          contentType: metadata.contentType,
+          created: metadata.timeCreated,
+          updated: metadata.updated,
+          // Custom metadata (if any)
+          customMetadata: metadata.customMetadata || {},
+          // Try to extract source from custom metadata or path
+          source: metadata.customMetadata?.source || 
+                  (item.fullPath.includes('uploads/') ? 'User Upload' : 
+                   item.fullPath.includes('ai-generated/') ? 'AI Generated' :
+                   item.fullPath.includes('web/') ? 'Web Import' : 'Unknown'),
+          // Extract potential plant name from filename
+          potentialPlantName: item.name
+            .replace(/\.(jpg|jpeg|png|gif|webp)$/i, '')
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/[-_]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' '),
+          // Usage information
+          inUse: isInUse,
+          usedBy: usedBy
+        });
+      } catch (error) {
+        console.error('Error getting details for:', item.name, error);
+      }
+    }
+    
+    // Also list subdirectories
+    const folders = result.prefixes.map(prefix => ({
+      name: prefix.name,
+      fullPath: prefix.fullPath
+    }));
+    
+    return {
+      images,
+      folders,
+      totalImages: images.length,
+      totalFolders: folders.length
+    };
+  } catch (error) {
+    console.error('Error listing Firebase images:', error);
+    throw error;
+  }
+};
+
 // Utility to upload an image to Firebase storage
-export const uploadImageToFirebase = async (file, path) => {
+export const uploadImageToFirebase = async (file, path, metadata = {}) => {
   try {
     console.log('Starting image upload to Firebase:', { fileName: file.name, fileSize: file.size, path });
     
@@ -175,8 +303,20 @@ export const uploadImageToFirebase = async (file, path) => {
       const fileRef = storageRef(storage, storagePath);
       console.log('Created storage reference:', storagePath);
       
-      console.log('Uploading bytes to Firebase...');
-      await uploadBytes(fileRef, file);
+      // Add custom metadata
+      const uploadMetadata = {
+        contentType: file.type,
+        customMetadata: {
+          uploadedBy: auth.currentUser?.email || 'anonymous',
+          uploadedAt: new Date().toISOString(),
+          source: metadata.source || 'user-upload',
+          originalName: file.name,
+          ...metadata // Allow additional custom metadata
+        }
+      };
+      
+      console.log('Uploading bytes to Firebase with metadata...');
+      await uploadBytes(fileRef, file, uploadMetadata);
       console.log('Upload successful, getting download URL...');
       
       const downloadURL = await getDownloadURL(fileRef);
@@ -1370,12 +1510,12 @@ export const loadSamplePlants = async () => {
     
     // Map the image URLs to local images
     const localImageMappings = {
-      "Lavender": "/images/LavenderMist.jpg",
-      "Lavender Mist": "/images/LavenderMist.jpg",
-      "Palmer's Beardtongue": "/images/penstemonpalmeri.jpg",
-      "Gaillardia Pulchella Mix": "/images/gaillardiapulchella.jpg",
-      "Korean Mint": "/images/koreanmint.jpg",
-      "Golden Jubilee Anise Hyssop": "/images/koreanmint.jpg", // Using Korean mint image as fallback
+      "Lavender": "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2FLavenderMist.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+      "Lavender Mist": "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2FLavenderMist.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+      "Palmer's Beardtongue": "/images/penstemonpalmeri.jpg", // Already handled separately
+      "Gaillardia Pulchella Mix": "/images/gaillardiapulchella.jpg", // Already handled separately
+      "Korean Mint": "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fkoreanmint.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739",
+      "Golden Jubilee Anise Hyssop": "https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/images%2Fkoreanmint.jpg?alt=media&token=655fba6f-d45e-44eb-8e01-eee626300739", // Using Korean mint image as fallback
     };
 
     // Update each plant's mainImage to use local files

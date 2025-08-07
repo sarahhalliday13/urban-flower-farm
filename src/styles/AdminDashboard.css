@@ -312,6 +312,24 @@
   background-color: #1e3c22;
 }
 
+.secondary-action {
+  text-align: center;
+}
+
+.secondary-link {
+  color: #2c5530;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+  padding: 0.5rem 0;
+  transition: color 0.2s;
+}
+
+.secondary-link:hover {
+  color: #1e3c22;
+  text-decoration: underline;
+}
+
 .admin-help {
   background-color: #e0efe0;
   padding: 1.5rem;

@@ -40,6 +40,7 @@ import { ModularOrderManager } from './components/orders/index';
 import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
 import InventoryImportExport from './components/InventoryImportExport';
+import ImageRecovery from './components/ImageRecovery';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -428,6 +429,16 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <InventoryImportExport />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/image-recovery"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <ImageRecovery />
               </AdminContentWrapper>
             </ProtectedRoute>
           }
