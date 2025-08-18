@@ -3,9 +3,20 @@ import '../styles/AdminUpdates.css';
 import { saveNewsItems, fetchNewsItems } from '../services/firebase';
 
 const AdminUpdates = () => {
+  // Generate preview text from content
+  const getPreviewText = (content, maxLength = 150) => {
+    if (!content) return '';
+    if (content.length <= maxLength) return content;
+    
+    // Find the last space before maxLength to avoid cutting words
+    const trimmed = content.substring(0, maxLength);
+    const lastSpace = trimmed.lastIndexOf(' ');
+    return trimmed.substring(0, lastSpace > 0 ? lastSpace : maxLength) + '...';
+  };
   const [updates, setUpdates] = useState([]);
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
+  const [isPinned, setIsPinned] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -29,11 +40,19 @@ const AdminUpdates = () => {
         setLoading(true);
         const newsData = await fetchNewsItems();
         
-        // Convert date strings to Date objects
+        // Convert date strings to Date objects and ensure isPinned field exists
         const processedData = newsData.map(item => ({
           ...item,
-          date: new Date(item.date)
+          date: new Date(item.date),
+          isPinned: item.isPinned || false
         }));
+        
+        // Sort: pinned items first, then by date (newest first)
+        processedData.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return b.date.getTime() - a.date.getTime();
+        });
         
         setUpdates(processedData);
         setLoading(false);
@@ -78,16 +97,22 @@ const AdminUpdates = () => {
       
       if (editingId) {
         // Update existing update
-        updatedNews = updates.map(update => 
-          update.id === editingId 
-            ? { 
-                ...update, 
-                subject: subject.trim(), 
-                content: content.trim(),
-                updatedAt: new Date()
-              } 
-            : update
-        );
+        updatedNews = updates.map(update => {
+          if (update.id === editingId) {
+            return {
+              ...update,
+              subject: subject.trim(),
+              content: content.trim(),
+              isPinned: isPinned,
+              updatedAt: new Date()
+            };
+          }
+          // If we're pinning this item, unpin any other pinned items
+          if (isPinned && update.isPinned) {
+            return { ...update, isPinned: false };
+          }
+          return update;
+        });
       } else {
         // Create new update
         const newId = 'news-' + (Math.floor(Math.random() * 10000) + 1);
@@ -95,10 +120,16 @@ const AdminUpdates = () => {
           id: newId,
           subject: subject.trim(),
           content: content.trim(),
+          isPinned: isPinned,
           date: new Date()
         };
         
-        updatedNews = [newUpdate, ...updates];
+        // If we're pinning the new item, unpin any existing pinned items
+        const updatedExisting = isPinned 
+          ? updates.map(update => ({ ...update, isPinned: false }))
+          : updates;
+        
+        updatedNews = [newUpdate, ...updatedExisting];
       }
       
       // Save to Firebase
@@ -114,6 +145,7 @@ const AdminUpdates = () => {
         // Clear form
         setSubject('');
         setContent('');
+        setIsPinned(false);
         setEditingId(null);
       } else {
         throw new Error(result.error || 'Failed to save to Firebase');
@@ -129,6 +161,7 @@ const AdminUpdates = () => {
   const handleEdit = (update) => {
     setSubject(update.subject);
     setContent(update.content);
+    setIsPinned(update.isPinned || false);
     setEditingId(update.id);
     window.scrollTo(0, 0);
   };
@@ -168,6 +201,7 @@ const AdminUpdates = () => {
   const cancelEdit = () => {
     setSubject('');
     setContent('');
+    setIsPinned(false);
     setEditingId(null);
     setError(null);
   };
@@ -212,6 +246,19 @@ const AdminUpdates = () => {
             />
           </div>
           
+          <div className="form-group checkbox-group">
+            <input
+              type="checkbox"
+              id="isPinned"
+              checked={isPinned}
+              onChange={(e) => setIsPinned(e.target.checked)}
+              disabled={submitting}
+            />
+            <label htmlFor="isPinned" className="checkbox-label">
+              Pin this news item to the top of the feed
+            </label>
+          </div>
+          
           <div className="form-actions">
             {editingId && (
               <button 
@@ -243,38 +290,52 @@ const AdminUpdates = () => {
         ) : updates.length === 0 ? (
           <p>No updates have been created yet.</p>
         ) : (
-          <div className="updates-grid">
-            {updates.map(update => (
-              <div key={update.id} className="update-item">
-                <div className="update-item-header">
-                  <span className="update-date">
-                    {update.date.toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </span>
-                  <div className="update-actions">
-                    <button 
-                      className="edit-button" 
-                      onClick={() => handleEdit(update)}
-                      title="Edit"
-                    >
-                      <span role="img" aria-label="Edit">✏️</span>
-                    </button>
-                    <button 
-                      className="delete-button" 
-                      onClick={() => handleDelete(update.id)}
-                      title="Delete"
-                    >
-                      <span role="img" aria-label="Delete">🗑️</span>
-                    </button>
+          <div className="admin-updates-list">
+            {updates.map(update => {
+              const preview = getPreviewText(update.content);
+              
+              return (
+                <div key={update.id} className={`admin-update-item ${update.isPinned ? 'pinned' : ''}`}>
+                  {update.isPinned && (
+                    <div className="pin-badge">
+                      <span className="pin-icon">📌</span>
+                      Pinned
+                    </div>
+                  )}
+                  
+                  <div className="admin-update-header">
+                    <div className="admin-update-info">
+                      <span className="update-date">
+                        {update.date.toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </span>
+                      <h4 className="update-subject">{update.subject}</h4>
+                      <p className="update-preview">{preview}</p>
+                    </div>
+                    
+                    <div className="admin-actions">
+                      <button 
+                        className="edit-button" 
+                        onClick={() => handleEdit(update)}
+                        title="Edit"
+                      >
+                        <span role="img" aria-label="Edit">✏️</span>
+                      </button>
+                      <button 
+                        className="delete-button" 
+                        onClick={() => handleDelete(update.id)}
+                        title="Delete"
+                      >
+                        <span role="img" aria-label="Delete">🗑️</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <h4 className="update-subject">{update.subject}</h4>
-                <p className="update-content">{update.content}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

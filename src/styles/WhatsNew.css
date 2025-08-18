@@ -73,6 +73,17 @@
   margin-bottom: 0.5rem;
 }
 
+.read-more-link {
+  color: #2c5530;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.read-more-link:hover {
+  text-decoration: underline;
+}
+
 .news-footer {
   display: flex;
   justify-content: flex-end;

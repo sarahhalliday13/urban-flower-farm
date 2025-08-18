@@ -30,6 +30,17 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
 
+  // Generate preview text from content
+  const getPreviewText = (content, maxLength = 150) => {
+    if (!content) return '';
+    if (content.length <= maxLength) return content;
+    
+    // Find the last space before maxLength to avoid cutting words
+    const trimmed = content.substring(0, maxLength);
+    const lastSpace = trimmed.lastIndexOf(' ');
+    return trimmed.substring(0, lastSpace > 0 ? lastSpace : maxLength) + '...';
+  };
+
   // Load news updates from Firebase
   useEffect(() => {
     const fetchNews = async () => {
@@ -39,11 +50,19 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
         
         // If we got data from Firebase, process it
         if (newsData && newsData.length > 0) {
-          // Convert date strings to Date objects
+          // Convert date strings to Date objects and sort by pinned first, then date
           const processedData = newsData.map(item => ({
             ...item,
-            date: new Date(item.date)
+            date: new Date(item.date),
+            isPinned: item.isPinned || false
           }));
+          
+          // Sort: pinned items first, then by date (newest first)
+          processedData.sort((a, b) => {
+            if (a.isPinned && !b.isPinned) return -1;
+            if (!a.isPinned && b.isPinned) return 1;
+            return b.date.getTime() - a.date.getTime();
+          });
           
           setUpdates(processedData);
         } else {
@@ -130,9 +149,14 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
                 })}
               </span>
             </div>
-            <div className="update-body">{update.content}</div>
+            <div className="update-body">
+              {getPreviewText(update.content)}
+              {update.content.length > 150 && (
+                <Link to="/news" className="read-more-link"> Read more</Link>
+              )}
+            </div>
             <div className="news-footer">
-              <Link to="/updates" className="view-all-news">View All News</Link>
+              <Link to="/news" className="view-all-news">View All News</Link>
             </div>
           </div>
         ))}

@@ -1,26 +1,20 @@
 .updates-page-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
 }
 
 .updates-page-container h1 {
-  color: #2c5530;
-  margin-bottom: 1rem;
-  text-align: left;
   font-size: 2rem;
-}
-
-.updates-intro {
-  color: #555;
-  max-width: 800px;
-  margin: 0 0 2rem 0;
-  line-height: 1.5;
-  font-size: 1rem;
+  font-weight: 600;
+  color: #3a3a3a;
+  margin-bottom: 2rem;
   text-align: left;
+  padding-bottom: 0;
 }
 
-.updates-loading, .updates-error, .no-updates {
+.updates-loading, .updates-error {
   text-align: center;
   padding: 2rem 0;
   color: #666;
@@ -31,97 +25,194 @@
   color: #d32f2f;
 }
 
-/* Year styling */
-.updates-year-section {
-  margin-bottom: 2rem;
+/* Updates list matching FAQ style */
+.updates-list {
+  margin-bottom: 40px;
+  max-width: 1100px;
+}
+
+.update-item {
+  margin-bottom: 15px;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  background-color: #fff;
   position: relative;
 }
 
-.updates-year-section:last-child {
-  margin-bottom: 0;
+.update-item.pinned {
+  border-color: #f57c00;
+  box-shadow: 0 2px 8px rgba(245, 124, 0, 0.15);
 }
 
-.year-heading {
-  font-size: 1.4rem;
+/* Pin badge */
+.pin-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: #f57c00;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 600;
-  color: #2c5530;
-  text-align: left;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #eaefea;
-}
-
-/* Updates grid */
-.updates-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-}
-
-.update-card {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  position: relative;
-  border-left: 3px solid #2c5530;
-  text-align: left;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.update-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.update-card-header {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+.pin-icon {
+  font-size: 0.9rem;
+}
+
+/* Update question (header) - matching FAQ style */
+.update-question {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 18px 20px;
+  cursor: pointer;
+  user-select: none;
+  background-color: #f9f9f9;
+  transition: background-color 0.3s ease;
+}
+
+.update-item.pinned .update-question {
+  background-color: #fffef5;
+}
+
+.update-question:hover {
+  background-color: #f3f3f3;
+}
+
+.update-item.pinned .update-question:hover {
+  background-color: #fff9f0;
+}
+
+.update-question-content {
+  flex: 1;
+  text-align: left;
+  padding-right: 20px;
 }
 
 .update-date {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.update-question h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: #333;
   text-align: left;
 }
 
-.update-title {
-  color: #2c5530;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  text-align: left;
-}
-
-.update-content {
-  color: #444;
-  line-height: 1.5;
-  font-size: 1rem;
-  white-space: pre-line;
-  text-align: left;
+.update-preview {
   margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.5;
+  text-align: left;
 }
 
+.update-icon {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #2c5530;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+.update-item.expanded .update-icon {
+  transform: rotate(180deg);
+}
+
+/* Update answer (content) - matching FAQ style */
+.update-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  padding: 0 20px;
+}
+
+.update-item.expanded .update-answer {
+  max-height: 1000px;
+  padding: 0 20px 20px;
+}
+
+.update-answer p {
+  margin: 0;
+  line-height: 1.6;
+  color: #444;
+  font-size: 1rem;
+  text-align: left;
+  white-space: pre-line;
+}
+
+/* Mobile responsive */
 @media (max-width: 768px) {
   .updates-page-container {
-    padding: 1.5rem 1rem;
+    padding: 15px;
   }
   
   .updates-page-container h1 {
     font-size: 1.75rem;
+    margin-bottom: 1.5rem;
   }
   
-  .year-heading {
+  .update-question {
+    padding: 15px;
+  }
+  
+  .update-question h3 {
+    font-size: 1rem;
+  }
+  
+  .update-preview {
+    font-size: 0.9rem;
+  }
+  
+  .update-date {
+    font-size: 0.8rem;
+  }
+  
+  .update-icon {
     font-size: 1.25rem;
+    margin-top: 15px;
   }
   
-  .updates-grid {
-    grid-template-columns: 1fr;
+  .pin-badge {
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    top: 8px;
+    right: 8px;
   }
   
-  .update-card {
-    padding: 1.25rem;
+  .update-item.expanded .update-answer {
+    padding: 0 15px 15px;
   }
-} 
+  
+  .update-answer p {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .updates-page-container h1 {
+    font-size: 1.5rem;
+  }
+  
+  .update-question-content {
+    padding-right: 15px;
+  }
+  
+  .update-icon {
+    margin-top: 10px;
+  }
+}

@@ -19,6 +19,11 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-08-18)
+- Redesigned News page with stacked collapsible layout matching How-To page
+- Added pin functionality for news items (limited to one pinned item)
+- Implemented preview text with ellipsis for long content
+- Added "Read more" links on homepage for truncated news
+- Updated admin news view to match customer view
 - Renamed FAQ to How-To throughout the application
 - Updated all pickup location references from "farm" to "shop"
 - Updated Contact page social media links

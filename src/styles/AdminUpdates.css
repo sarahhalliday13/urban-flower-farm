@@ -195,4 +195,164 @@
   .form-actions button {
     width: 100%;
   }
+}
+
+/* Pin functionality styles */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin: 0;
+}
+
+.checkbox-label {
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 14px;
+  color: #555;
+  margin: 0;
+}
+
+/* Pinned item styles */
+.update-item.pinned {
+  border-left: 3px solid #f57c00;
+  background-color: #fffef5;
+}
+
+.pin-indicator {
+  font-size: 16px;
+  margin-right: 8px;
+  color: #f57c00;
+}
+
+/* New Admin Stacked Layout */
+.admin-updates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 100%;
+}
+
+.admin-update-item {
+  background-color: white;
+  border: 1px solid #eaeaea;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  position: relative;
+  transition: box-shadow 0.2s;
+}
+
+.admin-update-item:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.admin-update-item.pinned {
+  border-color: #f57c00;
+  box-shadow: 0 2px 8px rgba(245, 124, 0, 0.15);
+}
+
+.admin-update-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px;
+  background-color: #f9f9f9;
+}
+
+.admin-update-item.pinned .admin-update-header {
+  background-color: #fffef5;
+}
+
+.admin-update-info {
+  flex: 1;
+  text-align: left;
+  padding-right: 20px;
+}
+
+.admin-update-info .update-date {
+  font-size: 0.85rem;
+  color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.admin-update-info .update-subject {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.update-preview {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-actions button {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.admin-actions .edit-button:hover {
+  border-color: #2c5530;
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.admin-actions .delete-button:hover {
+  border-color: #d32f2f;
+  background-color: rgba(211, 47, 47, 0.05);
+}
+
+/* Pin badge in admin view */
+.admin-update-item .pin-badge {
+  position: absolute;
+  top: 10px;
+  right: 110px; /* Moved left to avoid overlapping with action buttons */
+  background-color: #f57c00;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .admin-update-header {
+    padding: 15px;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .admin-update-info {
+    padding-right: 0;
+  }
+  
+  .admin-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 } 
