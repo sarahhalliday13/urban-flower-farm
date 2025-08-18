@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import '../styles/FAQ.css';
+import '../styles/HowTo.css';
 
-const FAQ = () => {
+const HowTo = () => {
   // State to track which FAQ items are expanded
   const [expandedItems, setExpandedItems] = useState({});
 
@@ -33,12 +33,12 @@ const FAQ = () => {
     {
       id: 4,
       question: "When can I pick up my plants?",
-      answer: "After placing your order, we'll contact you to arrange a convenient pickup time at the farm."
+      answer: "After placing your order, we'll contact you to arrange a convenient pickup time at the shop."
     },
     {
       id: 5,
       question: "Do you offer delivery?",
-      answer: "Currently, we offer pickup only at our farm location. We'll arrange a convenient pickup time after you place your order."
+      answer: "Currently, we offer pickup only at our shop location. We'll arrange a convenient pickup time after you place your order."
     },
     {
       id: 6,
@@ -60,12 +60,12 @@ const FAQ = () => {
   return (
     <div className="shop-container">
       <div className="shop-header">
-        <h1 className="shop-title">Frequently Asked Questions</h1>
+        <h1 className="shop-title">How-To</h1>
       </div>
       
       <p className="shop-description">
-        Find answers to common questions about shopping with Buttons Flower Farm. 
-        If you don't see your question here, please <a href="/contact">contact us</a>.
+        Find helpful information and answers to common questions about shopping with Buttons Flower Farm. 
+        If you need additional help, please <a href="/contact">contact us</a>.
       </p>
       
       <div className="faq-list">
@@ -93,4 +93,4 @@ const FAQ = () => {
   );
 };
 
-export default FAQ; 
+export default HowTo; 

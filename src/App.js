@@ -22,7 +22,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { AdminProvider } from './context/AdminContext';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import './cart-styles.css';
-import FAQ from './components/FAQ';
+import HowTo from './components/HowTo';
 import UpdatesPage from './components/UpdatesPage';
 import AdminUpdates from './components/AdminUpdates';
 import CartModal from './components/CartModal';
@@ -176,7 +176,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
           {!isAuthenticated && (
             <>
               <Link to="/updates" onClick={() => setIsMenuOpen(false)}>News</Link>
-              <Link to="/faq" onClick={() => setIsMenuOpen(false)}>FAQ</Link>
+              <Link to="/how-to" onClick={() => setIsMenuOpen(false)}>How-To</Link>
               <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
               <Link to="/contact" onClick={() => setIsMenuOpen(false)}>Contact</Link>
             </>
@@ -352,7 +352,7 @@ function AppContent() {
         <Route path="/about" element={<About />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/contact" element={<Contact />} />
-        <Route path="/faq" element={<FAQ />} />
+        <Route path="/how-to" element={<HowTo />} />
         <Route path="/plant/:id" element={
           <PlantDetailsWrapper>
             <PlantDetails />
@@ -453,7 +453,7 @@ function AppContent() {
         <div className="footer-links">
           <Link to="/shop">Shop</Link>
           <Link to="/updates">News</Link>
-          <Link to="/faq">FAQ</Link>
+          <Link to="/how-to">How-To</Link>
           <Link to="/about">About</Link>
           <Link to="/contact">Contact</Link>
           <Link to="/admin">Manage</Link>

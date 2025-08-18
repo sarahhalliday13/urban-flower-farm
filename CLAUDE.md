@@ -19,6 +19,8 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-08-18)
+- Renamed FAQ to How-To throughout the application
+- Updated all pickup location references from "farm" to "shop"
 - Updated Contact page social media links
 - Added Instagram icon and link to social media section
 - Fixed social media icons layout and styling
