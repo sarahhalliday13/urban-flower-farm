@@ -191,7 +191,7 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
               )}
             </div>
             <div className="news-footer">
-              <Link to="/news" className="view-all-news">View All News</Link>
+              <Link to="/updates" className="view-all-news">View All News</Link>
             </div>
           </div>
         ))}
