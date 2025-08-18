@@ -33,12 +33,13 @@
   display: inline-block;
   background-color: #f39c12;
   color: white;
-  font-size: 0.75em;
-  padding: 2px 8px;
+  font-size: 0.7em;
+  padding: 3px 8px;
   border-radius: 3px;
-  margin-left: 10px;
+  margin-left: 8px;
   font-weight: 500;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .coming-soon-checkbox {
@@ -51,13 +52,16 @@
 
 .coming-soon-checkbox .checkbox-label {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
   cursor: pointer;
 }
 
 .coming-soon-checkbox input[type="checkbox"] {
-  margin-top: 2px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
   cursor: pointer;
 }
 
@@ -65,6 +69,7 @@
   font-size: 0.95em;
   color: #495057;
   line-height: 1.4;
+  user-select: none;
 }
 
 .featured-plants-header {
@@ -237,24 +242,37 @@
 .cart-item {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   padding-bottom: 1rem;
   border-bottom: 1px solid #eee;
+}
+
+.item-info {
+  flex: 1;
 }
 
 .item-info h3 {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
   color: #2c3e50;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .item-price {
   color: #7f8c8d;
   font-size: 0.9rem;
+  margin: 0;
 }
 
 .item-total {
   font-weight: 600;
   color: #2c3e50;
+  min-width: 80px;
+  text-align: right;
+  white-space: nowrap;
+  margin-left: 1rem;
 }
 
 .order-total {
@@ -382,6 +400,15 @@
     padding: 1rem;
   }
   
+  .checkout-content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .order-summary {
+    position: static;
+  }
+  
   .form-row {
     flex-direction: column;
     gap: 1.5rem;
@@ -403,6 +430,24 @@
   
   .view-orders-btn, .continue-shopping-btn {
     width: 100%;
+  }
+  
+  .cart-item {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .item-total {
+    margin-left: 0;
+    text-align: left;
+    margin-top: 0.25rem;
+  }
+  
+  .item-total::before {
+    content: attr(data-label);
+    font-weight: normal;
+    color: #7f8c8d;
+    margin-right: 0.5rem;
   }
 }
 
