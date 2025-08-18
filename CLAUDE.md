@@ -18,12 +18,16 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-08-05)
-- Fixed news creation permissions in Firebase rules
-- Added discount itemization to order confirmation emails
-- Implemented admin notes system for order management
-- Enhanced shop sorting with plant type filters
-- Fixed mobile alignment for admin notes display
+## Recent Changes (2025-08-18)
+- Updated Contact page social media links
+- Added Instagram icon and link to social media section
+- Fixed social media icons layout and styling
+- Previous changes (2025-08-05):
+  - Fixed news creation permissions in Firebase rules
+  - Added discount itemization to order confirmation emails
+  - Implemented admin notes system for order management
+  - Enhanced shop sorting with plant type filters
+  - Fixed mobile alignment for admin notes display
 
 ## Project Structure
 ```
