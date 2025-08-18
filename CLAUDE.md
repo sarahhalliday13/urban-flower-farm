@@ -24,6 +24,7 @@
 - Implemented preview text with ellipsis for long content
 - Added "Read more" links on homepage for truncated news
 - Updated admin news view to match customer view
+- Enhanced pinned news on homepage (200 char preview, inline expansion)
 - Renamed FAQ to How-To throughout the application
 - Updated all pickup location references from "farm" to "shop"
 - Updated Contact page social media links

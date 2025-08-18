@@ -29,6 +29,7 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
   const [updates, setUpdates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isVisible, setIsVisible] = useState(true);
+  const [expandedItems, setExpandedItems] = useState(new Set());
 
   // Generate preview text from content
   const getPreviewText = (content, maxLength = 150) => {
@@ -125,6 +126,18 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
     return () => clearInterval(intervalId);
   }, []);
 
+  const toggleExpanded = (id) => {
+    setExpandedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
   if (loading || !isVisible || updates.length === 0) {
     return null;
   }
@@ -138,9 +151,12 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
       </button>
       <div className="whats-new-content">
         {visibleUpdates.map((update) => (
-          <div key={update.id} className="update-item">
+          <div key={update.id} className={`update-item ${update.isPinned ? 'pinned' : ''}`}>
             <div className="update-header">
-              <h3 className="update-subject">{update.subject}</h3>
+              <h3 className="update-subject">
+                {update.isPinned && <span className="pin-icon">📌 </span>}
+                {update.subject}
+              </h3>
               <span className="update-date">
                 {update.date.toLocaleDateString('en-US', {
                   year: 'numeric',
@@ -150,9 +166,28 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
               </span>
             </div>
             <div className="update-body">
-              {getPreviewText(update.content)}
-              {update.content.length > 150 && (
-                <Link to="/news" className="read-more-link"> Read more</Link>
+              {expandedItems.has(update.id) ? (
+                <>
+                  {update.content}
+                  <button 
+                    className="read-more-link inline-button" 
+                    onClick={() => toggleExpanded(update.id)}
+                  >
+                    Read less
+                  </button>
+                </>
+              ) : (
+                <>
+                  {getPreviewText(update.content, update.isPinned ? 200 : 150)}
+                  {((update.isPinned && update.content.length > 200) || (!update.isPinned && update.content.length > 150)) && (
+                    <button 
+                      className="read-more-link inline-button" 
+                      onClick={() => toggleExpanded(update.id)}
+                    >
+                      Read more
+                    </button>
+                  )}
+                </>
               )}
             </div>
             <div className="news-footer">

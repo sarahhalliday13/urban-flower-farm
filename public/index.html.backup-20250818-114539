@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2c5530" />
+    <meta
+      name="description"
+      content="Buttons Urban Flower Farm - Your local source for beautiful native and drought-tolerant plants in the Vancouver area."
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="%PUBLIC_URL%/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="%PUBLIC_URL%/favicon-16x16.png" />
+    <!-- CORS policy meta tags - use more permissive policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: filesystem: about: ws: wss:; connect-src * 'self' wss://*.firebaseio.com https://*.firebaseio.com https://*.googleapis.com https://*.firebase.io https://firebasestorage.googleapis.com data:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline';" />
+    <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>Buttons Flower Farm</title>
+    
+    <!-- Enhanced script to handle chunk loading errors -->
+    <script type="text/javascript">
+      // Keep track of chunks that need to be manually loaded
+      window.missingChunks = {};
+      window.chunkLoadErrors = [];
+      
+      // Check for missing chunks in URL parameters
+      window.checkForMissingChunks = function() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var missingChunkParam = urlParams.get('missingChunk');
+        if (missingChunkParam) {
+          var chunks = missingChunkParam.split(',');
+          chunks.forEach(function(chunkPath) {
+            if (chunkPath) {
+              window.loadMissingChunk(chunkPath);
+            }
+          });
+        }
+      };
+      
+      // Function to manually load missing chunks
+      window.loadMissingChunk = function(chunkPath) {
+        if (window.missingChunks[chunkPath]) {
+          console.log('Already attempting to load chunk:', chunkPath);
+          return;
+        }
+        
+        console.log('Attempting to manually load chunk:', chunkPath);
+        window.missingChunks[chunkPath] = true;
+        
+        var script = document.createElement('script');
+        script.src = chunkPath;
+        script.async = true;
+        script.onerror = function() {
+          console.error('Failed to manually load chunk:', chunkPath);
+        };
+        script.onload = function() {
+          console.log('Successfully loaded chunk:', chunkPath);
+          delete window.missingChunks[chunkPath];
+        };
+        document.head.appendChild(script);
+      };
+      
+      // Core function to handle chunk load errors
+      window.handleChunkError = function(error) {
+        console.error('Chunk loading failed:', error);
+        
+        // Extract the chunk path from the error
+        var chunkPath = '';
+        if (error.target && error.target.src) {
+          chunkPath = error.target.src;
+          window.chunkLoadErrors.push(chunkPath);
+        }
+        
+        // Store error details in session storage
+        try {
+          var storedErrors = JSON.parse(sessionStorage.getItem('chunkErrors') || '[]');
+          storedErrors.push({
+            src: chunkPath,
+            time: new Date().toISOString(),
+            ua: navigator.userAgent
+          });
+          sessionStorage.setItem('chunkErrors', JSON.stringify(storedErrors));
+        } catch (e) {
+          console.error('Error storing chunk error in sessionStorage:', e);
+        }
+        
+        // Prevent the error from bubbling up
+        error.preventDefault();
+        
+        // Check reload attempts
+        var reloadAttempts = parseInt(sessionStorage.getItem('reloadAttempts') || '0');
+        
+        // Enhanced reload strategy with progressive options
+        if (reloadAttempts < 3) {
+          console.log('Attempting recovery strategy #' + (reloadAttempts + 1));
+          sessionStorage.setItem('reloadAttempts', (reloadAttempts + 1).toString());
+          
+          // Strategy 1: Attempt manual chunk load
+          if (reloadAttempts === 0 && chunkPath) {
+            window.loadMissingChunk(chunkPath);
+            setTimeout(function() {
+              // If not loaded after 3 seconds, try clearing cache
+              if (window.missingChunks[chunkPath]) {
+                window.location.reload(true); // Force reload from server
+              }
+            }, 3000);
+          }
+          // Strategy 2: Full reload with cache clear and chunk parameter
+          else if (reloadAttempts === 1 && chunkPath) {
+            // Clear browser cache for the application
+            var clearCacheParam = 'clearCache=' + new Date().getTime();
+            var missingChunkParam = 'missingChunk=' + encodeURIComponent(chunkPath);
+            
+            // Create URL with parameters
+            var url = window.location.pathname + 
+                     (window.location.search ? window.location.search + '&' : '?') + 
+                     clearCacheParam + '&' + missingChunkParam;
+                     
+            window.location.href = url;
+          }
+          // Strategy 3: Reload and clear all app data
+          else {
+            // Clear session and local storage
+            try {
+              sessionStorage.clear();
+              localStorage.removeItem('chunkErrors');
+              localStorage.removeItem('reloadAttempts');
+              
+              // Add timestamp to force cache refresh
+              var cacheBuster = 'fullreset=' + new Date().getTime();
+              window.location.href = window.location.pathname + 
+                                    (window.location.search ? window.location.search + '&' : '?') + 
+                                    cacheBuster;
+            } catch (e) {
+              console.error('Error clearing storage:', e);
+              window.location.reload(true);
+            }
+          }
+        } else {
+          console.log('Max recovery attempts reached. Showing fallback UI.');
+          
+          // Log detailed diagnostic info
+          console.info('Diagnostic info:', {
+            userAgent: navigator.userAgent,
+            errors: storedErrors,
+            url: window.location.href,
+            timestamp: new Date().toISOString()
+          });
+          
+          // Show a comprehensive error message
+          var rootElement = document.getElementById('root');
+          if (rootElement) {
+            rootElement.innerHTML = '<div style="text-align: center; padding: 20px; font-family: Arial, sans-serif;">' +
+              '<h2 style="color: #d32f2f;">Error Loading Content</h2>' +
+              '<p>We\'re having trouble loading some content for the admin dashboard. This could be due to:</p>' +
+              '<ul style="text-align: left; max-width: 500px; margin: 20px auto; line-height: 1.5;">' +
+              '<li>Temporary network issues</li>' +
+              '<li>Browser cache problems</li>' +
+              '<li>Required resource unavailability</li>' +
+              '</ul>' +
+              '<div style="margin: 30px 0;">' +
+              '<button onclick="window.location.href=\'/\'" style="background-color: #777; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Return to Home</button>' +
+              '<button onclick="window.location.reload(true)" style="background-color: #2c5530; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer;">Try Again</button>' +
+              '</div>' +
+              '<p style="font-size: 0.8em; color: #777; margin-top: 30px;">If this problem persists, please try clearing your browser cache completely or using a different browser.</p>' +
+              '</div>';
+          }
+        }
+      };
+      
+      // Listen for all script errors
+      window.addEventListener('error', function(event) {
+        if (event.target && event.target.tagName === 'SCRIPT') {
+          window.handleChunkError(event);
+        }
+      }, true);
+      
+      // Initialize by checking for missing chunks when the page loads
+      document.addEventListener('DOMContentLoaded', function() {
+        window.checkForMissingChunks();
+      });
+      
+      // Additional safety: Add global unhandled promise rejection handler
+      window.addEventListener('unhandledrejection', function(event) {
+        console.error('Unhandled Promise Rejection:', event.reason);
+        // Check if it's a chunk loading error
+        if (event.reason && 
+            (event.reason.message && event.reason.message.includes('Loading chunk') ||
+             (typeof event.reason === 'string' && event.reason.includes('Loading chunk')))) {
+          console.log('Chunk loading promise rejection detected');
+          
+          // Extract chunk path if possible
+          var chunkMatch = /chunk \d+ failed.*?(\/static\/js\/.*?\.chunk\.js)/i.exec(event.reason.message || event.reason);
+          if (chunkMatch && chunkMatch[1]) {
+            var chunkPath = window.location.origin + chunkMatch[1];
+            var errorEvent = { preventDefault: function() {}, target: { src: chunkPath } };
+            window.handleChunkError(errorEvent);
+          }
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
