@@ -119,6 +119,9 @@ const ModularPlantEditor = () => {
           careTips: plant.careTips || '',
           gardeningTips: plant.gardeningTips || '',
           hardinessZone: plant.hardinessZone || '',
+          plantingSeason: plant.plantingSeason || '',
+          plantingDepth: plant.plantingDepth || '',
+          size: plant.size || '',
           featured: plant.featured === true || plant.featured === 'true',
           hidden: plant.hidden === true || plant.hidden === 'true'
         });

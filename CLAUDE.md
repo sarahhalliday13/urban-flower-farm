@@ -19,6 +19,16 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-08-18)
+- Added Coming Soon enhancements:
+  - Order confirmation emails show "(Coming Soon)" indicator for applicable items
+  - Checkout displays warning message when cart contains Coming Soon items
+  - Required checkbox acknowledgment before ordering Coming Soon items
+  - Visual badges on Coming Soon items in order summary
+- Added new plant characteristic fields:
+  - Planting Season
+  - Planting Depth (in inches)
+  - Mature Size
+- Updated CSV import to support new plant fields
 - Redesigned News page with stacked collapsible layout matching How-To page
 - Added pin functionality for news items (limited to one pinned item)
 - Implemented preview text with ellipsis for long content

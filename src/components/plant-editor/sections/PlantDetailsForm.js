@@ -87,6 +87,41 @@ const PlantDetailsForm = ({ flowerData, setFlowerData }) => {
             placeholder="e.g., 4-9"
           />
         </div>
+
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="planting-season">Planting Season:</label>
+            <input
+              id="planting-season"
+              type="text"
+              value={flowerData.plantingSeason || ''}
+              onChange={(e) => setFlowerData(prev => ({ ...prev, plantingSeason: e.target.value }))}
+              placeholder="e.g., Spring, Fall"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="planting-depth">Planting Depth (inches):</label>
+            <input
+              id="planting-depth"
+              type="text"
+              value={flowerData.plantingDepth || ''}
+              onChange={(e) => setFlowerData(prev => ({ ...prev, plantingDepth: e.target.value }))}
+              placeholder="e.g., 0.25, 1-2"
+            />
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="mature-size">Mature Size:</label>
+          <input
+            id="mature-size"
+            type="text"
+            value={flowerData.size || ''}
+            onChange={(e) => setFlowerData(prev => ({ ...prev, size: e.target.value }))}
+            placeholder="e.g., 2-3 feet tall and wide"
+          />
+        </div>
       </div>
       
       <div className="details-section">

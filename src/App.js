@@ -172,6 +172,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
         
         {/* Customer Navigation Links */}
         <div className="nav-section customer-links">
+          <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
           <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
           {!isAuthenticated && (
             <>
@@ -451,6 +452,7 @@ function AppContent() {
 
       <footer>
         <div className="footer-links">
+          <Link to="/">Home</Link>
           <Link to="/shop">Shop</Link>
           <Link to="/updates">News</Link>
           <Link to="/how-to">How-To</Link>

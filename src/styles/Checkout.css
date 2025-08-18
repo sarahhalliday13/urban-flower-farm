@@ -5,6 +5,68 @@
   font-family: 'Poppins', sans-serif;
 }
 
+/* Coming Soon Styles */
+.coming-soon-warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 5px;
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.coming-soon-warning .warning-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
+}
+
+.coming-soon-warning p {
+  margin: 0;
+  color: #856404;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+
+.coming-soon-badge {
+  display: inline-block;
+  background-color: #f39c12;
+  color: white;
+  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  margin-left: 10px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.coming-soon-checkbox {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border: 1px solid #e9ecef;
+}
+
+.coming-soon-checkbox .checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.coming-soon-checkbox input[type="checkbox"] {
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.coming-soon-checkbox span {
+  font-size: 0.95em;
+  color: #495057;
+  line-height: 1.4;
+}
+
 .featured-plants-header {
   display: flex;
   justify-content: space-between;

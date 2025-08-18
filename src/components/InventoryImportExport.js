@@ -182,7 +182,7 @@ const InventoryImportExport = () => {
         bloomSeason: plant.bloom_season || '',
         colour: plant.colour || plant.color || '',
         light: plant.sunlight || '',
-        spacing: plant.spread_inches || '',
+        spread: plant.spread_inches || '',
         height: plant.height_inches || '',
         hardinessZone: plant.hardiness_zones || '',
         specialFeatures: plant.special_features || '',
@@ -191,7 +191,11 @@ const InventoryImportExport = () => {
         gardeningTips: plant.gardening_tips || '',
         careTips: plant.care_tips || '',
         mainImage: plant.mainimage || plant.main_image || '',
-        additionalImages: plant.additionalimage || plant.additional_image || ''
+        additionalImages: plant.additionalimage || plant.additional_image || '',
+        plantingSeason: plant.planting_season || '',
+        plantingDepth: plant.planting_depth_inches || plant.planting_depth || '',
+        size: plant.mature_size || plant.size || '',
+        hidden: plant.hidden === 'true' || plant.hidden === true || plant.hidden === 'TRUE'
       }));
       
       setImportStatus({ loading: true, message: `Importing ${transformedPlantsData.length} plants...` });

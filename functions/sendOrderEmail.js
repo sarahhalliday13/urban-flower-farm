@@ -52,14 +52,20 @@ function generateCustomerEmailTemplate(order) {
     }
   };
 
-  const itemsList = order.items.map(item => `
+  const itemsList = order.items.map(item => {
+    // Check if item has "Coming Soon" status
+    const isComingSoon = item.inventoryStatus === 'Coming Soon' || item.status === 'Coming Soon';
+    const nameDisplay = isComingSoon ? `${item.name} <span style="color: #f39c12; font-weight: bold;">(Coming Soon)</span>` : item.name;
+    
+    return `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${nameDisplay}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   return `
     <!DOCTYPE html>
@@ -394,14 +400,20 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
     }
   };
 
-  const itemsList = order.items.map(item => `
+  const itemsList = order.items.map(item => {
+    // Check if item has "Coming Soon" status
+    const isComingSoon = item.inventoryStatus === 'Coming Soon' || item.status === 'Coming Soon';
+    const nameDisplay = isComingSoon ? `${item.name} <span style="color: #f39c12; font-weight: bold;">(Coming Soon)</span>` : item.name;
+    
+    return `
     <tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${nameDisplay}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 
   return `
     <!DOCTYPE html>

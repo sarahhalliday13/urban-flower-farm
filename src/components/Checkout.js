@@ -22,6 +22,7 @@ const Checkout = () => {
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
+  const [comingSoonAccepted, setComingSoonAccepted] = useState(false);
 
   // Move all useEffect hooks before conditional return
   useEffect(() => {
@@ -104,6 +105,12 @@ const Checkout = () => {
       newErrors.phone = 'Phone number must be valid (10 digits)';
     }
     
+    // Coming Soon checkbox validation
+    const hasComingSoonItems = cartItems.some(item => item.inventory?.status === 'Coming Soon');
+    if (hasComingSoonItems && !comingSoonAccepted) {
+      newErrors.comingSoon = 'Please acknowledge that Coming Soon items are not immediately available';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -171,7 +178,8 @@ const Checkout = () => {
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
-          quantity: parseInt(item.quantity, 10)
+          quantity: parseInt(item.quantity, 10),
+          inventoryStatus: item.inventory?.status || 'In Stock'
         })),
         // Calculate the total directly from cart items to ensure accuracy
         total: cartItems.reduce((sum, item) => {
@@ -482,6 +490,26 @@ const Checkout = () => {
               />
             </div>
             
+            {/* Coming Soon Acknowledgment Checkbox */}
+            {cartItems.some(item => item.inventory?.status === 'Coming Soon') && (
+              <div className="form-group coming-soon-checkbox">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={comingSoonAccepted}
+                    onChange={(e) => {
+                      setComingSoonAccepted(e.target.checked);
+                      if (errors.comingSoon) {
+                        setErrors(prev => ({ ...prev, comingSoon: null }));
+                      }
+                    }}
+                  />
+                  <span>I understand that items marked 'Coming Soon' are not immediately available</span>
+                </label>
+                {errors.comingSoon && <span className="error-message">{errors.comingSoon}</span>}
+              </div>
+            )}
+            
             <div className="form-actions">
               <button 
                 type="submit" 
@@ -496,11 +524,25 @@ const Checkout = () => {
         
         <div className="order-summary">
           <h2>Order Summary</h2>
+          
+          {/* Coming Soon Warning */}
+          {cartItems.some(item => item.inventory?.status === 'Coming Soon') && (
+            <div className="coming-soon-warning">
+              <span className="warning-icon">⚠️</span>
+              <p>Note: Some items in your cart are marked as 'Coming Soon' and will be available at a later date. We'll be in touch when they're available.</p>
+            </div>
+          )}
+          
           <div className="cart-items">
             {cartItems.map(item => (
               <div key={item.id} className="cart-item">
                 <div className="item-info">
-                  <h3>{item.name}</h3>
+                  <h3>
+                    {item.name}
+                    {item.inventory?.status === 'Coming Soon' && (
+                      <span className="coming-soon-badge">Coming Soon</span>
+                    )}
+                  </h3>
                   <p className="item-price" data-label="Price:">${parseFloat(item.price).toFixed(2)} × {item.quantity}</p>
                 </div>
                 <p className="item-total" data-label="Subtotal:">${(item.price * item.quantity).toFixed(2)}</p>
