@@ -4,7 +4,7 @@ const PlantDetailsForm = ({ flowerData, setFlowerData }) => {
   return (
     <>
       <div className="details-section">
-        <h3>Plant Details</h3>
+        <h3>Plant Characteristics</h3>
         <div className="form-row">
           <div className="form-group">
             <label htmlFor="plant-color">Color:</label>
