@@ -20,6 +20,8 @@ if (!admin.apps.length) {
 function calculateSubtotal(order) {
   if (order.items && Array.isArray(order.items)) {
     return order.items.reduce((sum, item) => {
+      // Skip freebies from subtotal calculation
+      if (item.isFreebie) return sum;
       return sum + (parseFloat(item.price) * parseInt(item.quantity));
     }, 0);
   }
@@ -57,12 +59,20 @@ function generateCustomerEmailTemplate(order) {
     const isComingSoon = item.inventoryStatus === 'Coming Soon' || item.status === 'Coming Soon';
     const nameDisplay = isComingSoon ? `${item.name} <span style="color: #f39c12; font-weight: bold;">(Coming Soon)</span>` : item.name;
     
+    // Handle freebie display
+    const priceDisplay = item.isFreebie ? 
+      `<span style="text-decoration: line-through; color: #999;">$${formatCurrency(item.price)}</span>` : 
+      `$${formatCurrency(item.price)}`;
+    const totalDisplay = item.isFreebie ? 
+      `<span style="color: #4caf50; font-weight: bold;">FREE</span>` : 
+      `$${formatCurrency(item.quantity * item.price)}`;
+    
     return `
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${nameDisplay}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${priceDisplay}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${totalDisplay}</td>
     </tr>
   `;
   }).join('');
@@ -405,12 +415,20 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
     const isComingSoon = item.inventoryStatus === 'Coming Soon' || item.status === 'Coming Soon';
     const nameDisplay = isComingSoon ? `${item.name} <span style="color: #f39c12; font-weight: bold;">(Coming Soon)</span>` : item.name;
     
+    // Handle freebie display
+    const priceDisplay = item.isFreebie ? 
+      `<span style="text-decoration: line-through; color: #999;">$${formatCurrency(item.price)}</span>` : 
+      `$${formatCurrency(item.price)}`;
+    const totalDisplay = item.isFreebie ? 
+      `<span style="color: #4caf50; font-weight: bold;">FREE</span>` : 
+      `$${formatCurrency(item.quantity * item.price)}`;
+    
     return `
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${nameDisplay}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${priceDisplay}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${totalDisplay}</td>
     </tr>
   `;
   }).join('');

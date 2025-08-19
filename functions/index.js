@@ -212,6 +212,9 @@ function calculateTotal(items) {
   if (!Array.isArray(items)) return 0;
   
   return items.reduce((sum, item) => {
+    // Skip freebies from total calculation
+    if (item.isFreebie) return sum;
+    
     const price = parseFloat(item.price) || 0;
     const quantity = parseInt(item.quantity, 10) || 0;
     return sum + (price * quantity);

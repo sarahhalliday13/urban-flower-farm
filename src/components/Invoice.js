@@ -27,13 +27,18 @@ export const generateInvoiceHTML = (order) => {
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.name || item.title}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.price)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">$${formatCurrency(item.quantity * item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.isFreebie ? '<span style="text-decoration: line-through; color: #999;">$' + formatCurrency(item.price) + '</span>' : '$' + formatCurrency(item.price)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${item.isFreebie ? '<span style="color: #4caf50; font-weight: bold;">FREE</span>' : '$' + formatCurrency(item.quantity * item.price)}</td>
     </tr>
   `).join('') || '';
   
-  // Calculate total after discount
-  const subtotal = order.subtotal || order.total || 0;
+  // Calculate subtotal from items, excluding freebies
+  const subtotal = order.items?.reduce((sum, item) => {
+    if (item.isFreebie) return sum;
+    const price = parseFloat(item.price) || 0;
+    const quantity = parseInt(item.quantity, 10) || 0;
+    return sum + (price * quantity);
+  }, 0) || 0;
   const discount = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
   const total = Math.max(0, subtotal - discount);
   
