@@ -156,4 +156,79 @@
 
 .remove-image-btn:hover {
   background-color: rgba(198, 40, 40, 0.1);
+}
+
+/* URL Input Toggle Button */
+.url-input-toggle {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.url-input-toggle:hover {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+/* URL Input Form */
+.url-input-form {
+  margin-top: 15px;
+  padding: 15px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+}
+
+.url-input-field {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.url-input-field:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+.url-input-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.url-submit-btn,
+.url-cancel-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.url-submit-btn {
+  background: #28a745;
+  color: white;
+}
+
+.url-submit-btn:hover {
+  background: #218838;
+}
+
+.url-cancel-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.url-cancel-btn:hover {
+  background: #5a6268;
 } 

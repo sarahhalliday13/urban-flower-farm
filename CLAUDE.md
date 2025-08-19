@@ -18,28 +18,40 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-08-18)
-- Added Coming Soon enhancements:
-  - Order confirmation emails show "(Coming Soon)" indicator for applicable items
-  - Checkout displays warning message when cart contains Coming Soon items
-  - Required checkbox acknowledgment before ordering Coming Soon items
-  - Visual badges on Coming Soon items in order summary
-- Added new plant characteristic fields:
-  - Planting Season
-  - Planting Depth (in inches)
-  - Mature Size
-- Updated CSV import to support new plant fields
-- Redesigned News page with stacked collapsible layout matching How-To page
-- Added pin functionality for news items (limited to one pinned item)
-- Implemented preview text with ellipsis for long content
-- Added "Read more" links on homepage for truncated news
-- Updated admin news view to match customer view
-- Enhanced pinned news on homepage (200 char preview, inline expansion)
-- Renamed FAQ to How-To throughout the application
-- Updated all pickup location references from "farm" to "shop"
-- Updated Contact page social media links
-- Added Instagram icon and link to social media section
-- Fixed social media icons layout and styling
+## Recent Changes (2025-08-19)
+- Added inventory image URL editing:
+  - Direct Firebase Storage URL input for plant images
+  - Always-visible URL field in plant editor
+  - Validation for Firebase Storage URLs only
+  - "Upload URL" button to save image URLs
+- Implemented freebie tracking:
+  - Checkbox in order editor to mark items as freebies
+  - Freebies excluded from order totals
+  - Visual indicators: strikethrough price and "FREE" label
+  - Plant Sales Tracker displays actual freebie counts
+- Added "My Orders" link to customer navigation menu
+- Previous changes (2025-08-18):
+  - Added Coming Soon enhancements:
+    - Order confirmation emails show "(Coming Soon)" indicator for applicable items
+    - Checkout displays warning message when cart contains Coming Soon items
+    - Required checkbox acknowledgment before ordering Coming Soon items
+    - Visual badges on Coming Soon items in order summary
+  - Added new plant characteristic fields:
+    - Planting Season
+    - Planting Depth (in inches)
+    - Mature Size
+  - Updated CSV import to support new plant fields
+  - Redesigned News page with stacked collapsible layout matching How-To page
+  - Added pin functionality for news items (limited to one pinned item)
+  - Implemented preview text with ellipsis for long content
+  - Added "Read more" links on homepage for truncated news
+  - Updated admin news view to match customer view
+  - Enhanced pinned news on homepage (200 char preview, inline expansion)
+  - Renamed FAQ to How-To throughout the application
+  - Updated all pickup location references from "farm" to "shop"
+  - Updated Contact page social media links
+  - Added Instagram icon and link to social media section
+  - Fixed social media icons layout and styling
 - Previous changes (2025-08-05):
   - Fixed news creation permissions in Firebase rules
   - Added discount itemization to order confirmation emails

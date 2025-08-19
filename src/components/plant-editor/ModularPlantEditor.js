@@ -330,11 +330,32 @@ const ModularPlantEditor = () => {
         <div className="form-section">
           <h2>Images</h2>
           <ImageUploader 
-            images={images}
-            setImages={setImages}
-            mainImage={mainImage}
-            setMainImage={setMainImage}
-            isUploading={saving}
+            images={images.map(img => img.url || img.preview || img)}
+            mainImageIndex={images.findIndex(img => (img.url || img.preview || img) === mainImage)}
+            plantId={plantId}
+            onUpload={(newImages) => {
+              // Convert array of URLs to image objects
+              const imageObjects = newImages.map((url, index) => {
+                const existingImage = images[index];
+                if (existingImage && !existingImage.isNew) {
+                  return existingImage;
+                }
+                return { url, preview: url, isNew: false };
+              });
+              setImages(imageObjects);
+            }}
+            onMainSelect={(index) => {
+              const selectedImage = images[index];
+              setMainImage(selectedImage?.url || selectedImage?.preview || selectedImage);
+            }}
+            onRemoveImage={(index) => {
+              const newImages = images.filter((_, i) => i !== index);
+              setImages(newImages);
+              // Update main image if removed
+              if (index === images.findIndex(img => (img.url || img.preview || img) === mainImage)) {
+                setMainImage(newImages[0]?.url || newImages[0]?.preview || newImages[0] || '');
+              }
+            }}
           />
           {formErrors.images && <div className="invalid-feedback">{formErrors.images}</div>}
           {formErrors.mainImage && <div className="invalid-feedback">{formErrors.mainImage}</div>}

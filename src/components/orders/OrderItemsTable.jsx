@@ -15,7 +15,8 @@ const OrderItemsTable = ({
   total = '0.00', 
   editable = false,
   onUpdateQuantity = () => console.log('Update quantity not implemented'),
-  onRemoveItem = () => console.log('Remove item not implemented')
+  onRemoveItem = () => console.log('Remove item not implemented'),
+  onToggleFreebie = () => console.log('Toggle freebie not implemented')
 }) => {
   // Keep local state of the calculated total to ensure UI updates
   const [calculatedTotal, setCalculatedTotal] = useState('0.00');
@@ -25,6 +26,8 @@ const OrderItemsTable = ({
     try {
       console.log("Items in OrderItemsTable:", items);
       const newTotal = items.reduce((sum, item) => {
+        // Skip freebies from total calculation
+        if (item.isFreebie) return sum;
         const price = parseFloat(item.price) || 0;
         const quantity = parseInt(item.quantity, 10) || 0;
         return sum + (price * quantity);
@@ -60,6 +63,7 @@ const OrderItemsTable = ({
             <th className="quantity-col">Quantity</th>
             <th className="price-col">Price</th>
             <th className="total-col">Total</th>
+            {editable && <th className="freebie-col">Freebie</th>}
           </tr>
         </thead>
         <tbody>
@@ -116,13 +120,36 @@ const OrderItemsTable = ({
                 )}
               </td>
               <td className="price-col">
-                ${Math.round(parseFloat(item.price))}
+                {item.isFreebie ? (
+                  <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                    ${Math.round(parseFloat(item.price))}
+                  </span>
+                ) : (
+                  `$${Math.round(parseFloat(item.price))}`
+                )}
               </td>
               <td className="total-col">
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  ${Math.round(parseFloat(item.price) * parseInt(item.quantity, 10))}
+                  {item.isFreebie ? (
+                    <span style={{ color: '#4caf50', fontWeight: 'bold' }}>FREE</span>
+                  ) : (
+                    `$${Math.round(parseFloat(item.price) * parseInt(item.quantity, 10))}`
+                  )}
                 </div>
               </td>
+              {editable && (
+                <td className="freebie-col">
+                  <input
+                    type="checkbox"
+                    checked={item.isFreebie || false}
+                    onChange={(e) => {
+                      console.log(`Toggling freebie for item ${item.id}`);
+                      onToggleFreebie(item.id, e.target.checked);
+                    }}
+                    className="freebie-checkbox"
+                  />
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -189,6 +216,17 @@ const OrderItemsTable = ({
         .total-col {
           width: 70px;
           text-align: right;
+        }
+
+        .freebie-col {
+          width: 60px;
+          text-align: center;
+        }
+
+        .freebie-checkbox {
+          width: 18px;
+          height: 18px;
+          cursor: pointer;
         }
 
         .quantity-input {

@@ -140,6 +140,16 @@ const OrderEditor = ({ orderId, closeModal }) => {
   const handleRemoveItem = (itemId) => {
     setItems(prevItems => prevItems.filter(item => item.id !== itemId));
   };
+
+  // Handle toggling freebie status
+  const handleToggleFreebie = (itemId, isFreebie) => {
+    console.log("Toggling freebie for item:", itemId, isFreebie);
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === itemId ? { ...item, isFreebie } : item
+      )
+    );
+  };
   
   // Add new item to the order
   const handleAddItem = (item) => {
@@ -201,7 +211,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
         items: items.map(item => ({
           ...item,
           quantity: parseInt(item.quantity, 10),
-          price: parseFloat(item.price)
+          price: parseFloat(item.price),
+          isFreebie: item.isFreebie || false
         })),
         total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
@@ -283,6 +294,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
                 editable={true}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}
+                onToggleFreebie={handleToggleFreebie}
               />
             </div>
           </div>

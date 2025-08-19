@@ -14,6 +14,8 @@ const ImageUploader = ({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState(null);
+  const [urlInput, setUrlInput] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(true); // Always show URL input
   const fileInputRef = useRef(null);
 
   // Handle file selection
@@ -128,6 +130,45 @@ const ImageUploader = ({
     }
   };
 
+  // Validate Firebase Storage URL
+  const isValidFirebaseUrl = (url) => {
+    const firebaseStoragePattern = /^https:\/\/firebasestorage\.googleapis\.com\/.+/;
+    const firebaseAppPattern = /^https:\/\/storage\.googleapis\.com\/.+/;
+    return firebaseStoragePattern.test(url) || firebaseAppPattern.test(url);
+  };
+
+  // Handle URL submission
+  const handleUrlSubmit = (e) => {
+    e.preventDefault();
+    
+    if (!urlInput.trim()) {
+      setError('Please enter a URL');
+      return;
+    }
+    
+    // Validate URL format
+    try {
+      new URL(urlInput);
+    } catch (err) {
+      setError('Please enter a valid URL');
+      return;
+    }
+    
+    // Check if it's a Firebase Storage URL
+    if (!isValidFirebaseUrl(urlInput)) {
+      setError('Please enter a valid Firebase Storage URL');
+      return;
+    }
+    
+    // Add the URL to images
+    const newImages = [...images, urlInput.trim()];
+    onUpload(newImages);
+    
+    // Reset form
+    setUrlInput('');
+    setError(null);
+  };
+
   return (
     <div className="image-uploader">
       <div 
@@ -156,6 +197,31 @@ const ImageUploader = ({
           <span className="upload-format">Supported formats: JPG, PNG, GIF (Max: 5MB)</span>
         </div>
       </div>
+      
+      {showUrlInput && (
+        <form className="url-input-form" onSubmit={handleUrlSubmit}>
+          <input
+            type="text"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="Enter Firebase Storage URL (e.g., https://firebasestorage.googleapis.com/...)"
+            className="url-input-field"
+          />
+          <div className="url-input-actions">
+            <button type="submit" className="url-submit-btn">Upload URL</button>
+            <button 
+              type="button" 
+              className="url-cancel-btn"
+              onClick={() => {
+                setUrlInput('');
+                setError(null);
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+      )}
       
       {uploading && (
         <div className="upload-progress">

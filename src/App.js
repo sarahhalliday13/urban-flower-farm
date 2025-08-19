@@ -174,6 +174,7 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
         <div className="nav-section customer-links">
           <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
           <Link to="/shop" onClick={() => setIsMenuOpen(false)}>Shop</Link>
+          <Link to="/orders" onClick={() => setIsMenuOpen(false)}>My Orders</Link>
           {!isAuthenticated && (
             <>
               <Link to="/updates" onClick={() => setIsMenuOpen(false)}>News</Link>
