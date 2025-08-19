@@ -287,6 +287,17 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
   
   const orderVersion = getOrderVersion();
 
+  // Calculate subtotal from items, excluding freebies
+  const calculateSubtotal = (items) => {
+    if (!items || !Array.isArray(items)) return 0;
+    return items.reduce((sum, item) => {
+      if (item.isFreebie) return sum;
+      const price = parseFloat(item.price) || 0;
+      const quantity = parseInt(item.quantity, 10) || 0;
+      return sum + (price * quantity);
+    }, 0);
+  };
+
   // Function to handle sending invoice email
   const handleSendInvoiceEmail = async () => {
     if (!order?.customer?.email) {
@@ -370,15 +381,29 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
               <tr key={index}>
                 <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
                 <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
-                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price)}</td>
-                <td style={{ textAlign: 'right' }}>${formatCurrency(item.price * item.quantity)}</td>
+                <td style={{ textAlign: 'right' }}>
+                  {item.isFreebie ? (
+                    <span style={{ textDecoration: 'line-through', color: '#999' }}>
+                      ${formatCurrency(item.price)}
+                    </span>
+                  ) : (
+                    `$${formatCurrency(item.price)}`
+                  )}
+                </td>
+                <td style={{ textAlign: 'right' }}>
+                  {item.isFreebie ? (
+                    <span style={{ color: '#4caf50', fontWeight: 'bold' }}>FREE</span>
+                  ) : (
+                    `$${formatCurrency(item.price * item.quantity)}`
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Subtotal</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(orderVersion.total)}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(calculateSubtotal(orderVersion.items))}</td>
             </tr>
             {order.discount && parseFloat(order.discount.amount) > 0 && (
               <tr>
@@ -391,8 +416,8 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
               <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
                   order.discount && parseFloat(order.discount.amount) > 0
-                    ? Math.max(0, orderVersion.total - parseFloat(order.discount.amount))
-                    : orderVersion.total
+                    ? Math.max(0, calculateSubtotal(orderVersion.items) - parseFloat(order.discount.amount))
+                    : calculateSubtotal(orderVersion.items)
                 )}
               </td>
             </tr>
