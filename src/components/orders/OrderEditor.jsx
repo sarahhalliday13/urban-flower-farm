@@ -164,6 +164,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
   // Calculate the current total
   const calculateTotal = () => {
     return items.reduce((total, item) => {
+      // Skip freebies from total calculation
+      if (item.isFreebie) return total;
+      
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return total + (price * quantity);
@@ -290,7 +293,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
               </div>
               <OrderItemsTable 
                 items={items} 
-                total={orderData.total}
+                total={calculateTotal()}
                 editable={true}
                 onUpdateQuantity={handleUpdateQuantity}
                 onRemoveItem={handleRemoveItem}

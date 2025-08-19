@@ -184,6 +184,9 @@ const OrderDetails = () => {
     if (!Array.isArray(orderDetails.items)) return 0;
     
     return orderDetails.items.reduce((sum, item) => {
+      // Skip freebies from subtotal calculation
+      if (item.isFreebie) return sum;
+      
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return sum + (price * quantity);
