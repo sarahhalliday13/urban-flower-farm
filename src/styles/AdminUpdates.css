@@ -323,6 +323,22 @@
   background-color: rgba(211, 47, 47, 0.05);
 }
 
+.admin-actions .pin-button:hover {
+  border-color: #f57c00;
+  background-color: rgba(245, 124, 0, 0.05);
+}
+
+.admin-actions .pin-button.pinned {
+  background-color: #f57c00;
+  color: white;
+  border-color: #f57c00;
+}
+
+.admin-actions .pin-button.pinned:hover {
+  background-color: #e65100;
+  border-color: #e65100;
+}
+
 /* Pin badge in admin view */
 .admin-update-item .pin-badge {
   position: absolute;

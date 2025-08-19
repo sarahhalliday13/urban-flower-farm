@@ -611,6 +611,13 @@ function PlantDetails() {
             {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
             {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
             {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
+            {plant.plantingSeason && <p><strong>Planting Season:</strong> {plant.plantingSeason}</p>}
+            {plant.planting_season && <p><strong>Planting Season:</strong> {plant.planting_season}</p>}
+            {plant.plantingDepth && <p><strong>Planting Depth:</strong> {plant.plantingDepth} inches</p>}
+            {plant.planting_depth_inches && <p><strong>Planting Depth:</strong> {plant.planting_depth_inches} inches</p>}
+            {plant.planting_depth && <p><strong>Planting Depth:</strong> {plant.planting_depth} inches</p>}
+            {plant.size && <p><strong>Mature Size:</strong> {plant.size}</p>}
+            {plant.mature_size && <p><strong>Mature Size:</strong> {plant.mature_size}</p>}
             {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
             {plant.featured && <p><strong>Featured:</strong> Yes</p>}
             {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}

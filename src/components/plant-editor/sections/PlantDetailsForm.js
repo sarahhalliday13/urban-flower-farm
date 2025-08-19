@@ -1,6 +1,8 @@
 import React from 'react';
 
 const PlantDetailsForm = ({ flowerData, setFlowerData }) => {
+  // Force cache refresh - v2025.08.18.4
+  console.log('PlantDetailsForm rendering, flowerData:', flowerData);
   return (
     <>
       <div className="details-section">

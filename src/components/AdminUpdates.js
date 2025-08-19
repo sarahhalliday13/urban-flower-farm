@@ -132,6 +132,13 @@ const AdminUpdates = () => {
         updatedNews = [newUpdate, ...updatedExisting];
       }
       
+      // Sort updates: pinned first, then by date
+      updatedNews.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      
       // Save to Firebase
       const result = await saveNewsItems(updatedNews);
       
@@ -204,6 +211,44 @@ const AdminUpdates = () => {
     setIsPinned(false);
     setEditingId(null);
     setError(null);
+  };
+
+  const handleTogglePin = async (id) => {
+    try {
+      const updatedNews = updates.map(update => {
+        if (update.id === id) {
+          // Toggle this item's pin status
+          return { ...update, isPinned: !update.isPinned };
+        }
+        // If we're pinning the clicked item, unpin all others
+        if (!updates.find(u => u.id === id).isPinned && update.isPinned) {
+          return { ...update, isPinned: false };
+        }
+        return update;
+      });
+      
+      // Sort updates: pinned first, then by date
+      updatedNews.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      
+      // Save to Firebase
+      const result = await saveNewsItems(updatedNews);
+      
+      if (result.success) {
+        setUpdates(updatedNews);
+        setSuccessMessage(updatedNews.find(u => u.id === id).isPinned 
+          ? "News item pinned to top!"
+          : "News item unpinned!");
+      } else {
+        throw new Error(result.error || 'Failed to update pin status');
+      }
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+      setError("Failed to update pin status: " + error.message);
+    }
   };
 
   return (
@@ -317,6 +362,13 @@ const AdminUpdates = () => {
                     </div>
                     
                     <div className="admin-actions">
+                      <button 
+                        className={`pin-button ${update.isPinned ? 'pinned' : ''}`} 
+                        onClick={() => handleTogglePin(update.id)}
+                        title={update.isPinned ? "Unpin" : "Pin to top"}
+                      >
+                        <span role="img" aria-label={update.isPinned ? "Unpin" : "Pin"}>📌</span>
+                      </button>
                       <button 
                         className="edit-button" 
                         onClick={() => handleEdit(update)}

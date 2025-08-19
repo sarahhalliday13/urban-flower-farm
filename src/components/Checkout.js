@@ -122,6 +122,13 @@ const Checkout = () => {
       return;
     }
     
+    // Check if total is valid
+    const orderTotal = getTotal();
+    if (orderTotal <= 0) {
+      setErrors({ ...errors, submit: 'Order total must be greater than $0. Please check your cart items.' });
+      return;
+    }
+    
     // Show processing
     setIsSubmitting(true);
     
@@ -264,12 +271,7 @@ const Checkout = () => {
     } catch (error) {
       console.error('❌ Error during checkout:', error);
       setErrors({ ...errors, submit: 'There was an error processing your order. Please try again.' });
-    } finally {
       setIsSubmitting(false);
-      setErrors({
-        ...errors,
-        submit: 'There was an error processing your order. Please try again.'
-      });
     }
   };
 
@@ -511,6 +513,11 @@ const Checkout = () => {
             )}
             
             <div className="form-actions">
+              {errors.submit && (
+                <div className="error-message" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                  {errors.submit}
+                </div>
+              )}
               <button 
                 type="submit" 
                 className="place-order-btn"
@@ -536,16 +543,19 @@ const Checkout = () => {
           <div className="cart-items">
             {cartItems.map(item => (
               <div key={item.id} className="cart-item">
-                <div className="item-info">
-                  <h3>
-                    {item.name}
+                <div className="item-details">
+                  <div className="item-header">
+                    <h3>{item.name}</h3>
                     {item.inventory?.status === 'Coming Soon' && (
                       <span className="coming-soon-badge">Coming Soon</span>
                     )}
-                  </h3>
-                  <p className="item-price" data-label="Price:">${parseFloat(item.price).toFixed(2)} × {item.quantity}</p>
+                  </div>
+                  <p className="item-price">Price: ${parseFloat(item.price).toFixed(2)} × {item.quantity}</p>
                 </div>
-                <p className="item-total" data-label="Subtotal:">${(item.price * item.quantity).toFixed(2)}</p>
+                <div className="item-subtotal">
+                  <p className="subtotal-label">Subtotal:</p>
+                  <p className="subtotal-amount">${(item.price * item.quantity).toFixed(2)}</p>
+                </div>
               </div>
             ))}
           </div>

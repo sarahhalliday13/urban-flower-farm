@@ -1910,7 +1910,8 @@ export const saveNewsItems = async (newsItems) => {
       id: item.id,
       subject: item.subject,
       content: item.content,
-      date: typeof item.date === 'string' ? item.date : item.date.toISOString()
+      date: typeof item.date === 'string' ? item.date : item.date.toISOString(),
+      isPinned: item.isPinned || false
     }));
     
     // Update in Firebase

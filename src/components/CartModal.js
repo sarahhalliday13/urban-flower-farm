@@ -62,8 +62,10 @@ function CartModal({ isOpen, onClose }) {
   return (
     <div className={`cart-modal-overlay ${animationState}`}>
       <div className="cart-modal" ref={modalRef}>
-        <button className="cart-close" onClick={onClose}>×</button>
-        <h2>Shopping Cart</h2>
+        <div className="cart-modal-header">
+          <h2>Shopping Cart</h2>
+          <button className="cart-close" onClick={onClose}>×</button>
+        </div>
         
         {cartItems.length === 0 ? (
           <div className="empty-cart-container">
@@ -71,7 +73,8 @@ function CartModal({ isOpen, onClose }) {
           </div>
         ) : (
           <>
-            <div className="cart-items">
+            <div className="cart-items-wrapper">
+              <div className="cart-items">
               {cartItems.map(item => {
                 // Check if we can add more of this item
                 const availableStock = parseInt(item.inventory?.currentStock, 10) || 0;
@@ -138,6 +141,7 @@ function CartModal({ isOpen, onClose }) {
                   </div>
                 );
               })}
+              </div>
             </div>
             
             <div className="cart-summary">

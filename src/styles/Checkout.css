@@ -33,13 +33,20 @@
   display: inline-block;
   background-color: #f39c12;
   color: white;
-  font-size: 0.7em;
+  font-size: 0.75rem;
   padding: 3px 8px;
   border-radius: 3px;
-  margin-left: 8px;
   font-weight: 500;
-  vertical-align: middle;
   white-space: nowrap;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+@media (max-width: 576px) {
+  .coming-soon-badge {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
 }
 
 .coming-soon-checkbox {
@@ -245,18 +252,26 @@
   align-items: flex-start;
   padding-bottom: 1rem;
   border-bottom: 1px solid #eee;
+  gap: 2rem;
 }
 
-.item-info {
+.item-details {
   flex: 1;
+  min-width: 0;
 }
 
-.item-info h3 {
-  margin: 0 0 0.5rem 0;
+.item-details h3 {
+  margin: 0;
   font-size: 1rem;
   color: #2c3e50;
+  font-weight: 600;
+}
+
+.item-header {
   display: flex;
   align-items: center;
+  gap: 8px;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
 
@@ -266,13 +281,24 @@
   margin: 0;
 }
 
-.item-total {
+.item-subtotal {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.subtotal-label {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+}
+
+.subtotal-amount {
+  margin: 0;
   font-weight: 600;
   color: #2c3e50;
-  min-width: 80px;
-  text-align: right;
-  white-space: nowrap;
-  margin-left: 1rem;
+  font-size: 1rem;
 }
 
 .order-total {
@@ -433,21 +459,18 @@
   }
   
   .cart-item {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .item-subtotal {
     flex-direction: column;
-    gap: 0.5rem;
+    align-items: flex-end;
+    gap: 0.25rem;
   }
   
-  .item-total {
-    margin-left: 0;
-    text-align: left;
-    margin-top: 0.25rem;
-  }
-  
-  .item-total::before {
-    content: attr(data-label);
-    font-weight: normal;
-    color: #7f8c8d;
-    margin-right: 0.5rem;
+  .subtotal-label {
+    font-size: 0.8rem;
   }
 }
 
@@ -457,12 +480,14 @@
   }
   
   .cart-item {
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
   }
   
   .item-total {
-    align-self: flex-end;
+    text-align: right;
+    margin-left: auto;
+    padding-left: 0.5rem;
   }
   
   /* Add data-label support for mobile */

@@ -54,6 +54,9 @@ const ModularInventoryManager = () => {
     gardeningTips: '',
     careTips: '',
     hardinessZone: '',
+    plantingSeason: '',
+    plantingDepth: '',
+    size: '',
     featured: false,
     hidden: false,
     inventory: {
@@ -128,6 +131,9 @@ const ModularInventoryManager = () => {
       gardeningTips: '',
       careTips: '',
       hardinessZone: '',
+      plantingSeason: '',
+      plantingDepth: '',
+      size: '',
       featured: false,
       hidden: false,
       inventory: {
@@ -419,6 +425,9 @@ const ModularInventoryManager = () => {
       gardeningTips: plant.gardeningTips || '',
       careTips: plant.careTips || '',
       hardinessZone: plant.hardinessZone || '',
+      plantingSeason: plant.plantingSeason || '',
+      plantingDepth: plant.plantingDepth || '',
+      size: plant.size || '',
       featured: plant.featured === true || plant.featured === 'true',
       hidden: plant.hidden === true || plant.hidden === 'true',
       inventory: {
@@ -1230,6 +1239,43 @@ const ModularInventoryManager = () => {
                       id="aroma"
                       value={plantFormData.aroma || ''}
                       onChange={(e) => updatePlantForm('aroma', e.target.value)}
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="plantingSeason">Planting Season</label>
+                    <input
+                      type="text"
+                      id="plantingSeason"
+                      value={plantFormData.plantingSeason || ''}
+                      onChange={(e) => updatePlantForm('plantingSeason', e.target.value)}
+                      placeholder="e.g., Spring, Fall"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label htmlFor="plantingDepth">Planting Depth (inches)</label>
+                    <input
+                      type="text"
+                      id="plantingDepth"
+                      value={plantFormData.plantingDepth || ''}
+                      onChange={(e) => updatePlantForm('plantingDepth', e.target.value)}
+                      placeholder="e.g., 0.25, 1-2"
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-row">
+                  <div className="form-group wide">
+                    <label htmlFor="size">Mature Size</label>
+                    <input
+                      type="text"
+                      id="size"
+                      value={plantFormData.size || ''}
+                      onChange={(e) => updatePlantForm('size', e.target.value)}
+                      placeholder="e.g., 2-3 feet tall and wide"
                     />
                   </div>
                 </div>

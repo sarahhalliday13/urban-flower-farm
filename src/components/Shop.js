@@ -906,13 +906,31 @@ function Shop() {
           </>
         ) : (
           <>
-            {sortedPlants.length === 0 && searchTerm.trim() !== '' ? (
+            {sortedPlants.length === 0 ? (
               <div className="no-results">
-                <p>No plants found matching "<strong>{searchTerm}</strong>"</p>
-                <button className="reset-search" onClick={() => {
-                  setSearchTerm('');
-                  window.location.href = `/shop?page=1&sort=${sortOption}`;
-                }}>Clear search</button>
+                {searchTerm.trim() !== '' ? (
+                  <>
+                    <p>No plants found matching "<strong>{searchTerm}</strong>"</p>
+                    <button className="reset-search" onClick={() => {
+                      setSearchTerm('');
+                      window.location.href = `/shop?page=1&sort=${sortOption}`;
+                    }}>Clear search</button>
+                  </>
+                ) : (
+                  <>
+                    <p>No plants currently available in this category.</p>
+                    {sortOption === 'status-coming-soon' && (
+                      <p className="status-message">Check back soon for new arrivals!</p>
+                    )}
+                    {sortOption === 'status-pre-order' && (
+                      <p className="status-message">No pre-order items available at this time.</p>
+                    )}
+                    <button className="reset-search" onClick={() => {
+                      setSortOption('status-in-stock');
+                      window.location.href = '/shop?page=1&sort=status-in-stock';
+                    }}>View in-stock plants</button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="plant-grid">
