@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Fragment } from 'react';
 import '../styles/AdminUpdates.css';
 import { saveNewsItems, fetchNewsItems } from '../services/firebase';
 
@@ -238,10 +238,15 @@ const AdminUpdates = () => {
       const result = await saveNewsItems(updatedNews);
       
       if (result.success) {
-        setUpdates(updatedNews);
-        setSuccessMessage(updatedNews.find(u => u.id === id).isPinned 
-          ? "News item pinned to top!"
-          : "News item unpinned!");
+        // Add a small delay before updating to make the transition smoother
+        setTimeout(() => {
+          setUpdates(updatedNews);
+        }, 100);
+        
+        const item = updates.find(u => u.id === id);
+        setSuccessMessage(item.isPinned 
+          ? "News item unpinned!"
+          : "News item pinned to top! It will appear first in the list.");
       } else {
         throw new Error(result.error || 'Failed to update pin status');
       }
@@ -336,18 +341,20 @@ const AdminUpdates = () => {
           <p>No updates have been created yet.</p>
         ) : (
           <div className="admin-updates-list">
-            {updates.map(update => {
+            {updates.map((update, index) => {
               const preview = getPreviewText(update.content);
+              const prevUpdate = index > 0 ? updates[index - 1] : null;
+              const showDivider = prevUpdate && prevUpdate.isPinned && !update.isPinned;
               
               return (
-                <div key={update.id} className={`admin-update-item ${update.isPinned ? 'pinned' : ''}`}>
-                  {update.isPinned && (
-                    <div className="pin-badge">
-                      <span className="pin-icon">📌</span>
-                      Pinned
+                <React.Fragment key={update.id}>
+                  {showDivider && (
+                    <div className="pinned-divider">
+                      <span>Other News</span>
                     </div>
                   )}
                   
+                <div key={update.id} className={`admin-update-item ${update.isPinned ? 'pinned' : ''}`}>
                   <div className="admin-update-header">
                     <div className="admin-update-info">
                       <span className="update-date">
@@ -365,7 +372,7 @@ const AdminUpdates = () => {
                       <button 
                         className={`pin-button ${update.isPinned ? 'pinned' : ''}`} 
                         onClick={() => handleTogglePin(update.id)}
-                        title={update.isPinned ? "Unpin" : "Pin to top"}
+                        title={update.isPinned ? "Click to unpin this item" : "Click to pin this item to the top"}
                       >
                         <span role="img" aria-label={update.isPinned ? "Unpin" : "Pin"}>📌</span>
                       </button>
@@ -386,6 +393,7 @@ const AdminUpdates = () => {
                     </div>
                   </div>
                 </div>
+                </React.Fragment>
               );
             })}
           </div>
