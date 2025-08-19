@@ -41,31 +41,6 @@
   position: relative;
 }
 
-.update-item.pinned {
-  border-color: #f57c00;
-  box-shadow: 0 2px 8px rgba(245, 124, 0, 0.15);
-}
-
-/* Pin badge */
-.pin-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background-color: #f57c00;
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  z-index: 10;
-}
-
-.pin-icon {
-  font-size: 0.9rem;
-}
 
 /* Update question (header) - matching FAQ style */
 .update-question {
@@ -79,17 +54,11 @@
   transition: background-color 0.3s ease;
 }
 
-.update-item.pinned .update-question {
-  background-color: #fffef5;
-}
 
 .update-question:hover {
   background-color: #f3f3f3;
 }
 
-.update-item.pinned .update-question:hover {
-  background-color: #fff9f0;
-}
 
 .update-question-content {
   flex: 1;

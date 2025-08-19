@@ -101,14 +101,8 @@ const UpdatesPage = () => {
           return (
             <div 
               key={update.id} 
-              className={`update-item ${isExpanded ? 'expanded' : ''} ${update.isPinned ? 'pinned' : ''}`}
+              className={`update-item ${isExpanded ? 'expanded' : ''}`}
             >
-              {update.isPinned && (
-                <div className="pin-badge">
-                  <span className="pin-icon">📌</span>
-                  Pinned
-                </div>
-              )}
               
               <div 
                 className="update-question"

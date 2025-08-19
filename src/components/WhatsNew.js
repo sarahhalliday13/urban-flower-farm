@@ -151,10 +151,9 @@ const WhatsNew = ({ maxDisplay = 1 }) => {
       </button>
       <div className="whats-new-content">
         {visibleUpdates.map((update) => (
-          <div key={update.id} className={`update-item ${update.isPinned ? 'pinned' : ''}`}>
+          <div key={update.id} className="update-item">
             <div className="update-header">
               <h3 className="update-subject">
-                {update.isPinned && <span className="pin-icon">📌 </span>}
                 {update.subject}
               </h3>
               <span className="update-date">
