@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOrders } from './OrderContext';
 import './OrderFilterControls.css';
 
@@ -14,6 +14,16 @@ const OrderFilterControls = () => {
     setSearchTerm,
     statusCounts = {} // Get status counts from context
   } = useOrders();
+  
+  // Local state for the search input (allows typing without immediate filtering)
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  
+  // Sync local search term when context search term changes
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+  
+  console.log('OrderFilterControls - localSearchTerm:', localSearchTerm, 'length:', localSearchTerm?.length);
 
   // Calculate archive count (completed + cancelled)
   const archiveCount = (statusCounts.completed || 0) + (statusCounts.cancelled || 0);
@@ -26,6 +36,17 @@ const OrderFilterControls = () => {
     { value: 'shipped', label: 'Shipped' },
     { value: 'archived', label: 'Archive' }
   ];
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    console.log('🔍 Search submitted:', localSearchTerm);
+    setSearchTerm(localSearchTerm);
+  };
+
+  const handleSearchClear = () => {
+    setLocalSearchTerm('');
+    setSearchTerm('');
+  };
 
   return (
     <div className="order-filter-controls">
@@ -43,24 +64,34 @@ const OrderFilterControls = () => {
         </select>
       </div>
       <div className="orders-search">
-        <div className="search-input-wrapper">
-          <input
-            type="text"
-            placeholder="Search by name, email, order ID, notes, or phone"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          {searchTerm && (
+        <form onSubmit={handleSearchSubmit} className="search-form">
+          <div className="search-input-wrapper">
+            <input
+              type="text"
+              placeholder="Search by name, email, order ID, notes, or phone"
+              value={localSearchTerm}
+              onChange={(e) => setLocalSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {localSearchTerm && (
+              <button 
+                type="button"
+                className="search-clear-btn" 
+                onClick={handleSearchClear}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
             <button 
-              className="search-clear-btn" 
-              onClick={() => setSearchTerm('')}
-              aria-label="Clear search"
+              type="submit" 
+              className="search-go-button"
+              aria-label="Search orders"
             >
-              ×
+              Go
             </button>
-          )}
-        </div>
+          </div>
+        </form>
       </div>
     </div>
   );

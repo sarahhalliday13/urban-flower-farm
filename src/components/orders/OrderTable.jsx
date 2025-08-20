@@ -9,7 +9,7 @@ import OrderDetails from './OrderDetails';
  * Handles the loading state and empty states
  */
 const OrderTable = () => {
-  const { filteredOrders, activeOrder } = useOrders();
+  const { filteredOrders, activeOrder, searchTerm } = useOrders();
 
   return (
     <div className="orders-list">
@@ -17,10 +17,10 @@ const OrderTable = () => {
         <OrderTableHeader />
         <tbody>
           {filteredOrders.map(order => (
-            <React.Fragment key={order.id}>
+            <React.Fragment key={`${searchTerm}-${order.id}`}>
               <OrderTableRow order={order} />
               {activeOrder === order.id && (
-                <tr key={`details-${order.id}`} className="details-row">
+                <tr key={`${searchTerm}-details-${order.id}`} className="details-row">
                   <td colSpan="6">
                     <OrderDetails />
                   </td>

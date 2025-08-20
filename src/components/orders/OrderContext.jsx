@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { getOrders, updateOrderStatus as updateFirebaseOrderStatus, updateInventory, updateOrder, getOrder } from '../../services/firebase';
 import { sendOrderConfirmationEmails } from '../../services/emailService';
 import { sendInvoiceEmail as invoiceEmailService } from '../../services/invoiceService';
@@ -909,15 +909,18 @@ export const OrderProvider = ({ children }) => {
       // Filter by status (case insensitive)
       const orderStatus = statusToLowerCase(safeOrder.status);
       
+      let statusMatches = false;
       if (filter === 'all') {
         // When 'all' is selected, exclude archived orders
-        return !archivedStatuses.includes(orderStatus);
+        statusMatches = !archivedStatuses.includes(orderStatus);
       } else if (filter === 'archived') {
         // When 'archived' is selected, show only completed and cancelled orders
-        return archivedStatuses.includes(orderStatus);
-      } else if (filter !== orderStatus) {
-        return false;
+        statusMatches = archivedStatuses.includes(orderStatus);
+      } else {
+        statusMatches = filter === orderStatus;
       }
+      
+      if (!statusMatches) return false;
       
       // Filter by date range if set
       if (dateRange.start || dateRange.end) {
@@ -926,9 +929,10 @@ export const OrderProvider = ({ children }) => {
         if (dateRange.end && new Date(dateRange.end) < orderDate) return false;
       }
       
-      // Enhanced search matching (case insensitive, partial matches)
-      if (searchTerm) {
-        const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
+      // Enhanced search matching (case insensitive, whole word matching)
+      if (searchTerm && searchTerm.trim() !== '') {
+        const searchTermLower = searchTerm.toLowerCase().trim();
+        
         const searchableFields = [
           safeOrder.customer.name.toLowerCase(),
           safeOrder.customer.email.toLowerCase(),
@@ -937,15 +941,24 @@ export const OrderProvider = ({ children }) => {
           (safeOrder.customer.phone || '').toLowerCase()
         ].filter(Boolean); // Remove empty strings
         
-        // All search terms must match at least one field
-        return searchTerms.every(term => 
-          searchableFields.some(field => field.includes(term))
-        );
+        // Check if any field contains the complete search term
+        const matches = searchableFields.some(field => field.includes(searchTermLower));
+        
+        return matches;
       }
       
       return true;
     });
 
+    // Debug logging for search functionality
+    if (searchTerm) {
+      console.log('🔍 Search Results:', {
+        searchTerm,
+        found: filteredOrders.length,
+        total: orders.length
+      });
+    }
+    
     return {
       orders: filteredOrders,
       statusCounts
@@ -999,6 +1012,11 @@ export const OrderProvider = ({ children }) => {
     };
   }, [loadOrders]);
 
+  // Get filtered data using memoization
+  const filteredData = useMemo(() => {
+    return getFilteredOrders();
+  }, [getFilteredOrders]);
+  
   // Return context value
   const contextValue = {
     orders,
@@ -1007,8 +1025,8 @@ export const OrderProvider = ({ children }) => {
     setActiveOrder,
     filter,
     setFilter,
-    filteredOrders: getFilteredOrders().orders,
-    statusCounts: getFilteredOrders().statusCounts,
+    filteredOrders: filteredData.orders,
+    statusCounts: filteredData.statusCounts,
     refreshOrders,
     searchTerm,
     setSearchTerm,
