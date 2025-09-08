@@ -513,35 +513,8 @@ function PlantDetails() {
               </div>
             )}
           </div>
-          {images.length > 1 && (
-            <>
-              <div className="image-thumbnails">
-                {images.map((image, index) => (
-                  <ThumbnailImage
-                    key={index}
-                    image={image}
-                    name={plant.name}
-                    index={index}
-                    isActive={selectedImageIndex === index}
-                    onClick={(newIndex) => {
-                      setSelectedImageIndex(newIndex);
-                    }}
-                  />
-                ))}
-              </div>
-              {(() => {
-                const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
-                const attribution = getImageAttribution(currentImage);
-                return attribution ? (
-                  <div className="image-copyright-text">
-                    <small>{attribution}</small>
-                  </div>
-                ) : null;
-              })()}
-            </>
-          )}
-          {images.length <= 1 && (() => {
-            const currentImage = plant.mainImage;
+          {(() => {
+            const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
             const attribution = getImageAttribution(currentImage);
             return attribution ? (
               <div className="image-copyright-text">
@@ -549,6 +522,22 @@ function PlantDetails() {
               </div>
             ) : null;
           })()}
+          {images.length > 1 && (
+            <div className="image-thumbnails">
+              {images.map((image, index) => (
+                <ThumbnailImage
+                  key={index}
+                  image={image}
+                  name={plant.name}
+                  index={index}
+                  isActive={selectedImageIndex === index}
+                  onClick={(newIndex) => {
+                    setSelectedImageIndex(newIndex);
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div className="plant-details-info">
           <div className="plant-info" style={{ padding: 0, margin: 0, paddingLeft: 0, paddingRight: 0 }}>
