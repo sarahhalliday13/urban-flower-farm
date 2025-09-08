@@ -41,10 +41,16 @@ function PlantDetails() {
     const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[imageUrl];
     if (!metadata) return null;
     
+    const currentYear = new Date().getFullYear();
+    
     if (metadata.type === 'commercial' && metadata.source) {
-      return `Image: ${metadata.source.name}`;
-    } else if (metadata.type === 'own' && metadata.watermarked) {
-      return '© Button\'s Flower Farm';
+      return `© ${currentYear} ${metadata.source.name}`;
+    } else if (metadata.type === 'own') {
+      if (metadata.photographer) {
+        return `© ${currentYear} ${metadata.photographer}`;
+      } else if (metadata.watermarked) {
+        return `© ${currentYear} Button's Flower Farm`;
+      }
     }
     return null;
   };
