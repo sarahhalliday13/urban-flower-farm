@@ -125,6 +125,14 @@ main {
   z-index: 1;
 }
 
+.image-copyright-note {
+  margin-top: 8px;
+  text-align: center;
+  color: #666;
+  font-size: 12px;
+  font-style: italic;
+}
+
 .plant-details-image img {
   width: 100%;
   height: 100%;

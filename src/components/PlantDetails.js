@@ -531,6 +531,15 @@ function PlantDetails() {
               ))}
             </div>
           )}
+          {(() => {
+            const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
+            const attribution = getImageAttribution(currentImage);
+            return attribution ? (
+              <div className="image-copyright-note">
+                <small>{attribution}</small>
+              </div>
+            ) : null;
+          })()}
         </div>
         <div className="plant-details-info">
           <div className="plant-info" style={{ padding: 0, margin: 0, paddingLeft: 0, paddingRight: 0 }}>
