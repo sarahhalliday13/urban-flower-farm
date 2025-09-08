@@ -28,11 +28,17 @@ function PlantDetails() {
   // Add image loading state
   const [imagesLoaded, setImagesLoaded] = useState(false);
   
+  // Create a safe key from URL for Firebase (replace dots and slashes)
+  const createSafeKey = (url) => {
+    return url.replace(/[.#$\[\]/]/g, '_');
+  };
+  
   // Get image attribution text
   const getImageAttribution = (imageUrl) => {
     if (!plant?.imageMetadata || !imageUrl) return null;
     
-    const metadata = plant.imageMetadata[imageUrl];
+    const safeKey = createSafeKey(imageUrl);
+    const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[imageUrl];
     if (!metadata) return null;
     
     if (metadata.type === 'commercial' && metadata.source) {

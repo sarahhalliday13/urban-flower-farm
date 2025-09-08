@@ -66,6 +66,11 @@ const ImageUploaderWithAttribution = ({
 
     return metadata;
   };
+  
+  // Create a safe key from URL for Firebase (replace dots and slashes)
+  const createSafeKey = (url) => {
+    return url.replace(/[.#$\[\]/]/g, '_');
+  };
 
   // Handle file selection
   const handleFileSelect = async (files) => {
@@ -144,7 +149,8 @@ const ImageUploaderWithAttribution = ({
         // Create metadata for each uploaded image
         const newMetadata = { ...imageMetadata };
         validUrls.forEach(url => {
-          newMetadata[url] = createImageMetadata(url);
+          const safeKey = createSafeKey(url);
+          newMetadata[safeKey] = createImageMetadata(url);
         });
         
         // Add new images to existing ones
@@ -240,7 +246,8 @@ const ImageUploaderWithAttribution = ({
     // Create metadata for the URL
     const url = urlInput.trim();
     const metadata = createImageMetadata(url);
-    const newMetadata = { ...imageMetadata, [url]: metadata };
+    const safeKey = createSafeKey(url);
+    const newMetadata = { ...imageMetadata, [safeKey]: metadata };
     
     // Add the URL to images
     const newImages = [...images, url];
@@ -261,7 +268,8 @@ const ImageUploaderWithAttribution = ({
   // Start editing metadata for an image
   const startEditingMetadata = (index) => {
     const imageUrl = images[index];
-    const metadata = imageMetadata[imageUrl] || {};
+    const safeKey = createSafeKey(imageUrl);
+    const metadata = imageMetadata[safeKey] || imageMetadata[imageUrl] || {}; // Check both
     setEditingIndex(index);
     setEditMetadata({
       type: metadata.type || 'own',
@@ -274,9 +282,10 @@ const ImageUploaderWithAttribution = ({
   // Save edited metadata
   const saveEditedMetadata = () => {
     const imageUrl = images[editingIndex];
+    const safeKey = createSafeKey(imageUrl);
     const newMetadata = { ...imageMetadata };
-    newMetadata[imageUrl] = {
-      ...newMetadata[imageUrl],
+    newMetadata[safeKey] = {
+      ...newMetadata[safeKey],
       ...editMetadata,
       url: imageUrl
     };
@@ -287,7 +296,8 @@ const ImageUploaderWithAttribution = ({
 
   // Get display text for attribution
   const getAttributionText = (imageUrl) => {
-    const metadata = imageMetadata[imageUrl];
+    const safeKey = createSafeKey(imageUrl);
+    const metadata = imageMetadata[safeKey] || imageMetadata[imageUrl]; // Check both for backwards compat
     if (!metadata) return null;
     
     if (metadata.type === 'commercial' && metadata.source) {

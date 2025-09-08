@@ -11,7 +11,7 @@ import {
 } from '../../services/firebase';
 import InventoryHeader from './InventoryHeader';
 import InventoryTable from './InventoryTable';
-import ImageUploader from '../plant-editor/sections/ImageUploader';
+import ImageUploaderWithAttribution from '../plant-editor/sections/ImageUploaderWithAttribution';
 import '../../styles/InventoryManager.css';
 import '../../styles/PlantManagement.css';
 import { useNavigate } from 'react-router-dom';
@@ -42,6 +42,7 @@ const ModularInventoryManager = () => {
     images: [],
     mainImageIndex: 0,
     mainImage: '',
+    imageMetadata: {},
     colour: '',
     light: '',
     height: '',
@@ -119,6 +120,7 @@ const ModularInventoryManager = () => {
       images: [],
       mainImageIndex: 0,
       mainImage: '',
+      imageMetadata: {},
       colour: '',
       light: '',
       height: '',
@@ -413,6 +415,7 @@ const ModularInventoryManager = () => {
       images: images,
       mainImageIndex: plant.mainImageIndex || 0,
       mainImage: plant.mainImage || '',
+      imageMetadata: plant.imageMetadata || {},
       colour: plant.colour || '',
       light: plant.light || '',
       height: plant.height || '',
@@ -1107,11 +1110,13 @@ const ModularInventoryManager = () => {
                 <div className="form-row">
                   <div className="form-group wide">
                     <label>Plant Images</label>
-                    <ImageUploader 
+                    <ImageUploaderWithAttribution 
                       images={plantFormData.images || []}
+                      imageMetadata={plantFormData.imageMetadata || {}}
                       mainImageIndex={plantFormData.mainImageIndex || 0}
                       plantId={plantFormData.id}
                       onUpload={(newImages) => updatePlantForm('images', newImages)}
+                      onMetadataUpdate={(newMetadata) => updatePlantForm('imageMetadata', newMetadata)}
                       onMainSelect={(index) => {
                         updatePlantForm('mainImageIndex', index);
                         // Also update mainImage for backward compatibility
@@ -1120,9 +1125,20 @@ const ModularInventoryManager = () => {
                         }
                       }}
                       onRemoveImage={(index) => {
+                        const imageUrl = plantFormData.images[index];
                         const updatedImages = [...plantFormData.images];
                         updatedImages.splice(index, 1);
                         updatePlantForm('images', updatedImages);
+                        
+                        // Also remove metadata for the deleted image
+                        if (plantFormData.imageMetadata && imageUrl) {
+                          const updatedMetadata = { ...plantFormData.imageMetadata };
+                          // Create safe key for Firebase
+                          const safeKey = imageUrl.replace(/[.#$\[\]/]/g, '_');
+                          delete updatedMetadata[safeKey];
+                          delete updatedMetadata[imageUrl]; // Also try to delete old format
+                          updatePlantForm('imageMetadata', updatedMetadata);
+                        }
                         
                         // If we removed the main image, update mainImageIndex
                         if (index === plantFormData.mainImageIndex) {

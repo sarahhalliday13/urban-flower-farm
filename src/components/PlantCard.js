@@ -5,11 +5,17 @@ import './PlantCard.css';
 const PlantCard = ({ plant }) => {
   const [imageError, setImageError] = useState(false);
   
+  // Create a safe key from URL for Firebase (replace dots and slashes)
+  const createSafeKey = (url) => {
+    return url.replace(/[.#$\[\]/]/g, '_');
+  };
+  
   // Get image attribution text
   const getImageAttribution = () => {
     if (!plant.imageMetadata || !plant.mainImage) return null;
     
-    const metadata = plant.imageMetadata[plant.mainImage];
+    const safeKey = createSafeKey(plant.mainImage);
+    const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[plant.mainImage];
     if (!metadata) return null;
     
     if (metadata.type === 'commercial' && metadata.source) {
