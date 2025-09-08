@@ -18,7 +18,17 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-08-19)
+## Recent Changes (2025-09-08)
+- Implemented Phase 1 Image Attribution System:
+  - New ImageUploaderWithAttribution component for source tracking
+  - Support for commercial sources (Van Noort, Jelitto, etc.)
+  - Attribution metadata stored with each image
+  - "Own photo" vs "Commercial source" selection
+  - Optional watermarking for BUFF's own photos
+  - Attribution display on shop cards and detail pages
+  - Edit existing image attributions in plant editor
+
+## Previous Changes (2025-08-19)
 - Added inventory image URL editing:
   - Direct Firebase Storage URL input for plant images
   - Always-visible URL field in plant editor

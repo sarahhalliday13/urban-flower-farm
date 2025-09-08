@@ -7,7 +7,7 @@ import { storage } from '../../services/firebase';
 // Import subcomponents
 import BasicInfoForm from './sections/BasicInfoForm';
 import InventoryForm from './sections/InventoryForm';
-import ImageUploader from './sections/ImageUploader';
+import ImageUploaderWithAttribution from './sections/ImageUploaderWithAttribution';
 import VisibilityToggles from './sections/VisibilityToggles';
 import PlantDetailsForm from './sections/PlantDetailsForm';
 
@@ -40,6 +40,7 @@ const ModularPlantEditor = () => {
     },
     images: [],
     mainImage: '',
+    imageMetadata: {},
     featured: false,
     hidden: false
   });
@@ -47,6 +48,7 @@ const ModularPlantEditor = () => {
   // Image handling state
   const [images, setImages] = useState([]);
   const [mainImage, setMainImage] = useState('');
+  const [imageMetadata, setImageMetadata] = useState({});
 
   // Load plant data if in edit mode
   useEffect(() => {
@@ -123,8 +125,12 @@ const ModularPlantEditor = () => {
           plantingDepth: plant.plantingDepth || '',
           size: plant.size || '',
           featured: plant.featured === true || plant.featured === 'true',
-          hidden: plant.hidden === true || plant.hidden === 'true'
+          hidden: plant.hidden === true || plant.hidden === 'true',
+          imageMetadata: plant.imageMetadata || {}
         });
+        
+        // Set image metadata separately
+        setImageMetadata(plant.imageMetadata || {});
       } catch (err) {
         console.error('Error loading plant:', err);
         setError(`Failed to load plant: ${err.message}`);
@@ -231,6 +237,7 @@ const ModularPlantEditor = () => {
         ...flowerData,
         images: finalImageUrls,
         mainImage: finalMainImageUrl,
+        imageMetadata: imageMetadata,
         price: parseFloat(flowerData.price),
         inventory: {
           ...flowerData.inventory,
@@ -329,8 +336,9 @@ const ModularPlantEditor = () => {
         {/* Image Upload Section */}
         <div className="form-section">
           <h2>Images</h2>
-          <ImageUploader 
+          <ImageUploaderWithAttribution 
             images={images.map(img => img.url || img.preview || img)}
+            imageMetadata={imageMetadata}
             mainImageIndex={images.findIndex(img => (img.url || img.preview || img) === mainImage)}
             plantId={plantId}
             onUpload={(newImages) => {
@@ -344,13 +352,23 @@ const ModularPlantEditor = () => {
               });
               setImages(imageObjects);
             }}
+            onMetadataUpdate={(newMetadata) => {
+              setImageMetadata(newMetadata);
+            }}
             onMainSelect={(index) => {
               const selectedImage = images[index];
               setMainImage(selectedImage?.url || selectedImage?.preview || selectedImage);
             }}
             onRemoveImage={(index) => {
+              const imageUrl = images[index]?.url || images[index]?.preview || images[index];
               const newImages = images.filter((_, i) => i !== index);
               setImages(newImages);
+              
+              // Remove metadata for deleted image
+              const newMetadata = { ...imageMetadata };
+              delete newMetadata[imageUrl];
+              setImageMetadata(newMetadata);
+              
               // Update main image if removed
               if (index === images.findIndex(img => (img.url || img.preview || img) === mainImage)) {
                 setMainImage(newImages[0]?.url || newImages[0]?.preview || newImages[0] || '');

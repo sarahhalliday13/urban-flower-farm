@@ -5,6 +5,23 @@ import './PlantCard.css';
 const PlantCard = ({ plant }) => {
   const [imageError, setImageError] = useState(false);
   
+  // Get image attribution text
+  const getImageAttribution = () => {
+    if (!plant.imageMetadata || !plant.mainImage) return null;
+    
+    const metadata = plant.imageMetadata[plant.mainImage];
+    if (!metadata) return null;
+    
+    if (metadata.type === 'commercial' && metadata.source) {
+      return `Image: ${metadata.source.name}`;
+    } else if (metadata.type === 'own' && metadata.watermarked) {
+      return '© Button\'s Flower Farm';
+    }
+    return null;
+  };
+  
+  const attribution = getImageAttribution();
+  
   // Helper function to check if a URL is from Firebase Storage
   const isFirebaseStorageUrl = (url) => {
     return url && typeof url === 'string' && 
@@ -37,6 +54,11 @@ const PlantCard = ({ plant }) => {
             alt={plant.name} 
             onError={handleImageError}
           />
+          {attribution && (
+            <div className="plant-image-attribution">
+              {attribution}
+            </div>
+          )}
         </div>
         <div className="plant-info">
           <h3>{plant.name}</h3>

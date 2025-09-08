@@ -28,6 +28,21 @@ function PlantDetails() {
   // Add image loading state
   const [imagesLoaded, setImagesLoaded] = useState(false);
   
+  // Get image attribution text
+  const getImageAttribution = (imageUrl) => {
+    if (!plant?.imageMetadata || !imageUrl) return null;
+    
+    const metadata = plant.imageMetadata[imageUrl];
+    if (!metadata) return null;
+    
+    if (metadata.type === 'commercial' && metadata.source) {
+      return `Image: ${metadata.source.name}`;
+    } else if (metadata.type === 'own' && metadata.watermarked) {
+      return '© Button\'s Flower Farm';
+    }
+    return null;
+  };
+  
   // Fetch plants from Firebase with fallbacks
   useEffect(() => {
     const loadPlants = async () => {
@@ -484,6 +499,15 @@ function PlantDetails() {
                 <div className="loading-spinner"></div>
               </div>
             )}
+            {(() => {
+              const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
+              const attribution = getImageAttribution(currentImage);
+              return attribution ? (
+                <div className="plant-details-image-attribution">
+                  {attribution}
+                </div>
+              ) : null;
+            })()}
           </div>
           {images.length > 1 && (
             <div className="image-thumbnails">
