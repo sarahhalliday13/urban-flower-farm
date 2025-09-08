@@ -125,12 +125,21 @@ main {
   z-index: 1;
 }
 
-.image-copyright-note {
+.image-copyright-text {
   margin-top: 4px;
-  text-align: right;
-  color: #999;
-  font-size: 11px;
-  font-style: normal;
+  margin-bottom: 8px;
+  padding-right: 4px;
+  text-align: right !important;
+  color: #999 !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  display: block;
+  width: 100%;
+}
+
+.image-copyright-text small {
+  color: #999 !important;
+  font-size: 11px !important;
 }
 
 .plant-details-image img {

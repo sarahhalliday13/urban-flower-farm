@@ -541,7 +541,7 @@ function PlantDetails() {
             const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
             const attribution = getImageAttribution(currentImage);
             return attribution ? (
-              <div className="image-copyright-note">
+              <div className="image-copyright-text">
                 <small>{attribution}</small>
               </div>
             ) : null;
