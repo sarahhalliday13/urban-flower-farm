@@ -1107,11 +1107,19 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
         return; // Skip existing plants in Phase 1
       }
       
-      // Store new plant
-      plantsObject[plantId] = {
+      // Process plant data, preserving imageMetadata if provided
+      const plantDataToStore = {
         ...plant,
         id: plantId // Make sure id is set consistently
       };
+      
+      // If imageMetadata is provided from CSV import, preserve it
+      if (plant.imageMetadata && typeof plant.imageMetadata === 'object') {
+        plantDataToStore.imageMetadata = plant.imageMetadata;
+      }
+      
+      // Store new plant
+      plantsObject[plantId] = plantDataToStore;
       newPlantsCount++;
     });
     

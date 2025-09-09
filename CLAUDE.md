@@ -19,6 +19,12 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-09-09)
+- Enhanced CSV Import with Photo Credits:
+  - Added photo credit fields to CSV/Excel import
+  - Direct Excel file upload support (.xlsx, .xls) - no CSV conversion needed
+  - Google Sheets compatible - export as Excel and upload directly
+  - New fields: photo_credit_type, photo_credit_source, photo_credit_photographer, photo_credit_watermarked
+  - Automatically converts to imageMetadata structure for attribution system
 - Updated image attribution display format:
   - Replaced copyright symbol (©) with "Photo credit:" for clarity
   - Applied to PlantCard, PlantDetails, and ImageUploaderWithAttribution components

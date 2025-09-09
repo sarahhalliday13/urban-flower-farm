@@ -1,0 +1,4 @@
+plant_id,name,price,mainimage,photo_credit_type,photo_credit_source,photo_credit_photographer,photo_credit_watermarked
+9999,Test Rose with Credits,12.99,https://firebasestorage.googleapis.com/test/rose.jpg,commercial,Van Noort,,NO
+9998,Test Lily Own Photo,15.99,https://firebasestorage.googleapis.com/test/lily.jpg,own,,Jane Smith,YES
+9997,Test Tulip BUFF Photo,8.99,https://firebasestorage.googleapis.com/test/tulip.jpg,own,,,YES

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { downloadBackup, importPlantsFromSheets, updateInventoryStock, getAvailablePlantIds } from '../services/firebase';
 import { useToast } from '../context/ToastContext';
+import * as XLSX from 'xlsx';
 import '../styles/InventoryImportExport.css';
 
 const InventoryImportExport = () => {
@@ -71,17 +72,58 @@ const InventoryImportExport = () => {
   const readFile = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      
+      // Check file extension to determine parsing method
+      const fileName = file.name.toLowerCase();
+      const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
+      
       reader.onload = (event) => {
         try {
-          const csvText = event.target.result;
-          const parsedData = parseCSV(csvText);
+          let parsedData;
+          
+          if (isExcel) {
+            // Parse Excel file
+            const data = new Uint8Array(event.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            
+            // Get the first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON with lowercase headers
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+              raw: false,
+              defval: '' 
+            });
+            
+            // Convert headers to lowercase to match CSV parsing
+            parsedData = jsonData.map(row => {
+              const lowercaseRow = {};
+              Object.keys(row).forEach(key => {
+                lowercaseRow[key.toLowerCase().replace(/["']/g, '')] = row[key];
+              });
+              return lowercaseRow;
+            });
+          } else {
+            // Parse CSV file
+            const csvText = event.target.result;
+            parsedData = parseCSV(csvText);
+          }
+          
           resolve(parsedData);
         } catch (error) {
           reject(error);
         }
       };
+      
       reader.onerror = () => reject(new Error('Error reading file'));
-      reader.readAsText(file);
+      
+      // Read as ArrayBuffer for Excel, as text for CSV
+      if (isExcel) {
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.readAsText(file);
+      }
     });
   };
 
@@ -169,34 +211,74 @@ const InventoryImportExport = () => {
     try {
       setImportStatus({ loading: true, message: 'Processing import...' });
       
+      // Helper to create safe Firebase key from URL
+      const createSafeKey = (url) => {
+        if (!url) return '';
+        return url.replace(/[.#$\[\]/]/g, '_');
+      };
+
       // Transform plant data
-      const transformedPlantsData = previewData.plants.map(plant => ({
-        id: parseInt(plant.plant_id) || 0,
-        name: plant.name || '',
-        scientificName: plant.latinname || '',
-        commonName: plant.commonname || '',
-        price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
-        featured: plant.featured === 'true',
-        plantType: plant.type || '',
-        description: plant.description || '',
-        bloomSeason: plant.bloom_season || '',
-        colour: plant.colour || plant.color || '',
-        light: plant.sunlight || '',
-        spread: plant.spread_inches || '',
-        height: plant.height_inches || '',
-        hardinessZone: plant.hardiness_zones || '',
-        specialFeatures: plant.special_features || '',
-        uses: plant.uses || '',
-        aroma: plant.aroma || '',
-        gardeningTips: plant.gardening_tips || '',
-        careTips: plant.care_tips || '',
-        mainImage: plant.mainimage || plant.main_image || '',
-        additionalImages: plant.additionalimage || plant.additional_image || '',
-        plantingSeason: plant.planting_season || '',
-        plantingDepth: plant.planting_depth_inches || plant.planting_depth || '',
-        size: plant.mature_size || plant.size || '',
-        hidden: plant.hidden === 'true' || plant.hidden === true || plant.hidden === 'TRUE'
-      }));
+      const transformedPlantsData = previewData.plants.map(plant => {
+        const plantData = {
+          id: parseInt(plant.plant_id) || 0,
+          name: plant.name || '',
+          scientificName: plant.latinname || '',
+          commonName: plant.commonname || '',
+          price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
+          featured: plant.featured === 'true',
+          plantType: plant.type || '',
+          description: plant.description || '',
+          bloomSeason: plant.bloom_season || '',
+          colour: plant.colour || plant.color || '',
+          light: plant.sunlight || '',
+          spread: plant.spread_inches || '',
+          height: plant.height_inches || '',
+          hardinessZone: plant.hardiness_zones || '',
+          specialFeatures: plant.special_features || '',
+          uses: plant.uses || '',
+          aroma: plant.aroma || '',
+          gardeningTips: plant.gardening_tips || '',
+          careTips: plant.care_tips || '',
+          mainImage: plant.mainimage || plant.main_image || '',
+          additionalImages: plant.additionalimage || plant.additional_image || '',
+          plantingSeason: plant.planting_season || '',
+          plantingDepth: plant.planting_depth_inches || plant.planting_depth || '',
+          size: plant.mature_size || plant.size || '',
+          hidden: plant.hidden === 'true' || plant.hidden === true || plant.hidden === 'TRUE'
+        };
+
+        // Process photo credit metadata if provided
+        if (plant.photo_credit_type) {
+          const mainImage = plantData.mainImage;
+          if (mainImage) {
+            const safeKey = createSafeKey(mainImage);
+            plantData.imageMetadata = {
+              [safeKey]: {
+                type: plant.photo_credit_type.toLowerCase()
+              }
+            };
+
+            if (plant.photo_credit_type.toLowerCase() === 'commercial' && plant.photo_credit_source) {
+              plantData.imageMetadata[safeKey].source = {
+                name: plant.photo_credit_source,
+                url: plant.photo_credit_url || ''
+              };
+            } else if (plant.photo_credit_type.toLowerCase() === 'own') {
+              if (plant.photo_credit_photographer) {
+                plantData.imageMetadata[safeKey].photographer = plant.photo_credit_photographer;
+              }
+              if (plant.photo_credit_watermarked === 'true' || 
+                  plant.photo_credit_watermarked === 'TRUE' || 
+                  plant.photo_credit_watermarked === 'YES' ||
+                  plant.photo_credit_watermarked === true) {
+                plantData.imageMetadata[safeKey].watermarked = true;
+              }
+            }
+          }
+        }
+
+        return plantData;
+      });
       
       setImportStatus({ loading: true, message: `Importing ${transformedPlantsData.length} plants...` });
       
@@ -359,25 +441,25 @@ const InventoryImportExport = () => {
                 <h3>📄 Excel Template</h3>
                 <p>Get the correct format for easy importing:</p>
                 <a 
-                  href="/templates/plants_inventory.xlsx" 
-                  download="plants_inventory_template.xlsx"
+                  href="/templates/plants_inventory_v2.xlsx" 
+                  download="plants_inventory_template_v2.xlsx"
                   className="template-download-link"
                 >
-                  📥 Download Template
+                  📥 Download Template (with Photo Credits)
                 </a>
               </div>
             </div>
             
             <form onSubmit={handleGeneratePreview}>
               <div className="form-group">
-                <h4>📋 Plants CSV File (Required)</h4>
+                <h4>📋 Plants File (Required)</h4>
                 <p className="help-text">
-                  Should include: plant_id, name, price, mainimage, etc.
+                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, name, price, mainimage, etc.
                 </p>
                 <div className="file-input-wrapper">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls"
                     onChange={(e) => setPlantsFile(e.target.files[0])}
                     className="file-input"
                     id="plants-file"
@@ -392,14 +474,14 @@ const InventoryImportExport = () => {
               </div>
               
               <div className="form-group">
-                <h4>📦 Inventory CSV File (Optional)</h4>
+                <h4>📦 Inventory File (Optional)</h4>
                 <p className="help-text">
-                  Should include: plant_id, current_stock, status
+                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, current_stock, status
                 </p>
                 <div className="file-input-wrapper">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls"
                     onChange={(e) => setInventoryFile(e.target.files[0])}
                     className="file-input"
                     id="inventory-file"
@@ -496,14 +578,14 @@ const InventoryImportExport = () => {
             
             <form onSubmit={handleUpdateInventory}>
               <div className="form-group">
-                <h4>📊 Inventory CSV File</h4>
+                <h4>📊 Inventory File</h4>
                 <p className="help-text">
-                  Should include: plant_id, current_stock (or stock/quantity)
+                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, current_stock (or stock/quantity)
                 </p>
                 <div className="file-input-wrapper">
                   <input
                     type="file"
-                    accept=".csv"
+                    accept=".csv,.xlsx,.xls"
                     onChange={(e) => setUpdateFile(e.target.files[0])}
                     className="file-input"
                     id="update-file"
@@ -545,6 +627,16 @@ const InventoryImportExport = () => {
               <code>
                 plant_id, name, latinname, price, mainimage, type, description...
               </code>
+              <div style={{marginTop: '8px', fontSize: '12px'}}>
+                <strong>Photo Credit Fields (optional):</strong><br/>
+                <code style={{fontSize: '11px'}}>
+                  photo_credit_type (own/commercial)<br/>
+                  photo_credit_source (e.g., Van Noort, Jelitto)<br/>
+                  photo_credit_photographer (for own photos)<br/>
+                  photo_credit_watermarked (YES/NO)<br/>
+                  photo_credit_url (source website)
+                </code>
+              </div>
             </div>
             <div className="format-box">
               <h4>Inventory CSV</h4>
