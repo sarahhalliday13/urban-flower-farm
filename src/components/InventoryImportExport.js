@@ -248,33 +248,97 @@ const InventoryImportExport = () => {
         };
 
         // Process photo credit metadata if provided
-        if (plant.photo_credit_type) {
-          const mainImage = plantData.mainImage;
-          if (mainImage) {
+        // Support both old format (photo_credit_*) and new format (main_credit_*, add1_credit_*, etc.)
+        plantData.imageMetadata = {};
+        
+        // Handle main image credits
+        const mainImage = plantData.mainImage;
+        if (mainImage) {
+          const mainCreditType = plant.main_credit_type || plant.photo_credit_type;
+          if (mainCreditType && mainCreditType.toLowerCase() !== 'none') {
             const safeKey = createSafeKey(mainImage);
-            plantData.imageMetadata = {
-              [safeKey]: {
-                type: plant.photo_credit_type.toLowerCase()
-              }
+            plantData.imageMetadata[safeKey] = {
+              type: mainCreditType.toLowerCase()
             };
 
-            if (plant.photo_credit_type.toLowerCase() === 'commercial' && plant.photo_credit_source) {
+            const mainSource = plant.main_credit_source || plant.photo_credit_source;
+            const mainPhotographer = plant.main_credit_photographer || plant.photo_credit_photographer;
+            const mainWatermarked = plant.main_credit_watermarked || plant.photo_credit_watermarked;
+
+            if (mainCreditType.toLowerCase() === 'commercial' && mainSource) {
               plantData.imageMetadata[safeKey].source = {
-                name: plant.photo_credit_source,
-                url: plant.photo_credit_url || ''
+                name: mainSource,
+                url: plant.main_credit_url || plant.photo_credit_url || ''
               };
-            } else if (plant.photo_credit_type.toLowerCase() === 'own') {
-              if (plant.photo_credit_photographer) {
-                plantData.imageMetadata[safeKey].photographer = plant.photo_credit_photographer;
+            } else if (mainCreditType.toLowerCase() === 'own') {
+              if (mainPhotographer) {
+                plantData.imageMetadata[safeKey].photographer = mainPhotographer;
               }
-              if (plant.photo_credit_watermarked === 'true' || 
-                  plant.photo_credit_watermarked === 'TRUE' || 
-                  plant.photo_credit_watermarked === 'YES' ||
-                  plant.photo_credit_watermarked === true) {
+              if (mainWatermarked === 'true' || 
+                  mainWatermarked === 'TRUE' || 
+                  mainWatermarked === 'YES' ||
+                  mainWatermarked === true) {
                 plantData.imageMetadata[safeKey].watermarked = true;
               }
             }
           }
+        }
+        
+        // Handle additional images and their credits
+        // Process additionalImages string (comma-separated) or individual columns
+        let additionalImageUrls = [];
+        
+        // Check for comma-separated additionalImages
+        if (plantData.additionalImages) {
+          additionalImageUrls = plantData.additionalImages.split(',').map(url => url.trim()).filter(url => url);
+        }
+        
+        // Also check for individual additional image columns
+        for (let i = 1; i <= 3; i++) {
+          const imgUrl = plant[`additionalimage${i}`];
+          if (imgUrl && imgUrl.trim()) {
+            additionalImageUrls.push(imgUrl.trim());
+            
+            // Process credits for this additional image
+            const creditType = plant[`add${i}_credit_type`];
+            if (creditType && creditType.toLowerCase() !== 'none') {
+              const safeKey = createSafeKey(imgUrl);
+              plantData.imageMetadata[safeKey] = {
+                type: creditType.toLowerCase()
+              };
+              
+              const source = plant[`add${i}_credit_source`];
+              const photographer = plant[`add${i}_credit_photographer`];
+              const watermarked = plant[`add${i}_credit_watermarked`];
+              
+              if (creditType.toLowerCase() === 'commercial' && source) {
+                plantData.imageMetadata[safeKey].source = {
+                  name: source,
+                  url: plant[`add${i}_credit_url`] || ''
+                };
+              } else if (creditType.toLowerCase() === 'own') {
+                if (photographer) {
+                  plantData.imageMetadata[safeKey].photographer = photographer;
+                }
+                if (watermarked === 'true' || 
+                    watermarked === 'TRUE' || 
+                    watermarked === 'YES' ||
+                    watermarked === true) {
+                  plantData.imageMetadata[safeKey].watermarked = true;
+                }
+              }
+            }
+          }
+        }
+        
+        // Update additionalImages if we found any
+        if (additionalImageUrls.length > 0) {
+          plantData.additionalImages = additionalImageUrls.join(',');
+        }
+        
+        // Clean up imageMetadata if empty
+        if (Object.keys(plantData.imageMetadata).length === 0) {
+          delete plantData.imageMetadata;
         }
 
         return plantData;
@@ -384,13 +448,7 @@ const InventoryImportExport = () => {
           className={`tab ${activeTab === 'import' ? 'active' : ''}`}
           onClick={() => setActiveTab('import')}
         >
-          📤 Import New Plants
-        </button>
-        <button 
-          className={`tab ${activeTab === 'update' ? 'active' : ''}`}
-          onClick={() => setActiveTab('update')}
-        >
-          🔄 Update Stock Levels
+          📤 Import / Update
         </button>
       </div>
       
@@ -419,7 +477,7 @@ const InventoryImportExport = () => {
           </div>
         )}
         
-        {/* Import New Plants Tab */}
+        {/* Import / Update Tab */}
         {activeTab === 'import' && (
           <div className="import-section">
             <div className="info-boxes-row">
@@ -433,26 +491,37 @@ const InventoryImportExport = () => {
                   </>
                 )}
                 <hr className="info-divider" />
-                <p className="small-text"><strong>Import Mode:</strong> Add-only • Skips existing • Preview first</p>
+                <p className="small-text"><strong>Usage:</strong> Add new plants • Update stock levels • Both at once</p>
               </div>
               
-              {/* Template Download */}
+              {/* Template Downloads */}
               <div className="info-box template">
-                <h3>📄 Excel Template</h3>
-                <p>Get the correct format for easy importing:</p>
-                <a 
-                  href="/templates/plants_inventory_v2.xlsx" 
-                  download="plants_inventory_template_v2.xlsx"
-                  className="template-download-link"
-                >
-                  📥 Download Template (with Photo Credits)
-                </a>
+                <h3>📄 Excel Templates</h3>
+                <p>Download templates for easy importing:</p>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
+                  <a 
+                    href="/templates/plants_template.xlsx" 
+                    download="plants_template.xlsx"
+                    className="template-download-link"
+                    style={{fontSize: '14px'}}
+                  >
+                    🌱 Plants Template (with photo credits)
+                  </a>
+                  <a 
+                    href="/templates/inventory_template.xlsx" 
+                    download="inventory_template.xlsx"
+                    className="template-download-link"
+                    style={{fontSize: '14px'}}
+                  >
+                    📦 Inventory Template (stock levels)
+                  </a>
+                </div>
               </div>
             </div>
             
             <form onSubmit={handleGeneratePreview}>
               <div className="form-group">
-                <h4>📋 Plants File (Required)</h4>
+                <h4>📋 Plants File (Optional if only updating inventory)</h4>
                 <p className="help-text">
                   Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, name, price, mainimage, etc.
                 </p>
@@ -567,58 +636,10 @@ const InventoryImportExport = () => {
           </div>
         )}
         
-        {/* Update Inventory Tab */}
-        {activeTab === 'update' && (
-          <div className="update-section">
-            <div className="info-box info">
-              <h3>🔄 Update Stock Levels</h3>
-              <p>Update inventory quantities for existing plants only.</p>
-              <p>Use this after importing plants to set their stock levels.</p>
-            </div>
-            
-            <form onSubmit={handleUpdateInventory}>
-              <div className="form-group">
-                <h4>📊 Inventory File</h4>
-                <p className="help-text">
-                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, current_stock (or stock/quantity)
-                </p>
-                <div className="file-input-wrapper">
-                  <input
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={(e) => setUpdateFile(e.target.files[0])}
-                    className="file-input"
-                    id="update-file"
-                  />
-                  <label htmlFor="update-file" className="file-label">
-                    {updateFile ? updateFile.name : 'No file chosen'}
-                  </label>
-                  <button type="button" className="select-button" onClick={() => document.getElementById('update-file').click()}>
-                    Select
-                  </button>
-                </div>
-              </div>
-              
-              <button 
-                type="submit"
-                disabled={updateStatus.loading || !updateFile}
-                className="primary-button"
-              >
-                {updateStatus.loading ? 'Updating...' : 'Update Stock Levels'}
-              </button>
-            </form>
-            
-            {updateStatus.message && (
-              <div className={`status-message ${updateStatus.error ? 'error' : updateStatus.success ? 'success' : ''}`}>
-                {updateStatus.message}
-              </div>
-            )}
-          </div>
-        )}
       </div>
       
-      {/* CSV Format Reference - only show on import/update tabs */}
-      {activeTab !== 'export' && (
+      {/* CSV Format Reference - only show on import tab */}
+      {activeTab === 'import' && (
         <div className="format-reference">
           <h3>📋 CSV Format Reference</h3>
           <div className="format-grid">

@@ -19,11 +19,16 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-09-09)
+- Simplified Import Interface:
+  - Removed redundant "Update Stock Levels" tab - now unified under "Import / Update"
+  - Separate templates for Plants and Inventory (cleaner, more focused)
+  - Inventory template includes status dropdown (In Stock, Low Stock, Sold Out, Coming Soon, Pre-Order)
+  - Plants file now optional when only updating inventory levels
 - Enhanced CSV Import with Photo Credits:
-  - Added photo credit fields to CSV/Excel import
+  - Support for multiple images with individual photo credits
   - Direct Excel file upload support (.xlsx, .xls) - no CSV conversion needed
   - Google Sheets compatible - export as Excel and upload directly
-  - New fields: photo_credit_type, photo_credit_source, photo_credit_photographer, photo_credit_watermarked
+  - New fields for main and additional images photo credits
   - Automatically converts to imageMetadata structure for attribution system
 - Updated image attribution display format:
   - Replaced copyright symbol (©) with "Photo credit:" for clarity
