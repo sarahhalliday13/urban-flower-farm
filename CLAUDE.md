@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-08-05
+**Last Updated**: 2025-09-09
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,14 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-09-08)
+## Recent Changes (2025-09-09)
+- Updated image attribution display format:
+  - Replaced copyright symbol (©) with "Photo credit:" for clarity
+  - Applied to PlantCard, PlantDetails, and ImageUploaderWithAttribution components
+  - Removed year from photo credits as it's not needed
+  - Consistent labeling across shop cards, detail pages, and editor
+
+## Previous Changes (2025-09-08)
 - Implemented Phase 1 Image Attribution System:
   - New ImageUploaderWithAttribution component for source tracking
   - Support for commercial sources (Van Noort, Jelitto, etc.)

@@ -18,15 +18,13 @@ const PlantCard = ({ plant }) => {
     const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[plant.mainImage];
     if (!metadata) return null;
     
-    const currentYear = new Date().getFullYear();
-    
     if (metadata.type === 'commercial' && metadata.source) {
-      return `© ${currentYear} ${metadata.source.name}`;
+      return `Photo credit: ${metadata.source.name}`;
     } else if (metadata.type === 'own') {
       if (metadata.photographer) {
-        return `© ${currentYear} ${metadata.photographer}`;
+        return `Photo credit: ${metadata.photographer}`;
       } else if (metadata.watermarked) {
-        return `© ${currentYear} Button's Flower Farm`;
+        return `Photo credit: Button's Flower Farm`;
       }
     }
     return null;

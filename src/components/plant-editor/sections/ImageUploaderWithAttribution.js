@@ -340,7 +340,7 @@ const ImageUploaderWithAttribution = ({
       if (metadata.photographer) {
         return `Photo by ${metadata.photographer}`;
       }
-      return metadata.watermarked ? '© Button\'s Flower Farm' : null;
+      return metadata.watermarked ? 'Photo credit: Button\'s Flower Farm' : null;
     }
     return null;
   };
@@ -416,7 +416,7 @@ const ImageUploaderWithAttribution = ({
                   checked={addWatermark}
                   onChange={(e) => setAddWatermark(e.target.checked)}
                 />
-                Add watermark (© Button's Flower Farm)
+                Add watermark (Photo credit: Button's Flower Farm)
               </label>
             </div>
             
@@ -633,7 +633,7 @@ const ImageUploaderWithAttribution = ({
                                 watermarked: e.target.checked
                               })}
                             />
-                            Add watermark (© Button's Flower Farm)
+                            Add watermark (Photo credit: Button's Flower Farm)
                           </label>
                           
                           <input
