@@ -968,6 +968,7 @@ const ModularInventoryManager = () => {
                       ...plantFormData,
                       id: plantId,
                       mainImage: mainImage,
+                      imageMetadata: plantFormData.imageMetadata || {},
                       inventory: standardizedInventory
                     };
                     
@@ -1447,6 +1448,7 @@ const ModularInventoryManager = () => {
                       ...plantFormData,
                       id: plantId,
                       mainImage: mainImage,
+                      imageMetadata: plantFormData.imageMetadata || {},
                       inventory: standardizedInventory
                     };
                     
