@@ -271,9 +271,20 @@ const ImageUploaderWithAttribution = ({
     const safeKey = createSafeKey(imageUrl);
     const metadata = imageMetadata[safeKey] || imageMetadata[imageUrl] || {}; // Check both
     setEditingIndex(index);
+    
+    // Find matching commercial source value
+    let commercialSourceValue = '';
+    if (metadata.type === 'commercial' && metadata.source?.name) {
+      const matchingSource = COMMERCIAL_SOURCES.find(s => s.name === metadata.source.name);
+      commercialSourceValue = matchingSource ? matchingSource.value : 'other';
+    }
+    
     setEditMetadata({
       type: metadata.type || 'own',
       source: metadata.source || {},
+      commercialSource: commercialSourceValue,
+      customSourceName: commercialSourceValue === 'other' ? metadata.source?.name || '' : '',
+      sourceUrl: metadata.source?.url || '',
       photographer: metadata.photographer || '',
       watermarked: metadata.watermarked || false
     });
@@ -284,11 +295,26 @@ const ImageUploaderWithAttribution = ({
     const imageUrl = images[editingIndex];
     const safeKey = createSafeKey(imageUrl);
     const newMetadata = { ...imageMetadata };
-    newMetadata[safeKey] = {
-      ...newMetadata[safeKey],
-      ...editMetadata,
-      url: imageUrl
+    
+    // Build the metadata object similar to createImageMetadata
+    const updatedMetadata = {
+      url: imageUrl,
+      type: editMetadata.type,
+      uploadedAt: newMetadata[safeKey]?.uploadedAt || new Date().toISOString()
     };
+    
+    if (editMetadata.type === 'commercial') {
+      const selectedSource = COMMERCIAL_SOURCES.find(s => s.value === editMetadata.commercialSource);
+      updatedMetadata.source = {
+        name: editMetadata.commercialSource === 'other' ? editMetadata.customSourceName : selectedSource?.name || '',
+        url: editMetadata.sourceUrl || ''
+      };
+    } else {
+      updatedMetadata.photographer = editMetadata.photographer || '';
+      updatedMetadata.watermarked = editMetadata.watermarked;
+    }
+    
+    newMetadata[safeKey] = updatedMetadata;
     onMetadataUpdate(newMetadata);
     setEditingIndex(null);
     setEditMetadata({});
@@ -528,50 +554,92 @@ const ImageUploaderWithAttribution = ({
                 
                 {isEditing && (
                   <div className="metadata-edit-form">
-                    <div className="form-group">
-                      <label>
-                        <input
-                          type="radio"
-                          value="own"
-                          checked={editMetadata.type === 'own'}
-                          onChange={(e) => setEditMetadata({...editMetadata, type: e.target.value})}
-                        />
-                        Own photo
-                      </label>
-                      <label>
-                        <input
-                          type="radio"
-                          value="commercial"
-                          checked={editMetadata.type === 'commercial'}
-                          onChange={(e) => setEditMetadata({...editMetadata, type: e.target.value})}
-                        />
+                    <div className="edit-form-tabs">
+                      <button
+                        type="button"
+                        className={`edit-tab ${editMetadata.type === 'own' ? 'active' : ''}`}
+                        onClick={() => setEditMetadata({...editMetadata, type: 'own'})}
+                      >
+                        Own Photo
+                      </button>
+                      <button
+                        type="button"
+                        className={`edit-tab ${editMetadata.type === 'commercial' ? 'active' : ''}`}
+                        onClick={() => setEditMetadata({...editMetadata, type: 'commercial'})}
+                      >
                         Commercial
-                      </label>
+                      </button>
                     </div>
                     
-                    {editMetadata.type === 'commercial' && (
-                      <input
-                        type="text"
-                        value={editMetadata.source?.name || ''}
-                        onChange={(e) => setEditMetadata({
-                          ...editMetadata, 
-                          source: {...editMetadata.source, name: e.target.value}
-                        })}
-                        placeholder="Source name"
-                      />
-                    )}
-                    
-                    {editMetadata.type === 'own' && (
-                      <input
-                        type="text"
-                        value={editMetadata.photographer || ''}
-                        onChange={(e) => setEditMetadata({
-                          ...editMetadata, 
-                          photographer: e.target.value
-                        })}
-                        placeholder="Photographer name"
-                      />
-                    )}
+                    <div className="edit-form-content">
+                      {editMetadata.type === 'commercial' && (
+                        <>
+                          <select
+                            value={editMetadata.commercialSource || ''}
+                            onChange={(e) => setEditMetadata({
+                              ...editMetadata,
+                              commercialSource: e.target.value,
+                              customSourceName: e.target.value === 'other' ? editMetadata.customSourceName : ''
+                            })}
+                          >
+                            <option value="">Select source...</option>
+                            {COMMERCIAL_SOURCES.map(source => (
+                              <option key={source.value} value={source.value}>
+                                {source.name}
+                              </option>
+                            ))}
+                          </select>
+                          
+                          {editMetadata.commercialSource === 'other' && (
+                            <input
+                              type="text"
+                              value={editMetadata.customSourceName || ''}
+                              onChange={(e) => setEditMetadata({
+                                ...editMetadata,
+                                customSourceName: e.target.value
+                              })}
+                              placeholder="Enter source name"
+                            />
+                          )}
+                          
+                          <input
+                            type="url"
+                            value={editMetadata.sourceUrl || ''}
+                            onChange={(e) => setEditMetadata({
+                              ...editMetadata,
+                              sourceUrl: e.target.value
+                            })}
+                            placeholder="Source URL (optional)"
+                          />
+                        </>
+                      )}
+                      
+                      {editMetadata.type === 'own' && (
+                        <>
+                          <label className="watermark-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={editMetadata.watermarked || false}
+                              onChange={(e) => setEditMetadata({
+                                ...editMetadata,
+                                watermarked: e.target.checked
+                              })}
+                            />
+                            Add watermark (© Button's Flower Farm)
+                          </label>
+                          
+                          <input
+                            type="text"
+                            value={editMetadata.photographer || ''}
+                            onChange={(e) => setEditMetadata({
+                              ...editMetadata,
+                              photographer: e.target.value
+                            })}
+                            placeholder="Photographer name (optional)"
+                          />
+                        </>
+                      )}
+                    </div>
                     
                     <div className="edit-actions">
                       <button onClick={saveEditedMetadata}>Save</button>

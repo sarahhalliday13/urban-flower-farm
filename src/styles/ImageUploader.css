@@ -360,34 +360,70 @@
   background: white;
   border: 1px solid #ddd;
   border-radius: 0 0 8px 8px;
-  padding: 12px;
+  padding: 0;
   z-index: 10;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
-.metadata-edit-form .form-group {
-  margin-bottom: 10px;
+.edit-form-tabs {
+  display: flex;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.metadata-edit-form input[type="text"] {
+.edit-tab {
+  flex: 1;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-tab:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: #495057;
+}
+
+.edit-tab.active {
+  background-color: white;
+  color: #2c5530;
+  border-bottom: 2px solid #2c5530;
+}
+
+.edit-tab:not(:last-child) {
+  border-right: 1px solid #dee2e6;
+}
+
+.edit-form-content {
+  padding: 12px;
+}
+
+.edit-form-content select,
+.edit-form-content input[type="text"],
+.edit-form-content input[type="url"] {
   width: 100%;
   padding: 6px 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 13px;
-  margin-top: 5px;
+  font-size: 12px;
+  margin-bottom: 8px;
 }
 
-.metadata-edit-form label {
-  display: inline-flex;
+.watermark-checkbox {
+  display: flex;
   align-items: center;
-  margin-right: 15px;
-  font-size: 13px;
+  margin-bottom: 8px;
+  font-size: 12px;
   cursor: pointer;
 }
 
-.metadata-edit-form label input[type="radio"] {
-  margin-right: 5px;
+.watermark-checkbox input[type="checkbox"] {
+  margin-right: 6px;
 }
 
 .edit-actions {
