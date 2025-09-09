@@ -315,26 +315,21 @@ const ImageUploaderWithAttribution = ({
     <div className="image-uploader">
       {/* Attribution Options for New Uploads */}
       <div className="attribution-options">
-        <h4>Image Source</h4>
-        <div className="source-selection">
-          <label>
-            <input
-              type="radio"
-              value="own"
-              checked={imageSource === 'own'}
-              onChange={(e) => setImageSource(e.target.value)}
-            />
-            This is my own photo
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="commercial"
-              checked={imageSource === 'commercial'}
-              onChange={(e) => setImageSource(e.target.value)}
-            />
-            This is from a commercial source
-          </label>
+        <div className="source-tabs">
+          <button
+            type="button"
+            className={`source-tab ${imageSource === 'own' ? 'active' : ''}`}
+            onClick={() => setImageSource('own')}
+          >
+            My Own Photo
+          </button>
+          <button
+            type="button"
+            className={`source-tab ${imageSource === 'commercial' ? 'active' : ''}`}
+            onClick={() => setImageSource('commercial')}
+          >
+            Commercial Source
+          </button>
         </div>
 
         {imageSource === 'commercial' && (
@@ -513,7 +508,7 @@ const ImageUploaderWithAttribution = ({
                         onClick={() => startEditingMetadata(index)}
                         title="Edit attribution"
                       >
-                        ✏️
+                        Edit
                       </button>
                       
                       <button 
