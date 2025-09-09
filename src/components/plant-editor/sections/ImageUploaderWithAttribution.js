@@ -4,6 +4,7 @@ import '../../../styles/ImageUploader.css';
 
 // Common commercial sources for dropdown
 const COMMERCIAL_SOURCES = [
+  { value: 'annies', name: "Annie's Annuals & Perennials" },
   { value: 'van-noort', name: 'Van Noort Bulb' },
   { value: 'jelitto', name: 'Jelitto' },
   { value: 'genesis', name: 'Genesis Seed' },
@@ -275,7 +276,14 @@ const ImageUploaderWithAttribution = ({
     // Find matching commercial source value
     let commercialSourceValue = '';
     if (metadata.type === 'commercial' && metadata.source?.name) {
-      const matchingSource = COMMERCIAL_SOURCES.find(s => s.name === metadata.source.name);
+      // Try exact match first
+      let matchingSource = COMMERCIAL_SOURCES.find(s => s.name === metadata.source.name);
+      
+      // If no exact match, try partial match for Annie's (handle old data)
+      if (!matchingSource && metadata.source.name.includes("Annie")) {
+        matchingSource = COMMERCIAL_SOURCES.find(s => s.value === 'annies');
+      }
+      
       commercialSourceValue = matchingSource ? matchingSource.value : 'other';
     }
     
