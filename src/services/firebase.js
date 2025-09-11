@@ -1067,9 +1067,10 @@ export const subscribeToInventory = (callback) => {
  * This is a one-time migration function
  * @param {Array} plantsData - Array of plant objects from Google Sheets
  * @param {Array} inventoryData - Array of inventory objects from Google Sheets (optional)
+ * @param {String} importMode - 'add' (skip existing), 'update' (overwrite), or 'smart' (use update_mode column)
  * @returns {Promise<Object>} Result of the import operation
  */
-export const importPlantsFromSheets = async (plantsData, inventoryData = []) => {
+export const importPlantsFromSheets = async (plantsData, inventoryData = [], importMode = 'add') => {
   try {
     console.log('Importing plants data from Google Sheets to Firebase...');
     console.log('Plants data:', plantsData.length, 'items');
@@ -1090,6 +1091,9 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
     
     let newPlantsCount = 0;
     let updatedPlantsCount = 0;
+    let archivedPlantsCount = 0;
+    
+    console.log(`Import mode: ${importMode}`);
     
     // Process plant data
     plantsData.forEach(plant => {
@@ -1100,27 +1104,71 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
         return;
       }
       
+      // Determine the action based on import mode
+      let action = importMode; // Default to the global mode
+      
+      // In smart mode, check for update_mode column
+      if (importMode === 'smart' && plant.update_mode) {
+        action = plant.update_mode.toLowerCase();
+      }
+      
       // Check if plant already exists
-      if (plantsObject[plantId]) {
-        console.log(`Plant ${plantId} already exists - skipping to preserve existing data`);
-        updatedPlantsCount++;
-        return; // Skip existing plants in Phase 1
+      const existingPlant = plantsObject[plantId];
+      
+      if (existingPlant) {
+        // Handle existing plants based on action
+        if (action === 'add') {
+          console.log(`Plant ${plantId} already exists - skipping (add mode)`);
+          updatedPlantsCount++;
+          return;
+        } else if (action === 'update') {
+          console.log(`Plant ${plantId} - updating existing data`);
+          // Preserve certain fields that shouldn't be overwritten
+          const preservedFields = {
+            createdAt: existingPlant.createdAt,
+            // Preserve order history by not overwriting these
+            orderCount: existingPlant.orderCount,
+            lastOrdered: existingPlant.lastOrdered
+          };
+          plantsObject[plantId] = {
+            ...plant,
+            ...preservedFields,
+            id: plantId,
+            updatedAt: new Date().toISOString()
+          };
+          updatedPlantsCount++;
+        } else if (action === 'archive') {
+          console.log(`Plant ${plantId} - archiving (setting hidden=true)`);
+          plantsObject[plantId] = {
+            ...existingPlant,
+            hidden: true,
+            archivedAt: new Date().toISOString()
+          };
+          archivedPlantsCount++;
+        }
+      } else {
+        // New plant - add it regardless of mode
+        if (action === 'archive') {
+          console.log(`Plant ${plantId} - cannot archive non-existent plant, skipping`);
+          return;
+        }
+        
+        // Process plant data, preserving imageMetadata if provided
+        const plantDataToStore = {
+          ...plant,
+          id: plantId,
+          createdAt: new Date().toISOString()
+        };
+        
+        // If imageMetadata is provided from CSV import, preserve it
+        if (plant.imageMetadata && typeof plant.imageMetadata === 'object') {
+          plantDataToStore.imageMetadata = plant.imageMetadata;
+        }
+        
+        // Store new plant
+        plantsObject[plantId] = plantDataToStore;
+        newPlantsCount++;
       }
-      
-      // Process plant data, preserving imageMetadata if provided
-      const plantDataToStore = {
-        ...plant,
-        id: plantId // Make sure id is set consistently
-      };
-      
-      // If imageMetadata is provided from CSV import, preserve it
-      if (plant.imageMetadata && typeof plant.imageMetadata === 'object') {
-        plantDataToStore.imageMetadata = plant.imageMetadata;
-      }
-      
-      // Store new plant
-      plantsObject[plantId] = plantDataToStore;
-      newPlantsCount++;
     });
     
     // Process inventory data
@@ -1161,7 +1209,7 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
       });
     }
     
-    console.log(`Will add ${newPlantsCount} new plants (${updatedPlantsCount} existing plants skipped)`);
+    console.log(`Results: ${newPlantsCount} added, ${updatedPlantsCount} updated, ${archivedPlantsCount} archived`);
     
     // Update Firebase - this still uses set() but now includes existing data
     const plantsRef = ref(database, 'plants');
@@ -1170,12 +1218,24 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = []) => 
     await set(plantsRef, plantsObject);
     await set(inventoryRef, inventoryObject);
     
+    // Build result message based on what happened
+    const actions = [];
+    if (newPlantsCount > 0) actions.push(`${newPlantsCount} added`);
+    if (updatedPlantsCount > 0) actions.push(`${updatedPlantsCount} updated`);
+    if (archivedPlantsCount > 0) actions.push(`${archivedPlantsCount} archived`);
+    
+    const message = actions.length > 0 
+      ? `Successfully processed plants: ${actions.join(', ')}`
+      : 'No changes made';
+    
     return {
       success: true,
-      message: `Added ${newPlantsCount} new plants (${updatedPlantsCount} existing plants preserved)`,
+      message,
       plantsCount: newPlantsCount,
+      updatedCount: updatedPlantsCount,
+      archivedCount: archivedPlantsCount,
       inventoryCount: Object.keys(inventoryObject).length,
-      skippedCount: updatedPlantsCount,
+      skippedCount: 0,
       totalPlants: Object.keys(plantsObject).length
     };
   } catch (error) {

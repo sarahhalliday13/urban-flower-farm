@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-09-09
+**Last Updated**: 2025-09-11
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,16 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-09-09)
+## Recent Changes (2025-09-11)
+- Unified Master Database Spreadsheet System:
+  - Single spreadsheet contains all plant and inventory data
+  - Export current database as master spreadsheet for editing
+  - Update_mode column controls each row's action (add_new, update_existing, archive)
+  - Simplified import to single file upload
+  - Export-edit-import workflow for data consistency
+  - Addresses potential conflicts by encouraging export before edit
+
+## Previous Changes (2025-09-09)
 - Simplified Import Interface:
   - Removed redundant "Update Stock Levels" tab - now unified under "Import / Update"
   - Separate templates for Plants and Inventory (cleaner, more focused)

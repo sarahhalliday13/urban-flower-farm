@@ -10,17 +10,14 @@ const InventoryImportExport = () => {
   
   // Export/Backup state
   const [isBackingUp, setIsBackingUp] = useState(false);
+  const [isExportingMaster, setIsExportingMaster] = useState(false);
   
-  // Import Plants state
+  // Import state
   const [plantsFile, setPlantsFile] = useState(null);
-  const [inventoryFile, setInventoryFile] = useState(null);
   const [importStatus, setImportStatus] = useState({ loading: false, message: '' });
   const [previewData, setPreviewData] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
-  
-  // Update Inventory state
-  const [updateFile, setUpdateFile] = useState(null);
-  const [updateStatus, setUpdateStatus] = useState({ loading: false, message: '' });
+  const [importMode, setImportMode] = useState('smart'); // Always use smart mode for unified database
   
   // Available IDs state
   const [availableIds, setAvailableIds] = useState(null);
@@ -145,51 +142,253 @@ const InventoryImportExport = () => {
     }
   };
 
-  // Generate preview data
+  // Export current database as master spreadsheet
+  const handleExportMasterSpreadsheet = async () => {
+    try {
+      setIsExportingMaster(true);
+      
+      // Fetch current plants and inventory from Firebase
+      const { database } = await import('../services/firebase');
+      const { ref, get } = await import('firebase/database');
+      
+      const plantsSnapshot = await get(ref(database, 'plants'));
+      const inventorySnapshot = await get(ref(database, 'inventory'));
+      
+      const plants = plantsSnapshot.exists() ? plantsSnapshot.val() : {};
+      const inventory = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+      
+      // Prepare data for spreadsheet
+      const rows = [];
+      
+      // Process each plant
+      Object.entries(plants).forEach(([plantId, plant]) => {
+        const inventoryData = inventory[plantId] || {};
+        
+        // Create row with all plant and inventory data
+        const row = {
+          // Core fields
+          'plant_id': plantId,
+          'update_mode': '', // Empty by default, user will fill this
+          
+          // Plant data
+          'name': plant.name || '',
+          'latinname': plant.scientificName || '',
+          'commonname': plant.commonName || '',
+          'price': plant.price || 0,
+          'featured': plant.featured ? 'TRUE' : 'FALSE',
+          'type': plant.plantType || '',
+          'description': plant.description || '',
+          'bloom_season': plant.bloomSeason || '',
+          'colour': plant.colour || '',
+          'sunlight': plant.light || '',
+          'spread_inches': plant.spread || '',
+          'height_inches': plant.height || '',
+          'hardiness_zones': plant.hardinessZone || '',
+          'special_features': plant.specialFeatures || '',
+          'uses': plant.uses || '',
+          'aroma': plant.aroma || '',
+          'gardening_tips': plant.gardeningTips || '',
+          'care_tips': plant.careTips || '',
+          'planting_season': plant.plantingSeason || '',
+          'planting_depth_inches': plant.plantingDepth || '',
+          'mature_size': plant.size || '',
+          'hidden': plant.hidden ? 'TRUE' : 'FALSE',
+          
+          // Inventory data
+          'current_stock': inventoryData.inventoryCount || 0,
+          'status': inventoryData.status || 'active',
+          'restock_date': inventoryData.restockDate || '',
+          'notes': inventoryData.notes || '',
+          
+          // Images
+          'mainimage': plant.mainImage || '',
+          'additionalimage': plant.additionalImages || ''
+        };
+        
+        // Add photo credit fields for main image
+        if (plant.imageMetadata && plant.mainImage) {
+          const mainKey = plant.mainImage.replace(/[.#$\[\]/]/g, '_');
+          const mainMeta = plant.imageMetadata[mainKey];
+          if (mainMeta) {
+            row['main_credit_type'] = mainMeta.type || '';
+            if (mainMeta.type === 'commercial' && mainMeta.source) {
+              row['main_credit_source'] = mainMeta.source.name || '';
+              row['main_credit_url'] = mainMeta.source.url || '';
+            } else if (mainMeta.type === 'own') {
+              row['main_credit_photographer'] = mainMeta.photographer || '';
+              row['main_credit_watermarked'] = mainMeta.watermarked ? 'YES' : 'NO';
+            }
+          }
+        }
+        
+        // Add photo credit fields for additional images (up to 3)
+        if (plant.additionalImages && plant.imageMetadata) {
+          const additionalUrls = plant.additionalImages.split(',').map(url => url.trim()).filter(url => url);
+          additionalUrls.slice(0, 3).forEach((url, index) => {
+            const imgKey = url.replace(/[.#$\[\]/]/g, '_');
+            const imgMeta = plant.imageMetadata[imgKey];
+            if (imgMeta) {
+              const prefix = `add${index + 1}_credit_`;
+              row[prefix + 'type'] = imgMeta.type || '';
+              if (imgMeta.type === 'commercial' && imgMeta.source) {
+                row[prefix + 'source'] = imgMeta.source.name || '';
+                row[prefix + 'url'] = imgMeta.source.url || '';
+              } else if (imgMeta.type === 'own') {
+                row[prefix + 'photographer'] = imgMeta.photographer || '';
+                row[prefix + 'watermarked'] = imgMeta.watermarked ? 'YES' : 'NO';
+              }
+            }
+          });
+        }
+        
+        rows.push(row);
+      });
+      
+      // Sort by plant_id
+      rows.sort((a, b) => parseInt(a.plant_id) - parseInt(b.plant_id));
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Create main data sheet
+      const ws = XLSX.utils.json_to_sheet(rows);
+      
+      // Set column widths
+      const cols = [
+        { wch: 10 }, // plant_id
+        { wch: 15 }, // update_mode
+        { wch: 30 }, // name
+        { wch: 30 }, // latinname
+        { wch: 20 }, // commonname
+        { wch: 10 }, // price
+        { wch: 10 }, // featured
+        { wch: 15 }, // type
+        { wch: 50 }, // description
+        { wch: 15 }, // bloom_season
+        { wch: 15 }, // colour
+        { wch: 15 }, // sunlight
+        { wch: 15 }, // spread_inches
+        { wch: 15 }, // height_inches
+        { wch: 15 }, // hardiness_zones
+        { wch: 30 }, // special_features
+        { wch: 20 }, // uses
+        { wch: 15 }, // aroma
+        { wch: 30 }, // gardening_tips
+        { wch: 30 }, // care_tips
+        { wch: 15 }, // planting_season
+        { wch: 15 }, // planting_depth_inches
+        { wch: 15 }, // mature_size
+        { wch: 10 }, // hidden
+        { wch: 15 }, // current_stock
+        { wch: 15 }, // status
+        { wch: 15 }, // restock_date
+        { wch: 30 }, // notes
+        { wch: 50 }, // mainimage
+        { wch: 50 }  // additionalimage
+      ];
+      ws['!cols'] = cols;
+      
+      XLSX.utils.book_append_sheet(wb, ws, 'Database');
+      
+      // Create instructions sheet
+      const instructions = [
+        { 'Instructions': 'HOW TO USE THIS MASTER DATABASE SPREADSHEET' },
+        { 'Instructions': '' },
+        { 'Instructions': '1. UPDATING THE DATABASE:' },
+        { 'Instructions': '   - Make any changes to plant data, prices, inventory, etc.' },
+        { 'Instructions': '   - Use the update_mode column to control what happens to each plant:' },
+        { 'Instructions': '     • Leave blank or "update_existing" = Update the plant data' },
+        { 'Instructions': '     • "add_new" = Add as new plant (only if plant_id doesn\'t exist)' },
+        { 'Instructions': '     • "archive" = Hide the plant (preserves order history)' },
+        { 'Instructions': '' },
+        { 'Instructions': '2. ADDING NEW PLANTS:' },
+        { 'Instructions': '   - Add new rows at the bottom' },
+        { 'Instructions': '   - Use new plant_id numbers (check existing highest number)' },
+        { 'Instructions': '   - Set update_mode to "add_new"' },
+        { 'Instructions': '' },
+        { 'Instructions': '3. INVENTORY STATUS OPTIONS:' },
+        { 'Instructions': '   - "active" = Currently available' },
+        { 'Instructions': '   - "coming_soon" = Future availability' },
+        { 'Instructions': '   - "discontinued" = No longer available' },
+        { 'Instructions': '' },
+        { 'Instructions': '4. PHOTO CREDITS:' },
+        { 'Instructions': '   - main_credit_type: "own" or "commercial"' },
+        { 'Instructions': '   - For commercial: provide source name and URL' },
+        { 'Instructions': '   - For own photos: optionally add photographer and watermark info' },
+        { 'Instructions': '' },
+        { 'Instructions': '5. IMPORTANT NOTES:' },
+        { 'Instructions': '   - Do NOT change plant_id for existing plants' },
+        { 'Instructions': '   - Order history is preserved when updating or archiving' },
+        { 'Instructions': '   - Upload this file in the Import section when ready' }
+      ];
+      
+      const wsInstructions = XLSX.utils.json_to_sheet(instructions, { header: ['Instructions'] });
+      wsInstructions['!cols'] = [{ wch: 80 }];
+      XLSX.utils.book_append_sheet(wb, wsInstructions, 'Instructions');
+      
+      // Generate filename with date
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `master_database_${date}.xlsx`;
+      
+      // Download the file
+      XLSX.writeFile(wb, filename);
+      
+      addToast(`Master database exported: ${rows.length} plants`, 'success');
+    } catch (error) {
+      console.error('Error exporting master spreadsheet:', error);
+      addToast('Failed to export master spreadsheet', 'error');
+    } finally {
+      setIsExportingMaster(false);
+    }
+  };
+
+  // Process Master Database
   const handleGeneratePreview = async (e) => {
     e.preventDefault();
     
     if (!plantsFile) {
-      setImportStatus({ loading: false, message: 'Please select a plants CSV file' });
+      setImportStatus({ loading: false, message: 'Please select a master database file' });
       return;
     }
     
     try {
-      setImportStatus({ loading: true, message: 'Reading files...' });
+      setImportStatus({ loading: true, message: 'Reading master database...' });
       
-      // Read plants data
-      const plantsData = await readFile(plantsFile);
+      // Read master database file
+      const masterData = await readFile(plantsFile);
       
-      // Read inventory data if provided
-      let inventoryData = [];
-      if (inventoryFile) {
-        inventoryData = await readFile(inventoryFile);
-      }
+      // Analyze the data to provide a summary
+      let addCount = 0;
+      let updateCount = 0;
+      let archiveCount = 0;
       
-      // Transform plant data for preview
-      const transformedPlantsData = plantsData.map(plant => ({
-        id: parseInt(plant.plant_id) || 0,
-        name: plant.name || '',
-        price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
-        mainImage: plant.mainimage || plant.main_image || '',
-        inventoryCount: 0 // Will be updated from inventory data
+      masterData.forEach(row => {
+        const mode = row.update_mode ? row.update_mode.toLowerCase() : 'update_existing';
+        if (mode === 'add_new') addCount++;
+        else if (mode === 'archive') archiveCount++;
+        else updateCount++; // Default to update
+      });
+      
+      // Transform for preview (showing first 10 with their actions)
+      const previewRows = masterData.slice(0, 10).map(row => ({
+        id: parseInt(row.plant_id) || 0,
+        name: row.name || '',
+        price: parseFloat(String(row.price || 0).replace(/[$,]/g, '')) || 0,
+        stock: parseInt(row.current_stock || 0),
+        action: row.update_mode || 'update_existing',
+        mainImage: row.mainimage || ''
       }));
-      
-      // Add inventory counts if available
-      if (inventoryData.length > 0) {
-        inventoryData.forEach(item => {
-          const plant = transformedPlantsData.find(p => p.id.toString() === item.plant_id);
-          if (plant) {
-            plant.inventoryCount = parseInt(item.current_stock || item.stock || 0);
-          }
-        });
-      }
       
       // Store full data for actual import
       setPreviewData({
-        plants: plantsData,
-        inventory: inventoryData,
-        preview: transformedPlantsData.slice(0, 10) // Show first 10 items
+        masterData: masterData,
+        preview: previewRows,
+        summary: {
+          total: masterData.length,
+          add: addCount,
+          update: updateCount,
+          archive: archiveCount
+        }
       });
       
       setShowPreview(true);
@@ -344,20 +543,32 @@ const InventoryImportExport = () => {
         return plantData;
       });
       
-      setImportStatus({ loading: true, message: `Importing ${transformedPlantsData.length} plants...` });
+      // Transform inventory data from the same rows
+      const transformedInventoryData = previewData.masterData ? 
+        previewData.masterData.map(row => ({
+          plantId: row.plant_id,
+          inventoryCount: parseInt(row.current_stock || 0),
+          status: row.status || 'active',
+          restockDate: row.restock_date || '',
+          notes: row.notes || ''
+        })) : 
+        previewData.inventory || [];
       
-      const result = await importPlantsFromSheets(transformedPlantsData, previewData.inventory);
+      setImportStatus({ loading: true, message: `Processing ${transformedPlantsData.length} plants...` });
+      
+      // Use smart mode for master database, otherwise use selected mode
+      const effectiveMode = previewData.masterData ? 'smart' : importMode;
+      const result = await importPlantsFromSheets(transformedPlantsData, transformedInventoryData, effectiveMode);
       
       if (result.success) {
         setImportStatus({ 
           loading: false, 
-          message: `Success! Added ${result.plantsCount} new plants. ${result.skippedCount > 0 ? `(${result.skippedCount} existing plants preserved)` : ''}`,
+          message: result.message,
           success: true
         });
         addToast(result.message, 'success');
         // Reset form
         setPlantsFile(null);
-        setInventoryFile(null);
         setPreviewData(null);
         setShowPreview(false);
         // Refresh available IDs
@@ -474,6 +685,20 @@ const InventoryImportExport = () => {
                 Downloads a JSON file with all your data that can be used for recovery
               </p>
             </div>
+            
+            <div className="action-box" style={{marginTop: '20px'}}>
+              <button 
+                onClick={handleExportMasterSpreadsheet}
+                disabled={isExportingMaster}
+                className="primary-button large"
+                style={{backgroundColor: '#28a745'}}
+              >
+                {isExportingMaster ? 'Exporting Database...' : '📊 Download Master Database Spreadsheet'}
+              </button>
+              <p className="help-text">
+                Downloads an Excel file with all plants and inventory for editing and re-import
+              </p>
+            </div>
           </div>
         )}
         
@@ -487,43 +712,41 @@ const InventoryImportExport = () => {
                 {availableIds && (
                   <>
                     <p>You have <strong>{availableIds.totalPlants} plants</strong> in your database</p>
-                    <p><strong>Next ID:</strong> {availableIds.highestUsed + 1} • <strong>Suggested Range:</strong> {availableIds.highestUsed + 1} - {availableIds.highestUsed + 10}</p>
+                    <p><strong>Next ID:</strong> {availableIds.highestUsed + 1} for new plants</p>
                   </>
                 )}
                 <hr className="info-divider" />
-                <p className="small-text"><strong>Usage:</strong> Add new plants • Update stock levels • Both at once</p>
+                <p className="small-text"><strong>HOW IT WORKS:</strong></p>
+                <ol style={{fontSize: '12px', marginTop: '5px', paddingLeft: '20px'}}>
+                  <li>Export your current database using the button on the Export tab</li>
+                  <li>Edit the spreadsheet (prices, inventory, add new plants, etc.)</li>
+                  <li>Use the update_mode column to control each row's action</li>
+                  <li>Upload the modified spreadsheet here</li>
+                </ol>
               </div>
               
-              {/* Template Downloads */}
+              {/* Import Instructions */}
               <div className="info-box template">
-                <h3>📄 Excel Templates</h3>
-                <p>Download templates for easy importing:</p>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
-                  <a 
-                    href="/templates/plants_template.xlsx" 
-                    download="plants_template.xlsx"
-                    className="template-download-link"
-                    style={{fontSize: '14px'}}
-                  >
-                    🌱 Plants Template (with photo credits)
-                  </a>
-                  <a 
-                    href="/templates/inventory_template.xlsx" 
-                    download="inventory_template.xlsx"
-                    className="template-download-link"
-                    style={{fontSize: '14px'}}
-                  >
-                    📦 Inventory Template (stock levels)
-                  </a>
-                </div>
+                <h3>📝 Update Mode Options</h3>
+                <p style={{fontSize: '13px', marginBottom: '10px'}}>Use the <strong>update_mode</strong> column to control each plant:</p>
+                <ul style={{fontSize: '12px', paddingLeft: '20px', marginTop: '5px'}}>
+                  <li><strong>Leave blank or "update_existing":</strong> Updates the plant</li>
+                  <li><strong>"add_new":</strong> Adds as new plant (if ID doesn't exist)</li>
+                  <li><strong>"archive":</strong> Hides the plant (preserves orders)</li>
+                </ul>
+                <hr className="info-divider" />
+                <p style={{fontSize: '11px', color: '#6c757d'}}>
+                  💡 Tip: Export first, make changes, then re-import
+                </p>
               </div>
             </div>
             
+            {/* Unified Database Upload */}
             <form onSubmit={handleGeneratePreview}>
               <div className="form-group">
-                <h4>📋 Plants File (Optional if only updating inventory)</h4>
+                <h4>📊 Master Database File</h4>
                 <p className="help-text">
-                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, name, price, mainimage, etc.
+                  Upload your edited master database spreadsheet (.xlsx, .xls, or .csv)
                 </p>
                 <div className="file-input-wrapper">
                   <input
@@ -531,35 +754,13 @@ const InventoryImportExport = () => {
                     accept=".csv,.xlsx,.xls"
                     onChange={(e) => setPlantsFile(e.target.files[0])}
                     className="file-input"
-                    id="plants-file"
+                    id="master-file"
                   />
-                  <label htmlFor="plants-file" className="file-label">
+                  <label htmlFor="master-file" className="file-label">
                     {plantsFile ? plantsFile.name : 'No file chosen'}
                   </label>
-                  <button type="button" className="select-button" onClick={() => document.getElementById('plants-file').click()}>
-                    Select
-                  </button>
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <h4>📦 Inventory File (Optional)</h4>
-                <p className="help-text">
-                  Accepts Excel (.xlsx, .xls) or CSV files. Should include: plant_id, current_stock, status
-                </p>
-                <div className="file-input-wrapper">
-                  <input
-                    type="file"
-                    accept=".csv,.xlsx,.xls"
-                    onChange={(e) => setInventoryFile(e.target.files[0])}
-                    className="file-input"
-                    id="inventory-file"
-                  />
-                  <label htmlFor="inventory-file" className="file-label">
-                    {inventoryFile ? inventoryFile.name : 'No file chosen'}
-                  </label>
-                  <button type="button" className="select-button" onClick={() => document.getElementById('inventory-file').click()}>
-                    Select
+                  <button type="button" className="select-button" onClick={() => document.getElementById('master-file').click()}>
+                    Select File
                   </button>
                 </div>
               </div>
@@ -568,8 +769,9 @@ const InventoryImportExport = () => {
                 type="submit"
                 disabled={importStatus.loading || !plantsFile}
                 className="primary-button"
+                style={{marginTop: '20px'}}
               >
-                {importStatus.loading ? 'Loading...' : 'Preview Import'}
+                {importStatus.loading ? 'Processing...' : '🚀 Process Database Update'}
               </button>
             </form>
             
@@ -577,8 +779,39 @@ const InventoryImportExport = () => {
             {showPreview && previewData && (
               <div className="preview-modal">
                 <div className="preview-content">
-                  <h3>Import Preview</h3>
-                  <p>Found {previewData.plants.length} plants to import. Showing first {Math.min(10, previewData.plants.length)}:</p>
+                  <h3>Database Update Preview</h3>
+                  
+                  {/* Action Summary */}
+                  <div style={{
+                    backgroundColor: '#f8f9fa',
+                    padding: '15px',
+                    borderRadius: '8px',
+                    marginBottom: '20px'
+                  }}>
+                    <h4 style={{marginTop: 0, marginBottom: '10px'}}>📊 Summary of Actions</h4>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                      <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#28a745'}}>
+                          {previewData.summary.add}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#6c757d'}}>To Add</div>
+                      </div>
+                      <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#007bff'}}>
+                          {previewData.summary.update}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#6c757d'}}>To Update</div>
+                      </div>
+                      <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#dc3545'}}>
+                          {previewData.summary.archive}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#6c757d'}}>To Archive</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p>Showing first {Math.min(10, previewData.preview.length)} of {previewData.summary.total} plants:</p>
                   
                   <div className="preview-table">
                     <table>
@@ -588,7 +821,7 @@ const InventoryImportExport = () => {
                           <th>Name</th>
                           <th>Price</th>
                           <th>Stock</th>
-                          <th>Image</th>
+                          <th>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -597,8 +830,27 @@ const InventoryImportExport = () => {
                             <td>{plant.id}</td>
                             <td>{plant.name}</td>
                             <td>${plant.price}</td>
-                            <td>{plant.inventoryCount}</td>
-                            <td>{plant.mainImage ? '✓' : '✗'}</td>
+                            <td>{plant.stock}</td>
+                            <td>
+                              <span style={{
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                backgroundColor: 
+                                  plant.action === 'add_new' ? '#d4edda' :
+                                  plant.action === 'archive' ? '#f8d7da' :
+                                  '#cce5ff',
+                                color:
+                                  plant.action === 'add_new' ? '#155724' :
+                                  plant.action === 'archive' ? '#721c24' :
+                                  '#004085'
+                              }}>
+                                {plant.action === 'add_new' ? 'ADD' :
+                                 plant.action === 'archive' ? 'ARCHIVE' :
+                                 'UPDATE'}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
