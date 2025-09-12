@@ -1146,6 +1146,13 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
         } else if (action === 'update') {
           console.log(`Plant ${plantId} - updating existing data`);
           console.log(`Plant ${plantId} - old name: "${existingPlant.name}", new name: "${plant.name}"`);
+          
+          // Debug imageMetadata
+          if (plant.imageMetadata) {
+            console.log(`Plant ${plantId} - new imageMetadata:`, plant.imageMetadata);
+            console.log(`Plant ${plantId} - old imageMetadata:`, existingPlant.imageMetadata);
+          }
+          
           // Preserve certain fields that shouldn't be overwritten
           const preservedFields = {};
           if (existingPlant.createdAt) {
@@ -1162,7 +1169,15 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
           const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
             // Skip undefined values and the update_mode field (it's not a plant property)
             if (value !== undefined && key !== 'update_mode' && key !== 'plant_id') {
-              acc[key] = value;
+              // Special handling for imageMetadata - merge instead of replace
+              if (key === 'imageMetadata' && existingPlant.imageMetadata) {
+                acc[key] = {
+                  ...existingPlant.imageMetadata,
+                  ...value  // New metadata overwrites old for same keys
+                };
+              } else {
+                acc[key] = value;
+              }
             }
             return acc;
           }, {});
