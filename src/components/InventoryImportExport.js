@@ -631,7 +631,17 @@ const InventoryImportExport = () => {
                 url: plant.main_credit_url || plant.photo_credit_url || ''
               };
             } else if (mainCreditType.toLowerCase() === 'own') {
-              if (mainPhotographer) {
+              // Handle source field for own photos (could be photographer name or "Buttons Flower Farm")
+              if (mainSource) {
+                // If source is the farm name, just store the type
+                if (mainSource === 'Buttons Flower Farm') {
+                  // Type is already set to 'own', that's enough
+                } else {
+                  // Otherwise treat it as photographer name
+                  plantData.imageMetadata[safeKey].photographer = mainSource;
+                }
+              } else if (mainPhotographer) {
+                // Fall back to photographer field if it exists
                 plantData.imageMetadata[safeKey].photographer = mainPhotographer;
               }
               if (mainWatermarked === 'true' || 
@@ -677,7 +687,17 @@ const InventoryImportExport = () => {
                   url: plant[`add${i}_credit_url`] || ''
                 };
               } else if (creditType.toLowerCase() === 'own') {
-                if (photographer) {
+                // Handle source field for own photos (could be photographer name or "Buttons Flower Farm")
+                if (source) {
+                  // If source is the farm name, just store the type
+                  if (source === 'Buttons Flower Farm') {
+                    // Type is already set to 'own', that's enough
+                  } else {
+                    // Otherwise treat it as photographer name
+                    plantData.imageMetadata[safeKey].photographer = source;
+                  }
+                } else if (photographer) {
+                  // Fall back to photographer field if it exists
                   plantData.imageMetadata[safeKey].photographer = photographer;
                 }
                 if (watermarked === 'true' || 
