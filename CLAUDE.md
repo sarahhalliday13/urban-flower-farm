@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-09-11
+**Last Updated**: 2025-09-12
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,11 +18,22 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-09-11)
+## Recent Changes (2025-09-12)
+- Fixed and improved master database import/export:
+  - Smart mode only processes rows with explicit update_mode values (blank rows skipped)
+  - Fixed inventory field mappings (currentStock instead of inventoryCount)
+  - Fixed boolean consistency (lowercase true/false instead of TRUE/FALSE)
+  - Simplified update_mode values to: add, update, hide
+  - Filters undefined values to prevent Firebase validation errors
+  - Inventory updates now work for all plants (not just new ones)
+  - Cleaned up UI - removed redundant JSON backup and CSV reference sections
+  - Streamlined import page with simple tip box
+
+## Previous Changes (2025-09-11)
 - Unified Master Database Spreadsheet System:
   - Single spreadsheet contains all plant and inventory data
   - Export current database as master spreadsheet for editing
-  - Update_mode column controls each row's action (add_new, update_existing, archive)
+  - Update_mode column controls each row's action
   - Simplified import to single file upload
   - Export-edit-import workflow for data consistency
   - Addresses potential conflicts by encouraging export before edit

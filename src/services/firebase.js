@@ -44,7 +44,7 @@ const auth = getAuth(app);
 const functions = getFunctions(app, 'us-central1');
 
 // Export Firebase utilities
-export { set, get, onValue, update, remove, storage, db, auth, functions };
+export { set, get, onValue, update, remove, storage, db, auth, functions, database };
 
 // Sign in with email and password
 export const signInWithEmail = async (email, password) => {
@@ -1108,8 +1108,25 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
       let action = importMode; // Default to the global mode
       
       // In smart mode, check for update_mode column
-      if (importMode === 'smart' && plant.update_mode) {
-        action = plant.update_mode.toLowerCase();
+      if (importMode === 'smart') {
+        const updateMode = plant.update_mode ? plant.update_mode.toLowerCase().trim() : '';
+        
+        // Skip plants with blank/empty update_mode in smart mode
+        if (!updateMode) {
+          console.log(`Plant ${plantId} has blank update_mode, skipping in smart mode`);
+          return;
+        }
+        
+        action = updateMode;
+        
+        // Map simplified values to internal actions
+        if (action === 'hide' || action === 'hide_plant' || action === 'hide_from_shop' || action === 'archive') {
+          action = 'hide_from_shop';
+        } else if (action === 'add' || action === 'add_new') {
+          action = 'add';
+        } else if (action === 'update' || action === 'update_existing') {
+          action = 'update';
+        }
       }
       
       // Check if plant already exists
@@ -1124,38 +1141,80 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
         } else if (action === 'update') {
           console.log(`Plant ${plantId} - updating existing data`);
           // Preserve certain fields that shouldn't be overwritten
-          const preservedFields = {
-            createdAt: existingPlant.createdAt,
-            // Preserve order history by not overwriting these
-            orderCount: existingPlant.orderCount,
-            lastOrdered: existingPlant.lastOrdered
-          };
+          const preservedFields = {};
+          if (existingPlant.createdAt) {
+            preservedFields.createdAt = existingPlant.createdAt;
+          }
+          if (existingPlant.orderCount !== undefined) {
+            preservedFields.orderCount = existingPlant.orderCount;
+          }
+          if (existingPlant.lastOrdered) {
+            preservedFields.lastOrdered = existingPlant.lastOrdered;
+          }
+          
+          // Remove any undefined values from the plant data
+          const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {});
+          
           plantsObject[plantId] = {
-            ...plant,
+            ...cleanPlantData,
             ...preservedFields,
             id: plantId,
             updatedAt: new Date().toISOString()
           };
           updatedPlantsCount++;
-        } else if (action === 'archive') {
-          console.log(`Plant ${plantId} - archiving (setting hidden=true)`);
+        } else if (action === 'hide_from_shop' || action === 'archive') {
+          console.log(`Plant ${plantId} - hiding from shop (setting hidden=true)`);
+          
+          // Remove any undefined values from the plant data
+          const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {});
+          
+          // Clean existing plant data too
+          const cleanExistingData = Object.entries(existingPlant).reduce((acc, [key, value]) => {
+            if (value !== undefined) {
+              acc[key] = value;
+            }
+            return acc;
+          }, {});
+          
+          // When using hide_from_shop action, always set hidden to true
+          // This overrides whatever is in the hidden column of the spreadsheet
           plantsObject[plantId] = {
-            ...existingPlant,
-            hidden: true,
-            archivedAt: new Date().toISOString()
+            ...cleanExistingData,
+            ...cleanPlantData, // Include any other updates from spreadsheet
+            hidden: true, // Force hidden to true regardless of spreadsheet value
+            hiddenAt: new Date().toISOString(),
+            id: plantId
           };
           archivedPlantsCount++;
         }
       } else {
         // New plant - add it regardless of mode
-        if (action === 'archive') {
-          console.log(`Plant ${plantId} - cannot archive non-existent plant, skipping`);
+        if (action === 'hide_from_shop' || action === 'archive') {
+          console.log(`Plant ${plantId} - cannot hide non-existent plant, skipping`);
           return;
         }
         
+        // Remove any undefined values from the plant data
+        const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
+          if (value !== undefined) {
+            acc[key] = value;
+          }
+          return acc;
+        }, {});
+        
         // Process plant data, preserving imageMetadata if provided
         const plantDataToStore = {
-          ...plant,
+          ...cleanPlantData,
           id: plantId,
           createdAt: new Date().toISOString()
         };
@@ -1182,16 +1241,15 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
           return;
         }
         
-        // Only add inventory for new plants
-        if (!existingInventory[plantId]) {
-          inventoryObject[plantId] = {
-            currentStock: parseInt(item.current_stock) || 0,
-            status: item.status || 'Unknown',
-            restockDate: item.restock_date || '',
-            notes: item.notes || '',
-            lastUpdated: new Date().toISOString()
-          };
-        }
+        // Update or create inventory entries for all plants with inventory data
+        inventoryObject[plantId] = {
+          currentStock: parseInt(item.current_stock) || 0,
+          status: item.status || 'Unknown',
+          restockDate: item.restock_date || '',
+          notes: item.notes || '',
+          lastUpdated: new Date().toISOString()
+        };
+        console.log(`Updating inventory for plant ${plantId}: stock=${item.current_stock}, status=${item.status}`);
       });
     } else {
       // If no inventory data provided, create default entries for NEW plants only

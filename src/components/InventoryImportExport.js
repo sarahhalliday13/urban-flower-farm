@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { downloadBackup, importPlantsFromSheets, updateInventoryStock, getAvailablePlantIds } from '../services/firebase';
+import { downloadBackup, importPlantsFromSheets, updateInventoryStock, getAvailablePlantIds, database } from '../services/firebase';
+import { ref, get } from 'firebase/database';
 import { useToast } from '../context/ToastContext';
 import * as XLSX from 'xlsx';
 import '../styles/InventoryImportExport.css';
@@ -148,14 +149,17 @@ const InventoryImportExport = () => {
       setIsExportingMaster(true);
       
       // Fetch current plants and inventory from Firebase
-      const { database } = await import('../services/firebase');
-      const { ref, get } = await import('firebase/database');
-      
       const plantsSnapshot = await get(ref(database, 'plants'));
       const inventorySnapshot = await get(ref(database, 'inventory'));
       
       const plants = plantsSnapshot.exists() ? plantsSnapshot.val() : {};
       const inventory = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+      
+      // Debug inventory structure
+      console.log('Inventory data sample:', Object.keys(inventory).slice(0, 5).map(key => ({
+        key,
+        data: inventory[key]
+      })));
       
       // Prepare data for spreadsheet
       const rows = [];
@@ -164,18 +168,30 @@ const InventoryImportExport = () => {
       Object.entries(plants).forEach(([plantId, plant]) => {
         const inventoryData = inventory[plantId] || {};
         
+        // Debug: Check if we're getting inventory data
+        if (plantId === '1' || plantId === '2') {
+          console.log(`Inventory for plant ${plantId}:`, inventoryData);
+        }
+        
+        // Debug plant 46 specifically
+        if (plantId === '46') {
+          console.log('Plant 46 full data:', plant);
+          console.log('Plant 46 additionalImages:', plant.additionalImages);
+          console.log('Plant 46 imageMetadata:', plant.imageMetadata);
+        }
+        
         // Create row with all plant and inventory data
         const row = {
           // Core fields
           'plant_id': plantId,
-          'update_mode': '', // Empty by default, user will fill this
+          'update_mode': '', // Empty by default, shows dropdown when clicked
           
           // Plant data
           'name': plant.name || '',
           'latinname': plant.scientificName || '',
           'commonname': plant.commonName || '',
           'price': plant.price || 0,
-          'featured': plant.featured ? 'TRUE' : 'FALSE',
+          'featured': plant.featured ? 'true' : 'false',
           'type': plant.plantType || '',
           'description': plant.description || '',
           'bloom_season': plant.bloomSeason || '',
@@ -192,17 +208,16 @@ const InventoryImportExport = () => {
           'planting_season': plant.plantingSeason || '',
           'planting_depth_inches': plant.plantingDepth || '',
           'mature_size': plant.size || '',
-          'hidden': plant.hidden ? 'TRUE' : 'FALSE',
+          'hidden': plant.hidden ? 'true' : 'false',
           
           // Inventory data
-          'current_stock': inventoryData.inventoryCount || 0,
+          'current_stock': inventoryData.currentStock || 0,
           'status': inventoryData.status || 'active',
           'restock_date': inventoryData.restockDate || '',
           'notes': inventoryData.notes || '',
           
           // Images
-          'mainimage': plant.mainImage || '',
-          'additionalimage': plant.additionalImages || ''
+          'mainimage': plant.mainImage || ''
         };
         
         // Add photo credit fields for main image
@@ -215,30 +230,114 @@ const InventoryImportExport = () => {
               row['main_credit_source'] = mainMeta.source.name || '';
               row['main_credit_url'] = mainMeta.source.url || '';
             } else if (mainMeta.type === 'own') {
-              row['main_credit_photographer'] = mainMeta.photographer || '';
-              row['main_credit_watermarked'] = mainMeta.watermarked ? 'YES' : 'NO';
+              row['main_credit_source'] = 'Buttons Flower Farm';
+              row['main_credit_url'] = '';
+            } else {
+              row['main_credit_source'] = '';
+              row['main_credit_url'] = '';
             }
+          } else {
+            // No metadata for main image - default to own
+            row['main_credit_type'] = 'own';
+            row['main_credit_source'] = 'Buttons Flower Farm';
+            row['main_credit_url'] = '';
           }
+        } else {
+          // No main image or no metadata at all
+          row['main_credit_type'] = '';
+          row['main_credit_source'] = '';
+          row['main_credit_url'] = '';
         }
         
-        // Add photo credit fields for additional images (up to 3)
-        if (plant.additionalImages && plant.imageMetadata) {
-          const additionalUrls = plant.additionalImages.split(',').map(url => url.trim()).filter(url => url);
-          additionalUrls.slice(0, 3).forEach((url, index) => {
-            const imgKey = url.replace(/[.#$\[\]/]/g, '_');
-            const imgMeta = plant.imageMetadata[imgKey];
-            if (imgMeta) {
-              const prefix = `add${index + 1}_credit_`;
-              row[prefix + 'type'] = imgMeta.type || '';
-              if (imgMeta.type === 'commercial' && imgMeta.source) {
-                row[prefix + 'source'] = imgMeta.source.name || '';
-                row[prefix + 'url'] = imgMeta.source.url || '';
-              } else if (imgMeta.type === 'own') {
-                row[prefix + 'photographer'] = imgMeta.photographer || '';
-                row[prefix + 'watermarked'] = imgMeta.watermarked ? 'YES' : 'NO';
-              }
+        // Extract additional images - they might be in imageMetadata
+        let additionalUrls = [];
+        
+        if (plant.imageMetadata) {
+          // Get all image URLs from metadata except the main image
+          const mainImageKey = plant.mainImage ? plant.mainImage.replace(/[.#$\[\]/]/g, '_') : null;
+          
+          Object.keys(plant.imageMetadata).forEach(key => {
+            // Skip if this is the main image
+            if (key !== mainImageKey) {
+              // The key is the mangled URL - we need to store it as is for now
+              // We'll reconstruct the actual URL from the metadata
+              additionalUrls.push(key);
             }
           });
+          
+          // Debug log
+          if (plantId === '46') {
+            console.log(`Plant ${plantId} mainImageKey:`, mainImageKey);
+            console.log(`Plant ${plantId} additional image keys:`, additionalUrls);
+          }
+        } else if (plant.additionalImages) {
+          // Fall back to additionalImages field if it exists
+          if (Array.isArray(plant.additionalImages)) {
+            additionalUrls = plant.additionalImages.filter(url => url);
+          } else if (typeof plant.additionalImages === 'string') {
+            additionalUrls = plant.additionalImages.split(',').map(url => url.trim()).filter(url => url);
+          }
+        }
+          
+          // Add up to 3 additional image URLs in separate columns
+          for (let i = 0; i < 3; i++) {
+            if (additionalUrls[i]) {
+              // If we have a key from imageMetadata, get the metadata and reconstruct URL
+              const imgKey = additionalUrls[i];
+              const imgMeta = plant.imageMetadata ? plant.imageMetadata[imgKey] : null;
+              
+              // Try to reconstruct the URL from the key
+              // The key format is like: https:__firebasestorage_googleapis_com_v0_b_buttonsflowerfarm-8a54d...
+              let reconstructedUrl = imgKey
+                .replace(/^https:__/, 'https://')
+                .replace(/_/g, '.')
+                .replace(/\.com\./, '.com/')
+                .replace(/\.app\./, '.app/')
+                .replace(/\.\./g, '_'); // Fix any double dots that might have been created
+              
+              // Clean up the URL - remove everything after the first valid image extension
+              const match = reconstructedUrl.match(/(.*?\.(jpg|jpeg|png|gif|webp))/i);
+              if (match) {
+                reconstructedUrl = match[1];
+              }
+              
+              row[`additionalimage${i + 1}`] = reconstructedUrl;
+              
+              if (imgMeta) {
+                const prefix = `add${i + 1}_credit_`;
+                row[prefix + 'type'] = imgMeta.type || '';
+                if (imgMeta.type === 'commercial' && imgMeta.source) {
+                  row[prefix + 'source'] = imgMeta.source.name || '';
+                  row[prefix + 'url'] = imgMeta.source.url || '';
+                } else if (imgMeta.type === 'own') {
+                  row[prefix + 'source'] = 'Buttons Flower Farm';
+                  row[prefix + 'url'] = '';
+                } else {
+                  // Initialize empty credit fields
+                  row[prefix + 'type'] = '';
+                  row[prefix + 'source'] = '';
+                  row[prefix + 'url'] = '';
+                }
+              } else {
+                // No metadata for this image - default to own
+                const prefix = `add${i + 1}_credit_`;
+                row[prefix + 'type'] = 'own';
+                row[prefix + 'source'] = 'Buttons Flower Farm';
+                row[prefix + 'url'] = '';
+              }
+            } else {
+              // No image in this slot - initialize empty fields
+              row[`additionalimage${i + 1}`] = '';
+              const prefix = `add${i + 1}_credit_`;
+              row[prefix + 'type'] = '';
+              row[prefix + 'source'] = '';
+              row[prefix + 'url'] = '';
+            }
+          }
+        
+        // Debug: log if this plant has imageMetadata
+        if (plant.imageMetadata && Object.keys(plant.imageMetadata).length > 0) {
+          console.log(`Plant ${plantId} has imageMetadata:`, plant.imageMetadata);
         }
         
         rows.push(row);
@@ -247,11 +346,41 @@ const InventoryImportExport = () => {
       // Sort by plant_id
       rows.sort((a, b) => parseInt(a.plant_id) - parseInt(b.plant_id));
       
+      // Debug: Log a sample row to see what data we have
+      if (rows.length > 0) {
+        console.log('Sample row with photo credits:', rows[0]);
+      }
+      
       // Create workbook
       const wb = XLSX.utils.book_new();
       
       // Create main data sheet
       const ws = XLSX.utils.json_to_sheet(rows);
+      
+      // Format plant_id column (column A) as numbers
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let row = 1; row <= range.e.r; row++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: 0 }); // Column A
+        if (ws[cellAddress] && ws[cellAddress].v) {
+          ws[cellAddress].t = 'n'; // Set type to number
+          ws[cellAddress].v = parseInt(ws[cellAddress].v); // Ensure it's an integer
+          ws[cellAddress].z = '0'; // Number format with no decimals
+        }
+      }
+      
+      // Add data validation for update_mode column (column B)
+      // Create a validation list that Excel will recognize
+      const validationRange = `B2:B${rows.length + 1}`;
+      if (!ws['!dataValidation']) {
+        ws['!dataValidation'] = [];
+      }
+      
+      ws['!dataValidation'].push({
+        type: 'list',
+        allowBlank: true,
+        sqref: validationRange,
+        formula1: '"add,update,hide"'
+      });
       
       // Set column widths
       const cols = [
@@ -284,7 +413,21 @@ const InventoryImportExport = () => {
         { wch: 15 }, // restock_date
         { wch: 30 }, // notes
         { wch: 50 }, // mainimage
-        { wch: 50 }  // additionalimage
+        { wch: 50 }, // additionalimage1
+        { wch: 50 }, // additionalimage2
+        { wch: 50 }, // additionalimage3
+        { wch: 15 }, // main_credit_type
+        { wch: 25 }, // main_credit_source
+        { wch: 40 }, // main_credit_url
+        { wch: 15 }, // add1_credit_type
+        { wch: 25 }, // add1_credit_source
+        { wch: 40 }, // add1_credit_url
+        { wch: 15 }, // add2_credit_type
+        { wch: 25 }, // add2_credit_source
+        { wch: 40 }, // add2_credit_url
+        { wch: 15 }, // add3_credit_type
+        { wch: 25 }, // add3_credit_source
+        { wch: 40 }  // add3_credit_url
       ];
       ws['!cols'] = cols;
       
@@ -296,24 +439,25 @@ const InventoryImportExport = () => {
         { 'Instructions': '' },
         { 'Instructions': '1. UPDATING THE DATABASE:' },
         { 'Instructions': '   - Make any changes to plant data, prices, inventory, etc.' },
-        { 'Instructions': '   - Use the update_mode column to control what happens to each plant:' },
-        { 'Instructions': '     • Leave blank or "update_existing" = Update the plant data' },
-        { 'Instructions': '     • "add_new" = Add as new plant (only if plant_id doesn\'t exist)' },
-        { 'Instructions': '     • "archive" = Hide the plant (preserves order history)' },
+        { 'Instructions': '   - Use the update_mode column (click cell to see dropdown) to control what happens to each plant:' },
+        { 'Instructions': '     • Leave blank or "update" = Update the plant data (respects hidden column value)' },
+        { 'Instructions': '     • "add" = Add as new plant (only if plant_id doesn\'t exist)' },
+        { 'Instructions': '     • "hide" = Hide plant AND update data (forces hidden to TRUE, ignores hidden column)' },
         { 'Instructions': '' },
         { 'Instructions': '2. ADDING NEW PLANTS:' },
         { 'Instructions': '   - Add new rows at the bottom' },
         { 'Instructions': '   - Use new plant_id numbers (check existing highest number)' },
-        { 'Instructions': '   - Set update_mode to "add_new"' },
+        { 'Instructions': '   - Set update_mode to "add"' },
         { 'Instructions': '' },
         { 'Instructions': '3. INVENTORY STATUS OPTIONS:' },
-        { 'Instructions': '   - "active" = Currently available' },
-        { 'Instructions': '   - "coming_soon" = Future availability' },
-        { 'Instructions': '   - "discontinued" = No longer available' },
+        { 'Instructions': '   - "In Stock" = Currently available for purchase' },
+        { 'Instructions': '   - "Coming Soon" = Future availability' },
+        { 'Instructions': '   - "Pre-Order" = Available for advance ordering' },
+        { 'Instructions': '   - "Sold Out" = Temporarily out of stock' },
         { 'Instructions': '' },
         { 'Instructions': '4. PHOTO CREDITS:' },
         { 'Instructions': '   - main_credit_type: "own" or "commercial"' },
-        { 'Instructions': '   - For commercial: provide source name and URL' },
+        { 'Instructions': '   - For commercial: provide source name and a URL if you want to link to the external site' },
         { 'Instructions': '   - For own photos: optionally add photographer and watermark info' },
         { 'Instructions': '' },
         { 'Instructions': '5. IMPORTANT NOTES:' },
@@ -357,37 +501,52 @@ const InventoryImportExport = () => {
       // Read master database file
       const masterData = await readFile(plantsFile);
       
-      // Analyze the data to provide a summary
+      // Filter out rows with blank update_mode in smart mode
+      const rowsToProcess = masterData.filter(row => {
+        const mode = row.update_mode ? row.update_mode.toLowerCase().trim() : '';
+        // In smart mode, only process rows that have an explicit update_mode value
+        return mode !== '';
+      });
+      
+      // Analyze the filtered data to provide a summary
       let addCount = 0;
       let updateCount = 0;
       let archiveCount = 0;
       
-      masterData.forEach(row => {
-        const mode = row.update_mode ? row.update_mode.toLowerCase() : 'update_existing';
-        if (mode === 'add_new') addCount++;
-        else if (mode === 'archive') archiveCount++;
-        else updateCount++; // Default to update
+      rowsToProcess.forEach(row => {
+        const mode = row.update_mode.toLowerCase().trim();
+        
+        // Handle all variations of the update modes
+        if (mode === 'add' || mode === 'add_new') {
+          addCount++;
+        } else if (mode === 'hide' || mode === 'hide_plant' || mode === 'hide_from_shop' || mode === 'archive') {
+          archiveCount++;
+        } else {
+          // For 'update', 'update_existing', or any other explicit value
+          updateCount++;
+        }
       });
       
-      // Transform for preview (showing first 10 with their actions)
-      const previewRows = masterData.slice(0, 10).map(row => ({
+      // Transform for preview (showing first 10 filtered rows with their actions)
+      const previewRows = rowsToProcess.slice(0, 10).map(row => ({
         id: parseInt(row.plant_id) || 0,
         name: row.name || '',
         price: parseFloat(String(row.price || 0).replace(/[$,]/g, '')) || 0,
         stock: parseInt(row.current_stock || 0),
-        action: row.update_mode || 'update_existing',
+        action: row.update_mode.toLowerCase().trim(),
         mainImage: row.mainimage || ''
       }));
       
-      // Store full data for actual import
+      // Store filtered data for actual import
       setPreviewData({
-        masterData: masterData,
+        masterData: rowsToProcess,
         preview: previewRows,
         summary: {
-          total: masterData.length,
+          total: rowsToProcess.length,
           add: addCount,
           update: updateCount,
-          archive: archiveCount
+          archive: archiveCount,
+          skipped: masterData.length - rowsToProcess.length
         }
       });
       
@@ -417,14 +576,16 @@ const InventoryImportExport = () => {
       };
 
       // Transform plant data
-      const transformedPlantsData = previewData.plants.map(plant => {
+      const plantsToTransform = previewData.masterData || previewData.plants || [];
+      const transformedPlantsData = plantsToTransform.map(plant => {
         const plantData = {
           id: parseInt(plant.plant_id) || 0,
+          update_mode: plant.update_mode || '', // Include update_mode for smart mode
           name: plant.name || '',
           scientificName: plant.latinname || '',
           commonName: plant.commonname || '',
           price: parseFloat(String(plant.price || 0).replace(/[$,]/g, '')) || 0,
-          featured: plant.featured === 'true',
+          featured: (plant.featured === 'true' || plant.featured === 'TRUE' || plant.featured === true),
           plantType: plant.type || '',
           description: plant.description || '',
           bloomSeason: plant.bloom_season || '',
@@ -544,14 +705,17 @@ const InventoryImportExport = () => {
       });
       
       // Transform inventory data from the same rows
+      // For master data, only include inventory for rows with update_mode values
       const transformedInventoryData = previewData.masterData ? 
-        previewData.masterData.map(row => ({
-          plantId: row.plant_id,
-          inventoryCount: parseInt(row.current_stock || 0),
-          status: row.status || 'active',
-          restockDate: row.restock_date || '',
-          notes: row.notes || ''
-        })) : 
+        previewData.masterData
+          .filter(row => row.update_mode && row.update_mode.trim() !== '') // Only rows with update_mode
+          .map(row => ({
+            plant_id: row.plant_id,  // Use plant_id to match what firebase.js expects
+            current_stock: parseInt(row.current_stock || 0),  // Use current_stock field name
+            status: row.status || 'Unknown',
+            restock_date: row.restock_date || '',
+            notes: row.notes || ''
+          })) : 
         previewData.inventory || [];
       
       setImportStatus({ loading: true, message: `Processing ${transformedPlantsData.length} plants...` });
@@ -587,45 +751,7 @@ const InventoryImportExport = () => {
     }
   };
 
-  // Update Inventory handler
-  const handleUpdateInventory = async (e) => {
-    e.preventDefault();
-    
-    if (!updateFile) {
-      setUpdateStatus({ loading: false, message: 'Please select an inventory CSV file' });
-      return;
-    }
-    
-    try {
-      setUpdateStatus({ loading: true, message: 'Reading inventory file...' });
-      
-      const inventoryData = await readFile(updateFile);
-      
-      setUpdateStatus({ loading: true, message: `Updating ${inventoryData.length} inventory records...` });
-      
-      const result = await updateInventoryStock(inventoryData);
-      
-      if (result.success) {
-        setUpdateStatus({ 
-          loading: false, 
-          message: result.message,
-          success: true
-        });
-        addToast(result.message, 'success');
-        setUpdateFile(null);
-      } else {
-        throw new Error(result.message);
-      }
-    } catch (error) {
-      console.error('Update error:', error);
-      setUpdateStatus({ 
-        loading: false, 
-        message: `Error: ${error.message}`,
-        error: true
-      });
-      addToast(error.message, 'error');
-    }
-  };
+  // Removed old update inventory handler - now using unified system
 
   // Load available IDs when on import tab
   useEffect(() => {
@@ -668,22 +794,9 @@ const InventoryImportExport = () => {
         {activeTab === 'export' && (
           <div className="export-section">
             <div className="info-box success">
-              <h3>🛡️ Protect Your Data</h3>
-              <p>Download a complete backup of your plants, inventory, and orders.</p>
+              <h3>📊 Export Your Database</h3>
+              <p>Download your complete database as an Excel spreadsheet for backup or editing.</p>
               <p className="tip">💡 Tip: Create a backup before any major changes!</p>
-            </div>
-            
-            <div className="action-box">
-              <button 
-                onClick={handleBackup}
-                disabled={isBackingUp}
-                className="primary-button large"
-              >
-                {isBackingUp ? 'Creating Backup...' : '📥 Download Full Backup'}
-              </button>
-              <p className="help-text">
-                Downloads a JSON file with all your data that can be used for recovery
-              </p>
             </div>
             
             <div className="action-box" style={{marginTop: '20px'}}>
@@ -696,7 +809,7 @@ const InventoryImportExport = () => {
                 {isExportingMaster ? 'Exporting Database...' : '📊 Download Master Database Spreadsheet'}
               </button>
               <p className="help-text">
-                Downloads an Excel file with all plants and inventory for editing and re-import
+                Downloads an Excel file with all plants and inventory that can be edited and re-imported
               </p>
             </div>
           </div>
@@ -705,40 +818,10 @@ const InventoryImportExport = () => {
         {/* Import / Update Tab */}
         {activeTab === 'import' && (
           <div className="import-section">
-            <div className="info-boxes-row">
-              {/* Database Status & Import Info */}
-              <div className="info-box info">
-                <h3>📊 Database Status</h3>
-                {availableIds && (
-                  <>
-                    <p>You have <strong>{availableIds.totalPlants} plants</strong> in your database</p>
-                    <p><strong>Next ID:</strong> {availableIds.highestUsed + 1} for new plants</p>
-                  </>
-                )}
-                <hr className="info-divider" />
-                <p className="small-text"><strong>HOW IT WORKS:</strong></p>
-                <ol style={{fontSize: '12px', marginTop: '5px', paddingLeft: '20px'}}>
-                  <li>Export your current database using the button on the Export tab</li>
-                  <li>Edit the spreadsheet (prices, inventory, add new plants, etc.)</li>
-                  <li>Use the update_mode column to control each row's action</li>
-                  <li>Upload the modified spreadsheet here</li>
-                </ol>
-              </div>
-              
-              {/* Import Instructions */}
-              <div className="info-box template">
-                <h3>📝 Update Mode Options</h3>
-                <p style={{fontSize: '13px', marginBottom: '10px'}}>Use the <strong>update_mode</strong> column to control each plant:</p>
-                <ul style={{fontSize: '12px', paddingLeft: '20px', marginTop: '5px'}}>
-                  <li><strong>Leave blank or "update_existing":</strong> Updates the plant</li>
-                  <li><strong>"add_new":</strong> Adds as new plant (if ID doesn't exist)</li>
-                  <li><strong>"archive":</strong> Hides the plant (preserves orders)</li>
-                </ul>
-                <hr className="info-divider" />
-                <p style={{fontSize: '11px', color: '#6c757d'}}>
-                  💡 Tip: Export first, make changes, then re-import
-                </p>
-              </div>
+            <div style={{textAlign: 'center', marginBottom: '20px', padding: '15px', backgroundColor: '#fffef0', borderRadius: '8px', border: '1px solid #fff4c4'}}>
+              <p style={{fontSize: '14px', color: '#6c757d', margin: 0}}>
+                💡 <strong>Tip:</strong> Export your database first from the Export tab, make changes to the spreadsheet, then upload it here
+              </p>
             </div>
             
             {/* Unified Database Upload */}
@@ -811,7 +894,12 @@ const InventoryImportExport = () => {
                     </div>
                   </div>
                   
-                  <p>Showing first {Math.min(10, previewData.preview.length)} of {previewData.summary.total} plants:</p>
+                  <p>Showing first {Math.min(10, previewData.preview.length)} of {previewData.summary.total} plants to process
+                    {previewData.summary.skipped > 0 && (
+                      <span style={{color: '#6c757d', fontSize: '14px', marginLeft: '10px'}}>
+                        ({previewData.summary.skipped} rows with blank update_mode were skipped)
+                      </span>
+                    )}:</p>
                   
                   <div className="preview-table">
                     <table>
@@ -838,16 +926,16 @@ const InventoryImportExport = () => {
                                 fontSize: '11px',
                                 fontWeight: 'bold',
                                 backgroundColor: 
-                                  plant.action === 'add_new' ? '#d4edda' :
-                                  plant.action === 'archive' ? '#f8d7da' :
+                                  plant.action === 'add' ? '#d4edda' :
+                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#f8d7da' :
                                   '#cce5ff',
                                 color:
-                                  plant.action === 'add_new' ? '#155724' :
-                                  plant.action === 'archive' ? '#721c24' :
+                                  plant.action === 'add' ? '#155724' :
+                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#721c24' :
                                   '#004085'
                               }}>
-                                {plant.action === 'add_new' ? 'ADD' :
-                                 plant.action === 'archive' ? 'ARCHIVE' :
+                                {plant.action === 'add' ? 'ADD' :
+                                 (plant.action === 'hide' || plant.action === 'hide_from_shop') ? 'HIDE' :
                                  'UPDATE'}
                               </span>
                             </td>
@@ -889,37 +977,6 @@ const InventoryImportExport = () => {
         )}
         
       </div>
-      
-      {/* CSV Format Reference - only show on import tab */}
-      {activeTab === 'import' && (
-        <div className="format-reference">
-          <h3>📋 CSV Format Reference</h3>
-          <div className="format-grid">
-            <div className="format-box">
-              <h4>Plants CSV</h4>
-              <code>
-                plant_id, name, latinname, price, mainimage, type, description...
-              </code>
-              <div style={{marginTop: '8px', fontSize: '12px'}}>
-                <strong>Photo Credit Fields (optional):</strong><br/>
-                <code style={{fontSize: '11px'}}>
-                  photo_credit_type (own/commercial)<br/>
-                  photo_credit_source (e.g., Van Noort, Jelitto)<br/>
-                  photo_credit_photographer (for own photos)<br/>
-                  photo_credit_watermarked (YES/NO)<br/>
-                  photo_credit_url (source website)
-                </code>
-              </div>
-            </div>
-            <div className="format-box">
-              <h4>Inventory CSV</h4>
-              <code>
-                plant_id, current_stock, status, restock_date, notes
-              </code>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
