@@ -1118,13 +1118,18 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
         }
         
         action = updateMode;
+        console.log(`Plant ${plantId} raw update_mode: "${plant.update_mode}", normalized: "${updateMode}"`);
         
         // Map simplified values to internal actions
         if (action === 'hide' || action === 'hide_plant' || action === 'hide_from_shop' || action === 'archive') {
           action = 'hide_from_shop';
         } else if (action === 'add' || action === 'add_new') {
           action = 'add';
-        } else if (action === 'update' || action === 'update_existing') {
+        } else if (action === 'update' || action === 'update_existing' || action === '') {
+          action = 'update';
+        } else {
+          // Default any other non-empty value to update
+          console.log(`Plant ${plantId} has unexpected update_mode value: "${action}", treating as update`);
           action = 'update';
         }
       }
@@ -1140,6 +1145,7 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
           return;
         } else if (action === 'update') {
           console.log(`Plant ${plantId} - updating existing data`);
+          console.log(`Plant ${plantId} - old name: "${existingPlant.name}", new name: "${plant.name}"`);
           // Preserve certain fields that shouldn't be overwritten
           const preservedFields = {};
           if (existingPlant.createdAt) {
@@ -1152,9 +1158,10 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
             preservedFields.lastOrdered = existingPlant.lastOrdered;
           }
           
-          // Remove any undefined values from the plant data
+          // Remove any undefined values and update_mode from the plant data
           const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
-            if (value !== undefined) {
+            // Skip undefined values and the update_mode field (it's not a plant property)
+            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id') {
               acc[key] = value;
             }
             return acc;
@@ -1170,9 +1177,9 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
         } else if (action === 'hide_from_shop' || action === 'archive') {
           console.log(`Plant ${plantId} - hiding from shop (setting hidden=true)`);
           
-          // Remove any undefined values from the plant data
+          // Remove any undefined values and update_mode from the plant data
           const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
-            if (value !== undefined) {
+            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id') {
               acc[key] = value;
             }
             return acc;
