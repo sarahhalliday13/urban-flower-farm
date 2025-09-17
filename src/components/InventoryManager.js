@@ -1438,7 +1438,7 @@ const InventoryManager = () => {
         console.log('Original plant data headers:', Object.keys(plant));
         
         return {
-          id: parseInt(plant.plant_id) || 0,
+          id: plant.plant_id || '', // Keep original ID (string for gift certificates)
           name: plant.name || '',
           scientificName: plant.latinname || '',
           commonName: plant.commonname || '',

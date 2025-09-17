@@ -343,8 +343,25 @@ const InventoryImportExport = () => {
         rows.push(row);
       });
       
-      // Sort by plant_id
-      rows.sort((a, b) => parseInt(a.plant_id) - parseInt(b.plant_id));
+      // Sort by plant_id - handle both numeric and string IDs (like gift certificates)
+      rows.sort((a, b) => {
+        const aId = a.plant_id;
+        const bId = b.plant_id;
+        
+        // If both are numeric, sort numerically
+        const aNum = parseInt(aId);
+        const bNum = parseInt(bId);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return aNum - bNum;
+        }
+        
+        // If one is numeric and one is not, numeric comes first
+        if (!isNaN(aNum) && isNaN(bNum)) return -1;
+        if (isNaN(aNum) && !isNaN(bNum)) return 1;
+        
+        // If both are strings, sort alphabetically
+        return aId.localeCompare(bId);
+      });
       
       // Debug: Log a sample row to see what data we have
       if (rows.length > 0) {
@@ -529,7 +546,7 @@ const InventoryImportExport = () => {
       
       // Transform for preview (showing first 10 filtered rows with their actions)
       const previewRows = rowsToProcess.slice(0, 10).map(row => ({
-        id: parseInt(row.plant_id) || 0,
+        id: row.plant_id || '', // Keep original ID (don't parse to int for gift certificates)
         name: row.name || '',
         price: parseFloat(String(row.price || 0).replace(/[$,]/g, '')) || 0,
         stock: parseInt(row.current_stock || 0),
@@ -579,7 +596,7 @@ const InventoryImportExport = () => {
       const plantsToTransform = previewData.masterData || previewData.plants || [];
       const transformedPlantsData = plantsToTransform.map(plant => {
         const plantData = {
-          id: parseInt(plant.plant_id) || 0,
+          id: plant.plant_id || '', // Keep original ID (string for gift certificates)
           update_mode: plant.update_mode || '', // Include update_mode for smart mode
           name: plant.name || '',
           scientificName: plant.latinname || '',
