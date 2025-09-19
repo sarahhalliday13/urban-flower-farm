@@ -94,6 +94,17 @@ function Shop() {
         
         console.log('Fetched plants:', data);
         
+        // Debug: Check for gift certificates
+        const giftCerts = data ? data.filter(plant => 
+          plant.id && (plant.id.toString().startsWith('GC-') || plant.plantType === 'Gift Certificate')
+        ) : [];
+        console.log(`🎁 Gift certificates found in fetchPlants: ${giftCerts.length}`);
+        if (giftCerts.length > 0) {
+          giftCerts.forEach(cert => {
+            console.log(`🎁 Gift cert: ID=${cert.id}, Name=${cert.name}, Hidden=${cert.hidden}, Stock=${cert.inventory?.currentStock}`);
+          });
+        }
+        
         if (!data || data.length === 0) {
           console.log('No plants found in Firebase, trying sample data');
           const sampleData = await loadSamplePlants();
@@ -186,6 +197,29 @@ function Shop() {
     );
     
     console.log('Total visible plants (not hidden or out of stock):', visiblePlants.length);
+    
+    // Debug: Check if gift certificates are being filtered out
+    const giftCertsInVisiblePlants = visiblePlants.filter(plant => 
+      plant.id && (plant.id.toString().startsWith('GC-') || plant.plantType === 'Gift Certificate')
+    );
+    console.log(`🎁 Gift certificates in visible plants: ${giftCertsInVisiblePlants.length}`);
+    if (giftCertsInVisiblePlants.length === 0) {
+      // Check if they're being filtered out
+      const giftCertsInAllPlants = plants.filter(plant => 
+        plant.id && (plant.id.toString().startsWith('GC-') || plant.plantType === 'Gift Certificate')
+      );
+      if (giftCertsInAllPlants.length > 0) {
+        console.log('🎁 Gift certificates exist in all plants but filtered out:');
+        giftCertsInAllPlants.forEach(cert => {
+          const isHidden = (cert.hidden === true || cert.hidden === 'true' || cert.hidden === 1 || cert.hidden === '1');
+          const hasStock = ((cert.inventory?.currentStock > 0) || 
+            (cert.inventory?.status === 'Coming Soon') || 
+            (cert.inventory?.status === 'Pre-order') || 
+            (cert.inventory?.status === 'Pre-Order'));
+          console.log(`🎁 ${cert.id}: hidden=${isHidden}, hasStock=${hasStock}, stock=${cert.inventory?.currentStock}, status=${cert.inventory?.status}`);
+        });
+      }
+    }
     
     // Then apply search filter - USING displayedSearchTerm INSTEAD OF searchTerm
     const filteredPlants = visiblePlants.filter(plant => {

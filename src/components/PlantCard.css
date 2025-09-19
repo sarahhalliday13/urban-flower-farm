@@ -90,4 +90,39 @@
 .out-of-stock {
   background-color: #ffebee;
   color: #c62828;
+}
+
+/* Gift Certificate Styling */
+.gift-certificate-card {
+  border: 2px solid #f4e4c1;
+  background: linear-gradient(135deg, #fff 0%, #fdfaf2 100%);
+}
+
+.gift-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #2c7a54;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 2;
+}
+
+.gift-certificate-label {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f4e4c1;
+  color: #7a5c2c;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 } 

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Certificate Image Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        canvas {
+            border: 1px solid #ddd;
+            margin: 20px 0;
+            display: block;
+        }
+        
+        .controls {
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #4a7c59;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #3a6c49;
+        }
+        
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        .preview-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="instructions">
+            <h1>Gift Certificate Image Generator</h1>
+            <p>This tool creates gift certificate images for each denomination. The images will be 800x800px with a decorative design.</p>
+            <ol>
+                <li>Click on each button to generate that denomination's image</li>
+                <li>Right-click the canvas and "Save Image As..." to download</li>
+                <li>Upload to Firebase Storage at: <code>images/gift-certificate-[amount].jpg</code></li>
+            </ol>
+        </div>
+        
+        <div class="controls">
+            <button onclick="generateCertificate(25)">Generate $25</button>
+            <button onclick="generateCertificate(50)">Generate $50</button>
+            <button onclick="generateCertificate(75)">Generate $75</button>
+            <button onclick="generateCertificate(100)">Generate $100</button>
+            <button onclick="generateCertificate(200)">Generate $200</button>
+        </div>
+        
+        <div class="preview-container">
+            <h2>Preview:</h2>
+            <canvas id="canvas" width="800" height="800"></canvas>
+        </div>
+    </div>
+
+    <script>
+        function generateCertificate(amount) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, 800, 800);
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 800, 800);
+            gradient.addColorStop(0, '#fdfbf7');
+            gradient.addColorStop(1, '#f9f5ed');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 800, 800);
+            
+            // Decorative border
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 8;
+            ctx.strokeRect(40, 40, 720, 720);
+            
+            // Inner border
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(60, 60, 680, 680);
+            
+            // Corner decorations
+            drawCornerOrnament(ctx, 60, 60);
+            drawCornerOrnament(ctx, 740, 60, Math.PI / 2);
+            drawCornerOrnament(ctx, 740, 740, Math.PI);
+            drawCornerOrnament(ctx, 60, 740, -Math.PI / 2);
+            
+            // Title
+            ctx.fillStyle = '#2c5530';
+            ctx.font = 'bold 48px serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('GIFT', 400, 200);
+            ctx.fillText('CERTIFICATE', 400, 260);
+            
+            // Decorative line
+            ctx.beginPath();
+            ctx.moveTo(250, 290);
+            ctx.lineTo(550, 290);
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Amount circle
+            ctx.beginPath();
+            ctx.arc(400, 400, 120, 0, 2 * Math.PI);
+            ctx.fillStyle = '#4a7c59';
+            ctx.fill();
+            
+            // Amount text
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 72px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('$' + amount, 400, 420);
+            
+            // Farm name
+            ctx.fillStyle = '#2c5530';
+            ctx.font = '32px serif';
+            ctx.fillText('Buttons Urban', 400, 560);
+            ctx.fillText('Flower Farm', 400, 600);
+            
+            // Bottom text
+            ctx.fillStyle = '#666';
+            ctx.font = '18px sans-serif';
+            ctx.fillText('Digital Delivery', 400, 680);
+            ctx.fillText('No Expiration Date', 400, 710);
+            
+            // Add some decorative flowers
+            drawFlower(ctx, 150, 400, '#f4a460');
+            drawFlower(ctx, 650, 400, '#daa520');
+            drawFlower(ctx, 200, 600, '#ff69b4');
+            drawFlower(ctx, 600, 200, '#9370db');
+        }
+        
+        function drawCornerOrnament(ctx, x, y, rotation = 0) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            ctx.beginPath();
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 2;
+            
+            // Decorative corner flourish
+            ctx.moveTo(0, 40);
+            ctx.quadraticCurveTo(20, 20, 40, 0);
+            ctx.stroke();
+            
+            ctx.moveTo(0, 30);
+            ctx.quadraticCurveTo(15, 15, 30, 0);
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        function drawFlower(ctx, x, y, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Petals
+            ctx.fillStyle = color;
+            for (let i = 0; i < 6; i++) {
+                ctx.rotate(Math.PI / 3);
+                ctx.beginPath();
+                ctx.ellipse(15, 0, 10, 5, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+            
+            // Center
+            ctx.beginPath();
+            ctx.arc(0, 0, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Generate initial image
+        generateCertificate(25);
+    </script>
+</body>
+</html>

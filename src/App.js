@@ -41,6 +41,7 @@ import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
 import InventoryImportExport from './components/InventoryImportExport';
 import ImageRecovery from './components/ImageRecovery';
+import GiftCertificateView from './components/GiftCertificateView';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -360,11 +361,17 @@ function AppContent() {
             <PlantDetails />
           </PlantDetailsWrapper>
         } />
+        <Route path="/plants/:id" element={
+          <PlantDetailsWrapper>
+            <PlantDetails />
+          </PlantDetailsWrapper>
+        } />
         <Route path="/login" element={<Login />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/checkout/confirmation" element={<Checkout />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/invoice/:orderId" element={<InvoicePage />} />
+        <Route path="/gift-certificate/:orderId" element={<GiftCertificateView />} />
         <Route 
           path="/admin" 
           element={

@@ -598,15 +598,28 @@ export const fetchPlants = async () => {
         const plant = plantsData[key];
         const plantId = plant.id || key;
         
-        return {
-          ...plant,
-          id: plantId, // Use the plant's ID or the Firebase key
-          inventory: inventoryData[plantId] || {
+        // Check if plant already has inventory data embedded (common after CSV import)
+        let inventoryForPlant;
+        if (plant.inventory && typeof plant.inventory === 'object') {
+          // Plant already has inventory data, use it but merge with Firebase inventory if available
+          inventoryForPlant = {
+            ...plant.inventory,
+            ...(inventoryData[plantId] || {}) // Firebase inventory takes precedence
+          };
+        } else {
+          // Use Firebase inventory or create default
+          inventoryForPlant = inventoryData[plantId] || {
             currentStock: 0,
             status: "Out of Stock",
             restockDate: "",
             notes: ""
-          }
+          };
+        }
+        
+        return {
+          ...plant,
+          id: plantId, // Use the plant's ID or the Firebase key
+          inventory: inventoryForPlant
         };
       });
       
@@ -619,6 +632,18 @@ export const fetchPlants = async () => {
       }
       
       console.log(`[${environment}] fetchPlants - Fetched ${plantsArray.length} plants from Firebase`);
+      
+      // Debug: Check for gift certificates specifically
+      const giftCertificates = plantsArray.filter(plant => 
+        plant.id && (plant.id.toString().startsWith('GC-') || plant.plantType === 'Gift Certificate')
+      );
+      console.log(`[${environment}] fetchPlants - Gift certificates found: ${giftCertificates.length}`);
+      if (giftCertificates.length > 0) {
+        giftCertificates.forEach(cert => {
+          console.log(`[${environment}] fetchPlants - Gift cert: ID="${cert.id}", Stock=${cert.inventory?.currentStock}, Status="${cert.inventory?.status}"`);
+        });
+      }
+      
       // Log a sample plant for verification
       if (plantsArray.length > 0) {
         console.log(`[${environment}] fetchPlants - Sample plant:`, 
@@ -1165,10 +1190,10 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
             preservedFields.lastOrdered = existingPlant.lastOrdered;
           }
           
-          // Remove any undefined values and update_mode from the plant data
+          // Remove any undefined values, update_mode, and inventory from the plant data
           const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
-            // Skip undefined values and the update_mode field (it's not a plant property)
-            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id') {
+            // Skip undefined values, update_mode field, plant_id, and inventory (stored separately)
+            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id' && key !== 'inventory') {
               // Special handling for imageMetadata - merge instead of replace
               if (key === 'imageMetadata' && existingPlant.imageMetadata) {
                 acc[key] = {
@@ -1188,13 +1213,24 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
             id: plantId,
             updatedAt: new Date().toISOString()
           };
+          
+          // If the original plant has embedded inventory data, update inventory entry
+          if (plant.inventory && typeof plant.inventory === 'object') {
+            console.log(`Updating inventory for plant ${plantId} with embedded inventory:`, plant.inventory);
+            inventoryObject[plantId] = {
+              ...(inventoryObject[plantId] || {}), // Preserve existing inventory
+              ...plant.inventory,
+              lastUpdated: new Date().toISOString()
+            };
+          }
+          
           updatedPlantsCount++;
         } else if (action === 'hide_from_shop' || action === 'archive') {
           console.log(`Plant ${plantId} - hiding from shop (setting hidden=true)`);
           
-          // Remove any undefined values and update_mode from the plant data
+          // Remove any undefined values, update_mode, and inventory from the plant data
           const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
-            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id') {
+            if (value !== undefined && key !== 'update_mode' && key !== 'plant_id' && key !== 'inventory') {
               acc[key] = value;
             }
             return acc;
@@ -1217,6 +1253,17 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
             hiddenAt: new Date().toISOString(),
             id: plantId
           };
+          
+          // If the original plant has embedded inventory data, update inventory entry
+          if (plant.inventory && typeof plant.inventory === 'object') {
+            console.log(`Updating inventory for hidden plant ${plantId} with embedded inventory:`, plant.inventory);
+            inventoryObject[plantId] = {
+              ...(inventoryObject[plantId] || {}), // Preserve existing inventory
+              ...plant.inventory,
+              lastUpdated: new Date().toISOString()
+            };
+          }
+          
           archivedPlantsCount++;
         }
       } else {
@@ -1226,9 +1273,9 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
           return;
         }
         
-        // Remove any undefined values from the plant data
+        // Remove any undefined values and inventory from the plant data (inventory is stored separately)
         const cleanPlantData = Object.entries(plant).reduce((acc, [key, value]) => {
-          if (value !== undefined) {
+          if (value !== undefined && key !== 'inventory') {
             acc[key] = value;
           }
           return acc;
@@ -1248,6 +1295,16 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
         
         // Store new plant
         plantsObject[plantId] = plantDataToStore;
+        
+        // If the plant has embedded inventory data, create inventory entry
+        if (plantDataToStore.inventory && typeof plantDataToStore.inventory === 'object') {
+          console.log(`Creating inventory entry for new plant ${plantId} with embedded inventory:`, plantDataToStore.inventory);
+          inventoryObject[plantId] = {
+            ...plantDataToStore.inventory,
+            lastUpdated: new Date().toISOString()
+          };
+        }
+        
         newPlantsCount++;
       }
     });
@@ -2042,6 +2099,77 @@ export const deletePlant = async (plantId) => {
 };
 
 /**
+ * Check for gift certificates in the database
+ * @returns {Promise<Object>} Analysis of gift certificate status
+ */
+export const checkGiftCertificates = async () => {
+  try {
+    console.log('Checking gift certificates in database...');
+    
+    // Fetch all plants and inventory
+    const plantsSnapshot = await get(ref(database, 'plants'));
+    const inventorySnapshot = await get(ref(database, 'inventory'));
+    
+    const plantsData = plantsSnapshot.exists() ? plantsSnapshot.val() : {};
+    const inventoryData = inventorySnapshot.exists() ? inventorySnapshot.val() : {};
+    
+    // Search for gift certificate plants
+    const allPlants = Object.keys(plantsData).map(key => ({
+      ...plantsData[key],
+      id: plantsData[key].id || key
+    }));
+    
+    const giftCertPlants = allPlants.filter(plant => 
+      (plant.id && plant.id.toString().startsWith('GC-')) ||
+      plant.plantType === 'Gift Certificate' ||
+      (plant.name && plant.name.toLowerCase().includes('gift certificate'))
+    );
+    
+    // Search for gift certificate inventory
+    const giftCertInventories = Object.keys(inventoryData).filter(key => 
+      key.startsWith('GC-')
+    );
+    
+    // Check which inventory entries have corresponding plant records
+    const orphanedInventory = giftCertInventories.filter(id => !plantsData[id]);
+    const completeGiftCerts = giftCertInventories.filter(id => plantsData[id]);
+    
+    const result = {
+      plantsFound: giftCertPlants.length,
+      inventoryFound: giftCertInventories.length,
+      completeRecords: completeGiftCerts.length,
+      orphanedInventory: orphanedInventory.length,
+      giftCertificates: giftCertPlants.map(cert => ({
+        id: cert.id,
+        name: cert.name,
+        price: cert.price,
+        stock: inventoryData[cert.id]?.currentStock || 0,
+        status: inventoryData[cert.id]?.status || 'No inventory'
+      })),
+      orphanedIds: orphanedInventory,
+      inventoryDetails: giftCertInventories.map(id => ({
+        id,
+        stock: inventoryData[id]?.currentStock || 0,
+        status: inventoryData[id]?.status || 'Unknown',
+        hasPlantRecord: !!plantsData[id]
+      }))
+    };
+    
+    console.log(`Gift certificate check complete:`, result);
+    return result;
+  } catch (error) {
+    console.error('Error checking gift certificates:', error);
+    return {
+      error: error.message,
+      plantsFound: 0,
+      inventoryFound: 0,
+      completeRecords: 0,
+      orphanedInventory: 0
+    };
+  }
+};
+
+/**
  * Save news items to Firebase
  * @param {Array} newsItems - Array of news items to save
  * @returns {Promise<Object>} Result of the operation
@@ -2135,7 +2263,8 @@ const firebaseService = {
   repairInventoryData,
   deletePlant,
   saveNewsItems,
-  fetchNewsItems
+  fetchNewsItems,
+  checkGiftCertificates
 };
 
 export default firebaseService; 

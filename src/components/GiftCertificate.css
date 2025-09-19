@@ -1,0 +1,419 @@
+/* ==========================
+   Gift Certificate Core Styles
+   ========================== */
+
+/* Printable Gift Certificate Component */
+.gift-certificate-container {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gift-certificate-actions {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.print-button {
+  background-color: #2c7a54;
+  color: white;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.print-button:hover {
+  background-color: #245f43;
+}
+
+.order-info {
+  margin-top: 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+.gift-certificate-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gift-certificate {
+  background: white;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  width: 800px;
+  height: 800px;
+  position: relative;
+  overflow: hidden;
+}
+
+.certificate-border-outer {
+  position: absolute;
+  inset: 2rem;
+  border: 4px double #d3d3d3;
+}
+
+.certificate-border-inner {
+  position: absolute;
+  inset: 2rem;
+  border: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header */
+.certificate-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+}
+
+.certificate-logo {
+  height: 80px;
+  width: auto;
+  margin-bottom: 1.5rem;
+  object-fit: contain;
+}
+
+.certificate-title {
+  font-size: 36px;
+  color: #333;
+  letter-spacing: 4px;
+  font-weight: 400;
+  font-family: 'Georgia', serif;
+  margin: 0;
+}
+
+/* Amount Section */
+.certificate-amount-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.amount-label {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.amount-container {
+  position: relative;
+}
+
+.amount-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dollar-sign {
+  font-size: 60px;
+  color: #2c7a54;
+  font-weight: 500;
+}
+
+.amount-input {
+  width: 150px;
+  font-size: 60px;
+  color: #2c7a54;
+  text-align: center;
+  border: 2px solid #a8c5a9;
+  border-radius: 4px;
+  padding: 0 10px;
+  font-weight: 500;
+}
+
+.amount-input:focus {
+  outline: none;
+  border-color: #2c7a54;
+}
+
+.amount-display {
+  font-size: 60px;
+  color: #2c7a54;
+  background: transparent;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.amount-display:hover {
+  color: #245f43;
+}
+
+.edit-hint {
+  font-size: 12px;
+  color: #999;
+  margin-top: 8px;
+}
+
+/* Recipient Section */
+.certificate-recipient {
+  padding: 0 4rem;
+  margin-bottom: 3rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+.recipient-field,
+.from-field {
+  border-bottom: 2px solid #d3d3d3;
+  padding-bottom: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.field-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.recipient-input {
+  font-size: 20px;
+  color: #333;
+  border: none;
+  padding: 0;
+  width: 100%;
+  background: transparent;
+  font-family: 'Georgia', serif;
+}
+
+.recipient-input:focus {
+  outline: none;
+}
+
+.from-name {
+  font-size: 20px;
+  color: #333;
+  font-family: 'Georgia', serif;
+}
+
+/* Footer */
+.certificate-footer {
+  position: absolute;
+  bottom: 4rem;
+  left: 4rem;
+  right: 4rem;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.signature-field,
+.date-field {
+  border-bottom: 1px solid #d3d3d3;
+  padding-bottom: 8px;
+}
+
+.date-value {
+  color: #333;
+  margin-top: 4px;
+}
+
+.certificate-terms {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.certificate-terms p {
+  font-size: 11px;
+  color: #666;
+  margin: 4px 0;
+}
+
+.certificate-code {
+  margin-top: 12px !important;
+  font-weight: 600;
+  color: #333 !important;
+}
+
+/* Decorative corners */
+.corner {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+}
+
+.corner.top-left {
+  top: 1rem;
+  left: 1rem;
+  border-left: 2px solid #d3d3d3;
+  border-top: 2px solid #d3d3d3;
+}
+
+.corner.top-right {
+  top: 1rem;
+  right: 1rem;
+  border-right: 2px solid #d3d3d3;
+  border-top: 2px solid #d3d3d3;
+}
+
+.corner.bottom-left {
+  bottom: 1rem;
+  left: 1rem;
+  border-left: 2px solid #d3d3d3;
+  border-bottom: 2px solid #d3d3d3;
+}
+
+.corner.bottom-right {
+  bottom: 1rem;
+  right: 1rem;
+  border-right: 2px solid #d3d3d3;
+  border-bottom: 2px solid #d3d3d3;
+}
+
+/* ==========================
+   Gift Certificate Shop Display
+   ========================== */
+
+/* Ensure shop-main container is properly constrained */
+.shop-main {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Shop card and detail page image display */
+.gift-certificate-shop-image {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+/* Override App.css grid layout for gift certificate pages */
+.shop-main .plant-details-container.gift-certificate-layout {
+  display: flex !important;
+  grid-template-columns: unset !important;
+  grid-template-rows: unset !important;
+  grid-auto-columns: unset !important;
+  grid-auto-rows: unset !important;
+  grid-auto-flow: unset !important;
+  gap: 2rem;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* Reset all grid children properties */
+.shop-main .plant-details-container.gift-certificate-layout > * {
+  grid-column: unset !important;
+  grid-row: unset !important;
+  grid-area: unset !important;
+}
+
+.shop-main .gift-certificate-image-section {
+  flex: 0 0 auto;
+  width: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.shop-main .gift-certificate-content-section {
+  flex: 1;
+  min-width: 0;
+  max-width: 600px; /* Match typical content width */
+  text-align: left !important;
+}
+
+/* Force gift certificate details to be the outer constraint */
+.shop-main .gift-certificate-content-section .gift-certificate-details {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* Force price-action-container to match gift-certificate-details exactly */
+.shop-main .plant-details-container.gift-certificate-layout .gift-certificate-content-section .price-action-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 20px !important; /* Match the padding of gift-certificate-details */
+  box-sizing: border-box !important;
+  border-top: 1px solid #eee !important;
+  padding-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.shop-main .gift-certificate-content-section .description {
+  text-align: left !important;
+}
+
+.shop-main .gift-certificate-content-section .plant-info {
+  text-align: left !important;
+}
+
+/* ==========================
+   Responsive Adjustments
+   ==========================*/
+
+/* Responsive adjustments for gift certificate layout */
+@media (max-width: 968px) {
+  .shop-main .plant-details-container.gift-certificate-layout {
+    flex-direction: column !important;
+    align-items: center;
+  }
+  
+  .shop-main .gift-certificate-image-section {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .shop-main .gift-certificate-content-section {
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+/* Legacy responsive adjustments for certificate printing */
+@media (max-width: 850px) {
+  .gift-certificate {
+    transform: scale(0.9);
+    transform-origin: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .gift-certificate {
+    transform: scale(0.7);
+    transform-origin: center;
+  }
+  
+  .gift-certificate-shop-image {
+    max-width: 90%;
+  }
+}
+
+@media (max-width: 600px) {
+  .gift-certificate {
+    transform: scale(0.5);
+    transform-origin: center;
+  }
+}

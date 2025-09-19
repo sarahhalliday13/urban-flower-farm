@@ -62,7 +62,9 @@ const ImageUploaderWithAttribution = ({
       };
     } else {
       metadata.photographer = photographerName || '';
-      metadata.watermarked = addWatermark;
+      if (addWatermark) {
+        metadata.source = "Buttons Flower Farm";
+      }
     }
 
     return metadata;
@@ -129,7 +131,7 @@ const ImageUploaderWithAttribution = ({
             }),
             ...(imageSource === 'own' && {
               photographer: photographerName,
-              watermarked: addWatermark.toString()
+              source: addWatermark ? "Buttons Flower Farm" : ""
             })
           };
           
@@ -294,7 +296,7 @@ const ImageUploaderWithAttribution = ({
       customSourceName: commercialSourceValue === 'other' ? metadata.source?.name || '' : '',
       sourceUrl: metadata.source?.url || '',
       photographer: metadata.photographer || '',
-      watermarked: metadata.watermarked || false
+      watermarked: (metadata.source === "Buttons Flower Farm") || false
     });
   };
 
@@ -319,7 +321,9 @@ const ImageUploaderWithAttribution = ({
       };
     } else {
       updatedMetadata.photographer = editMetadata.photographer || '';
-      updatedMetadata.watermarked = editMetadata.watermarked;
+      if (editMetadata.watermarked) {
+        updatedMetadata.source = "Buttons Flower Farm";
+      }
     }
     
     newMetadata[safeKey] = updatedMetadata;
@@ -338,9 +342,11 @@ const ImageUploaderWithAttribution = ({
       return `Source: ${metadata.source.name}`;
     } else if (metadata.type === 'own') {
       if (metadata.photographer) {
-        return `Photo by ${metadata.photographer}`;
+        return `Photo credit: ${metadata.photographer}`;
+      } else if (metadata.source === "Buttons Flower Farm") {
+        return `Photo credit: Buttons Flower Farm`;
       }
-      return metadata.watermarked ? 'Photo credit: Button\'s Flower Farm' : null;
+      return null;
     }
     return null;
   };
@@ -416,7 +422,7 @@ const ImageUploaderWithAttribution = ({
                   checked={addWatermark}
                   onChange={(e) => setAddWatermark(e.target.checked)}
                 />
-                Add watermark (Photo credit: Button's Flower Farm)
+                Add watermark (Photo credit: Buttons Flower Farm)
               </label>
             </div>
             
@@ -633,7 +639,7 @@ const ImageUploaderWithAttribution = ({
                                 watermarked: e.target.checked
                               })}
                             />
-                            Add watermark (Photo credit: Button's Flower Farm)
+                            Add watermark (Photo credit: Buttons Flower Farm)
                           </label>
                           
                           <input

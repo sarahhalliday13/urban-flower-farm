@@ -1,0 +1,67 @@
+[
+  {
+    "plant_id": "GC-25",
+    "name": "Gift Certificate - $25",
+    "price": 25.00,
+    "plantType": "Gift Certificate",
+    "description": "This digital gift certificate will be emailed to you within 24 hours of purchase. To redeem, contact Buttons Flower Farm with your order number. The recipient can use this certificate toward any plants or products in our shop. No expiration date.",
+    "mainImage": "/images/gift-certificate-full.png",
+    "inventory": {
+      "currentStock": 999,
+      "status": "In Stock"
+    },
+    "update_mode": "add"
+  },
+  {
+    "plant_id": "GC-50",
+    "name": "Gift Certificate - $50",
+    "price": 50.00,
+    "plantType": "Gift Certificate",
+    "description": "This digital gift certificate will be emailed to you within 24 hours of purchase. To redeem, contact Buttons Flower Farm with your order number. The recipient can use this certificate toward any plants or products in our shop. No expiration date.",
+    "mainImage": "/images/gift-certificate-full.png",
+    "inventory": {
+      "currentStock": 999,
+      "status": "In Stock"
+    },
+    "update_mode": "add"
+  },
+  {
+    "plant_id": "GC-75",
+    "name": "Gift Certificate - $75",
+    "price": 75.00,
+    "plantType": "Gift Certificate",
+    "description": "This digital gift certificate will be emailed to you within 24 hours of purchase. To redeem, contact Buttons Flower Farm with your order number. The recipient can use this certificate toward any plants or products in our shop. No expiration date.",
+    "mainImage": "/images/gift-certificate-full.png",
+    "inventory": {
+      "currentStock": 999,
+      "status": "In Stock"
+    },
+    "update_mode": "add"
+  },
+  {
+    "plant_id": "GC-100",
+    "name": "Gift Certificate - $100",
+    "price": 100.00,
+    "plantType": "Gift Certificate",
+    "description": "This digital gift certificate will be emailed to you within 24 hours of purchase. To redeem, contact Buttons Flower Farm with your order number. The recipient can use this certificate toward any plants or products in our shop. No expiration date.",
+    "mainImage": "/images/gift-certificate-full.png",
+    "inventory": {
+      "currentStock": 999,
+      "status": "In Stock"
+    },
+    "update_mode": "add"
+  },
+  {
+    "plant_id": "GC-250",
+    "name": "Gift Certificate - $250",
+    "price": 250.00,
+    "plantType": "Gift Certificate",
+    "description": "This digital gift certificate will be emailed to you within 24 hours of purchase. To redeem, contact Buttons Flower Farm with your order number. The recipient can use this certificate toward any plants or products in our shop. No expiration date.",
+    "mainImage": "/images/gift-certificate-full.png",
+    "inventory": {
+      "currentStock": 999,
+      "status": "In Stock"
+    },
+    "update_mode": "add"
+  }
+]

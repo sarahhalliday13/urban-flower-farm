@@ -832,11 +832,26 @@ footer p {
   width: 100%;
 }
 
-.plant-details-image img {
-  width: 100%;
-  height: 100%;
+.plant-details-image > img:not(.thumbnail-image) {
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
   background-color: #f8f9fa;
+}
+
+/* Ensure thumbnail class doesn't affect main image */
+.plant-details-image > .thumbnail-image {
+  width: 80px !important;
+  height: 80px !important;
+}
+
+/* Override for gift certificates */
+.plant-details-image.gift-certificate-container {
+  aspect-ratio: unset;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .image-thumbnails {

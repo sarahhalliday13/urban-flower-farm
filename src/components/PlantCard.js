@@ -23,8 +23,8 @@ const PlantCard = ({ plant }) => {
     } else if (metadata.type === 'own') {
       if (metadata.photographer) {
         return `Photo credit: ${metadata.photographer}`;
-      } else if (metadata.watermarked) {
-        return `Photo credit: Button's Flower Farm`;
+      } else if (metadata.source === "Buttons Flower Farm") {
+        return `Photo credit: Buttons Flower Farm`;
       }
     }
     return null;
@@ -55,8 +55,11 @@ const PlantCard = ({ plant }) => {
     }
   };
 
+  // Check if this is a gift certificate
+  const isGiftCertificate = plant.plantType && plant.plantType.toLowerCase() === 'gift certificate';
+  
   return (
-    <div className="plant-card">
+    <div className={`plant-card ${isGiftCertificate ? 'gift-certificate-card' : ''}`}>
       <Link to={`/plant/${plant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
         <div className="plant-image">
           <img 
@@ -64,19 +67,25 @@ const PlantCard = ({ plant }) => {
             alt={plant.name} 
             onError={handleImageError}
           />
-          {attribution && (
+          {attribution && !isGiftCertificate && (
             <div className="plant-image-attribution">
               {attribution}
             </div>
+          )}
+          {isGiftCertificate && (
+            <div className="gift-badge">Digital Delivery</div>
           )}
         </div>
         <div className="plant-info">
           <h3>{plant.name}</h3>
           <p className="price">${plant.price}</p>
-          {plant.inventory && plant.inventory.status && (
+          {!isGiftCertificate && plant.inventory && plant.inventory.status && (
             <div className={`inventory-status ${plant.inventory.status.toLowerCase().replace(' ', '-')}`}>
               {plant.inventory.status}
             </div>
+          )}
+          {isGiftCertificate && (
+            <div className="gift-certificate-label">Gift Certificate</div>
           )}
         </div>
       </Link>

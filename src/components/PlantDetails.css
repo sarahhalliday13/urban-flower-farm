@@ -43,3 +43,164 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Gift Certificate Styling */
+.gift-certificate-container {
+  aspect-ratio: unset !important;
+  height: auto !important;
+}
+
+.gift-certificate-image {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 600px !important;
+}
+
+.gift-certificate-details {
+  background: #fdfaf2;
+  border: 2px solid #f4e4c1;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+  transition: box-shadow 0.2s ease;
+  text-align: left !important;
+}
+
+.gift-certificate-details:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.gift-certificate-details h3 {
+  color: #2c5530; /* Using brand primary color */
+  margin-bottom: 15px;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: left !important;
+}
+
+.gift-certificate-details p {
+  margin: 10px 0;
+  color: #555;
+  line-height: 1.6;
+  text-align: left !important;
+}
+
+.gift-certificate-details strong {
+  color: #333;
+  margin-right: 8px;
+  font-weight: 600;
+}
+
+/* Gift certificate side-by-side layout */
+.plant-details-container.gift-certificate-layout {
+  display: flex !important;
+  grid-template-columns: unset !important;
+  gap: 3rem;
+  align-items: flex-start;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.gift-certificate-image-section {
+  flex: 0 0 auto;
+  width: 45%;
+  display: flex;
+  justify-content: center;
+}
+
+.gift-certificate-content-section {
+  flex: 1;
+  width: 55%;
+}
+
+.redemption-instructions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #f4e4c1;
+  text-align: left !important;
+}
+
+.redemption-instructions h4 {
+  color: #7a5c2c;
+  margin-bottom: 10px;
+  font-size: 16px;
+  text-align: left !important;
+}
+
+.redemption-instructions p {
+  line-height: 1.6;
+  color: #666;
+  text-align: left !important;
+}
+
+/* Responsive adjustments for gift certificate */
+@media (max-width: 968px) {
+  .plant-details-container.gift-certificate-layout {
+    flex-direction: column !important;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .gift-certificate-image-section {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .gift-certificate-content-section {
+    width: 100%;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .plant-details-container.gift-certificate-layout {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+  
+  .gift-certificate-image-section {
+    max-width: 400px;
+  }
+  
+  .gift-certificate-content-section {
+    max-width: 100%;
+  }
+  
+  .gift-certificate-details {
+    padding: 16px;
+    margin-top: 16px;
+  }
+  
+  .gift-certificate-details h3 {
+    font-size: 18px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .plant-details-container.gift-certificate-layout {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .gift-certificate-image-section {
+    max-width: 300px;
+  }
+  
+  .gift-certificate-details {
+    padding: 12px;
+    margin-top: 12px;
+  }
+  
+  .gift-certificate-details h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  
+  .gift-certificate-details p {
+    margin: 8px 0;
+    font-size: 14px;
+  }
+}

@@ -3,7 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchPlants, loadSamplePlants } from '../services/firebase';
+import GiftCertificateDetails from './GiftCertificateDetails';
 import './PlantDetails.css';
+import './GiftCertificate.css';
 
 function PlantDetails() {
   const { id } = useParams();
@@ -47,8 +49,8 @@ function PlantDetails() {
     } else if (metadata.type === 'own') {
       if (metadata.photographer) {
         return `Photo credit: ${metadata.photographer}`;
-      } else if (metadata.watermarked) {
-        return `Photo credit: Button's Flower Farm`;
+      } else if (metadata.source === "Buttons Flower Farm") {
+        return `Photo credit: Buttons Flower Farm`;
       }
     }
     return null;
@@ -109,7 +111,27 @@ function PlantDetails() {
       try {
         // Fetch all plants and find the one with the matching ID
         const allPlants = await fetchPlants();
-        const plant = allPlants.find(p => p.id.toString() === id.toString() || p.id === Number(id));
+        console.log(`🔍 PlantDetails: Looking for plant with ID: "${id}" (type: ${typeof id})`);
+        console.log(`🔍 PlantDetails: Total plants fetched: ${allPlants.length}`);
+        
+        // Debug: Check for gift certificates in fetched plants
+        const giftCerts = allPlants.filter(plant => 
+          plant.id && (plant.id.toString().startsWith('GC-') || plant.plantType === 'Gift Certificate')
+        );
+        console.log(`🎁 PlantDetails: Gift certificates found: ${giftCerts.length}`);
+        if (giftCerts.length > 0) {
+          giftCerts.forEach(cert => {
+            console.log(`🎁 PlantDetails: Gift cert: ID="${cert.id}" (type: ${typeof cert.id}), Name="${cert.name}"`);
+          });
+        }
+        
+        const plant = allPlants.find(p => {
+          const match = p.id.toString() === id.toString() || p.id === Number(id);
+          if (p.id && p.id.toString().startsWith('GC-')) {
+            console.log(`🎁 PlantDetails: Checking gift cert ID="${p.id}" vs requested ID="${id}": match=${match}`);
+          }
+          return match;
+        });
         
         if (!plant) {
           console.error(`Plant with ID ${id} not found`);
@@ -184,8 +206,16 @@ function PlantDetails() {
         
         console.log(`Final result: Plant ${plant.name} has ${plantImages.length} images:`, plantImages);
         
+        // For gift certificates, only use the main image
+        if (plant.plantType && plant.plantType.toLowerCase() === 'gift certificate') {
+          const mainImageOnly = plant.mainImage ? [plant.mainImage] : plantImages.slice(0, 1);
+          console.log('Gift certificate - using only main image:', mainImageOnly);
+          setImages(mainImageOnly);
+        } else {
+          setImages(plantImages);
+        }
+        
         setPlant(plant);
-        setImages(plantImages);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching plant:', err);
@@ -400,6 +430,28 @@ function PlantDetails() {
   if (loading) return <div className="loading">Loading plant details...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plant) return <div className="error">Plant not found</div>;
+  
+  // Check if this is a gift certificate
+  const isGiftCertificate = plant && plant.plantType && plant.plantType.toLowerCase() === 'gift certificate';
+
+  // If this is a gift certificate, use the special component
+  if (isGiftCertificate && plant) {
+    return (
+      <div className="shop-main">
+        <GiftCertificateDetails 
+          plant={plant}
+          images={images}
+          quantity={quantity}
+          onQuantityChange={(delta) => {
+            const newQty = quantity + delta;
+            if (newQty >= 1) setQuantity(newQty);
+          }}
+          onAddToCart={() => handleAddToCart(plant.id)}
+          onBackToShop={handleBackToShop}
+        />
+      </div>
+    );
+  }
 
   // eslint-disable-next-line no-unused-vars
   const handleSubmitComment = (e) => {
@@ -490,28 +542,73 @@ function PlantDetails() {
   return (
     <div className="shop-main">
       <NavigationButtons className="top" />
-      <div className="plant-details-container">
-        <div className="plant-details-gallery">
-          <div className="plant-details-image">
-            <img 
-              src={imagesLoaded ? images[selectedImageIndex] : plant.mainImage || '/images/placeholder.jpg'} 
-              alt={plant.name} 
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
-              onError={(e) => {
-                e.target.src = '/images/placeholder.jpg';
-              }}
-            />
-            {!imagesLoaded && (
-              <div className="image-loading-overlay">
-                <div className="loading-spinner"></div>
+      <div className={`plant-details-container ${isGiftCertificate ? 'gift-certificate-layout' : ''}`}>
+        <div className={isGiftCertificate ? 'gift-certificate-image-section' : "plant-details-gallery"}>
+          {isGiftCertificate ? (
+            <div style={{ width: '100%', padding: '20px' }}>
+              <img 
+                src={images[0] || plant.mainImage || '/images/placeholder.jpg'} 
+                alt={plant.name}
+                width="600"
+                height="600"
+                style={{
+                  width: '100%',
+                  maxWidth: '500px',
+                  height: 'auto',
+                  objectFit: 'contain',
+                  display: 'block',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '12px',
+                  padding: '40px',
+                  backgroundColor: '#ffffff',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}
+                onError={(e) => {
+                  e.target.src = '/images/placeholder.jpg';
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="plant-details-image">
+                {!imagesLoaded ? (
+                  <img 
+                    src={plant.mainImage || '/images/placeholder.jpg'} 
+                    alt={plant.name} 
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/images/placeholder.jpg';
+                    }}
+                  />
+                ) : (
+                  <img 
+                    src={images[selectedImageIndex]} 
+                    alt={plant.name} 
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                    onError={(e) => {
+                      e.target.src = '/images/placeholder.jpg';
+                    }}
+                  />
+                )}
               </div>
-            )}
-          </div>
-          {(() => {
+              {!imagesLoaded && (
+                <div className="image-loading-overlay">
+                  <div className="loading-spinner"></div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        
+        {!isGiftCertificate && (() => {
             const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
             const attribution = getImageAttribution(currentImage);
             return attribution ? (
@@ -520,7 +617,7 @@ function PlantDetails() {
               </div>
             ) : null;
           })()}
-          {images.length > 1 && (
+        {!isGiftCertificate && images.length > 1 && (
             <div className="image-thumbnails">
               {images.map((image, index) => (
                 <ThumbnailImage
@@ -536,61 +633,23 @@ function PlantDetails() {
               ))}
             </div>
           )}
-        </div>
-        <div className="plant-details-info">
+        
+        <div className={isGiftCertificate ? "gift-certificate-content-section" : "plant-details-info"}>
           <div className="plant-info" style={{ padding: 0, margin: 0, paddingLeft: 0, paddingRight: 0 }}>
             <div className="name-and-status">
               <h1 className="plant-common-name">{plant.name}</h1>
-              {(() => {
-                // Get the current stock
-                const currentStock = plant.inventory?.currentStock || 0;
-                
-                // Common inline styles for all status badges
-                const statusBadgeStyle = {
-                  paddingBottom: 0,
-                  marginBottom: 0,
-                  alignSelf: 'flex-start',
-                  position: 'relative',
-                  top: '0.4rem'
-                };
-                
-                if (currentStock <= 0) {
-                  // Standardize on "Out of Stock" terminology
-                  return (
-                    <span className="status-badge sold-out" style={statusBadgeStyle}>
-                      Out of Stock
-                    </span>
-                  );
-                } else if (currentStock < 10) {
-                  // Show as "In Stock" instead of "Low Stock"
-                  return (
-                    <span className="status-badge in-stock" style={statusBadgeStyle}>
-                      In Stock
-                    </span>
-                  );
-                } else if (plant.inventory?.status) {
-                  // For other statuses like 'Coming Soon' or custom ones
-                  // If it happens to be "Sold Out", standardize to "Out of Stock"
-                  if (plant.inventory.status.toLowerCase() === 'sold out') {
-                    return (
-                      <span className="status-badge sold-out" style={statusBadgeStyle}>
-                        Out of Stock
-                      </span>
-                    );
-                  }
-                  return (
-                    <span className={`status-badge ${plant.inventory.status.toLowerCase().replace(' ', '-') || 'in-stock'}`} style={statusBadgeStyle}>
-                      {plant.inventory.status}
-                    </span>
-                  );
-                } else {
-                  return (
-                    <span className="status-badge in-stock" style={statusBadgeStyle}>
-                      In Stock
-                    </span>
-                  );
-                }
-              })()}
+              {isGiftCertificate ? (
+                <span className="status-badge gift-certificate" style={{
+                  background: '#f4e4c1',
+                  color: '#7a5c2c'
+                }}>
+                  Gift Certificate
+                </span>
+              ) : (
+                <span className="status-badge in-stock">
+                  {plant.inventory?.currentStock <= 0 ? 'Out of Stock' : 'In Stock'}
+                </span>
+              )}
             </div>
             {(plant.scientificName || plant.latinname) && (
               <h2 className="scientific-name">{plant.scientificName || plant.latinname}</h2>
@@ -626,44 +685,60 @@ function PlantDetails() {
             </div>
           </div>
           
-          <div className="plant-specs">
-            <h3>Plant Specifications</h3>
-            {plant.plantType && (
-              <p>
-                <strong>Type:</strong>&nbsp;&nbsp;
-                <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
-                  {plant.plantType}
-                </span>
-              </p>
-            )}
-            {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
-            {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
-            {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
-            {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing.toString().includes('"') ? plant.spacing : `${plant.spacing}"`}</p>}
-            {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
-            {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
-            {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
-            {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
-            {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
-            {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
-            {plant.plantingSeason && <p><strong>Planting Season:</strong> {plant.plantingSeason}</p>}
-            {plant.planting_season && <p><strong>Planting Season:</strong> {plant.planting_season}</p>}
-            {plant.plantingDepth && <p><strong>Planting Depth:</strong> {plant.plantingDepth} inches</p>}
-            {plant.planting_depth_inches && <p><strong>Planting Depth:</strong> {plant.planting_depth_inches} inches</p>}
-            {plant.planting_depth && <p><strong>Planting Depth:</strong> {plant.planting_depth} inches</p>}
-            {plant.size && <p><strong>Mature Size:</strong> {plant.size}</p>}
-            {plant.mature_size && <p><strong>Mature Size:</strong> {plant.mature_size}</p>}
-            {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
-            {plant.featured && <p><strong>Featured:</strong> Yes</p>}
-            {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
-            {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
-            {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
-            {plant.aroma && <p><strong>Aroma:</strong> {plant.aroma}</p>}
-            {plant.gardeningTips && <p><strong>Gardening Tips:</strong> {plant.gardeningTips}</p>}
-            {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
-            {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
-            {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
-          </div>
+          {isGiftCertificate ? (
+            <div className="gift-certificate-details">
+              <h3>Gift Certificate Details</h3>
+              <p><strong>Type:</strong> Digital Delivery</p>
+              <p><strong>Value:</strong> ${plant.price}</p>
+              <p><strong>Delivery:</strong> Emailed within 24 hours</p>
+              <p><strong>Valid:</strong> No expiration</p>
+              {plant.description && (
+                <div className="redemption-instructions">
+                  <h4>How to Redeem:</h4>
+                  <p>{plant.description}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="plant-specs">
+              <h3>Plant Specifications</h3>
+              {plant.plantType && (
+                <p>
+                  <strong>Type:</strong>&nbsp;&nbsp;
+                  <span className={`type-badge ${plant.plantType?.toLowerCase().replace(/\s+/g, '-') || 'other'}`}>
+                    {plant.plantType}
+                  </span>
+                </p>
+              )}
+              {plant.height_inches && <p><strong>Height:</strong> {plant.height_inches}"</p>}
+              {(plant.height && !plant.height_inches) && <p><strong>Height:</strong> {plant.height.toString().includes('"') ? plant.height : `${plant.height}"`}</p>}
+              {plant.spread_inches && <p><strong>Spread:</strong> {plant.spread_inches}"</p>}
+              {plant.spacing && <p><strong>Spacing:</strong> {plant.spacing.toString().includes('"') ? plant.spacing : `${plant.spacing}"`}</p>}
+              {plant.sunlight && <p><strong>Sunlight:</strong> {plant.sunlight}</p>}
+              {(plant.light && !plant.sunlight) && <p><strong>Light:</strong> {plant.light}</p>}
+              {plant.hardiness_zones && <p><strong>Hardiness Zone:</strong> {plant.hardiness_zones}</p>}
+              {(plant.hardinessZone && !plant.hardiness_zones) && <p><strong>Hardiness Zone:</strong> {plant.hardinessZone}</p>}
+              {plant.bloomSeason && <p><strong>Bloom Season:</strong> {plant.bloomSeason}</p>}
+              {plant.bloom_season && <p><strong>Bloom Season:</strong> {plant.bloom_season}</p>}
+              {plant.plantingSeason && <p><strong>Planting Season:</strong> {plant.plantingSeason}</p>}
+              {plant.planting_season && <p><strong>Planting Season:</strong> {plant.planting_season}</p>}
+              {plant.plantingDepth && <p><strong>Planting Depth:</strong> {plant.plantingDepth} inches</p>}
+              {plant.planting_depth_inches && <p><strong>Planting Depth:</strong> {plant.planting_depth_inches} inches</p>}
+              {plant.planting_depth && <p><strong>Planting Depth:</strong> {plant.planting_depth} inches</p>}
+              {plant.size && <p><strong>Mature Size:</strong> {plant.size}</p>}
+              {plant.mature_size && <p><strong>Mature Size:</strong> {plant.mature_size}</p>}
+              {plant.colour && <p><strong>Colour:</strong> {plant.colour}</p>}
+              {plant.featured && <p><strong>Featured:</strong> Yes</p>}
+              {plant.special_features && <p><strong>Special Features:</strong> {plant.special_features}</p>}
+              {(plant.specialFeatures && !plant.special_features) && <p><strong>Special Features:</strong> {plant.specialFeatures}</p>}
+              {plant.uses && <p><strong>Uses:</strong> {plant.uses}</p>}
+              {plant.aroma && <p><strong>Aroma:</strong> {plant.aroma}</p>}
+              {plant.gardeningTips && <p><strong>Gardening Tips:</strong> {plant.gardeningTips}</p>}
+              {plant.gardening_tips && <p><strong>Gardening Tips:</strong> {plant.gardening_tips}</p>}
+              {plant.careTips && <p><strong>Care Tips:</strong> {plant.careTips}</p>}
+              {plant.care_tips && <p><strong>Care Tips:</strong> {plant.care_tips}</p>}
+            </div>
+          )}
         </div>
       </div>
       <NavigationButtons className="bottom" />
