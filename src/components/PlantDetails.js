@@ -432,7 +432,7 @@ function PlantDetails() {
   if (!plant) return <div className="error">Plant not found</div>;
   
   // Check if this is a gift certificate
-  const isGiftCertificate = plant && plant.plantType && plant.plantType.toLowerCase() === 'gift certificate';
+  const isGiftCertificate = plant && plant.id && plant.id.toString().startsWith('GC-');
 
   // If this is a gift certificate, use the special component
   if (isGiftCertificate && plant) {
