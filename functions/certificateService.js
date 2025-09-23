@@ -120,7 +120,7 @@ async function validateCertificate(certificateCode, amount = 0) {
     if (!certificate) {
       return {
         valid: false,
-        error: 'Certificate not found',
+        error: 'Certificate not found, contact us to help',
         certificate: null
       };
     }
@@ -202,7 +202,7 @@ async function redeemCertificate(certificateCode, amount, orderId) {
       ...certificate,
       balance: newBalance,
       status: newBalance === 0 ? 'fully-redeemed' : 'partially-redeemed',
-      redemptions: [...certificate.redemptions, redemption],
+      redemptions: [...(certificate.redemptions || []), redemption],
       lastModified: now
     };
 

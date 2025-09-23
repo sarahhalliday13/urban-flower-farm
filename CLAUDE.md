@@ -19,7 +19,16 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2025-09-23)
-- Implemented Gift Certificate Redemption System:
+- Enhanced Gift Certificate Redemption System with UX improvements:
+  - Simplified checkout UI with pill-style certificate display
+  - Removed redundant certificate information and titles for cleaner interface
+  - Repositioned Place Order button to order summary for better mobile experience
+  - Improved error messaging with helpful contact links for invalid certificates
+  - Fixed critical redemption bug preventing certificate balance deduction
+  - Streamlined certificate validation and redemption API flow
+  - Enhanced mobile responsiveness and user experience
+  - Full-width order summary section for better visual hierarchy
+- Completed Gift Certificate Redemption Implementation:
   - New GiftCertificateRedemption component for customer checkout
   - Real-time certificate validation with balance checking
   - Multiple certificates can be applied per order

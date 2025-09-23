@@ -234,10 +234,8 @@ const Checkout = () => {
   const redeemCertificates = async (orderId) => {
     const redemptionResults = [];
     
-    // Use Firebase Functions URL based on environment
-    const baseUrl = process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1/api'
-      : 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/api';
+    // Use Firebase Functions URL - temporarily use deployed functions for local testing
+    const baseUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/api';
     
     for (const cert of appliedCertificates) {
       try {
@@ -683,7 +681,7 @@ const Checkout = () => {
             </div>
             
             <div className="form-group full-width">
-              <label htmlFor="notes">Notes / Flower Pick Up / Gift Certificate #</label>
+              <label htmlFor="notes">Flower Pick Up</label>
               <textarea
                 id="notes"
                 name="notes"
@@ -724,20 +722,11 @@ const Checkout = () => {
               </div>
             )}
             
-            <div className="form-actions">
-              {errors.submit && (
-                <div className="error-message" style={{ marginBottom: '1rem', textAlign: 'center' }}>
-                  {errors.submit}
-                </div>
-              )}
-              <button 
-                type="submit" 
-                className="place-order-btn"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Processing...' : 'Place Order'}
-              </button>
-            </div>
+            {errors.submit && (
+              <div className="error-message" style={{ marginBottom: '1rem', textAlign: 'center' }}>
+                {errors.submit}
+              </div>
+            )}
           </form>
         </div>
         
@@ -780,27 +769,37 @@ const Checkout = () => {
             orderTotal={getTotal()}
           />
           
-          <div className="order-total">
-            <h3>Subtotal</h3>
-            <p className="total-price">${getTotal().toFixed(2)}</p>
-            {appliedCertificates.length > 0 && (
-              <>
-                <div className="gift-certificate-discount">
-                  <h4>Gift Certificate Discount</h4>
-                  <p className="discount-amount">-${appliedCertificates.reduce((sum, cert) => sum + cert.appliedAmount, 0).toFixed(2)}</p>
+          <div className="order-total" style={{ width: '100%', margin: '0 -1.5rem', padding: '0 1.5rem' }}>
+            <div style={{ borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                <span>Subtotal:</span>
+                <span>${getTotal().toFixed(2)}</span>
+              </div>
+              {appliedCertificates.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#28a745', fontWeight: '500' }}>
+                  <span>Gift Certificate:</span>
+                  <span>-${appliedCertificates.reduce((sum, cert) => sum + cert.appliedAmount, 0).toFixed(2)}</span>
                 </div>
-                <div className="final-total">
-                  <h3>Final Total</h3>
-                  <p className="total-price" data-label="Total:">${calculateFinalTotal().toFixed(2)}</p>
-                </div>
-              </>
-            )}
-            {appliedCertificates.length === 0 && (
-              <>
-                <h3>Total</h3>
-                <p className="total-price" data-label="Total:">${getTotal().toFixed(2)}</p>
-              </>
-            )}
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Total:</h3>
+              <p className="total-price" style={{ margin: 0, fontSize: '1.5rem', fontWeight: 'bold' }}>
+                ${calculateFinalTotal().toFixed(2)}
+              </p>
+            </div>
+            
+            <div className="form-actions" style={{ marginTop: '20px' }}>
+              <button 
+                type="submit" 
+                className="place-order-btn"
+                disabled={isSubmitting}
+                onClick={handleSubmit}
+                style={{ width: '100%' }}
+              >
+                {isSubmitting ? 'Processing...' : 'Place Order'}
+              </button>
+            </div>
           </div>
           
           <div className="order-note">

@@ -12,10 +12,8 @@ const GiftCertificateRedemption = ({
 
   const validateCertificate = async (code, amount = 0) => {
     try {
-      // Use Firebase Functions URL based on environment
-      const baseUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1/api'
-        : 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/api';
+      // Use Firebase Functions URL - temporarily use deployed functions for local testing
+      const baseUrl = 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/api';
       
       const response = await fetch(`${baseUrl}/validateCertificate`, {
         method: 'POST',
@@ -107,13 +105,8 @@ const GiftCertificateRedemption = ({
 
   return (
     <div style={{ 
-      border: '1px solid #ddd', 
-      borderRadius: '8px', 
-      padding: '20px', 
-      backgroundColor: '#f9f9f9',
       marginBottom: '20px'
     }}>
-      <h3 style={{ margin: '0 0 15px 0', color: '#333' }}>Gift Certificates</h3>
       
       <div style={{ marginBottom: '15px' }}>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
@@ -157,70 +150,56 @@ const GiftCertificateRedemption = ({
             borderRadius: '4px',
             padding: '8px 12px'
           }}>
-            {error}
+            {error.includes('contact us to help') ? (
+              <>
+                Certificate not found, <a href="mailto:buttonsflowerfarm@telus.net" style={{ color: '#dc3545', textDecoration: 'underline' }}>contact us</a> to help
+              </>
+            ) : (
+              error
+            )}
           </div>
         )}
       </div>
 
       {appliedCertificates.length > 0 && (
         <div>
-          <h4 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#555' }}>Applied Certificates:</h4>
-          {appliedCertificates.map((cert, index) => (
-            <div key={cert.code} style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              backgroundColor: '#e8f5e9',
-              border: '1px solid #c8e6c9',
-              borderRadius: '4px',
-              padding: '10px',
-              marginBottom: '8px'
-            }}>
-              <div>
-                <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
-                  {cert.code}
-                </div>
-                <div style={{ fontSize: '12px', color: '#666' }}>
-                  Applied: ${cert.appliedAmount.toFixed(2)} | 
-                  Available: ${cert.availableBalance.toFixed(2)} |
-                  Expires: {formatExpirationDate(cert.expirationDate)}
-                </div>
-                {cert.recipientName && (
-                  <div style={{ fontSize: '12px', color: '#666' }}>
-                    For: {cert.recipientName}
-                  </div>
-                )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+            {appliedCertificates.map((cert, index) => (
+              <div key={cert.code} style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                backgroundColor: '#f0f0f0',
+                border: '1px solid #ddd',
+                borderRadius: '20px',
+                padding: '6px 10px 6px 14px',
+                fontSize: '14px',
+                gap: '8px'
+              }}>
+                <span style={{ color: '#333' }}>{cert.code}</span>
+                <span style={{ color: '#28a745', fontWeight: '500' }}>-${cert.appliedAmount.toFixed(2)}</span>
+                <button
+                  onClick={() => handleRemoveCertificate(cert.code)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#999',
+                    fontSize: '18px',
+                    lineHeight: '1',
+                    cursor: 'pointer',
+                    padding: '0 2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                  onMouseOver={(e) => e.target.style.color = '#666'}
+                  onMouseOut={(e) => e.target.style.color = '#999'}
+                >
+                  ×
+                </button>
               </div>
-              <button
-                onClick={() => handleRemoveCertificate(cert.code)}
-                style={{
-                  padding: '5px 10px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          
-          <div style={{
-            textAlign: 'right',
-            fontWeight: 'bold',
-            fontSize: '16px',
-            color: '#28a745',
-            marginTop: '10px',
-            padding: '10px',
-            backgroundColor: '#d4edda',
-            border: '1px solid #c3e6cb',
-            borderRadius: '4px'
-          }}>
-            Total Gift Certificate Credit: ${totalApplied.toFixed(2)}
+            ))}
           </div>
+          
         </div>
       )}
     </div>
