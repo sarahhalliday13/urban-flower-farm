@@ -427,6 +427,31 @@ function PlantDetails() {
     window.location.href = shopPath;
   };
 
+  // Define handleAddToCart before it's used in JSX
+  const handleAddToCart = () => {
+    if (plant) {
+      // Use the quantity parameter instead of a loop
+      const added = addToCart(plant, quantity);
+      
+      // Only show success message if items were actually added
+      if (added) {
+        // Dispatch the toast event for success
+        const event = new CustomEvent('show-toast', {
+          detail: {
+            message: `${quantity} ${quantity === 1 ? 'item has' : 'items have'} been added to your cart`,
+            type: 'success',
+            duration: 3000
+          }
+        });
+        window.dispatchEvent(event);
+        
+        // Reset quantity to 1 after adding to cart
+        setQuantity(1);
+        localStorage.setItem(`plant-${id}-quantity`, '1');
+      }
+    }
+  };
+
   if (loading) return <div className="loading">Loading plant details...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!plant) return <div className="error">Plant not found</div>;
@@ -446,7 +471,7 @@ function PlantDetails() {
             const newQty = quantity + delta;
             if (newQty >= 1) setQuantity(newQty);
           }}
-          onAddToCart={() => handleAddToCart(plant.id)}
+          onAddToCart={handleAddToCart}
           onBackToShop={handleBackToShop}
         />
       </div>
@@ -492,30 +517,6 @@ function PlantDetails() {
       localStorage.setItem(`plant-${id}-quantity`, newQuantity.toString());
       return newQuantity;
     });
-  };
-
-  const handleAddToCart = () => {
-    if (plant) {
-      // Use the quantity parameter instead of a loop
-      const added = addToCart(plant, quantity);
-      
-      // Only show success message if items were actually added
-      if (added) {
-        // Dispatch the toast event for success
-        const event = new CustomEvent('show-toast', {
-          detail: {
-            message: `${quantity} ${quantity === 1 ? 'item has' : 'items have'} been added to your cart`,
-            type: 'success',
-            duration: 3000
-          }
-        });
-        window.dispatchEvent(event);
-        
-        // Reset quantity to 1 after adding to cart
-        setQuantity(1);
-        localStorage.setItem(`plant-${id}-quantity`, '1');
-      }
-    }
   };
   
   // Use simple img tag for thumbnail images

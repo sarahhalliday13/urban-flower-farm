@@ -21,8 +21,12 @@ export function CartProvider({ children }) {
     // Get available stock from product.inventory
     const availableStock = parseInt(product.inventory?.currentStock, 10) || 0;
     
-    // If no stock available, return false
-    if (availableStock <= 0) {
+    // Check if this is a gift certificate (unlimited stock)
+    const isGiftCertificate = (product.id && product.id.toString().startsWith('GC-')) || 
+                              (product.plantType === 'Gift Certificate');
+    
+    // If no stock available and not a gift certificate, return false
+    if (availableStock <= 0 && !isGiftCertificate) {
       // Notify user that item is out of stock
       const event = new CustomEvent('show-toast', {
         detail: {
@@ -39,11 +43,13 @@ export function CartProvider({ children }) {
     const existingItem = cartItems.find(item => item.id === product.id);
     const currentInCart = existingItem ? parseInt(existingItem.quantity, 10) || 0 : 0;
     
-    // Calculate how many more can be added
-    const maxAddable = Math.max(0, availableStock - currentInCart);
+    // Calculate how many more can be added (unlimited for gift certificates)
+    const maxAddable = isGiftCertificate ? 
+      quantityToAdd : // No limit for gift certificates 
+      Math.max(0, availableStock - currentInCart);
     
-    // If we can't add any more, show message
-    if (maxAddable <= 0) {
+    // If we can't add any more (only applies to regular items), show message
+    if (maxAddable <= 0 && !isGiftCertificate) {
       const event = new CustomEvent('show-toast', {
         detail: {
           message: `You already have all available ${product.name} in your cart.`,
@@ -55,8 +61,8 @@ export function CartProvider({ children }) {
       return false;
     }
     
-    // Limit quantity to what's available
-    if (quantityToAdd > maxAddable) {
+    // Limit quantity to what's available (skip for gift certificates)
+    if (!isGiftCertificate && quantityToAdd > maxAddable) {
       const event = new CustomEvent('show-toast', {
         detail: {
           message: `Only ${maxAddable} more ${product.name} available. Added what we could.`,

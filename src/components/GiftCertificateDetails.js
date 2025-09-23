@@ -7,13 +7,14 @@ const GiftCertificateDetails = ({ plant, quantity, onQuantityChange, onAddToCart
   
   // Other gift certificate amounts for suggestions
   const otherAmounts = [
-    { id: 'gc-25', name: 'Gift Certificate $25', price: 25 },
-    { id: 'gc-50', name: 'Gift Certificate $50', price: 50 },
-    { id: 'gc-75', name: 'Gift Certificate $75', price: 75 },
-    { id: 'gc-100', name: 'Gift Certificate $100', price: 100 },
-    { id: 'gc-150', name: 'Gift Certificate $150', price: 150 },
-    { id: 'gc-200', name: 'Gift Certificate $200', price: 200 },
-  ].filter(gc => gc.price !== plant.price); // Exclude current amount
+    { id: 'GC-25', name: 'Gift Certificate $25', price: 25 },
+    { id: 'GC-50', name: 'Gift Certificate $50', price: 50 },
+    { id: 'GC-75', name: 'Gift Certificate $75', price: 75 },
+    { id: 'GC-100', name: 'Gift Certificate $100', price: 100 },
+    { id: 'GC-150', name: 'Gift Certificate $150', price: 150 },
+    { id: 'GC-200', name: 'Gift Certificate $200', price: 200 },
+    { id: 'GC-250', name: 'Gift Certificate $250', price: 250 },
+  ].filter(gc => gc.price !== parseFloat(plant.price)); // Exclude current amount
 
   const NavigationButtons = ({ className }) => (
     <div className={`plant-navigation ${className}`}>

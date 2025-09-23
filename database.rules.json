@@ -37,6 +37,10 @@
     "orderCounter": {
       ".read": "auth !== null",
       ".write": true
+    },
+    "giftCertificates": {
+      ".read": true,
+      ".write": true
     }
   }
 }

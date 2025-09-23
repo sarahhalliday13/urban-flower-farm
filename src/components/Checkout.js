@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { updateInventory, saveOrder } from '../services/firebase';
 import { getCustomerData, saveCustomerData } from '../services/customerService';
 import { sendOrderConfirmationEmails } from '../services/emailService';
+import GiftCertificateCheckoutFields from './GiftCertificateCheckoutFields';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -23,6 +24,7 @@ const Checkout = () => {
   const [orderId, setOrderId] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
   const [comingSoonAccepted, setComingSoonAccepted] = useState(false);
+  const [giftCertificateData, setGiftCertificateData] = useState({});
 
   // Move all useEffect hooks before conditional return
   useEffect(() => {
@@ -72,6 +74,15 @@ const Checkout = () => {
     }
   }, [location.pathname, navigate]);
 
+  // Helper function to check if an item is a gift certificate
+  const isGiftCertificate = (item) => {
+    return item.id && item.id.toString().startsWith('GC-');
+  };
+
+  // Get gift certificate items from cart
+  const giftCertificateItems = cartItems.filter(isGiftCertificate);
+  const hasGiftCertificates = giftCertificateItems.length > 0;
+
   // Early return to prevent rendering with empty cart - AFTER all hooks
   if (cartItems.length === 0 && !orderComplete && location.pathname !== '/checkout/confirmation') {
     return null; // Don't render broken page, wait for navigate
@@ -82,6 +93,91 @@ const Checkout = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: null }));
+    }
+  };
+
+  const handleGiftCertificateChange = (itemId, field, value) => {
+    setGiftCertificateData(prev => ({
+      ...prev,
+      [itemId]: {
+        ...prev[itemId],
+        [field]: value
+      }
+    }));
+  };
+
+  const processGiftCertificates = async (orderData, giftCertItems) => {
+    try {
+      console.log('🎁 Starting gift certificate processing...');
+      console.log('Order data:', orderData);
+      console.log('Gift cert items:', giftCertItems);
+      console.log('Gift cert data:', giftCertificateData);
+      
+      // Prepare gift certificate data for each item
+      const certificatesData = giftCertItems.map(item => {
+        const certData = giftCertificateData[item.id] || {};
+        return {
+          amount: parseFloat(item.price),
+          recipientName: certData.recipientName || '',
+          recipientEmail: certData.recipientEmail || '',
+          senderName: certData.senderName || `${formData.firstName} ${formData.lastName}`,
+          giftMessage: certData.giftMessage || '',
+          quantity: item.quantity // Handle multiple certificates of same amount
+        };
+      });
+
+      console.log('📋 Prepared certificates data:', certificatesData);
+
+      // Flatten for multiple quantities
+      const allCertificates = [];
+      certificatesData.forEach(cert => {
+        for (let i = 0; i < cert.quantity; i++) {
+          allCertificates.push({
+            amount: cert.amount,
+            recipientName: cert.recipientName,
+            recipientEmail: cert.recipientEmail,
+            senderName: cert.senderName,
+            giftMessage: cert.giftMessage
+          });
+        }
+      });
+
+      // Call Firebase function to generate certificates
+      const functionsUrl = (typeof process !== 'undefined' && process.env?.REACT_APP_FIREBASE_FUNCTIONS_URL) || 
+                          'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net';
+      
+      console.log('📡 Making request to:', `${functionsUrl}/generateGiftCertificate`);
+      console.log('📦 Request payload:', {
+        orderData,
+        giftCertificates: allCertificates
+      });
+      
+      const response = await fetch(`${functionsUrl}/generateGiftCertificate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderData,
+          giftCertificates: allCertificates
+        }),
+      });
+
+      console.log('📡 Response status:', response.status, response.statusText);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Response error:', errorText);
+        throw new Error(`Failed to generate gift certificates: ${response.statusText}. ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ Gift certificates generated successfully:', result);
+      return result;
+
+    } catch (error) {
+      console.error('Error processing gift certificates:', error);
+      throw error;
     }
   };
 
@@ -223,6 +319,26 @@ const Checkout = () => {
           console.log('✅ Order confirmation emails sent successfully');
         } catch (emailError) {
           console.error('❌ Error sending order confirmation emails:', emailError);
+        }
+
+        // Process gift certificates if any exist
+        if (hasGiftCertificates) {
+          console.log(`🎁 Processing ${giftCertificateItems.length} gift certificate(s)...`);
+          try {
+            const result = await processGiftCertificates(newOrderData, giftCertificateItems);
+            console.log('✅ Gift certificates processed successfully:', result);
+          } catch (certificateError) {
+            console.error('❌ Error processing gift certificates:', certificateError);
+            // Show user-friendly error message
+            const event = new CustomEvent('show-toast', {
+              detail: {
+                message: 'Gift certificates processed, but there was an issue with email delivery. Please contact us if you don\'t receive your certificates.',
+                type: 'warning',
+                duration: 8000
+              }
+            });
+            window.dispatchEvent(event);
+          }
         }
         
         // Dispatch the orderCreated event to update the navigation
@@ -481,7 +597,7 @@ const Checkout = () => {
             </div>
             
             <div className="form-group full-width">
-              <label htmlFor="notes">Flower Pick Up</label>
+              <label htmlFor="notes">Notes / Flower Pick Up / Gift Certificate #</label>
               <textarea
                 id="notes"
                 name="notes"
@@ -491,6 +607,16 @@ const Checkout = () => {
                 rows="3"
               />
             </div>
+            
+            {/* Gift Certificate Fields */}
+            {hasGiftCertificates && (
+              <GiftCertificateCheckoutFields
+                giftCertificateItems={giftCertificateItems}
+                giftCertificateData={giftCertificateData}
+                onGiftCertificateChange={handleGiftCertificateChange}
+                customerName={`${formData.firstName} ${formData.lastName}`.trim()}
+              />
+            )}
             
             {/* Coming Soon Acknowledgment Checkbox */}
             {cartItems.some(item => item.inventory?.status === 'Coming Soon') && (

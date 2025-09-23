@@ -42,6 +42,8 @@ import InvoicePage from './pages/InvoicePage';
 import InventoryImportExport from './components/InventoryImportExport';
 import ImageRecovery from './components/ImageRecovery';
 import GiftCertificateView from './components/GiftCertificateView';
+import GiftCertificateGenerator from './components/GiftCertificateGenerator';
+import AdminGiftCertificates from './components/AdminGiftCertificates';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -448,6 +450,26 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <ImageRecovery />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/gift-certificates"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <GiftCertificateGenerator />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/gift-certificate-management"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <AdminGiftCertificates />
               </AdminContentWrapper>
             </ProtectedRoute>
           }

@@ -397,6 +397,12 @@ const AdminDashboard = () => {
             <Link to="/admin/image-recovery" className="secondary-link">
               🔍 Image Recovery Tool
             </Link>
+            <Link to="/admin/gift-certificates" className="secondary-link" style={{ marginLeft: '1rem' }}>
+              🎁 Gift Certificate Generator
+            </Link>
+            <Link to="/admin/gift-certificate-management" className="secondary-link" style={{ marginLeft: '1rem' }}>
+              💳 Manage Gift Certificates
+            </Link>
           </div>
         </div>
         

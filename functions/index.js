@@ -33,6 +33,8 @@ const { directContactEmail } = require('./simple-contact-email');
 // Import our email functions directly - CRITICAL: use destructuring syntax to get the actual function
 const sendOrderEmailFunction = require('./sendOrderEmail');
 const invoiceEmailModule = require('./sendInvoiceEmail');
+const { generateGiftCertificate } = require('./generateGiftCertificate');
+const { sendGiftCertificateManually } = require('./sendGiftCertificateManually');
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -324,6 +326,10 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
 // Export sendInvoiceEmail function
 exports.sendInvoiceEmail = invoiceEmailModule.sendInvoiceEmail;
+
+// Export gift certificate functions
+exports.generateGiftCertificate = generateGiftCertificate;
+exports.sendGiftCertificateManually = sendGiftCertificateManually;
 
 // Export other functions
 exports.simpleContactFunction = simpleContactFunction;

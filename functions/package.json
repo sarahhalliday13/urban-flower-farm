@@ -17,12 +17,14 @@
   "dependencies": {
     "@sendgrid/mail": "^8.1.4",
     "busboy": "^1.6.0",
+    "chrome-aws-lambda": "~10.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "firebase-admin": "^11.11.1",
     "firebase-functions": "^3.24.1",
     "node-fetch": "^2.7.0",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^7.0.5",
+    "puppeteer-core": "~10.4.0"
   },
   "devDependencies": {
     "eslint": "^8.15.0",

@@ -189,11 +189,14 @@ function Shop() {
       plant.hidden !== 'true' && 
       plant.hidden !== 1 && 
       plant.hidden !== '1') &&
-      // Only show plants with inventory > 0
+      // Only show plants with inventory > 0, OR gift certificates (always available), OR special statuses
       ((plant.inventory?.currentStock > 0) || 
       (plant.inventory?.status === 'Coming Soon') || 
       (plant.inventory?.status === 'Pre-order') || 
-      (plant.inventory?.status === 'Pre-Order'))
+      (plant.inventory?.status === 'Pre-Order') ||
+      // Always show gift certificates regardless of stock
+      (plant.id && plant.id.toString().startsWith('GC-')) ||
+      (plant.plantType === 'Gift Certificate'))
     );
     
     console.log('Total visible plants (not hidden or out of stock):', visiblePlants.length);
