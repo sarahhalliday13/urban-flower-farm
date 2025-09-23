@@ -92,7 +92,7 @@ const AdminOrders = () => {
               <th>Date</th>
               <th>Customer</th>
               <th>Status</th>
-              <th>Total</th>
+              <th>Payment Details</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -103,7 +103,36 @@ const AdminOrders = () => {
                 <td>{order.date ? formatDate(order.date) : 'Unknown'}</td>
                 <td>{order.customer?.name || 'No name'}</td>
                 <td>{order.status}</td>
-                <td>${order.total?.toFixed(2) || '0.00'}</td>
+                <td>
+                  <div className="payment-details">
+                    <div className="order-subtotal">
+                      <strong>Subtotal: ${order.total?.toFixed(2) || '0.00'}</strong>
+                    </div>
+                    {order.giftCertificatesApplied && order.giftCertificatesApplied.length > 0 && (
+                      <>
+                        <div className="gift-certificates-used">
+                          <small>Gift Certificates:</small>
+                          {order.giftCertificatesApplied.map((cert, index) => (
+                            <div key={index} className="cert-detail">
+                              <small>
+                                {cert.certificateCode}: -${cert.appliedAmount.toFixed(2)}
+                                {cert.recipientName && ` (${cert.recipientName})`}
+                              </small>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="final-total">
+                          <strong>Final Total: ${order.finalTotal || '0.00'}</strong>
+                        </div>
+                      </>
+                    )}
+                    {(!order.giftCertificatesApplied || order.giftCertificatesApplied.length === 0) && (
+                      <div className="payment-method">
+                        <small>Cash/E-transfer</small>
+                      </div>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <div className="invoice-buttons">
                     <button 

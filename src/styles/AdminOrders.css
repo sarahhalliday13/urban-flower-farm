@@ -1,5 +1,39 @@
 /* AdminOrders.css */
 
+/* Payment Details Styling */
+.payment-details {
+  text-align: left;
+}
+
+.order-subtotal {
+  margin-bottom: 4px;
+}
+
+.gift-certificates-used {
+  margin: 4px 0;
+  padding: 4px 8px;
+  background-color: #e8f5e9;
+  border-left: 3px solid #4caf50;
+  border-radius: 2px;
+}
+
+.cert-detail {
+  margin: 2px 0;
+}
+
+.final-total {
+  margin-top: 4px;
+  padding: 4px 8px;
+  background-color: #fff3e0;
+  border-left: 3px solid #ff9800;
+  border-radius: 2px;
+}
+
+.payment-method {
+  color: #666;
+  font-style: italic;
+}
+
 /* Container */
 .admin-orders-container {
   padding: 2rem;

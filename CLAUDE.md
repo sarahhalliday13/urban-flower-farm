@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-09-12
+**Last Updated**: 2025-09-23
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -17,6 +17,19 @@
 2. **Admin Dashboard**: Order management, inventory control, news updates
 3. **Order System**: Cart, checkout, email confirmations with invoices
 4. **Authentication**: Firebase Auth with admin role management
+
+## Recent Changes (2025-09-23)
+- Implemented Gift Certificate Redemption System:
+  - New GiftCertificateRedemption component for customer checkout
+  - Real-time certificate validation with balance checking
+  - Multiple certificates can be applied per order
+  - Partial certificate redemption support
+  - Firebase Functions API endpoints: validateCertificate, redeemCertificate
+  - Updated Checkout.js with certificate processing and order integration
+  - Enhanced AdminOrders.js with certificate payment details display
+  - Added certificate balance tracking and redemption history
+  - Order records now include applied certificates and final totals
+  - Admin dashboard shows certificate usage, discounts, and remaining balances
 
 ## Recent Changes (2025-09-12)
 - Fixed and improved master database import/export:

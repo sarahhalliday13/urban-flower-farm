@@ -5,6 +5,7 @@ import { updateInventory, saveOrder } from '../services/firebase';
 import { getCustomerData, saveCustomerData } from '../services/customerService';
 import { sendOrderConfirmationEmails } from '../services/emailService';
 import GiftCertificateCheckoutFields from './GiftCertificateCheckoutFields';
+import GiftCertificateRedemption from './GiftCertificateRedemption';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
@@ -25,6 +26,7 @@ const Checkout = () => {
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
   const [comingSoonAccepted, setComingSoonAccepted] = useState(false);
   const [giftCertificateData, setGiftCertificateData] = useState({});
+  const [appliedCertificates, setAppliedCertificates] = useState([]);
 
   // Move all useEffect hooks before conditional return
   useEffect(() => {
@@ -211,6 +213,67 @@ const Checkout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Calculate total with gift certificate discounts
+  const calculateFinalTotal = () => {
+    const subtotal = getTotal();
+    const certificateDiscount = appliedCertificates.reduce((sum, cert) => sum + cert.appliedAmount, 0);
+    return Math.max(0, subtotal - certificateDiscount);
+  };
+
+  // Handle gift certificate application
+  const handleCertificateApplied = (certificate) => {
+    setAppliedCertificates(prev => [...prev, certificate]);
+  };
+
+  // Handle gift certificate removal
+  const handleCertificateRemoved = (certificateCode) => {
+    setAppliedCertificates(prev => prev.filter(cert => cert.code !== certificateCode));
+  };
+
+  // Redeem certificates during order processing
+  const redeemCertificates = async (orderId) => {
+    const redemptionResults = [];
+    
+    // Use Firebase Functions URL based on environment
+    const baseUrl = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:5002/buttonsflowerfarm-8a54d/us-central1/api'
+      : 'https://us-central1-buttonsflowerfarm-8a54d.cloudfunctions.net/api';
+    
+    for (const cert of appliedCertificates) {
+      try {
+        const response = await fetch(`${baseUrl}/redeemCertificate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            certificateCode: cert.code,
+            amount: cert.appliedAmount,
+            orderId: orderId
+          })
+        });
+
+        const result = await response.json();
+        redemptionResults.push({
+          certificateCode: cert.code,
+          success: result.success,
+          redeemedAmount: cert.appliedAmount,
+          remainingBalance: result.remainingBalance,
+          error: result.error
+        });
+      } catch (error) {
+        redemptionResults.push({
+          certificateCode: cert.code,
+          success: false,
+          error: error.message,
+          redeemedAmount: 0
+        });
+      }
+    }
+
+    return redemptionResults;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -219,9 +282,9 @@ const Checkout = () => {
     }
     
     // Check if total is valid
-    const orderTotal = getTotal();
-    if (orderTotal <= 0) {
-      setErrors({ ...errors, submit: 'Order total must be greater than $0. Please check your cart items.' });
+    const finalTotal = calculateFinalTotal();
+    if (finalTotal < 0) {
+      setErrors({ ...errors, submit: 'Gift certificate amount exceeds order total. Please adjust certificates.' });
       return;
     }
     
@@ -290,6 +353,12 @@ const Checkout = () => {
           const itemQuantity = parseInt(item.quantity, 10) || 0;
           return sum + (itemPrice * itemQuantity);
         }, 0).toFixed(2),
+        giftCertificatesApplied: appliedCertificates.map(cert => ({
+          certificateCode: cert.code,
+          appliedAmount: cert.appliedAmount,
+          recipientName: cert.recipientName
+        })),
+        finalTotal: finalTotal.toFixed(2),
         status: 'Processing'
       };
       
@@ -313,6 +382,23 @@ const Checkout = () => {
         localStorage.setItem('orders', JSON.stringify([...existingOrders, newOrderData]));
         localStorage.setItem('userEmail', formData.email.toLowerCase());
         
+        // Redeem gift certificates if any were applied
+        if (appliedCertificates.length > 0) {
+          console.log(`🎫 Processing ${appliedCertificates.length} gift certificate redemption(s)...`);
+          try {
+            const redemptionResults = await redeemCertificates(newOrderId);
+            console.log('✅ Gift certificate redemptions processed:', redemptionResults);
+            
+            // Check for any failed redemptions
+            const failedRedemptions = redemptionResults.filter(result => !result.success);
+            if (failedRedemptions.length > 0) {
+              console.warn('⚠️ Some certificate redemptions failed:', failedRedemptions);
+            }
+          } catch (redemptionError) {
+            console.error('❌ Error processing gift certificate redemptions:', redemptionError);
+          }
+        }
+
         // Send order confirmation emails
         try {
           await sendOrderConfirmationEmails(newOrderData);
@@ -685,10 +771,36 @@ const Checkout = () => {
               </div>
             ))}
           </div>
+
+          {/* Gift Certificate Redemption */}
+          <GiftCertificateRedemption
+            onCertificateApplied={handleCertificateApplied}
+            onCertificateRemoved={handleCertificateRemoved}
+            appliedCertificates={appliedCertificates}
+            orderTotal={getTotal()}
+          />
           
           <div className="order-total">
-            <h3>Total</h3>
-            <p className="total-price" data-label="Total:">${getTotal().toFixed(2)}</p>
+            <h3>Subtotal</h3>
+            <p className="total-price">${getTotal().toFixed(2)}</p>
+            {appliedCertificates.length > 0 && (
+              <>
+                <div className="gift-certificate-discount">
+                  <h4>Gift Certificate Discount</h4>
+                  <p className="discount-amount">-${appliedCertificates.reduce((sum, cert) => sum + cert.appliedAmount, 0).toFixed(2)}</p>
+                </div>
+                <div className="final-total">
+                  <h3>Final Total</h3>
+                  <p className="total-price" data-label="Total:">${calculateFinalTotal().toFixed(2)}</p>
+                </div>
+              </>
+            )}
+            {appliedCertificates.length === 0 && (
+              <>
+                <h3>Total</h3>
+                <p className="total-price" data-label="Total:">${getTotal().toFixed(2)}</p>
+              </>
+            )}
           </div>
           
           <div className="order-note">

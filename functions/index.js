@@ -35,6 +35,7 @@ const sendOrderEmailFunction = require('./sendOrderEmail');
 const invoiceEmailModule = require('./sendInvoiceEmail');
 const { generateGiftCertificate } = require('./generateGiftCertificate');
 const { sendGiftCertificateManually } = require('./sendGiftCertificateManually');
+const { validateCertificate, redeemCertificate } = require('./certificateService');
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
@@ -326,6 +327,57 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
 // Export sendInvoiceEmail function
 exports.sendInvoiceEmail = invoiceEmailModule.sendInvoiceEmail;
+
+// Certificate validation endpoint
+app.post('/validateCertificate', async (req, res) => {
+  try {
+    const { certificateCode, amount } = req.body;
+    
+    if (!certificateCode) {
+      return res.status(400).json({
+        success: false,
+        error: 'Certificate code is required'
+      });
+    }
+
+    const validation = await validateCertificate(certificateCode, amount || 0);
+    
+    res.status(200).json({
+      success: true,
+      ...validation
+    });
+  } catch (error) {
+    logger.error('Error validating certificate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to validate certificate'
+    });
+  }
+});
+
+// Certificate redemption endpoint
+app.post('/redeemCertificate', async (req, res) => {
+  try {
+    const { certificateCode, amount, orderId } = req.body;
+    
+    if (!certificateCode || !amount || !orderId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Certificate code, amount, and order ID are required'
+      });
+    }
+
+    const redemption = await redeemCertificate(certificateCode, parseFloat(amount), orderId);
+    
+    res.status(200).json(redemption);
+  } catch (error) {
+    logger.error('Error redeeming certificate:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to redeem certificate'
+    });
+  }
+});
 
 // Export gift certificate functions
 exports.generateGiftCertificate = generateGiftCertificate;
