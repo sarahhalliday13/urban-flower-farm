@@ -1,18 +1,20 @@
 /* Image copyright attribution styles */
 .image-copyright-text {
-  margin-top: 2px;
-  margin-bottom: 4px;
-  padding-right: 4px;
-  text-align: right !important;
-  color: #999 !important;
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white !important;
+  padding: 4px 8px;
+  border-radius: 4px;
   font-size: 11px !important;
   font-style: normal !important;
-  display: block;
-  width: 100%;
+  z-index: 10;
+  text-align: right;
 }
 
 .image-copyright-text small {
-  color: #999 !important;
+  color: white !important;
   font-size: 11px !important;
 }
 

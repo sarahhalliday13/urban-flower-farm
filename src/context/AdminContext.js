@@ -16,8 +16,11 @@ export const AdminProvider = ({ children }) => {
 
   // Function to load plants data
   const loadPlants = useCallback(async (forceRefresh = false) => {
+    // Use a ref to track current plants length to avoid dependency loop
+    const currentPlantsLength = plants.length;
+    
     // Skip if we already have data and force refresh is not requested
-    if (plants.length > 0 && !forceRefresh) {
+    if (currentPlantsLength > 0 && !forceRefresh) {
       return plants;
     }
 
@@ -27,7 +30,7 @@ export const AdminProvider = ({ children }) => {
     try {
       // Create a timeout to handle cases where Firebase fetch hangs
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Firebase fetch timed out')), 5000);
+        setTimeout(() => reject(new Error('Firebase fetch timed out')), 8000);
       });
       
       // Try Firebase first
@@ -36,21 +39,22 @@ export const AdminProvider = ({ children }) => {
         timeoutPromise
       ]);
       
+      let finalData = data;
+      
       // If no data, try sample data
-      if (!data || data.length === 0) {
+      if (!finalData || finalData.length === 0) {
         console.log('No plants found in Firebase, trying sample data');
         const sampleData = await loadSamplePlants();
         if (sampleData.length === 0) {
           throw new Error('No plants found');
         }
-        setPlants(sampleData);
-      } else {
-        setPlants(data);
+        finalData = sampleData;
       }
       
+      setPlants(finalData);
       setLastUpdated(new Date());
       setLoading(false);
-      return data;
+      return finalData;
     } catch (err) {
       console.error('Error fetching plants:', err);
       
@@ -68,7 +72,7 @@ export const AdminProvider = ({ children }) => {
         return [];
       }
     }
-  }, [plants]);
+  }, []); // Remove plants dependency to prevent infinite loops
 
   // Initial loading of plants data
   useEffect(() => {

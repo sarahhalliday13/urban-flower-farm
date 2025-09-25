@@ -29,10 +29,29 @@ deploy_staging() {
     echo "URL: https://urban-flower-farm-staging.web.app"
 }
 
+# Function to deploy maintenance page
+deploy_maintenance() {
+    echo -e "${YELLOW}🔧 Deploying maintenance page to production${NC}"
+    
+    if [ ! -f "maintenance-build/index.html" ]; then
+        echo -e "${RED}❌ Maintenance page not found at maintenance-build/index.html${NC}"
+        exit 1
+    fi
+    
+    # Copy maintenance page to build directory temporarily
+    cp maintenance-build/index.html build/index.html
+    firebase deploy --only hosting:live
+    
+    echo -e "${GREEN}✅ Maintenance page deployed!${NC}"
+    echo "🔗 https://buttonsflowerfarm.ca"
+}
+
 # Function to deploy to production
 deploy_production() {
     echo -e "${RED}⚠️  WARNING: You are about to deploy to PRODUCTION!${NC}"
-    echo -e "${RED}This will make changes live to all customers.${NC}"
+    echo -e "${RED}This will OVERWRITE the maintenance page and make the shop LIVE!${NC}"
+    echo ""
+    echo "Current production site: https://buttonsflowerfarm.ca"
     echo ""
     read -p "Are you SURE you want to deploy to production? (type 'yes' to confirm): " confirm
     
@@ -44,6 +63,7 @@ deploy_production() {
     # Double confirmation for production
     echo ""
     echo -e "${RED}⚠️  FINAL CONFIRMATION REQUIRED${NC}"
+    echo -e "${RED}This will make the full e-commerce site live to customers!${NC}"
     read -p "Please type the word 'PRODUCTION' to confirm: " final_confirm
     
     if [ "$final_confirm" != "PRODUCTION" ]; then
@@ -58,13 +78,16 @@ deploy_production() {
     firebase deploy --only hosting:live
     
     echo -e "${GREEN}✅ Production deployment complete!${NC}"
-    echo "URL: https://buttonsflowerfarm-8a54d.web.app"
+    echo "🔗 https://buttonsflowerfarm.ca"
 }
 
 # Main logic
 case $TARGET in
     staging)
         deploy_staging
+        ;;
+    maintenance)
+        deploy_maintenance
         ;;
     production|prod|live)
         deploy_production
@@ -76,12 +99,28 @@ case $TARGET in
         echo ""
         deploy_production
         ;;
+    functions)
+        echo -e "${GREEN}🔧 Deploying Firebase Functions${NC}"
+        firebase deploy --only functions
+        echo -e "${GREEN}✅ Functions deployment complete!${NC}"
+        ;;
     *)
         echo -e "${RED}Invalid target: $TARGET${NC}"
-        echo "Usage: ./deploy.sh [staging|production|both]"
-        echo "  staging    - Deploy to staging (default)"
-        echo "  production - Deploy to production (requires confirmation)"
-        echo "  both       - Deploy to staging then production"
+        echo ""
+        echo "Usage: ./deploy.sh [option]"
+        echo ""
+        echo "Options:"
+        echo "  staging      - Deploy to staging environment (safe, default)"
+        echo "  maintenance  - Deploy maintenance page to production"
+        echo "  production   - Deploy full app to production (requires confirmation)"
+        echo "  functions    - Deploy Firebase Functions only"
+        echo "  both         - Deploy to staging then production"
+        echo ""
+        echo "Examples:"
+        echo "  ./deploy.sh staging"
+        echo "  ./deploy.sh maintenance"
+        echo ""
+        echo -e "${YELLOW}⚠️  Never use 'firebase deploy' directly - use this script!${NC}"
         exit 1
         ;;
 esac

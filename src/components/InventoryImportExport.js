@@ -216,6 +216,14 @@ const InventoryImportExport = () => {
           'restock_date': inventoryData.restockDate || '',
           'notes': inventoryData.notes || '',
           
+          // Photo credit fields (now stored in inventory)
+          'main_credit_type': inventoryData.mainCreditType || 'own',
+          'main_credit_source': inventoryData.mainCreditSource || '',
+          'main_credit_url': inventoryData.mainCreditUrl || '',
+          'add1_credit_type': inventoryData.add1CreditType || 'own',
+          'add1_credit_source': inventoryData.add1CreditSource || '',
+          'add1_credit_url': inventoryData.add1CreditUrl || '',
+          
           // Images
           'mainimage': plant.mainImage || ''
         };
@@ -624,9 +632,8 @@ const InventoryImportExport = () => {
           hidden: plant.hidden === 'true' || plant.hidden === true || plant.hidden === 'TRUE'
         };
 
-        // Process photo credit metadata if provided
-        // Support both old format (photo_credit_*) and new format (main_credit_*, add1_credit_*, etc.)
-        plantData.imageMetadata = {};
+        // NOTE: Photo credit metadata is now handled in inventory data instead of imageMetadata
+        // This keeps the old imageMetadata processing for compatibility but doesn't create new entries
         
         // Handle main image credits
         const mainImage = plantData.mainImage;
@@ -733,10 +740,7 @@ const InventoryImportExport = () => {
           plantData.additionalImages = additionalImageUrls.join(',');
         }
         
-        // Clean up imageMetadata if empty
-        if (Object.keys(plantData.imageMetadata).length === 0) {
-          delete plantData.imageMetadata;
-        }
+        // Photo credits are now handled in inventory data - no imageMetadata processing needed
 
         return plantData;
       });
@@ -751,7 +755,14 @@ const InventoryImportExport = () => {
             current_stock: parseInt(row.current_stock || 0),  // Use current_stock field name
             status: row.status || 'Unknown',
             restock_date: row.restock_date || '',
-            notes: row.notes || ''
+            notes: row.notes || '',
+            // Photo credit fields (now stored in inventory)
+            mainCreditType: row.main_credit_type || 'own',
+            mainCreditSource: row.main_credit_source || '',
+            mainCreditUrl: row.main_credit_url || '',
+            add1CreditType: row.add1_credit_type || 'own',
+            add1CreditSource: row.add1_credit_source || '',
+            add1CreditUrl: row.add1_credit_url || ''
           })) : 
         previewData.inventory || [];
       

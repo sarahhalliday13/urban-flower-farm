@@ -303,12 +303,17 @@ const ModularPlantEditor = () => {
     );
   }
 
+  console.log('About to render ModularPlantEditor');
   return (
     <div className="plant-editor-container">
-      <div className="plant-editor-header">
-        <h1>{isAddMode ? 'Add New Plant' : `Edit ${flowerData.name}`}</h1>
-        <Link to="/admin/inventory" className="back-button">Back to Inventory</Link>
+      <div className="plant-editor-header" style={{position: 'fixed', top: 0, left: 0, right: 0, background: 'blue', zIndex: 99999, padding: '15px 20px', color: 'white'}}>
+        <h1 style={{margin: 0, color: 'white'}}>{isAddMode ? 'Add New Plant' : `Edit ${flowerData.name}`}</h1>
+        <div style={{display: 'flex', gap: '10px'}}>
+          <Link to="/admin/inventory" style={{color: 'white', textDecoration: 'none', padding: '8px 16px', border: '1px solid white', borderRadius: '4px'}}>Back to Inventory</Link>
+          <button type="submit" form="plant-editor-form" style={{color: 'white', background: 'green', border: 'none', padding: '8px 16px', borderRadius: '4px'}}>Save</button>
+        </div>
       </div>
+      <div style={{height: '80px'}}></div>
 
       {error && (
         <div className="error-container">
@@ -322,7 +327,7 @@ const ModularPlantEditor = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="plant-editor-form">
+      <form id="plant-editor-form" onSubmit={handleSubmit} className="plant-editor-form">
         {/* Basic Information Section */}
         <div className="form-section">
           <h2>Basic Information</h2>
@@ -339,6 +344,7 @@ const ModularPlantEditor = () => {
           <ImageUploaderWithAttribution 
             images={images.map(img => img.url || img.preview || img)}
             imageMetadata={imageMetadata}
+            inventory={flowerData.inventory || {}}
             mainImageIndex={images.findIndex(img => (img.url || img.preview || img) === mainImage)}
             plantId={plantId}
             onUpload={(newImages) => {
@@ -374,6 +380,12 @@ const ModularPlantEditor = () => {
                 setMainImage(newImages[0]?.url || newImages[0]?.preview || newImages[0] || '');
               }
             }}
+            onInventoryUpdate={(updatedInventory) => {
+              setFlowerData(prev => ({
+                ...prev,
+                inventory: { ...prev.inventory, ...updatedInventory }
+              }));
+            }}
           />
           {formErrors.images && <div className="invalid-feedback">{formErrors.images}</div>}
           {formErrors.mainImage && <div className="invalid-feedback">{formErrors.mainImage}</div>}
@@ -406,23 +418,10 @@ const ModularPlantEditor = () => {
           />
         </div>
 
-        {/* Form Actions */}
-        <div className="form-actions">
-          <Link 
-            to="/admin/inventory"
-            className="cancel-button"
-          >
-            Cancel
-          </Link>
-          <button 
-            type="submit" 
-            className="save-button"
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : (isAddMode ? 'Add Plant' : 'Save Changes')}
-          </button>
-        </div>
+        {/* Spacer for sticky footer */}
+        <div className="form-spacer"></div>
       </form>
+      
     </div>
   );
 };

@@ -34,23 +34,53 @@ function PlantDetails() {
     return url.replace(/[.#$\[\]/]/g, '_');
   };
   
-  // Get image attribution text
-  const getImageAttribution = (imageUrl) => {
-    if (!plant?.imageMetadata || !imageUrl) return null;
+  // Get image attribution text from inventory data
+  const getImageAttribution = (imageUrl, imageIndex = 0) => {
+    if (!plant || !imageUrl) return null;
     
-    const safeKey = createSafeKey(imageUrl);
-    const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[imageUrl];
-    if (!metadata) return null;
+    console.log('=== PHOTO CREDIT DEBUG ===');
+    console.log('Looking for attribution for image:', imageUrl, 'at index:', imageIndex);
+    console.log('Plant has inventory:', !!plant.inventory);
     
-    if (metadata.type === 'commercial' && metadata.source) {
-      return `Photo credit: ${metadata.source.name}`;
-    } else if (metadata.type === 'own') {
-      if (metadata.photographer) {
-        return `Photo credit: ${metadata.photographer}`;
-      } else if (metadata.watermarked) {
-        return `Photo credit: Button's Flower Farm`;
-      }
+    // Read from inventory data instead of imageMetadata
+    if (!plant.inventory) {
+      console.log('No inventory data found');
+      return null;
     }
+    
+    let creditType, creditSource, creditUrl;
+    
+    if (imageIndex === 0) {
+      // Main image (index 0)
+      creditType = plant.inventory.mainCreditType;
+      creditSource = plant.inventory.mainCreditSource;
+      creditUrl = plant.inventory.mainCreditUrl;
+      console.log('Main image credit fields - type:', creditType, 'source:', creditSource, 'url:', creditUrl);
+    } else {
+      // Additional images (index 1+)
+      creditType = plant.inventory[`add${imageIndex}CreditType`];
+      creditSource = plant.inventory[`add${imageIndex}CreditSource`];
+      creditUrl = plant.inventory[`add${imageIndex}CreditUrl`];
+      console.log(`Additional image ${imageIndex} credit fields - type:`, creditType, 'source:', creditSource, 'url:', creditUrl);
+    }
+    
+    if (!creditType) {
+      console.log('No credit type found, defaulting to own');
+      creditType = 'own'; // Default to own if not specified
+    }
+    
+    if (creditType === 'commercial' && creditSource) {
+      console.log('Using commercial source:', creditSource);
+      return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own' && creditSource && creditSource !== 'Buttons Flower Farm') {
+      console.log('Using photographer name:', creditSource);
+      return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own') {
+      console.log('Using default farm credit for own photo');
+      return `Photo credit: Buttons Flower Farm`;
+    }
+    
+    console.log('No valid attribution found in inventory');
     return null;
   };
   
@@ -131,39 +161,76 @@ function PlantDetails() {
         // Comprehensive image handling to account for all possible data structures
         let plantImages = [];
         
+        // Step 1: Collect all possible images first
+        console.log('=== IMAGE PROCESSING DEBUG ===');
+        
         // Handle images based on the data structure
         if (Array.isArray(plant.images) && plant.images.length > 0) {
           // Images is already an array, use it directly
           plantImages = [...plant.images];
-          console.log('Using images from array, found', plantImages.length, 'images');
+          console.log('Step 1a: Using images from array, found', plantImages.length, 'images:', plantImages);
         } else if (typeof plant.images === 'object' && plant.images !== null) {
           // Images is an object (common in Firebase), convert to array
           plantImages = Object.values(plant.images)
             .filter(img => typeof img === 'string' && img.trim() !== '');
-          console.log('Extracted images from object, found', plantImages.length, 'images');
+          console.log('Step 1b: Extracted images from object, found', plantImages.length, 'images:', plantImages);
         }
         
-        // If we found the main image and it's not already in the array, add it first
-        if (plant.mainImage && plantImages.indexOf(plant.mainImage) === -1) {
-          plantImages.unshift(plant.mainImage);
-          console.log('Added main image to the beginning of the array');
-        } else if (plant.mainImage && plant.mainImageIndex !== undefined) {
-          // If we have a main image and a main image index, make sure it's first in the array
-          const mainImageIndex = Number(plant.mainImageIndex);
-          if (!isNaN(mainImageIndex) && mainImageIndex >= 0 && mainImageIndex < plantImages.length) {
-            // Remove the main image from its current position
-            const mainImage = plantImages[mainImageIndex];
-            plantImages.splice(mainImageIndex, 1);
-            // Add it to the beginning
-            plantImages.unshift(mainImage);
-            console.log('Moved main image to the beginning based on mainImageIndex');
+        // Step 2: Handle additionalImages separately and merge them
+        if (plant.additionalImages) {
+          console.log('Step 2: Found additionalImages:', plant.additionalImages, 'Type:', typeof plant.additionalImages);
+          
+          if (Array.isArray(plant.additionalImages) && plant.additionalImages.length > 0) {
+            // Handle as array
+            console.log('Step 2a: Processing additionalImages as array');
+            plant.additionalImages.forEach(img => {
+              if (img && typeof img === 'string' && img.trim() !== '' && !plantImages.includes(img)) {
+                plantImages.push(img);
+              }
+            });
+          } else if (typeof plant.additionalImages === 'string' && plant.additionalImages.trim() !== '') {
+            // Handle as single string
+            console.log('Step 2b: Processing additionalImages as single string');
+            if (!plantImages.includes(plant.additionalImages)) {
+              plantImages.push(plant.additionalImages);
+            }
+          } else if (typeof plant.additionalImages === 'object' && plant.additionalImages !== null) {
+            // Handle as object (convert to array)
+            console.log('Step 2c: Processing additionalImages as object');
+            const additionalImagesArray = Object.values(plant.additionalImages)
+              .filter(img => typeof img === 'string' && img.trim() !== '');
+            additionalImagesArray.forEach(img => {
+              if (!plantImages.includes(img)) {
+                plantImages.push(img);
+              }
+            });
+          }
+          
+          console.log('Step 2: After merging additionalImages, total count:', plantImages.length);
+        }
+        
+        // Step 3: Handle mainImage
+        if (plant.mainImage) {
+          console.log('Step 3: Processing mainImage:', plant.mainImage);
+          if (!plantImages.includes(plant.mainImage)) {
+            // Add main image to the beginning if it's not already in the array
+            plantImages.unshift(plant.mainImage);
+            console.log('Step 3a: Added main image to the beginning of the array');
+          } else {
+            // Move main image to the beginning if it's already in the array
+            const mainImageIndex = plantImages.indexOf(plant.mainImage);
+            if (mainImageIndex > 0) {
+              const mainImage = plantImages.splice(mainImageIndex, 1)[0];
+              plantImages.unshift(mainImage);
+              console.log('Step 3b: Moved existing main image to the beginning');
+            }
           }
         }
         
-        // As a fallback, check for additionalImages if images array is still empty
-        if (plantImages.length === 0 && Array.isArray(plant.additionalImages) && plant.additionalImages.length > 0) {
-          plantImages = [...plant.additionalImages];
-          console.log('Using additionalImages, found', plantImages.length, 'images');
+        // Step 4: If still no images, use mainImage as fallback
+        if (plantImages.length === 0 && plant.mainImage) {
+          plantImages.push(plant.mainImage);
+          console.log('Step 4: Used mainImage as fallback');
         }
         
         // If we found the main image and it's in the array multiple times, deduplicate
@@ -182,7 +249,10 @@ function PlantDetails() {
           console.log('No images found, using placeholder');
         }
         
-        console.log(`Final result: Plant ${plant.name} has ${plantImages.length} images:`, plantImages);
+        console.log(`=== FINAL RESULT ===`);
+        console.log(`Plant ${plant.name} has ${plantImages.length} images:`, plantImages);
+        console.log('Thumbnails will be shown:', plantImages.length > 1);
+        console.log('=== END DEBUG ===');
         
         setPlant(plant);
         setImages(plantImages);
@@ -510,16 +580,16 @@ function PlantDetails() {
                 <div className="loading-spinner"></div>
               </div>
             )}
+            {(() => {
+              const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
+              const attribution = getImageAttribution(currentImage, selectedImageIndex);
+              return attribution ? (
+                <div className="image-copyright-text">
+                  <small>{attribution}</small>
+                </div>
+              ) : null;
+            })()}
           </div>
-          {(() => {
-            const currentImage = imagesLoaded ? images[selectedImageIndex] : plant.mainImage;
-            const attribution = getImageAttribution(currentImage);
-            return attribution ? (
-              <div className="image-copyright-text">
-                <small>{attribution}</small>
-              </div>
-            ) : null;
-          })()}
           {images.length > 1 && (
             <div className="image-thumbnails">
               {images.map((image, index) => (

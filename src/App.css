@@ -825,6 +825,7 @@ footer p {
 }
 
 .plant-details-image {
+  position: relative;
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 4/3;

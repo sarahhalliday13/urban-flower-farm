@@ -6,12 +6,17 @@
 }
 
 .plant-editor-header {
+  position: sticky !important;
+  top: 0 !important;
+  background: white !important;
+  z-index: 1000 !important;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding-bottom: 15px;
+  padding: 15px 0;
   border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
 }
 
 .plant-editor-header h1 {
@@ -219,11 +224,13 @@
 .drop-zone {
   border: 2px dashed #ccc;
   border-radius: 8px;
-  padding: 40px;
+  padding: 30px;
   text-align: center;
   background-color: #f9f9f9;
   transition: all 0.3s;
   margin-bottom: 15px;
+  max-width: 100%;
+  min-height: 150px;
 }
 
 .drop-zone.dragging {
@@ -247,7 +254,7 @@
 
 .image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 15px;
   margin-top: 20px;
 }
@@ -258,6 +265,8 @@
   border-radius: 8px;
   overflow: hidden;
   aspect-ratio: 1;
+  max-width: 150px;
+  max-height: 150px;
 }
 
 .image-item.main {
@@ -406,6 +415,135 @@
   cursor: pointer;
 }
 
+/* Image uploader with attribution styles */
+.image-uploader-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+.image-section {
+  flex: 3;
+  min-width: 0;
+  max-width: 70%;
+}
+
+.credit-section {
+  flex: 1;
+  min-width: 280px;
+  max-width: 30%;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  position: sticky;
+  top: 20px;
+}
+
+.credit-section h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c5530;
+  font-size: 1.1rem;
+}
+
+.credit-tabs {
+  display: flex;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.credit-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.credit-tab.active {
+  border-bottom-color: #2c5530;
+  background-color: rgba(44, 85, 48, 0.05);
+}
+
+.edit-metadata-modal {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.edit-form-content {
+  margin: 10px 0;
+}
+
+.edit-form-content input,
+.edit-form-content select {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.watermark-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.watermark-checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.edit-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit-actions button:first-child {
+  background-color: #2c5530;
+  color: white;
+}
+
+.edit-actions button:last-child {
+  background-color: #6c757d;
+  color: white;
+}
+
+.edit-actions button:hover:first-child {
+  background-color: #204020;
+}
+
+.edit-actions button:hover:last-child {
+  background-color: #5a6268;
+}
+
 /* Details sections */
 .details-section {
   margin-bottom: 30px;
@@ -417,6 +555,22 @@
   margin-bottom: 20px;
   padding-bottom: 8px;
   border-bottom: 1px solid #e9ecef;
+}
+
+/* Mobile responsive for sticky footer */
+@media (max-width: 768px) {
+  .plant-editor-sticky-footer {
+    padding: 10px 15px !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    min-height: 80px !important;
+  }
+  
+  .back-to-inventory-button,
+  .plant-editor-sticky-footer .save-button {
+    width: 100% !important;
+    text-align: center !important;
+  }
 }
 
 /* Responsive adjustments */
@@ -437,7 +591,16 @@
   }
   
   .image-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  
+  .image-uploader-layout {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .credit-section {
+    min-width: unset;
   }
   
   .form-actions {
@@ -447,4 +610,78 @@
   .form-actions button {
     width: 100%;
   }
+}
+
+/* Sticky Footer */
+.plant-editor-container {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 80px; /* Space for sticky footer */
+}
+
+.form-spacer {
+  height: 60px; /* Extra space before footer */
+}
+
+body .plant-editor-sticky-footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: red !important;
+  border-top: 5px solid black !important;
+  padding: 30px 20px !important;
+  height: 100px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  z-index: 99999 !important;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 60px !important;
+  box-sizing: border-box !important;
+}
+
+.back-to-inventory-button {
+  padding: 12px 24px !important;
+  background: white !important;
+  border: 1px solid #ddd !important;
+  border-radius: 6px !important;
+  color: #666 !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+  display: inline-block !important;
+}
+
+.back-to-inventory-button:hover {
+  background: #f5f5f5 !important;
+  border-color: #ccc !important;
+  color: #333 !important;
+  text-decoration: none !important;
+}
+
+.plant-editor-sticky-footer .save-button {
+  padding: 12px 24px !important;
+  background: #28a745 !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-block !important;
+}
+
+.plant-editor-sticky-footer .save-button:hover:not(:disabled) {
+  background: #218838 !important;
+}
+
+.plant-editor-sticky-footer .save-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background: #6c757d !important;
 } 

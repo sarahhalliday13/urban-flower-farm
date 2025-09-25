@@ -14,7 +14,7 @@ import InventoryTable from './InventoryTable';
 import ImageUploaderWithAttribution from '../plant-editor/sections/ImageUploaderWithAttribution';
 import '../../styles/InventoryManager.css';
 import '../../styles/PlantManagement.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const ModularInventoryManager = () => {
   // Get admin context
@@ -386,6 +386,13 @@ const ModularInventoryManager = () => {
   // Handle edit plant click
   const handleEditPlant = useCallback((plant) => {
     console.log("handleEditPlant called with plant:", plant);
+    console.log("Plant inventory data:", plant.inventory);
+    console.log("Plant photo credit fields:", {
+      mainCreditType: plant.inventory?.mainCreditType,
+      mainCreditSource: plant.inventory?.mainCreditSource,
+      add1CreditType: plant.inventory?.add1CreditType,
+      add1CreditSource: plant.inventory?.add1CreditSource
+    });
     // Instead of navigating to a different URL, we'll set up edit mode with this plant's data
     setCurrentPlant(plant);
     
@@ -807,8 +814,9 @@ const ModularInventoryManager = () => {
         unsubscribe();
       }
       
-      // Clean up all timers using the copied refs
+      // Clean up all timers using the refs
       if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       clearTimeout(timer);
     };
   }, [handleLoadPlants, checkSyncQueue]);
@@ -1114,10 +1122,14 @@ const ModularInventoryManager = () => {
                     <ImageUploaderWithAttribution 
                       images={plantFormData.images || []}
                       imageMetadata={plantFormData.imageMetadata || {}}
+                      inventory={plantFormData.inventory || {}}
                       mainImageIndex={plantFormData.mainImageIndex || 0}
                       plantId={plantFormData.id}
                       onUpload={(newImages) => updatePlantForm('images', newImages)}
                       onMetadataUpdate={(newMetadata) => updatePlantForm('imageMetadata', newMetadata)}
+                      onInventoryUpdate={(updatedInventory) => {
+                        updatePlantForm('inventory', { ...plantFormData.inventory, ...updatedInventory });
+                      }}
                       onMainSelect={(index) => {
                         updatePlantForm('mainImageIndex', index);
                         // Also update mainImage for backward compatibility
@@ -1503,6 +1515,127 @@ const ModularInventoryManager = () => {
           </div>
         </div>
       )}
+      
+      {/* Sticky Footer */}
+      <div style={{position: 'fixed', bottom: 0, left: 0, right: 0, background: 'white', height: '60px', zIndex: 99999, display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', borderTop: '1px solid #ddd', boxShadow: '0 -2px 10px rgba(0,0,0,0.1)'}}>
+        <Link 
+          to="/admin/inventory"
+          style={{color: '#666', textDecoration: 'none', padding: '10px 20px', border: '1px solid #ddd', borderRadius: '4px', background: 'white'}}
+        >
+          Back to Inventory
+        </Link>
+        <button 
+          style={{color: 'white', background: '#28a745', border: 'none', padding: '12px 24px', borderRadius: '4px', fontWeight: '500'}}
+          disabled={plantSaveStatus === 'saving'}
+          onClick={async () => {
+            // Prevent multiple simultaneous save operations
+            if (plantSaveStatus === 'saving') {
+              console.log('Save already in progress, ignoring click');
+              return;
+            }
+            
+            try {
+              console.log('Sticky footer save clicked');
+              setPlantSaveStatus('saving');
+              
+              // ID handling - use existing ID or create new one
+              const plantId = currentPlant ? currentPlant.id : Date.now().toString();
+              console.log('Saving plant with ID:', plantId);
+              console.log('Plant form data:', plantFormData);
+              
+              // Standardize the inventory status before saving
+              const standardizedInventory = {
+                ...plantFormData.inventory,
+                status: standardizeInventoryStatus(plantFormData.inventory.status)
+              };
+              console.log('Standardized inventory:', standardizedInventory);
+              
+              // Ensure mainImage is set from images array
+              const mainImage = plantFormData.images && plantFormData.images.length > 0 
+                ? plantFormData.images[plantFormData.mainImageIndex || 0] 
+                : plantFormData.mainImage || '';
+              
+              const plantData = {
+                ...plantFormData,
+                id: plantId,
+                mainImage: mainImage,
+                imageMetadata: plantFormData.imageMetadata || {},
+                inventory: standardizedInventory
+              };
+              console.log('Final plant data to save:', plantData);
+              console.log('Photo credit data in inventory:', plantData.inventory);
+              
+              // Use the correct function based on whether we're adding or editing
+              if (currentPlant) {
+                console.log('Updating existing plant');
+                await updatePlant(plantId, plantData);
+              } else {
+                console.log('Adding new plant');
+                await addPlant(plantData);
+              }
+              console.log('Plant save completed');
+              
+              // Update the plant in context - but do it asynchronously to avoid blocking
+              if (typeof updatePlantData === 'function') {
+                // Use setTimeout to avoid blocking the main thread
+                setTimeout(() => {
+                  try {
+                    updatePlantData(plantData);
+                  } catch (contextError) {
+                    console.warn('Error updating plant in context:', contextError);
+                  }
+                }, 0);
+              }
+              
+              setPlantSaveStatus('success');
+              console.log('Save status set to success');
+              
+              // Show success toast
+              window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: { 
+                  message: currentPlant ? 'Plant updated successfully!' : 'Plant added successfully!',
+                  type: 'success',
+                  duration: 3000
+                }
+              }));
+              
+              // Reset form and go back to inventory after a delay
+              // Use a shorter delay and store the timeout reference for cleanup
+              const resetTimeout = setTimeout(() => {
+                try {
+                  console.log('Resetting form and going back to inventory');
+                  resetPlantForm();
+                  setActiveTab('inventory');
+                  navigate('/admin/inventory');
+                } catch (resetError) {
+                  console.error('Error during form reset:', resetError);
+                }
+              }, 500); // Reduced from 1000ms to 500ms
+              
+              // Store timeout reference for potential cleanup
+              if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+              }
+              saveTimerRef.current = resetTimeout;
+              
+            } catch (error) {
+              console.error('Error saving plant:', error);
+              setPlantSaveStatus('error');
+              
+              // Show error toast
+              window.dispatchEvent(new CustomEvent('show-toast', {
+                detail: {
+                  message: `Error: ${error.message || 'Unknown error'}`,
+                  type: 'error',
+                  duration: 5000
+                }
+              }));
+            }
+          }}
+        >
+          {plantSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+        </button>
+      </div>
     </div>
   );
 };

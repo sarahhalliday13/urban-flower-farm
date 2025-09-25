@@ -1857,8 +1857,9 @@ export const updateOrderStatus = async (orderId, newStatus) => {
     // Get current order data
     const currentOrder = snapshot.val();
     
-    // Update only the status while preserving all other fields
-    await update(orderRef, {
+    // Use set to replace the entire order with updated status
+    // This ensures all nested objects (like customer) are preserved correctly
+    await set(orderRef, {
       ...currentOrder,
       status: newStatus,
       lastUpdated: new Date().toISOString()

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { uploadImageToFirebase } from '../../../services/firebase';
 import '../../../styles/ImageUploader.css';
 
@@ -19,11 +19,13 @@ const COMMERCIAL_SOURCES = [
 const ImageUploaderWithAttribution = ({ 
   images = [], 
   imageMetadata = {},
+  inventory = {},
   mainImageIndex = 0, 
   onUpload, 
   onMainSelect, 
   onRemoveImage,
   onMetadataUpdate,
+  onInventoryUpdate,
   plantId = null
 }) => {
   const [isDragging, setIsDragging] = useState(false);
@@ -158,6 +160,27 @@ const ImageUploaderWithAttribution = ({
         const newImages = [...images, ...validUrls];
         onUpload(newImages);
         onMetadataUpdate(newMetadata);
+        
+        // Save photo credits to inventory for each uploaded image
+        if (onInventoryUpdate && validUrls.length > 0) {
+          const inventoryUpdates = {};
+          validUrls.forEach((url, urlIndex) => {
+            const imageIndex = images.length + urlIndex;
+            const fieldPrefix = imageIndex === 0 ? 'main' : `add${imageIndex}`;
+            
+            inventoryUpdates[`${fieldPrefix}CreditType`] = imageSource;
+            if (imageSource === 'commercial') {
+              const selectedSource = COMMERCIAL_SOURCES.find(s => s.value === commercialSource);
+              inventoryUpdates[`${fieldPrefix}CreditSource`] = commercialSource === 'other' ? customSourceName : selectedSource?.name || '';
+              inventoryUpdates[`${fieldPrefix}CreditUrl`] = sourceUrl || '';
+            } else if (imageSource === 'own') {
+              inventoryUpdates[`${fieldPrefix}CreditSource`] = photographerName || (addWatermark ? 'Buttons Flower Farm' : '');
+            }
+          });
+          
+          const updatedInventory = { ...inventory, ...inventoryUpdates };
+          onInventoryUpdate(updatedInventory);
+        }
         
         // Reset attribution fields
         setImageSource('own');
@@ -347,109 +370,319 @@ const ImageUploaderWithAttribution = ({
 
   return (
     <div className="image-uploader">
-      {/* Attribution Options for New Uploads */}
-      <div className="attribution-options">
-        <div className="source-tabs">
-          <button
-            type="button"
-            className={`source-tab ${imageSource === 'own' ? 'active' : ''}`}
-            onClick={() => setImageSource('own')}
+      <div className="plant-images-section">
+        <h3>Plant Images</h3>
+        
+        {/* Existing Images - Horizontal Layout */}
+        {images.length > 0 && (
+          <div className="images-horizontal-grid">
+            {images.map((imageUrl, index) => {
+              const fieldPrefix = index === 0 ? 'main' : `add${index}`;
+              const creditType = inventory[`${fieldPrefix}CreditType`] || 'own';
+              const creditSource = inventory[`${fieldPrefix}CreditSource`] || '';
+              
+              return (
+                <div key={`${index}-${creditType}`} className="image-credit-pair">
+                  <div className={`image-container ${mainImageIndex === index ? 'main-image' : ''}`}>
+                    <img src={imageUrl} alt={`Plant ${index + 1}`} />
+                    
+                    <div className="image-overlay-actions">
+                      <button
+                        type="button"
+                        className="overlay-btn star-btn"
+                        onClick={() => onMainSelect(index)}
+                        title={mainImageIndex === index ? "Main Image" : "Set as Main"}
+                      >
+                        {mainImageIndex === index ? "★" : "☆"}
+                      </button>
+                      <button
+                        type="button"
+                        className="overlay-btn remove-btn"
+                        onClick={() => onRemoveImage(index)}
+                        title="Remove image"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="photo-credit-controls">
+                    <h4>Photo Credit</h4>
+                    
+                    <div className="credit-tabs">
+                      <button
+                        type="button"
+                        className={`credit-tab ${creditType === 'own' ? 'active' : ''}`}
+                        onClick={() => {
+                          if (onInventoryUpdate) {
+                            const updates = { [`${fieldPrefix}CreditType`]: 'own' };
+                            const updatedInventory = { ...inventory, ...updates };
+                            onInventoryUpdate(updatedInventory);
+                          }
+                        }}
+                      >
+                        My Own Photo
+                      </button>
+                      <button
+                        type="button"
+                        className={`credit-tab ${creditType === 'commercial' ? 'active' : ''}`}
+                        onClick={() => {
+                          if (onInventoryUpdate) {
+                            const updates = { [`${fieldPrefix}CreditType`]: 'commercial' };
+                            const updatedInventory = { ...inventory, ...updates };
+                            onInventoryUpdate(updatedInventory);
+                          }
+                        }}
+                      >
+                        Commercial Source
+                      </button>
+                    </div>
+                    
+                    <div className="credit-content">
+                      {creditType === 'own' && (
+                        <>
+                          <label className="watermark-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={creditSource === 'Buttons Flower Farm'}
+                              onChange={(e) => {
+                                if (onInventoryUpdate) {
+                                  const value = e.target ? e.target.checked : false;
+                                  const updates = {
+                                    [`${fieldPrefix}CreditSource`]: value ? 'Buttons Flower Farm' : ''
+                                  };
+                                  const updatedInventory = { ...inventory, ...updates };
+                                  onInventoryUpdate(updatedInventory);
+                                }
+                              }}
+                            />
+                            Add watermark (Photo credit: Button's Flower Farm)
+                          </label>
+                          
+                          <div className="form-group">
+                            <label>Photographer name (optional):</label>
+                            <input
+                              type="text"
+                              value={creditSource !== 'Buttons Flower Farm' ? creditSource : ''}
+                              onChange={(e) => {
+                                if (onInventoryUpdate && e.target) {
+                                  const updates = {
+                                    [`${fieldPrefix}CreditSource`]: e.target.value
+                                  };
+                                  const updatedInventory = { ...inventory, ...updates };
+                                  onInventoryUpdate(updatedInventory);
+                                }
+                              }}
+                              placeholder="Enter photographer name"
+                            />
+                          </div>
+                        </>
+                      )}
+                      
+                      {creditType === 'commercial' && (
+                        <>
+                          <div className="form-group">
+                            <label>Source Name:</label>
+                            <select 
+                              value={COMMERCIAL_SOURCES.find(s => s.name === creditSource)?.value || 'other'}
+                              onChange={(e) => {
+                                if (onInventoryUpdate && e.target) {
+                                  const selectedSource = COMMERCIAL_SOURCES.find(s => s.value === e.target.value);
+                                  const updates = {
+                                    [`${fieldPrefix}CreditSource`]: selectedSource ? selectedSource.name : ''
+                                  };
+                                  const updatedInventory = { ...inventory, ...updates };
+                                  onInventoryUpdate(updatedInventory);
+                                }
+                              }}
+                            >
+                              <option value="">Select source...</option>
+                              {COMMERCIAL_SOURCES.map(source => (
+                                <option key={source.value} value={source.value}>
+                                  {source.name}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          
+                          <div className="form-group">
+                            <label>Photographer name (optional):</label>
+                            <input
+                              type="text"
+                              value={creditSource}
+                              onChange={(e) => {
+                                if (onInventoryUpdate && e.target) {
+                                  const updates = {
+                                    [`${fieldPrefix}CreditSource`]: e.target.value
+                                  };
+                                  const updatedInventory = { ...inventory, ...updates };
+                                  onInventoryUpdate(updatedInventory);
+                                }
+                              }}
+                              placeholder="Enter photographer name"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        
+        {/* Upload Section */}
+        <div className="upload-section">
+          <div 
+            className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+            onClick={triggerFileInput}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
           >
-            My Own Photo
-          </button>
-          <button
-            type="button"
-            className={`source-tab ${imageSource === 'commercial' ? 'active' : ''}`}
-            onClick={() => setImageSource('commercial')}
-          >
-            Commercial Source
-          </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileInputChange}
+              accept="image/*"
+              multiple
+              style={{ display: 'none' }}
+            />
+            
+            <div className="upload-instructions">
+              <div className="upload-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19M12 5L7 10M12 5L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p>Drag images here or click to upload</p>
+              <span className="upload-format">Supported formats: JPG, PNG, GIF (Max: 5MB)</span>
+            </div>
+          </div>
+          
+          <div className="url-input-form">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target ? e.target.value : '')}
+              placeholder="Enter Firebase Storage URL (e.g., https://firebasestorage.googleapis.com/...)"
+              className="url-input-field"
+            />
+            <div className="url-input-actions">
+              <button type="button" className="url-submit-btn" onClick={handleUrlSubmit}>Upload URL</button>
+              <button 
+                type="button" 
+                className="url-cancel-btn"
+                onClick={() => {
+                  setUrlInput('');
+                  setError(null);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </div>
         </div>
 
-        {imageSource === 'commercial' && (
-          <div className="commercial-source-fields">
-            <div className="form-group">
-              <label>Source Name:</label>
-              <select 
-                value={commercialSource} 
-                onChange={(e) => setCommercialSource(e.target.value)}
-              >
-                <option value="">Select source...</option>
-                {COMMERCIAL_SOURCES.map(source => (
-                  <option key={source.value} value={source.value}>
-                    {source.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            {commercialSource === 'other' && (
+        {/* Photo Credit for New Uploads */}
+        <div className="new-upload-credit-section">
+          <h4>Photo Credit for New Uploads</h4>
+          <div className="source-tabs">
+            <button
+              type="button"
+              className={`source-tab ${imageSource === 'own' ? 'active' : ''}`}
+              onClick={() => setImageSource('own')}
+            >
+              My Own Photo
+            </button>
+            <button
+              type="button"
+              className={`source-tab ${imageSource === 'commercial' ? 'active' : ''}`}
+              onClick={() => setImageSource('commercial')}
+            >
+              Commercial Source
+            </button>
+          </div>
+
+          {imageSource === 'commercial' && (
+            <div className="commercial-source-fields">
               <div className="form-group">
-                <label>Custom Source Name:</label>
+                <label>Source Name:</label>
+                <select 
+                  value={commercialSource} 
+                  onChange={(e) => setCommercialSource(e.target ? e.target.value : '')}
+                >
+                  <option value="">Select source...</option>
+                  {COMMERCIAL_SOURCES.map(source => (
+                    <option key={source.value} value={source.value}>
+                      {source.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {commercialSource === 'other' && (
+                <div className="form-group">
+                  <label>Custom Source Name:</label>
+                  <input
+                    type="text"
+                    value={customSourceName}
+                    onChange={(e) => setCustomSourceName(e.target ? e.target.value : '')}
+                    placeholder="Enter source name"
+                  />
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label>Source URL (optional):</label>
                 <input
-                  type="text"
-                  value={customSourceName}
-                  onChange={(e) => setCustomSourceName(e.target.value)}
-                  placeholder="Enter source name"
+                  type="url"
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target ? e.target.value : '')}
+                  placeholder="https://www.example.com/..."
                 />
               </div>
-            )}
-            
-            <div className="form-group">
-              <label>Source URL (optional):</label>
-              <input
-                type="url"
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
-                placeholder="https://www.example.com/..."
-              />
             </div>
-          </div>
-        )}
+          )}
 
-        {imageSource === 'own' && (
-          <div className="own-photo-fields">
-            <div className="form-group">
-              <label>
+          {imageSource === 'own' && (
+            <div className="own-photo-fields">
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={addWatermark}
+                    onChange={(e) => setAddWatermark(e.target ? e.target.checked : false)}
+                  />
+                  Add watermark (Photo credit: Button's Flower Farm)
+                </label>
+              </div>
+              
+              <div className="form-group">
+                <label>Photographer name (optional):</label>
                 <input
-                  type="checkbox"
-                  checked={addWatermark}
-                  onChange={(e) => setAddWatermark(e.target.checked)}
+                  type="text"
+                  value={photographerName}
+                  onChange={(e) => setPhotographerName(e.target ? e.target.value : '')}
+                  placeholder="Enter photographer name"
                 />
-                Add watermark (Photo credit: Button's Flower Farm)
-              </label>
+              </div>
             </div>
-            
-            <div className="form-group">
-              <label>Photographer name (optional):</label>
-              <input
-                type="text"
-                value={photographerName}
-                onChange={(e) => setPhotographerName(e.target.value)}
-                placeholder="Enter photographer name"
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-
-      <div 
-        className={`upload-zone ${isDragging ? 'dragging' : ''}`}
-        onClick={triggerFileInput}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileInputChange}
-          accept="image/*"
-          multiple
-          style={{ display: 'none' }}
-        />
-        
-        <div className="upload-instructions">
+      
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileInputChange}
+        accept="image/*"
+        multiple
+        style={{ display: 'none' }}
+      />
+      
+      <div className="upload-instructions">
           <div className="upload-icon">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M12 5V19M12 5L7 10M12 5L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -458,208 +691,7 @@ const ImageUploaderWithAttribution = ({
           <p>Drag images here or click to upload</p>
           <span className="upload-format">Supported formats: JPG, PNG, GIF (Max: 5MB)</span>
         </div>
-      </div>
       
-      {showUrlInput && (
-        <form className="url-input-form" onSubmit={handleUrlSubmit}>
-          <input
-            type="text"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            placeholder="Enter Firebase Storage URL (e.g., https://firebasestorage.googleapis.com/...)"
-            className="url-input-field"
-          />
-          <div className="url-input-actions">
-            <button type="submit" className="url-submit-btn">Upload URL</button>
-            <button 
-              type="button" 
-              className="url-cancel-btn"
-              onClick={() => {
-                setUrlInput('');
-                setError(null);
-              }}
-            >
-              Clear
-            </button>
-          </div>
-        </form>
-      )}
-      
-      {uploading && (
-        <div className="upload-progress">
-          <div className="progress-bar">
-            <div 
-              className="progress-fill" 
-              style={{ width: `${uploadProgress}%` }}
-            ></div>
-          </div>
-          <span>Uploading... {Math.round(uploadProgress)}%</span>
-        </div>
-      )}
-      
-      {error && (
-        <div className="upload-error">
-          <span>{error}</span>
-          <button onClick={() => setError(null)}>Dismiss</button>
-        </div>
-      )}
-      
-      {images.length > 0 && (
-        <div className="image-preview-grid">
-          {images.map((image, index) => {
-            const isEditing = editingIndex === index;
-            const attributionText = getAttributionText(image);
-            
-            return (
-              <div 
-                key={`${image}-${index}`} 
-                className={`image-preview-item ${mainImageIndex === index ? 'main-image' : ''}`}
-              >
-                <div className="image-thumbnail">
-                  <img src={image} alt={`Plant image ${index + 1}`} />
-                  {attributionText && (
-                    <div className="image-attribution">
-                      {attributionText}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="image-controls">
-                  <label className="main-image-toggle">
-                    <input
-                      type="radio"
-                      name="mainImage"
-                      checked={mainImageIndex === index}
-                      onChange={() => onMainSelect(index)}
-                    />
-                    {mainImageIndex === index ? 'Main Image' : 'Set as Main'}
-                  </label>
-                  
-                  {!isEditing && (
-                    <>
-                      <button 
-                        className="edit-metadata-btn"
-                        onClick={() => startEditingMetadata(index)}
-                        title="Edit attribution"
-                      >
-                        Edit
-                      </button>
-                      
-                      <button 
-                        className="remove-image-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onRemoveImage(index);
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                    </>
-                  )}
-                </div>
-                
-                {isEditing && (
-                  <div className="metadata-edit-form">
-                    <div className="edit-form-tabs">
-                      <button
-                        type="button"
-                        className={`edit-tab ${editMetadata.type === 'own' ? 'active' : ''}`}
-                        onClick={() => setEditMetadata({...editMetadata, type: 'own'})}
-                      >
-                        Own Photo
-                      </button>
-                      <button
-                        type="button"
-                        className={`edit-tab ${editMetadata.type === 'commercial' ? 'active' : ''}`}
-                        onClick={() => setEditMetadata({...editMetadata, type: 'commercial'})}
-                      >
-                        Commercial
-                      </button>
-                    </div>
-                    
-                    <div className="edit-form-content">
-                      {editMetadata.type === 'commercial' && (
-                        <>
-                          <select
-                            value={editMetadata.commercialSource || ''}
-                            onChange={(e) => setEditMetadata({
-                              ...editMetadata,
-                              commercialSource: e.target.value,
-                              customSourceName: e.target.value === 'other' ? editMetadata.customSourceName : ''
-                            })}
-                          >
-                            <option value="">Select source...</option>
-                            {COMMERCIAL_SOURCES.map(source => (
-                              <option key={source.value} value={source.value}>
-                                {source.name}
-                              </option>
-                            ))}
-                          </select>
-                          
-                          {editMetadata.commercialSource === 'other' && (
-                            <input
-                              type="text"
-                              value={editMetadata.customSourceName || ''}
-                              onChange={(e) => setEditMetadata({
-                                ...editMetadata,
-                                customSourceName: e.target.value
-                              })}
-                              placeholder="Enter source name"
-                            />
-                          )}
-                          
-                          <input
-                            type="url"
-                            value={editMetadata.sourceUrl || ''}
-                            onChange={(e) => setEditMetadata({
-                              ...editMetadata,
-                              sourceUrl: e.target.value
-                            })}
-                            placeholder="Source URL (optional)"
-                          />
-                        </>
-                      )}
-                      
-                      {editMetadata.type === 'own' && (
-                        <>
-                          <label className="watermark-checkbox">
-                            <input
-                              type="checkbox"
-                              checked={editMetadata.watermarked || false}
-                              onChange={(e) => setEditMetadata({
-                                ...editMetadata,
-                                watermarked: e.target.checked
-                              })}
-                            />
-                            Add watermark (Photo credit: Button's Flower Farm)
-                          </label>
-                          
-                          <input
-                            type="text"
-                            value={editMetadata.photographer || ''}
-                            onChange={(e) => setEditMetadata({
-                              ...editMetadata,
-                              photographer: e.target.value
-                            })}
-                            placeholder="Photographer name (optional)"
-                          />
-                        </>
-                      )}
-                    </div>
-                    
-                    <div className="edit-actions">
-                      <button onClick={saveEditedMetadata}>Save</button>
-                      <button onClick={() => setEditingIndex(null)}>Cancel</button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };

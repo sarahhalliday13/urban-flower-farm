@@ -128,10 +128,15 @@
    - `staging` (testing)
    - `development` (active development)
 
-2. **Deploy Commands**:
-   - Build: `npm run build`
-   - Deploy staging: `firebase deploy`
-   - Test locally: `npm start`
+2. **Deploy Commands** - IMPORTANT SAFETY RULES:
+   - **NEVER use `firebase deploy` directly** - it deploys to both environments!
+   - **Safe staging deploy**: `./deploy.sh staging` or `npm run deploy:staging`
+   - **Maintenance page**: `./deploy.sh maintenance`  
+   - **Production deploy** (with double confirmation): `./deploy.sh production`
+   - **Functions only**: `./deploy.sh functions`
+   - **Build locally**: `npm run build`
+   - **Test locally**: `npm start`
+   - **Emergency restore maintenance**: `./deploy.sh maintenance`
 
 ## Important Notes
 - **Authentication**: No anonymous auth - admin sign-in required

@@ -10,23 +10,25 @@ const PlantCard = ({ plant }) => {
     return url.replace(/[.#$\[\]/]/g, '_');
   };
   
-  // Get image attribution text
+  // Get image attribution text from inventory data
   const getImageAttribution = () => {
-    if (!plant.imageMetadata || !plant.mainImage) return null;
+    if (!plant.inventory || !plant.mainImage) return null;
     
-    const safeKey = createSafeKey(plant.mainImage);
-    const metadata = plant.imageMetadata[safeKey] || plant.imageMetadata[plant.mainImage];
-    if (!metadata) return null;
+    const creditType = plant.inventory.mainCreditType;
+    const creditSource = plant.inventory.mainCreditSource;
     
-    if (metadata.type === 'commercial' && metadata.source) {
-      return `Photo credit: ${metadata.source.name}`;
-    } else if (metadata.type === 'own') {
-      if (metadata.photographer) {
-        return `Photo credit: ${metadata.photographer}`;
-      } else if (metadata.watermarked) {
-        return `Photo credit: Button's Flower Farm`;
-      }
+    if (!creditType) {
+      return null; // No credit info
     }
+    
+    if (creditType === 'commercial' && creditSource) {
+      return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own' && creditSource && creditSource !== 'Buttons Flower Farm') {
+      return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own') {
+      return `Photo credit: Buttons Flower Farm`;
+    }
+    
     return null;
   };
   
