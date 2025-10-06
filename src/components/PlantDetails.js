@@ -64,9 +64,9 @@ function PlantDetails() {
       console.log(`Additional image ${imageIndex} credit fields - type:`, creditType, 'source:', creditSource, 'url:', creditUrl);
     }
     
-    if (!creditType) {
-      console.log('No credit type found, defaulting to own');
-      creditType = 'own'; // Default to own if not specified
+    if (!creditType || creditType === '') {
+      console.log('No credit type found, not showing attribution');
+      return null; // Don't show attribution if no credit type
     }
     
     if (creditType === 'commercial' && creditSource) {
@@ -75,6 +75,9 @@ function PlantDetails() {
     } else if (creditType === 'own' && creditSource && creditSource !== 'Buttons Flower Farm') {
       console.log('Using photographer name:', creditSource);
       return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own' && !creditSource) {
+      console.log('Using default farm credit for own photo without source');
+      return `Photo credit: Buttons Flower Farm`;
     } else if (creditType === 'own') {
       console.log('Using default farm credit for own photo');
       return `Photo credit: Buttons Flower Farm`;

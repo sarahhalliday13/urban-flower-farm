@@ -217,10 +217,10 @@ const InventoryImportExport = () => {
           'notes': inventoryData.notes || '',
           
           // Photo credit fields (now stored in inventory)
-          'main_credit_type': inventoryData.mainCreditType || 'own',
+          'main_credit_type': inventoryData.mainCreditType || '',
           'main_credit_source': inventoryData.mainCreditSource || '',
           'main_credit_url': inventoryData.mainCreditUrl || '',
-          'add1_credit_type': inventoryData.add1CreditType || 'own',
+          'add1_credit_type': inventoryData.add1CreditType || '',
           'add1_credit_source': inventoryData.add1CreditSource || '',
           'add1_credit_url': inventoryData.add1CreditUrl || '',
           
@@ -678,10 +678,10 @@ const InventoryImportExport = () => {
             restock_date: row.restock_date || '',
             notes: row.notes || '',
             // Photo credit fields (now stored in inventory)
-            mainCreditType: row.main_credit_type || 'own',
+            mainCreditType: row.main_credit_type || '',  // Don't default to 'own'
             mainCreditSource: row.main_credit_source || '',
             mainCreditUrl: row.main_credit_url || '',
-            add1CreditType: row.add1_credit_type || 'own',
+            add1CreditType: row.add1_credit_type || '',  // Don't default to 'own'
             add1CreditSource: row.add1_credit_source || '',
             add1CreditUrl: row.add1_credit_url || ''
           })) : 

@@ -17,14 +17,22 @@ const PlantCard = ({ plant }) => {
     const creditType = plant.inventory.mainCreditType;
     const creditSource = plant.inventory.mainCreditSource;
     
-    if (!creditType) {
-      return null; // No credit info
+    // Debug logging
+    if (plant.name && plant.name.includes('Plant')) {  // Log for a specific plant for debugging
+      console.log(`[PlantCard] ${plant.name} - creditType: "${creditType}", creditSource: "${creditSource}"`);
+    }
+    
+    if (!creditType || creditType === '') {
+      return null; // No credit info - don't show attribution
     }
     
     if (creditType === 'commercial' && creditSource) {
       return `Photo credit: ${creditSource}`;
     } else if (creditType === 'own' && creditSource && creditSource !== 'Buttons Flower Farm') {
       return `Photo credit: ${creditSource}`;
+    } else if (creditType === 'own' && !creditSource) {
+      // If type is 'own' but no source specified, show Buttons Flower Farm
+      return `Photo credit: Buttons Flower Farm`;
     } else if (creditType === 'own') {
       return `Photo credit: Buttons Flower Farm`;
     }
