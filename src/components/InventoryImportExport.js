@@ -630,53 +630,12 @@ const InventoryImportExport = () => {
           plantingDepth: plant.planting_depth_inches || plant.planting_depth || '',
           size: plant.mature_size || plant.size || '',
           hidden: plant.hidden === 'true' || plant.hidden === true || plant.hidden === 'TRUE'
+          // imageMetadata removed - photo credits now handled in inventory data
         };
 
         // NOTE: Photo credit metadata is now handled in inventory data instead of imageMetadata
-        // This keeps the old imageMetadata processing for compatibility but doesn't create new entries
-        
-        // Handle main image credits
-        const mainImage = plantData.mainImage;
-        if (mainImage) {
-          const mainCreditType = plant.main_credit_type || plant.photo_credit_type;
-          if (mainCreditType && mainCreditType.toLowerCase() !== 'none') {
-            const safeKey = createSafeKey(mainImage);
-            plantData.imageMetadata[safeKey] = {
-              type: mainCreditType.toLowerCase()
-            };
-
-            const mainSource = plant.main_credit_source || plant.photo_credit_source;
-            const mainPhotographer = plant.main_credit_photographer || plant.photo_credit_photographer;
-            const mainWatermarked = plant.main_credit_watermarked || plant.photo_credit_watermarked;
-
-            if (mainCreditType.toLowerCase() === 'commercial' && mainSource) {
-              plantData.imageMetadata[safeKey].source = {
-                name: mainSource,
-                url: plant.main_credit_url || plant.photo_credit_url || ''
-              };
-            } else if (mainCreditType.toLowerCase() === 'own') {
-              // Handle source field for own photos (could be photographer name or "Buttons Flower Farm")
-              if (mainSource) {
-                // If source is the farm name, just store the type
-                if (mainSource === 'Buttons Flower Farm') {
-                  // Type is already set to 'own', that's enough
-                } else {
-                  // Otherwise treat it as photographer name
-                  plantData.imageMetadata[safeKey].photographer = mainSource;
-                }
-              } else if (mainPhotographer) {
-                // Fall back to photographer field if it exists
-                plantData.imageMetadata[safeKey].photographer = mainPhotographer;
-              }
-              if (mainWatermarked === 'true' || 
-                  mainWatermarked === 'TRUE' || 
-                  mainWatermarked === 'YES' ||
-                  mainWatermarked === true) {
-                plantData.imageMetadata[safeKey].watermarked = true;
-              }
-            }
-          }
-        }
+        // The old imageMetadata processing has been removed since we now use inventory for photo credits
+        // Photo credits are handled in the inventory transformation below (lines 761-766)
         
         // Handle additional images and their credits
         // Process additionalImages string (comma-separated) or individual columns
@@ -692,46 +651,8 @@ const InventoryImportExport = () => {
           const imgUrl = plant[`additionalimage${i}`];
           if (imgUrl && imgUrl.trim()) {
             additionalImageUrls.push(imgUrl.trim());
-            
-            // Process credits for this additional image
-            const creditType = plant[`add${i}_credit_type`];
-            if (creditType && creditType.toLowerCase() !== 'none') {
-              const safeKey = createSafeKey(imgUrl);
-              plantData.imageMetadata[safeKey] = {
-                type: creditType.toLowerCase()
-              };
-              
-              const source = plant[`add${i}_credit_source`];
-              const photographer = plant[`add${i}_credit_photographer`];
-              const watermarked = plant[`add${i}_credit_watermarked`];
-              
-              if (creditType.toLowerCase() === 'commercial' && source) {
-                plantData.imageMetadata[safeKey].source = {
-                  name: source,
-                  url: plant[`add${i}_credit_url`] || ''
-                };
-              } else if (creditType.toLowerCase() === 'own') {
-                // Handle source field for own photos (could be photographer name or "Buttons Flower Farm")
-                if (source) {
-                  // If source is the farm name, just store the type
-                  if (source === 'Buttons Flower Farm') {
-                    // Type is already set to 'own', that's enough
-                  } else {
-                    // Otherwise treat it as photographer name
-                    plantData.imageMetadata[safeKey].photographer = source;
-                  }
-                } else if (photographer) {
-                  // Fall back to photographer field if it exists
-                  plantData.imageMetadata[safeKey].photographer = photographer;
-                }
-                if (watermarked === 'true' || 
-                    watermarked === 'TRUE' || 
-                    watermarked === 'YES' ||
-                    watermarked === true) {
-                  plantData.imageMetadata[safeKey].watermarked = true;
-                }
-              }
-            }
+            // Photo credits for additional images are now handled in inventory data
+            // No imageMetadata processing needed here
           }
         }
         
