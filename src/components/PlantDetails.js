@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
@@ -271,10 +271,61 @@ function PlantDetails() {
   }, [id]);
 
   // Get all plant IDs for navigation
-  const plantIds = plants.map(p => p.id);
-  const currentIndex = plantIds.indexOf(Number(id) || id);
-  const hasPrevious = currentIndex > 0;
-  const hasNext = currentIndex < plantIds.length - 1;
+  const allPlantIds = plants.map(p => p.id);
+
+  // Get visible plant IDs for navigation (exclude hidden and out of stock)
+  const visiblePlantIds = useMemo(() => {
+    return plants
+      .filter(plant =>
+        // Filter out hidden plants
+        (plant.hidden !== true &&
+        plant.hidden !== 'true' &&
+        plant.hidden !== 1 &&
+        plant.hidden !== '1') &&
+        // Only show plants with inventory > 0 or with Coming Soon/Pre-order status
+        ((plant.inventory?.currentStock > 0) ||
+        (plant.inventory?.status === 'Coming Soon') ||
+        (plant.inventory?.status === 'Pre-order') ||
+        (plant.inventory?.status === 'Pre-Order'))
+      )
+      .map(p => p.id);
+  }, [plants]);
+
+  // Find the current plant's position in ALL plants and calculate navigation
+  const navigationData = useMemo(() => {
+    // Normalize current ID to number for consistent comparison
+    const currentId = Number(id);
+    const currentIndexInAll = allPlantIds.findIndex(plantId => Number(plantId) === currentId);
+
+    // Find previous visible plant
+    let previousVisibleId = null;
+    for (let i = currentIndexInAll - 1; i >= 0; i--) {
+      const candidateId = allPlantIds[i];
+      if (visiblePlantIds.some(visId => Number(visId) === Number(candidateId))) {
+        previousVisibleId = candidateId;
+        break;
+      }
+    }
+
+    // Find next visible plant
+    let nextVisibleId = null;
+    for (let i = currentIndexInAll + 1; i < allPlantIds.length; i++) {
+      const candidateId = allPlantIds[i];
+      if (visiblePlantIds.some(visId => Number(visId) === Number(candidateId))) {
+        nextVisibleId = candidateId;
+        break;
+      }
+    }
+
+    return {
+      previousVisibleId,
+      nextVisibleId,
+      hasPrevious: previousVisibleId !== null,
+      hasNext: nextVisibleId !== null
+    };
+  }, [allPlantIds, visiblePlantIds, id]);
+
+  const { previousVisibleId, nextVisibleId, hasPrevious, hasNext } = navigationData;
 
   // Preload images
   useEffect(() => {
@@ -304,10 +355,10 @@ function PlantDetails() {
     // Reset image loaded state when navigating
     setImagesLoaded(false);
     setSelectedImageIndex(0);
-    
-    const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
-    if (newIndex >= 0 && newIndex < plantIds.length) {
-      navigate(`/plant/${plantIds[newIndex]}`);
+
+    const targetId = direction === 'next' ? nextVisibleId : previousVisibleId;
+    if (targetId) {
+      navigate(`/plant/${targetId}`);
     }
   };
 
