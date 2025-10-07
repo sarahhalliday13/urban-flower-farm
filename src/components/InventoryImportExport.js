@@ -886,7 +886,7 @@ const InventoryImportExport = () => {
                           <tr key={index}>
                             <td>{plant.id}</td>
                             <td>{plant.name}</td>
-                            <td>${plant.price}</td>
+                            <td>${plant.price ? plant.price.toFixed(2) : '0.00'}</td>
                             <td>{plant.stock}</td>
                             <td>
                               <span style={{

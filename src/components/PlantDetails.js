@@ -673,7 +673,7 @@ function PlantDetails() {
           <p className="description">{plant.description}</p>
           
           <div className="price-action-container">
-            <p className="price">${plant.price}</p>
+            <p className="price">${plant.price ? plant.price.toFixed(2) : '0.00'}</p>
             <div className="price-controls">
               <div className="quantity-selector">
                 <button 
