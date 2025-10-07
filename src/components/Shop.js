@@ -544,7 +544,7 @@ function Shop() {
                 </div>
               )}
             </div>
-            <p className="plant-price">${plant.price ? plant.price.toFixed(2) : '0.00'}</p>
+            <p className="plant-price">${plant.price ? parseFloat(plant.price).toFixed(2) : '0.00'}</p>
           </div>
         </Link>
         <div className="plant-actions">

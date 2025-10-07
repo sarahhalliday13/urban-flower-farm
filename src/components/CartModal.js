@@ -103,7 +103,7 @@ function CartModal({ isOpen, onClose }) {
                           <h3>{item.name}</h3>
                         </div>
                         <div className="cart-item-price">
-                          ${item.price ? item.price.toFixed(2) : '0.00'}
+                          ${item.price ? parseFloat(item.price).toFixed(2) : '0.00'}
                         </div>
                       </div>
                       <div className="cart-item-bottom-row">

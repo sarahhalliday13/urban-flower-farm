@@ -82,7 +82,7 @@ const PlantCard = ({ plant }) => {
         </div>
         <div className="plant-info">
           <h3>{plant.name}</h3>
-          <p className="price">${plant.price ? plant.price.toFixed(2) : '0.00'}</p>
+          <p className="price">${plant.price ? parseFloat(plant.price).toFixed(2) : '0.00'}</p>
           {plant.inventory && plant.inventory.status && (
             <div className={`inventory-status ${plant.inventory.status.toLowerCase().replace(' ', '-')}`}>
               {plant.inventory.status}
