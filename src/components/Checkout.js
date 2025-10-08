@@ -7,7 +7,7 @@ import { sendOrderConfirmationEmails } from '../services/emailService';
 import '../styles/Checkout.css';
 
 const Checkout = () => {
-  const { cartItems, getTotal, clearCart } = useCart();
+  const { cartItems, getSubtotal, getGST, getPST, getTotal, clearCart } = useCart();
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({
@@ -21,6 +21,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [completedOrder, setCompletedOrder] = useState(null);
   const [inventoryUpdateStatus, setInventoryUpdateStatus] = useState(null);
   const [comingSoonAccepted, setComingSoonAccepted] = useState(false);
 
@@ -55,6 +56,7 @@ const Checkout = () => {
         if (foundOrder) {
           setOrderComplete(true);
           setOrderId(foundOrder.id);
+          setCompletedOrder(foundOrder);
           setFormData(prevData => ({
             ...prevData,
             firstName: foundOrder.customer.firstName,
@@ -188,25 +190,13 @@ const Checkout = () => {
           quantity: parseInt(item.quantity, 10),
           inventoryStatus: item.inventory?.status || 'In Stock'
         })),
-        // Calculate the total directly from cart items to ensure accuracy
-        total: cartItems.reduce((sum, item) => {
-          const itemPrice = parseFloat(item.price) || 0;
-          const itemQuantity = parseInt(item.quantity, 10) || 0;
-          return sum + (itemPrice * itemQuantity);
-        }, 0).toFixed(2),
+        // Calculate subtotal, taxes, and total
+        subtotal: parseFloat(getSubtotal().toFixed(2)),
+        gst: parseFloat(getGST().toFixed(2)),
+        pst: parseFloat(getPST().toFixed(2)),
+        total: parseFloat(getTotal().toFixed(2)),
         status: 'Processing'
       };
-      
-      // Verify the calculated total matches getTotal() for debugging
-      const calculatedTotal = parseFloat(newOrderData.total);
-      const contextTotal = parseFloat(getTotal().toFixed(2));
-      if (calculatedTotal !== contextTotal) {
-        console.warn('Total mismatch:', {
-          calculatedTotal,
-          contextTotal,
-          items: cartItems
-        });
-      }
       
       // Save the order to Firebase and localStorage
       try {
@@ -329,17 +319,20 @@ const Checkout = () => {
               <span className="copy-tooltip">Copied!</span>
             </button>
           </p>
-          <p>We've received your order and will be in touch soon.</p>
-          <p>A confirmation has been sent to <strong>{formData.email}</strong>.</p>
+          <p>We've received your order and will be in touch soon. A confirmation email has been sent to <strong>{formData.email}</strong>.</p>
           <p className="spam-notice">Please check your spam folder if you don't see the email.</p>
-          
-          {inventoryUpdateStatus === 'warning' && (
-            <p className="inventory-warning">
-              Note: There may have been issues updating our inventory system. 
-              Our team will review your order manually.
-            </p>
-          )}
-          
+
+          <div className="pickup-confirmation">
+            <h3>Pickup Information</h3>
+            <p>We will confirm your pickup date and time by text message to <strong>{formData.phone}</strong>.</p>
+            {formData.notes && (
+              <div className="requested-pickup">
+                <p><strong>Your requested pickup:</strong></p>
+                <p>{formData.notes}</p>
+              </div>
+            )}
+          </div>
+
           <div className="payment-instructions">
             <h3>Payment Instructions</h3>
             <p>Please complete your payment using one of the following methods:</p>
@@ -347,23 +340,23 @@ const Checkout = () => {
               <li><strong>Cash:</strong> Available for in-person pickup</li>
               <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
                 buttonsflowerfarm@telus.net
-                <button 
-                  className="copy-email-btn" 
+                <button
+                  className="copy-email-btn"
                   onClick={(e) => {
                     e.preventDefault();
                     const btn = e.currentTarget;
                     const svgElement = btn.querySelector('svg');
                     const textElement = btn.querySelector('.copy-text');
-                    
+
                     // Hide SVG, show "Copied" text
                     if (svgElement) svgElement.style.display = 'none';
                     if (textElement) textElement.style.display = 'inline';
-                    
+
                     navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
                       .then(() => {
                         // Show tooltip
                         btn.classList.add('copied');
-                        
+
                         // Reset button after 2 seconds
                         setTimeout(() => {
                           btn.classList.remove('copied');
@@ -384,21 +377,87 @@ const Checkout = () => {
                   <span className="copy-text">Copied</span>
                   <span className="copy-tooltip">Copied!</span>
                 </button>
-              </span></li>
+              </span>. Include your order number <span className="email-with-copy">
+                ({orderId})
+                <button
+                  className="copy-email-btn"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const btn = e.currentTarget;
+                    const svgElement = btn.querySelector('svg');
+                    const textElement = btn.querySelector('.copy-text');
+
+                    // Hide SVG, show "Copied" text
+                    if (svgElement) svgElement.style.display = 'none';
+                    if (textElement) textElement.style.display = 'inline';
+
+                    navigator.clipboard.writeText(orderId)
+                      .then(() => {
+                        // Show tooltip
+                        btn.classList.add('copied');
+
+                        // Reset button after 2 seconds
+                        setTimeout(() => {
+                          btn.classList.remove('copied');
+                          if (svgElement) svgElement.style.display = 'inline';
+                          if (textElement) textElement.style.display = 'none';
+                        }, 2000);
+                      })
+                      .catch(err => {
+                        console.error('Failed to copy text: ', err);
+                      });
+                  }}
+                  title="Copy order number"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span className="copy-text">Copied</span>
+                  <span className="copy-tooltip">Copied!</span>
+                </button>
+              </span> in the payment notes.</li>
             </ul>
-            <p>Please include your order number ({orderId}) in the payment notes.</p>
           </div>
-          
-          <div className="pickup-confirmation">
-            <h3>Pickup Information</h3>
-            <p>We will confirm your pickup date and time by text message to <strong>{formData.phone}</strong>.</p>
-            {formData.notes && (
-              <div className="requested-pickup">
-                <p><strong>Your requested pickup:</strong></p>
-                <p>{formData.notes}</p>
+
+          {completedOrder && (
+            <div className="order-summary-confirmation">
+              <h3>Order Summary</h3>
+              <div className="confirmed-items">
+                {completedOrder.items && completedOrder.items.map((item, index) => (
+                  <div key={index} className="confirmed-item">
+                    <span className="item-name">{item.name} × {item.quantity}</span>
+                    <span className="item-price">${(item.price * item.quantity).toFixed(2)}</span>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+              <div className="confirmed-totals">
+                <div className="confirmed-total-row">
+                  <span>Sub-total:</span>
+                  <span>${completedOrder.subtotal ? completedOrder.subtotal.toFixed(2) : '0.00'}</span>
+                </div>
+                <div className="confirmed-total-row">
+                  <span>GST (5%):</span>
+                  <span>${completedOrder.gst ? completedOrder.gst.toFixed(2) : '0.00'}</span>
+                </div>
+                <div className="confirmed-total-row">
+                  <span>PST (7%):</span>
+                  <span>${completedOrder.pst ? completedOrder.pst.toFixed(2) : '0.00'}</span>
+                </div>
+                <div className="confirmed-total-row final">
+                  <span><strong>Total:</strong></span>
+                  <span><strong>${completedOrder.total ? completedOrder.total.toFixed(2) : '0.00'}</strong></span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {inventoryUpdateStatus === 'warning' && (
+            <p className="inventory-warning">
+              Note: There may have been issues updating our inventory system.
+              Our team will review your order manually.
+            </p>
+          )}
           
           <div className="order-actions">
             <button 
@@ -561,8 +620,25 @@ const Checkout = () => {
           </div>
           
           <div className="order-total">
-            <h3>Total</h3>
-            <p className="total-price" data-label="Total:">${getTotal().toFixed(2)}</p>
+            <h3>Order Summary</h3>
+            <div className="total-breakdown">
+              <div className="total-row subtotal-row">
+                <span>Sub-total:</span>
+                <span>${getSubtotal().toFixed(2)}</span>
+              </div>
+              <div className="total-row tax-row">
+                <span>GST (5%):</span>
+                <span>${getGST().toFixed(2)}</span>
+              </div>
+              <div className="total-row tax-row">
+                <span>PST (7%):</span>
+                <span>${getPST().toFixed(2)}</span>
+              </div>
+              <div className="total-row final-total-row">
+                <span>Total:</span>
+                <span>${getTotal().toFixed(2)}</span>
+              </div>
+            </div>
           </div>
           
           <div className="order-note">

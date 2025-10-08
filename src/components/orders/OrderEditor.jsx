@@ -161,16 +161,34 @@ const OrderEditor = ({ orderId, closeModal }) => {
     setItems(prevItems => [...prevItems, newItem]);
   };
   
-  // Calculate the current total
-  const calculateTotal = () => {
+  // Calculate the current subtotal
+  const calculateSubtotal = () => {
     return items.reduce((total, item) => {
       // Skip freebies from total calculation
       if (item.isFreebie) return total;
-      
+
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return total + (price * quantity);
-    }, 0).toString();
+    }, 0);
+  };
+
+  // Calculate GST (5%)
+  const calculateGST = () => {
+    return calculateSubtotal() * 0.05;
+  };
+
+  // Calculate PST (7%)
+  const calculatePST = () => {
+    return calculateSubtotal() * 0.07;
+  };
+
+  // Calculate the final total with taxes
+  const calculateTotal = () => {
+    const subtotal = calculateSubtotal();
+    const gst = calculateGST();
+    const pst = calculatePST();
+    return (subtotal + gst + pst).toString();
   };
   
   // Helper function to safely format values for display
@@ -193,10 +211,13 @@ const OrderEditor = ({ orderId, closeModal }) => {
       // First ensure we're authenticated
       await ensureAuthenticated();
       
-      // Calculate the new total
+      // Calculate tax amounts and total
+      const subtotal = calculateSubtotal();
+      const gst = calculateGST();
+      const pst = calculatePST();
       const newTotal = calculateTotal();
-      console.log("New total calculated:", newTotal);
-      
+      console.log("New total calculated:", newTotal, "Subtotal:", subtotal, "GST:", gst, "PST:", pst);
+
       // Prepare admin notes update if any
       let adminNotesArray = currentOrder?.adminNotes || [];
       if (adminNotes.trim()) {
@@ -207,7 +228,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
           addedBy: 'admin' // You might want to get actual admin user info here
         }];
       }
-      
+
       // Prepare the complete order data
       const updateData = {
         ...currentOrder,
@@ -217,6 +238,9 @@ const OrderEditor = ({ orderId, closeModal }) => {
           price: parseFloat(item.price),
           isFreebie: item.isFreebie || false
         })),
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        gst: parseFloat(gst.toFixed(2)),
+        pst: parseFloat(pst.toFixed(2)),
         total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
         adminNotes: adminNotesArray
@@ -333,7 +357,14 @@ const OrderEditor = ({ orderId, closeModal }) => {
               <p className="order-summary">
                 Total Items: {items.reduce((sum, item) => sum + (parseInt(item.quantity, 10) || 0), 0)}
                 <br />
-                Order Total: ${calculateTotal()}
+                <br />
+                Sub-total: ${calculateSubtotal().toFixed(2)}
+                <br />
+                GST (5%): ${calculateGST().toFixed(2)}
+                <br />
+                PST (7%): ${calculatePST().toFixed(2)}
+                <br />
+                <strong>Order Total: ${parseFloat(calculateTotal()).toFixed(2)}</strong>
               </p>
 
               <SaveCancelButtons 

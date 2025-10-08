@@ -369,6 +369,7 @@
 }
 
 .subtotal-row,
+.tax-row,
 .discount-row,
 .final-total-row {
   display: flex;
@@ -380,6 +381,19 @@
 .subtotal-row {
   border-bottom: 1px dashed #e0e0e0;
   color: #666;
+}
+
+.tax-row {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.tax-row span:first-child {
+  text-align: left;
+}
+
+.tax-row span:last-child {
+  text-align: right;
 }
 
 .discount-row {

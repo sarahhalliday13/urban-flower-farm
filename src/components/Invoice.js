@@ -33,14 +33,18 @@ export const generateInvoiceHTML = (order) => {
   `).join('') || '';
   
   // Calculate subtotal from items, excluding freebies
-  const subtotal = order.items?.reduce((sum, item) => {
+  const subtotal = order.subtotal || order.items?.reduce((sum, item) => {
     if (item.isFreebie) return sum;
     const price = parseFloat(item.price) || 0;
     const quantity = parseInt(item.quantity, 10) || 0;
     return sum + (price * quantity);
   }, 0) || 0;
+
+  // Get tax amounts (use from order if available, otherwise calculate)
+  const gst = order.gst || (subtotal * 0.05);
+  const pst = order.pst || (subtotal * 0.07);
   const discount = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
-  const total = Math.max(0, subtotal - discount);
+  const total = order.total || Math.max(0, subtotal + gst + pst - discount);
   
   // Generate full invoice HTML using table-based layout for better email client compatibility
   return `
@@ -141,8 +145,16 @@ export const generateInvoiceHTML = (order) => {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Subtotal</td>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Sub-total</td>
                         <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd;">$${formatCurrency(subtotal)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%)</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(gst)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%)</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(pst)}</td>
                       </tr>
                       ${discount > 0 ? `
                       <tr>
@@ -402,8 +414,16 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Subtotal</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(calculateSubtotal(orderVersion.items))}</td>
+              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Sub-total</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.subtotal || calculateSubtotal(orderVersion.items))}</td>
+            </tr>
+            <tr>
+              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>GST (5%)</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.gst || (order.subtotal || calculateSubtotal(orderVersion.items)) * 0.05)}</td>
+            </tr>
+            <tr>
+              <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>PST (7%)</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.pst || (order.subtotal || calculateSubtotal(orderVersion.items)) * 0.07)}</td>
             </tr>
             {order.discount && parseFloat(order.discount.amount) > 0 && (
               <tr>
@@ -415,9 +435,13 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
               <td colSpan="3" className="final-total-label" style={{ textAlign: 'right' }}>Total</td>
               <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
-                  order.discount && parseFloat(order.discount.amount) > 0
-                    ? Math.max(0, calculateSubtotal(orderVersion.items) - parseFloat(order.discount.amount))
-                    : calculateSubtotal(orderVersion.items)
+                  order.total || (() => {
+                    const sub = order.subtotal || calculateSubtotal(orderVersion.items);
+                    const gst = order.gst || (sub * 0.05);
+                    const pst = order.pst || (sub * 0.07);
+                    const disc = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
+                    return Math.max(0, sub + gst + pst - disc);
+                  })()
                 )}
               </td>
             </tr>

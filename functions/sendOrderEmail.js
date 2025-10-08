@@ -188,11 +188,19 @@ function generateCustomerEmailTemplate(order) {
                       ${itemsList}
                     </tbody>
                     <tfoot>
-                      ${order.discount && order.discount.amount > 0 ? `
                       <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Subtotal</td>
-                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(calculateSubtotal(order))}</td>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
+                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
                       </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                      </tr>
+                      ${order.discount && order.discount.amount > 0 ? `
                       <tr>
                         <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
                         <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
@@ -200,7 +208,7 @@ function generateCustomerEmailTemplate(order) {
                       ` : ''}
                       <tr>
                         <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(calculateFinalTotal(order))}</td>
+                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -369,11 +377,19 @@ function generateButtonsEmailTemplate(order) {
           ${itemsList}
         </tbody>
         <tfoot>
-          ${order.discount && order.discount.amount > 0 ? `
           <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;">Subtotal:</td>
-            <td style="padding: 10px; text-align: right;">$${parseFloat(calculateSubtotal(order)).toFixed(2)}</td>
+            <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(order.subtotal || calculateSubtotal(order)).toFixed(2)}</td>
           </tr>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(order.gst || 0).toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(order.pst || 0).toFixed(2)}</td>
+          </tr>
+          ${order.discount && order.discount.amount > 0 ? `
           <tr>
             <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
             <td style="padding: 10px; text-align: right; color: #27ae60;">-$${parseFloat(order.discount.amount).toFixed(2)}</td>
@@ -381,7 +397,7 @@ function generateButtonsEmailTemplate(order) {
           ` : ''}
           <tr>
             <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseFloat(calculateFinalTotal(order)).toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseFloat(order.total || calculateFinalTotal(order)).toFixed(2)}</td>
           </tr>
         </tfoot>
       </table>
@@ -520,11 +536,19 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                       ${itemsList}
                     </tbody>
                     <tfoot>
-                      ${order.discount && order.discount.amount > 0 ? `
                       <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Subtotal</td>
-                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(calculateSubtotal(order))}</td>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
+                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
                       </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                      </tr>
+                      ${order.discount && order.discount.amount > 0 ? `
                       <tr>
                         <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
                         <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
@@ -532,7 +556,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                       ` : ''}
                       <tr>
                         <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(calculateFinalTotal(order))}</td>
+                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
                       </tr>
                     </tfoot>
                   </table>

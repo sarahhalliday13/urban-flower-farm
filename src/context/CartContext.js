@@ -2,6 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
+// Tax rates for Canadian sales
+const GST_RATE = 0.05; // 5%
+const PST_RATE = 0.07; // 7%
+
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
     // Load cart items from localStorage on initialization
@@ -149,29 +153,60 @@ export function CartProvider({ children }) {
     setCartItems([]);
   };
 
-  const getTotal = () => {
-    // Enhanced version with better type handling and validation
-    let total = 0;
-    
+  const getSubtotal = () => {
+    // Calculate subtotal (before taxes)
+    let subtotal = 0;
+
     for (const item of cartItems) {
       const price = parseFloat(item.price);
       const quantity = parseInt(item.quantity, 10);
-      
+
       // Skip invalid items
       if (isNaN(price) || isNaN(quantity)) {
         console.warn('Invalid item in cart:', item);
         continue;
       }
-      
-      total += price * quantity;
+
+      subtotal += price * quantity;
     }
-    
-    // Check for special case where total might be 150 incorrectly
-    if (total === 150 && cartItems.length > 0) {
-      console.warn('Total is exactly 150. This might be a bug. Cart items:', cartItems);
-    }
-    
-    return total;
+
+    return subtotal;
+  };
+
+  const getGST = (subtotal = null) => {
+    // Calculate GST (5%)
+    const sub = subtotal !== null ? subtotal : getSubtotal();
+    return sub * GST_RATE;
+  };
+
+  const getPST = (subtotal = null) => {
+    // Calculate PST (7%)
+    const sub = subtotal !== null ? subtotal : getSubtotal();
+    return sub * PST_RATE;
+  };
+
+  const getTaxes = () => {
+    // Get all tax amounts in one call
+    const subtotal = getSubtotal();
+    const gst = getGST(subtotal);
+    const pst = getPST(subtotal);
+
+    return {
+      subtotal,
+      gst,
+      pst,
+      totalTax: gst + pst,
+      total: subtotal + gst + pst
+    };
+  };
+
+  const getTotal = () => {
+    // Total including taxes
+    const subtotal = getSubtotal();
+    const gst = getGST(subtotal);
+    const pst = getPST(subtotal);
+
+    return subtotal + gst + pst;
   };
 
   const getItemCount = () => {
@@ -189,6 +224,10 @@ export function CartProvider({ children }) {
       removeFromCart,
       updateQuantity,
       clearCart,
+      getSubtotal,
+      getGST,
+      getPST,
+      getTaxes,
       getTotal,
       getItemCount
     }}>

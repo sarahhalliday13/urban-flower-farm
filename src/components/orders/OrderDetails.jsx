@@ -204,11 +204,13 @@ const OrderDetails = () => {
     }
   };
 
-  // Get final total after discount
+  // Get final total including taxes after discount
   const getFinalTotal = () => {
-    const subtotal = calculateSubtotal();
+    const subtotal = orderDetails.subtotal || calculateSubtotal();
+    const gst = orderDetails.gst || (subtotal * 0.05);
+    const pst = orderDetails.pst || (subtotal * 0.07);
     const discount = getDiscountAmount();
-    return Math.max(0, subtotal - discount);
+    return Math.max(0, subtotal + gst + pst - discount);
   };
   
   // Helper to format payment method for display
@@ -521,10 +523,20 @@ const OrderDetails = () => {
               <h3>Order Totals</h3>
               <div className="totals-breakdown">
                 <div className="subtotal-row">
-                  <span>Subtotal:</span>
-                  <span>${formatCurrency(calculateSubtotal())}</span>
+                  <span>Sub-total:</span>
+                  <span>${formatCurrency(orderDetails.subtotal || calculateSubtotal())}</span>
                 </div>
-                
+
+                <div className="tax-row">
+                  <span>GST (5%):</span>
+                  <span>${formatCurrency(orderDetails.gst || (orderDetails.subtotal || calculateSubtotal()) * 0.05)}</span>
+                </div>
+
+                <div className="tax-row">
+                  <span>PST (7%):</span>
+                  <span>${formatCurrency(orderDetails.pst || (orderDetails.subtotal || calculateSubtotal()) * 0.07)}</span>
+                </div>
+
                 {/* Discount Row */}
                 <div className="discount-row">
                   <span>Discount:</span>
@@ -564,7 +576,7 @@ const OrderDetails = () => {
                           </button>
                         </div>
                         <div className="discount-preview">
-                          <em>Preview: ${formatCurrency(calculateSubtotal())} - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
+                          <em>Preview: ${formatCurrency(calculateSubtotal())} + taxes - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
                         </div>
                       </div>
                     ) : (

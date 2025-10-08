@@ -476,8 +476,20 @@ const Orders = () => {
                               </tbody>
                               <tfoot>
                                 <tr>
-                                  <td colSpan="3" className="total-label">Total:</td>
-                                  <td className="total-amount">${parseFloat(order.total || 0).toFixed(2)}</td>
+                                  <td colSpan="3" className="total-label">Sub-total:</td>
+                                  <td className="total-amount">${parseFloat(order.subtotal || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                  <td colSpan="3" className="total-label">GST (5%):</td>
+                                  <td className="total-amount">${parseFloat(order.gst || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                  <td colSpan="3" className="total-label">PST (7%):</td>
+                                  <td className="total-amount">${parseFloat(order.pst || 0).toFixed(2)}</td>
+                                </tr>
+                                <tr>
+                                  <td colSpan="3" className="total-label"><strong>Total:</strong></td>
+                                  <td className="total-amount"><strong>${parseFloat(order.total || 0).toFixed(2)}</strong></td>
                                 </tr>
                               </tfoot>
                             </table>

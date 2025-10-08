@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-09-12
+**Last Updated**: 2025-10-08
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -15,10 +15,22 @@
 ## Key Features
 1. **Shop**: Browse and purchase flowers with inventory management
 2. **Admin Dashboard**: Order management, inventory control, news updates
-3. **Order System**: Cart, checkout, email confirmations with invoices
+3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-09-12)
+## Recent Changes (2025-10-08)
+- Implemented Canadian Sales Tax (GST/PST) System:
+  - GST: 5%, PST: 7% (Total: 12%)
+  - Tax calculation methods in CartContext (getGST, getPST, getTotal)
+  - CartModal displays subtotal only (tax shown at checkout)
+  - Full tax breakdown on Checkout, Order Confirmation, and My Orders pages
+  - Email templates include tax rows (customer, admin, invoice)
+  - Invoice component calculates taxes for both HTML and PDF
+  - OrderEditor recalculates taxes when orders are modified
+  - OrderDetails and OrderTableRow display correct totals including taxes
+  - Order data structure now includes: subtotal, gst, pst, total fields
+
+## Previous Changes (2025-09-12)
 - Fixed and improved master database import/export:
   - Smart mode only processes rows with explicit update_mode values (blank rows skipped)
   - Fixed inventory field mappings (currentStock instead of inventoryCount)

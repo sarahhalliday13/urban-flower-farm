@@ -16,21 +16,25 @@ const OrderTableRow = ({ order }) => {
   const getFinalTotal = () => {
     // Always calculate from items to account for freebies
     const items = Array.isArray(order.items) ? order.items : [];
-    
+
     // Get the subtotal from items, excluding freebies
     const subtotal = items.reduce((sum, item) => {
       // Skip freebies from calculation
       if (item.isFreebie) return sum;
-      
+
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return sum + (price * quantity);
     }, 0);
-    
+
+    // Calculate taxes
+    const gst = order.gst || (subtotal * 0.05);
+    const pst = order.pst || (subtotal * 0.07);
+
     // Apply discount if any
     const discount = parseFloat(order.discount?.amount || 0);
-    const total = Math.max(0, subtotal - discount); // Ensure total doesn't go negative
-    
+    const total = Math.max(0, subtotal + gst + pst - discount); // Ensure total doesn't go negative
+
     return total.toFixed(2);
   };
 

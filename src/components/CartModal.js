@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 
 function CartModal({ isOpen, onClose }) {
-  const { cartItems, removeFromCart, updateQuantity, getTotal } = useCart();
+  const { cartItems, removeFromCart, updateQuantity, getSubtotal } = useCart();
   const navigate = useNavigate();
   const modalRef = useRef(null);
   const [animationState, setAnimationState] = useState('exited');
@@ -147,7 +147,7 @@ function CartModal({ isOpen, onClose }) {
             <div className="cart-summary">
               <div className="cart-total">
                 <span>Total:</span>
-                <span>${getTotal().toFixed(2)}</span>
+                <span>${getSubtotal().toFixed(2)}</span>
               </div>
               <button className="checkout-btn" onClick={handleCheckout}>Proceed to Checkout</button>
             </div>
