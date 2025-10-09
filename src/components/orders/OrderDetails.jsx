@@ -207,10 +207,11 @@ const OrderDetails = () => {
   // Get final total including taxes after discount
   const getFinalTotal = () => {
     const subtotal = orderDetails.subtotal || calculateSubtotal();
-    const gst = orderDetails.gst || (subtotal * 0.05);
-    const pst = orderDetails.pst || (subtotal * 0.07);
     const discount = getDiscountAmount();
-    return Math.max(0, subtotal + gst + pst - discount);
+    const subtotalAfterDiscount = Math.max(0, subtotal - discount);
+    const gst = orderDetails.gst || (subtotalAfterDiscount * 0.05);
+    const pst = orderDetails.pst || (subtotalAfterDiscount * 0.07);
+    return subtotalAfterDiscount + gst + pst;
   };
   
   // Helper to format payment method for display
@@ -527,16 +528,6 @@ const OrderDetails = () => {
                   <span>${formatCurrency(orderDetails.subtotal || calculateSubtotal())}</span>
                 </div>
 
-                <div className="tax-row">
-                  <span>GST (5%):</span>
-                  <span>${formatCurrency(orderDetails.gst || (orderDetails.subtotal || calculateSubtotal()) * 0.05)}</span>
-                </div>
-
-                <div className="tax-row">
-                  <span>PST (7%):</span>
-                  <span>${formatCurrency(orderDetails.pst || (orderDetails.subtotal || calculateSubtotal()) * 0.07)}</span>
-                </div>
-
                 {/* Discount Row */}
                 <div className="discount-row">
                   <span>Discount:</span>
@@ -601,7 +592,18 @@ const OrderDetails = () => {
                     )}
                   </div>
                 </div>
-                
+
+                {/* Tax rows - calculated on subtotal after discount */}
+                <div className="tax-row">
+                  <span>GST (5%):</span>
+                  <span>${formatCurrency(orderDetails.gst || (Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05))}</span>
+                </div>
+
+                <div className="tax-row">
+                  <span>PST (7%):</span>
+                  <span>${formatCurrency(orderDetails.pst || (Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07))}</span>
+                </div>
+
                 {/* Final Total */}
                 <div className="final-total-row">
                   <span>Total:</span>
