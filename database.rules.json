@@ -22,6 +22,10 @@
     "contactMessages": {
       ".write": true
     },
+    "feedback": {
+      ".read": true,
+      ".write": true
+    },
     "users": {
       "$uid": {
         ".read": "auth !== null && auth.uid === $uid",

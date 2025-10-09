@@ -2118,6 +2118,174 @@ export const fetchNewsItems = async () => {
   }
 };
 
+// ============================================================================
+// FEEDBACK FUNCTIONS
+// ============================================================================
+
+/**
+ * Save feedback to Firebase
+ * @param {Object} feedbackData - The feedback data to save
+ * @returns {Promise<string>} The feedback ID
+ */
+export const saveFeedback = async (feedbackData) => {
+  try {
+    // Generate a unique ID for the feedback
+    const feedbackId = `FDB-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+    console.log('📝 Saving feedback:', feedbackId);
+
+    const feedbackWithId = {
+      ...feedbackData,
+      id: feedbackId,
+      timestamp: feedbackData.timestamp || new Date().toISOString(),
+      status: feedbackData.status || 'new'
+    };
+
+    const feedbackRef = ref(database, `feedback/${feedbackId}`);
+    await set(feedbackRef, feedbackWithId);
+
+    console.log('✅ Feedback saved successfully:', feedbackId);
+    return feedbackId;
+  } catch (error) {
+    console.error('❌ Error saving feedback:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all feedback from Firebase (admin only)
+ * @returns {Promise<Array>} Array of feedback items
+ */
+export const getFeedback = async () => {
+  try {
+    console.log('Fetching all feedback from Firebase');
+
+    // Ensure user is authenticated before reading feedback
+    await ensureAuthenticated();
+
+    const feedbackRef = ref(database, 'feedback');
+    const snapshot = await get(feedbackRef);
+
+    if (snapshot.exists()) {
+      const feedbackData = snapshot.val();
+      // Convert object to array and sort by date (newest first)
+      const feedbackArray = Object.values(feedbackData);
+      console.log(`Found ${feedbackArray.length} feedback items in Firebase`);
+
+      return feedbackArray.sort((a, b) =>
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+    }
+
+    console.log('No feedback found in Firebase');
+    return [];
+  } catch (error) {
+    console.error('Error fetching feedback from Firebase:', error);
+    return [];
+  }
+};
+
+/**
+ * Update feedback status
+ * @param {string} feedbackId - The feedback ID
+ * @param {string} status - The new status ('new', 'in-progress', 'resolved')
+ * @returns {Promise<boolean>} Success status
+ */
+export const updateFeedbackStatus = async (feedbackId, status) => {
+  try {
+    console.log(`📝 Updating feedback ${feedbackId} status to: ${status}`);
+
+    await ensureAuthenticated();
+
+    const updates = {
+      status,
+      updatedAt: new Date().toISOString()
+    };
+
+    // If marking as resolved, add resolvedAt timestamp
+    if (status === 'resolved') {
+      updates.resolvedAt = new Date().toISOString();
+    }
+
+    const feedbackRef = ref(database, `feedback/${feedbackId}`);
+    await update(feedbackRef, updates);
+
+    console.log('✅ Feedback status updated successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Error updating feedback status:', error);
+    throw error;
+  }
+};
+
+/**
+ * Add an admin note to feedback
+ * @param {string} feedbackId - The feedback ID
+ * @param {string} note - The note text
+ * @returns {Promise<boolean>} Success status
+ */
+export const addFeedbackNote = async (feedbackId, note) => {
+  try {
+    console.log(`📝 Adding note to feedback ${feedbackId}`);
+
+    await ensureAuthenticated();
+
+    // Get current feedback to append to existing notes
+    const feedbackRef = ref(database, `feedback/${feedbackId}`);
+    const snapshot = await get(feedbackRef);
+
+    if (!snapshot.exists()) {
+      throw new Error('Feedback not found');
+    }
+
+    const feedback = snapshot.val();
+    const existingNotes = feedback.adminNotes || [];
+
+    const newNote = {
+      note,
+      timestamp: new Date().toISOString(),
+      addedBy: 'admin' // Could be expanded to include actual admin user info
+    };
+
+    await update(feedbackRef, {
+      adminNotes: [...existingNotes, newNote],
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log('✅ Note added successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Error adding feedback note:', error);
+    throw error;
+  }
+};
+
+/**
+ * Update feedback priority
+ * @param {string} feedbackId - The feedback ID
+ * @param {string} priority - The priority level ('low', 'medium', 'high')
+ * @returns {Promise<boolean>} Success status
+ */
+export const updateFeedbackPriority = async (feedbackId, priority) => {
+  try {
+    console.log(`📝 Updating feedback ${feedbackId} priority to: ${priority}`);
+
+    await ensureAuthenticated();
+
+    const feedbackRef = ref(database, `feedback/${feedbackId}`);
+    await update(feedbackRef, {
+      priority,
+      updatedAt: new Date().toISOString()
+    });
+
+    console.log('✅ Feedback priority updated successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Error updating feedback priority:', error);
+    throw error;
+  }
+};
+
 // Export all functions
 const firebaseService = {
   fetchPlants,
@@ -2136,7 +2304,12 @@ const firebaseService = {
   repairInventoryData,
   deletePlant,
   saveNewsItems,
-  fetchNewsItems
+  fetchNewsItems,
+  saveFeedback,
+  getFeedback,
+  updateFeedbackStatus,
+  addFeedbackNote,
+  updateFeedbackPriority
 };
 
 export default firebaseService; 

@@ -10,6 +10,8 @@ import Login from './components/Login';
 import Checkout from './components/Checkout';
 import Orders from './components/Orders';
 import Contact from './components/Contact';
+import Feedback from './components/Feedback';
+import FeedbackPanel from './components/FeedbackPanel';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ToastProvider } from './components/ToastManager';
 // Import Toaster from react-hot-toast
@@ -348,12 +350,16 @@ function AppContent() {
       <header className="App-header">
         <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
       </header>
-      
+
+      {/* Global Feedback Panel */}
+      <FeedbackPanel />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/shop" element={<Shop />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/feedback" element={<Feedback />} />
         <Route path="/how-to" element={<HowTo />} />
         <Route path="/plant/:id" element={
           <PlantDetailsWrapper>
