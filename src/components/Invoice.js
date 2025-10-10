@@ -43,11 +43,11 @@ export const generateInvoiceHTML = (order) => {
   // Get discount first
   const discount = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
 
-  // Calculate taxes on subtotal AFTER discount
+  // Calculate taxes on subtotal AFTER discount (always recalculate, ignore stored values)
   const subtotalAfterDiscount = Math.max(0, subtotal - discount);
-  const gst = order.gst || (subtotalAfterDiscount * 0.05);
-  const pst = order.pst || (subtotalAfterDiscount * 0.07);
-  const total = order.total || (subtotalAfterDiscount + gst + pst);
+  const gst = subtotalAfterDiscount * 0.05;
+  const pst = subtotalAfterDiscount * 0.07;
+  const total = subtotalAfterDiscount + gst + pst;
   
   // Generate full invoice HTML using table-based layout for better email client compatibility
   return `
