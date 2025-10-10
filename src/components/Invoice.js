@@ -428,22 +428,22 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             )}
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>GST (5%)</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.gst || (Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.05))}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.05)}</td>
             </tr>
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>PST (7%)</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.pst || (Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.07))}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.07)}</td>
             </tr>
             <tr>
               <td colSpan="3" className="final-total-label" style={{ textAlign: 'right' }}>Total</td>
               <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
-                  order.total || (() => {
+                  (() => {
                     const sub = order.subtotal || calculateSubtotal(orderVersion.items);
                     const disc = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
                     const subtotalAfterDiscount = Math.max(0, sub - disc);
-                    const gst = order.gst || (subtotalAfterDiscount * 0.05);
-                    const pst = order.pst || (subtotalAfterDiscount * 0.07);
+                    const gst = subtotalAfterDiscount * 0.05;
+                    const pst = subtotalAfterDiscount * 0.07;
                     return subtotalAfterDiscount + gst + pst;
                   })()
                 )}

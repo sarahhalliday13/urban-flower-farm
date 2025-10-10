@@ -2168,20 +2168,42 @@ export const getFeedback = async () => {
 
     if (snapshot.exists()) {
       const feedbackData = snapshot.val();
-      // Convert object to array and sort by date (newest first)
-      const feedbackArray = Object.values(feedbackData);
-      console.log(`Found ${feedbackArray.length} feedback items in Firebase`);
-
-      return feedbackArray.sort((a, b) =>
-        new Date(b.timestamp) - new Date(a.timestamp)
-      );
+      console.log(`Found ${Object.keys(feedbackData).length} feedback items in Firebase`);
+      return feedbackData;
     }
 
     console.log('No feedback found in Firebase');
-    return [];
+    return {};
   } catch (error) {
     console.error('Error fetching feedback from Firebase:', error);
-    return [];
+    return {};
+  }
+};
+
+/**
+ * Get a single feedback item by ID
+ * @param {string} feedbackId - The feedback ID
+ * @returns {Promise<Object>} The feedback data
+ */
+export const getFeedbackById = async (feedbackId) => {
+  try {
+    console.log(`Fetching feedback ${feedbackId} from Firebase`);
+
+    await ensureAuthenticated();
+
+    const feedbackRef = ref(database, `feedback/${feedbackId}`);
+    const snapshot = await get(feedbackRef);
+
+    if (snapshot.exists()) {
+      console.log('Feedback found in Firebase');
+      return snapshot.val();
+    }
+
+    console.log('Feedback not found in Firebase');
+    return null;
+  } catch (error) {
+    console.error('Error fetching feedback from Firebase:', error);
+    throw error;
   }
 };
 

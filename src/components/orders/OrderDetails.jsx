@@ -209,8 +209,9 @@ const OrderDetails = () => {
     const subtotal = orderDetails.subtotal || calculateSubtotal();
     const discount = getDiscountAmount();
     const subtotalAfterDiscount = Math.max(0, subtotal - discount);
-    const gst = orderDetails.gst || (subtotalAfterDiscount * 0.05);
-    const pst = orderDetails.pst || (subtotalAfterDiscount * 0.07);
+    // Always recalculate taxes based on subtotal after discount
+    const gst = subtotalAfterDiscount * 0.05;
+    const pst = subtotalAfterDiscount * 0.07;
     return subtotalAfterDiscount + gst + pst;
   };
   
@@ -596,12 +597,12 @@ const OrderDetails = () => {
                 {/* Tax rows - calculated on subtotal after discount */}
                 <div className="tax-row">
                   <span>GST (5%):</span>
-                  <span>${formatCurrency(orderDetails.gst || (Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05))}</span>
+                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05)}</span>
                 </div>
 
                 <div className="tax-row">
                   <span>PST (7%):</span>
-                  <span>${formatCurrency(orderDetails.pst || (Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07))}</span>
+                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07)}</span>
                 </div>
 
                 {/* Final Total */}

@@ -43,6 +43,8 @@ import { ModularPlantEditor } from './components/plant-editor';
 import InvoicePage from './pages/InvoicePage';
 import InventoryImportExport from './components/InventoryImportExport';
 import ImageRecovery from './components/ImageRecovery';
+import FeedbackManager from './components/admin/FeedbackManager';
+import FeedbackDetails from './components/admin/FeedbackDetails';
 
 // Initialize Firebase Anonymous Auth
 const auth = getAuth();
@@ -214,12 +216,19 @@ function BaseNavigation({ isMenuOpen, setIsMenuOpen, currentPath }) {
               >
                 Inventory
               </AdminNavLink>
-              <AdminNavLink 
-                to="/admin/updates" 
+              <AdminNavLink
+                to="/admin/updates"
                 currentPath={currentPath}
                 onClick={() => setIsMenuOpen(false)}
               >
                 News
+              </AdminNavLink>
+              <AdminNavLink
+                to="/admin/feedback"
+                currentPath={currentPath}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Feedback
               </AdminNavLink>
               <button className="logout-button" onClick={handleLogout}>
                 Logout
@@ -344,15 +353,19 @@ const AdminContentWrapper = ({ children }) => {
 function AppContent() {
   // Add state for mobile menu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+  const location = useLocation();
+
+  // Check if current path is an admin page
+  const isAdminPage = location.pathname.startsWith('/admin');
+
   return (
     <div className="App">
       <header className="App-header">
         <NavigationWithRouter isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
       </header>
 
-      {/* Global Feedback Panel */}
-      <FeedbackPanel />
+      {/* Global Feedback Panel - hide on admin pages */}
+      {!isAdminPage && <FeedbackPanel />}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -447,6 +460,26 @@ function AppContent() {
             <ProtectedRoute>
               <AdminContentWrapper>
                 <ImageRecovery />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/feedback"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <FeedbackManager />
+              </AdminContentWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/feedback/:feedbackId"
+          element={
+            <ProtectedRoute>
+              <AdminContentWrapper>
+                <FeedbackDetails />
               </AdminContentWrapper>
             </ProtectedRoute>
           }
