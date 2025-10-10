@@ -27,13 +27,16 @@ const OrderTableRow = ({ order }) => {
       return sum + (price * quantity);
     }, 0);
 
-    // Calculate taxes
-    const gst = order.gst || (subtotal * 0.05);
-    const pst = order.pst || (subtotal * 0.07);
-
-    // Apply discount if any
+    // Apply discount first
     const discount = parseFloat(order.discount?.amount || 0);
-    const total = Math.max(0, subtotal + gst + pst - discount); // Ensure total doesn't go negative
+    const discountedAmount = Math.max(0, subtotal - discount);
+
+    // Always recalculate taxes on discounted amount (ignore stored values)
+    const gst = discountedAmount * 0.05;
+    const pst = discountedAmount * 0.07;
+
+    // Calculate final total
+    const total = discountedAmount + gst + pst;
 
     return total.toFixed(2);
   };

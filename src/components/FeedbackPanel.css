@@ -456,3 +456,16 @@
     font-size: 2rem;
   }
 }
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  .feedback-tab,
+  .feedback-fab,
+  .feedback-overlay,
+  .feedback-panel {
+    display: none !important;
+  }
+}

@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-10-08
+**Last Updated**: 2025-10-10
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,14 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-10-08)
+## Recent Changes (2025-10-10)
+- Fixed order row total calculation and invoice printing:
+  - OrderTableRow now recalculates taxes on discounted amount (not stored values)
+  - Added comprehensive print styles to hide navbar, feedback button, and footer
+  - Invoice prints cleanly on single page without blank pages
+  - Print media queries ensure zero spacing from hidden elements
+
+## Previous Changes (2025-10-08)
 - Implemented Canadian Sales Tax (GST/PST) System:
   - GST: 5%, PST: 7% (Total: 12%)
   - Tax calculation methods in CartContext (getGST, getPST, getTotal)

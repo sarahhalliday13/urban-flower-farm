@@ -2322,3 +2322,34 @@ footer {
 .back-to-top a {
   transition: all 0.2s ease;
 }
+
+/* ===== Print Styles ===== */
+@media print {
+  /* Hide navigation and feedback elements */
+  .navbar,
+  .feedback-fab,
+  .feedback-panel,
+  .back-to-top,
+  footer,
+  header,
+  nav {
+    display: none !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Ensure invoice fits on one page */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  /* Remove spacing from main app container */
+  #root,
+  .App {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

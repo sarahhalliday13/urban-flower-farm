@@ -321,29 +321,49 @@
   html.printing body {
     background: white;
   }
-  
+
   .invoice-page-header,
   .back-button,
   .print-button,
   .non-printable,
-  .print-controls {
+  .print-controls,
+  footer,
+  .thank-you-message {
     display: none !important;
   }
-  
+
   .invoice-page {
     padding: 0;
     margin: 0;
     max-width: 100%;
   }
-  
+
   .invoice-page-body {
     padding: 0;
     margin: 0;
   }
-  
+
   .invoice-container {
     box-shadow: none;
-    padding: 0;
+    padding: 20px;
+    page-break-inside: avoid;
+  }
+
+  .invoice-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+  }
+
+  .invoice-addresses {
+    margin-bottom: 20px;
+  }
+
+  .invoice-items {
+    margin-bottom: 20px;
+  }
+
+  .invoice-payment {
+    margin-bottom: 0;
   }
 }
 
