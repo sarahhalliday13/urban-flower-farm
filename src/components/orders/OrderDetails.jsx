@@ -38,12 +38,18 @@ const OrderDetails = () => {
   // State for discount editing
   const [discountAmount, setDiscountAmount] = useState('');
   const [discountReason, setDiscountReason] = useState('');
+  const [discountApplyTo, setDiscountApplyTo] = useState('all'); // 'all', 'instock', 'preorder', 'split'
   const [isEditingDiscount, setIsEditingDiscount] = useState(false);
   
   // State for payment method editing
   const [paymentMethod, setPaymentMethod] = useState('');
   const [paymentTiming, setPaymentTiming] = useState('');
   const [isEditingPayment, setIsEditingPayment] = useState(false);
+
+  // State for invoice payment tracking
+  const [instockPaid, setInstockPaid] = useState(false);
+  const [preorderPaid, setPreorderPaid] = useState(false);
+  const [allItemsPaid, setAllItemsPaid] = useState(false);
   
   // State for order editing
   const [isEditingOrder, setIsEditingOrder] = useState(false);
@@ -53,18 +59,20 @@ const OrderDetails = () => {
   const [editorKey, setEditorKey] = useState(0);
   // Reference for scrolling
   const orderDetailsRef = useRef(null);
-  
+
   // Find the active order details
   const orderDetails = activeOrder ? orders.find(order => order.id === activeOrder) : null;
-  
+
   // Initialize the discount states from order if available
   useEffect(() => {
     if (orderDetails?.discount) {
       setDiscountAmount(orderDetails.discount.amount || '');
       setDiscountReason(orderDetails.discount.reason || '');
+      setDiscountApplyTo(orderDetails.discount.applyTo || 'all');
     } else {
       setDiscountAmount('');
       setDiscountReason('');
+      setDiscountApplyTo('all');
     }
     setIsEditingDiscount(false);
     
@@ -77,10 +85,21 @@ const OrderDetails = () => {
       setPaymentTiming('');
     }
     setIsEditingPayment(false);
-    
+
+    // Initialize invoice payment status
+    if (orderDetails?.invoicePayments) {
+      setInstockPaid(orderDetails.invoicePayments.instock || false);
+      setPreorderPaid(orderDetails.invoicePayments.preorder || false);
+      setAllItemsPaid(orderDetails.invoicePayments.all || false);
+    } else {
+      setInstockPaid(false);
+      setPreorderPaid(false);
+      setAllItemsPaid(false);
+    }
+
     // Reset editing state when changing orders
     setIsEditingOrder(false);
-  }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment]);
+  }, [orderDetails?.id, orderDetails?.discount, orderDetails?.payment, orderDetails?.invoicePayments]);
   
   // Scroll to order details when opened or reopened
   useEffect(() => {
@@ -157,9 +176,10 @@ const OrderDetails = () => {
     updateOrderDiscount(orderDetails.id, {
       amount,
       reason: discountReason,
-      type: 'amount' // Currently we only support fixed amount discounts
+      type: 'amount', // Currently we only support fixed amount discounts
+      applyTo: discountApplyTo // Where to apply the discount
     });
-    
+
     setIsEditingDiscount(false);
   };
   
@@ -175,23 +195,73 @@ const OrderDetails = () => {
       timing: paymentTiming,
       updatedAt: new Date().toISOString()
     });
-    
+
     setIsEditingPayment(false);
+  };
+
+  // Handle toggling invoice payment status
+  const handleToggleInvoicePayment = async (invoiceType, currentValue) => {
+    const newValue = !currentValue;
+
+    // Update local state immediately
+    if (invoiceType === 'instock') {
+      setInstockPaid(newValue);
+    } else if (invoiceType === 'preorder') {
+      setPreorderPaid(newValue);
+    } else if (invoiceType === 'all') {
+      setAllItemsPaid(newValue);
+    }
+
+    // Update Firebase
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_FIREBASE_DATABASE_URL}/orders/${orderDetails.id}/invoicePayments.json`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            [invoiceType]: newValue
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update payment status');
+      }
+
+      // Refresh orders to sync state
+      if (refreshOrders) {
+        await refreshOrders();
+      }
+    } catch (error) {
+      console.error('Error updating invoice payment status:', error);
+      // Revert local state on error
+      if (invoiceType === 'instock') {
+        setInstockPaid(currentValue);
+      } else if (invoiceType === 'preorder') {
+        setPreorderPaid(currentValue);
+      } else if (invoiceType === 'all') {
+        setAllItemsPaid(currentValue);
+      }
+    }
   };
 
   // Calculate subtotal from items
   const calculateSubtotal = () => {
     if (!Array.isArray(orderDetails.items)) return 0;
-    
+
     return orderDetails.items.reduce((sum, item) => {
       // Skip freebies from subtotal calculation
       if (item.isFreebie) return sum;
-      
+
       const price = parseFloat(item.price) || 0;
       const quantity = parseInt(item.quantity, 10) || 0;
       return sum + (price * quantity);
     }, 0);
   };
+
 
   // Get discount amount
   const getDiscountAmount = () => {
@@ -352,7 +422,112 @@ const OrderDetails = () => {
                 </div>
               )}
             </div>
-            
+
+            {/* Order Totals Section */}
+            <div className="discount-section" style={{marginBottom: '15px'}}>
+              <h3 style={{marginBottom: '10px'}}>Order Totals</h3>
+              <div className="totals-breakdown" style={{padding: '5px 0'}}>
+                {/* Standard Invoice Display */}
+                <div className="subtotal-row" style={{padding: '1px 0', margin: '1px 0'}}>
+                  <span>Sub-total:</span>
+                  <span>${formatCurrency(orderDetails.subtotal || calculateSubtotal())}</span>
+                </div>
+
+                {/* Discount Row */}
+                <div className="discount-row" style={{padding: '1px 0', margin: '1px 0'}}>
+                  <span>Discount:</span>
+                  <div className="discount-value">
+                    {isEditingDiscount ? (
+                      <div className="discount-edit-form">
+                        <div className="discount-amount-input">
+                          <span>$</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={discountAmount}
+                            onChange={(e) => setDiscountAmount(e.target.value)}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          className="discount-reason-input"
+                          value={discountReason}
+                          onChange={(e) => setDiscountReason(e.target.value)}
+                          placeholder="Reason for discount (optional)"
+                        />
+                        <select
+                          className="discount-apply-to-select"
+                          value={discountApplyTo}
+                          onChange={(e) => setDiscountApplyTo(e.target.value)}
+                          style={{width: '100%', padding: '8px', marginTop: '8px', marginBottom: '8px'}}
+                        >
+                          <option value="all">Apply to All Items</option>
+                          <option value="instock">Apply to In Stock Only</option>
+                          <option value="preorder">Apply to Pre-Order Only</option>
+                          <option value="split">Split Proportionally</option>
+                        </select>
+                        <div className="discount-edit-actions">
+                          <button
+                            className="save-discount-btn"
+                            onClick={handleSaveDiscount}
+                          >
+                            Save
+                          </button>
+                          <button
+                            className="cancel-edit-btn"
+                            onClick={() => setIsEditingDiscount(false)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                        <div className="discount-preview">
+                          <em>Preview: ${formatCurrency(calculateSubtotal())} + taxes - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="discount-display">
+                        <span>
+                          {getDiscountAmount() > 0 ?
+                            `-$${formatCurrency(getDiscountAmount())}` :
+                            '$0.00'}
+                        </span>
+                        {orderDetails.discount?.reason && (
+                          <span className="discount-reason">
+                            ({orderDetails.discount.reason})
+                          </span>
+                        )}
+                        <button
+                          className="edit-discount-btn"
+                          onClick={() => setIsEditingDiscount(true)}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tax rows - calculated on subtotal after discount */}
+                <div className="tax-row" style={{padding: '1px 0', margin: '1px 0'}}>
+                  <span>GST (5%):</span>
+                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05)}</span>
+                </div>
+
+                <div className="tax-row" style={{padding: '1px 0', margin: '1px 0'}}>
+                  <span>PST (7%):</span>
+                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07)}</span>
+                </div>
+
+                {/* Final Total */}
+                <div className="final-total-row" style={{padding: '1px 0', margin: '1px 0'}}>
+                  <span>Total:</span>
+                  <span>${formatCurrency(getFinalTotal())}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Admin Notes Section */}
             {orderDetails.adminNotes && orderDetails.adminNotes.length > 0 && (
               <div className="admin-notes-display">
@@ -520,107 +695,70 @@ const OrderDetails = () => {
               </div>
             </div>
 
-            {/* Discount Section */}
-            <div className="discount-section">
-              <h3>Order Totals</h3>
-              <div className="totals-breakdown">
-                <div className="subtotal-row">
-                  <span>Sub-total:</span>
-                  <span>${formatCurrency(orderDetails.subtotal || calculateSubtotal())}</span>
+            <div className="invoice-actions" style={{marginTop: '15px'}}>
+              <h3 style={{marginBottom: '12px'}}>Invoice & Payment Status</h3>
+
+              <div className="invoice-buttons-grid" style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  <button
+                    className="generate-invoice-btn invoice-instock-btn"
+                    onClick={() => navigate(`/invoice/${orderDetails.id}?type=instock`)}
+                  >
+                    In Stock Items
+                  </button>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer'}}>
+                    <input
+                      type="checkbox"
+                      checked={instockPaid}
+                      onChange={() => handleToggleInvoicePayment('instock', instockPaid)}
+                      style={{cursor: 'pointer'}}
+                    />
+                    <span style={{color: instockPaid ? '#28a745' : '#666'}}>
+                      {instockPaid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </label>
                 </div>
 
-                {/* Discount Row */}
-                <div className="discount-row">
-                  <span>Discount:</span>
-                  <div className="discount-value">
-                    {isEditingDiscount ? (
-                      <div className="discount-edit-form">
-                        <div className="discount-amount-input">
-                          <span>$</span>
-                          <input 
-                            type="number" 
-                            min="0" 
-                            step="0.01"
-                            value={discountAmount}
-                            onChange={(e) => setDiscountAmount(e.target.value)}
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <input 
-                          type="text"
-                          className="discount-reason-input"
-                          value={discountReason}
-                          onChange={(e) => setDiscountReason(e.target.value)}
-                          placeholder="Reason for discount (optional)"
-                        />
-                        <div className="discount-edit-actions">
-                          <button 
-                            className="save-discount-btn"
-                            onClick={handleSaveDiscount}
-                          >
-                            Save
-                          </button>
-                          <button 
-                            className="cancel-edit-btn"
-                            onClick={() => setIsEditingDiscount(false)}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                        <div className="discount-preview">
-                          <em>Preview: ${formatCurrency(calculateSubtotal())} + taxes - ${formatCurrency(getDiscountAmount())} = ${formatCurrency(getFinalTotal())}</em>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="discount-display">
-                        <span>
-                          {getDiscountAmount() > 0 ? 
-                            `-$${formatCurrency(getDiscountAmount())}` : 
-                            '$0.00'}
-                        </span>
-                        {orderDetails.discount?.reason && (
-                          <span className="discount-reason">
-                            ({orderDetails.discount.reason})
-                          </span>
-                        )}
-                        <button 
-                          className="edit-discount-btn"
-                          onClick={() => setIsEditingDiscount(true)}
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  <button
+                    className="generate-invoice-btn invoice-preorder-btn"
+                    onClick={() => navigate(`/invoice/${orderDetails.id}?type=preorder`)}
+                  >
+                    Pre-Order Items
+                  </button>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer'}}>
+                    <input
+                      type="checkbox"
+                      checked={preorderPaid}
+                      onChange={() => handleToggleInvoicePayment('preorder', preorderPaid)}
+                      style={{cursor: 'pointer'}}
+                    />
+                    <span style={{color: preorderPaid ? '#28a745' : '#666'}}>
+                      {preorderPaid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </label>
                 </div>
 
-                {/* Tax rows - calculated on subtotal after discount */}
-                <div className="tax-row">
-                  <span>GST (5%):</span>
-                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05)}</span>
-                </div>
-
-                <div className="tax-row">
-                  <span>PST (7%):</span>
-                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07)}</span>
-                </div>
-
-                {/* Final Total */}
-                <div className="final-total-row">
-                  <span>Total:</span>
-                  <span>${formatCurrency(getFinalTotal())}</span>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                  <button
+                    className="generate-invoice-btn invoice-all-btn"
+                    onClick={() => navigate(`/invoice/${orderDetails.id}?type=all`)}
+                  >
+                    All Items
+                  </button>
+                  <label style={{display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px', cursor: 'pointer'}}>
+                    <input
+                      type="checkbox"
+                      checked={allItemsPaid}
+                      onChange={() => handleToggleInvoicePayment('all', allItemsPaid)}
+                      style={{cursor: 'pointer'}}
+                    />
+                    <span style={{color: allItemsPaid ? '#28a745' : '#666'}}>
+                      {allItemsPaid ? 'Paid' : 'Unpaid'}
+                    </span>
+                  </label>
                 </div>
               </div>
-            </div>
-            
-            <div className="invoice-actions">
-              <h3>Invoice</h3>
-              <button 
-                className="generate-invoice-btn" 
-                onClick={viewInvoice}
-              >
-                View Invoice
-              </button>
             </div>
             
             {/* Version info moved here from left column */}

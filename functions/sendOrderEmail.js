@@ -48,25 +48,47 @@ function generateCustomerEmailTemplate(order) {
   const formatDate = (dateString) => {
     try {
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
-      return new Date(dateString).toLocaleDateString(undefined, options);
+      return new Date(dateString).toLocalDateString(undefined, options);
     } catch (error) {
       return new Date().toLocaleDateString();
     }
   };
 
-  const itemsList = order.items.map(item => {
-    // Check if item has "Coming Soon" status
-    const isComingSoon = item.inventoryStatus === 'Coming Soon' || item.status === 'Coming Soon';
-    const nameDisplay = isComingSoon ? `${item.name} <span style="color: #f39c12; font-weight: bold;">(Coming Soon)</span>` : item.name;
-    
-    // Handle freebie display
-    const priceDisplay = item.isFreebie ? 
-      `<span style="text-decoration: line-through; color: #999;">$${formatCurrency(item.price)}</span>` : 
+  // Separate items by invoice status
+  const invoiceNowItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow !== false));
+  const invoiceLaterItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow === false));
+  const freebieItems = order.items.filter(item => item.isFreebie);
+
+  const hasMixedInvoicing = invoiceNowItems.length > 0 && invoiceLaterItems.length > 0;
+
+  // Function to generate item rows
+  const generateItemRow = (item) => {
+    // Determine inventory status
+    const status = item.inventoryStatus || 'In Stock';
+
+    // Get badge styling based on status
+    const getBadgeStyle = (status) => {
+      switch(status) {
+        case 'Pre-Order':
+          return 'background-color: #e3f2fd; color: #1976d2; border: 1px solid #1976d2;';
+        case 'Coming Soon':
+          return 'background-color: #fff3e0; color: #f57c00; border: 1px solid #f57c00;';
+        case 'In Stock':
+        default:
+          return 'background-color: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32;';
+      }
+    };
+
+    const statusBadge = `<span style="${getBadgeStyle(status)} padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; display: inline-block;">${status}</span>`;
+    const nameDisplay = `${item.name} ${statusBadge}`;
+
+    const priceDisplay = item.isFreebie ?
+      `<span style="text-decoration: line-through; color: #999;">$${formatCurrency(item.price)}</span>` :
       `$${formatCurrency(item.price)}`;
-    const totalDisplay = item.isFreebie ? 
-      `<span style="color: #4caf50; font-weight: bold;">FREE</span>` : 
+    const totalDisplay = item.isFreebie ?
+      `<span style="color: #4caf50; font-weight: bold;">FREE</span>` :
       `$${formatCurrency(item.quantity * item.price)}`;
-    
+
     return `
     <tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${nameDisplay}</td>
@@ -75,7 +97,9 @@ function generateCustomerEmailTemplate(order) {
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${totalDisplay}</td>
     </tr>
   `;
-  }).join('');
+  };
+
+  const itemsList = order.items.map(generateItemRow).join('');
 
   return `
     <!DOCTYPE html>
@@ -188,28 +212,76 @@ function generateCustomerEmailTemplate(order) {
                       ${itemsList}
                     </tbody>
                     <tfoot>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
-                      </tr>
-                      ${order.discount && order.discount.amount > 0 ? `
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
-                        <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
-                      </tr>
-                      ` : ''}
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
-                      </tr>
+                      ${hasMixedInvoicing ? `
+                        <!-- Split Invoicing -->
+                        <tr>
+                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
+                            <strong style="color: #2c5530; font-size: 16px;">READY FOR PICKUP (In Stock)</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.05)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.07)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; background-color: #e8f5e9;">
+                            <strong style="color: #2c5530;">INVOICE TOTAL:</strong>
+                          </td>
+                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530; background-color: #e8f5e9; font-size: 16px;">
+                            <strong>$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.12)}</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 14px; font-style: italic; color: #666; background-color: #f9f9f9;">
+                            This is your order summary. A separate invoice will be sent for payment.
+                          </td>
+                        </tr>
+                        <tr><td colspan="4" style="padding: 10px;"></td></tr>
+                        <tr>
+                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
+                            <strong style="color: #3498db; font-size: 16px;">PRE-ORDER (Invoice on Delivery)</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceLaterItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 13px; font-style: italic; color: #666;">Will be invoiced when ready</td>
+                        </tr>
+                      ` : `
+                        <!-- Standard Single Invoice -->
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
+                          <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                        </tr>
+                        ${order.discount && order.discount.amount > 0 ? `
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
+                          <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
+                        </tr>
+                        ` : ''}
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
+                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
+                        </tr>
+                      `}
                     </tfoot>
                   </table>
                 </td>
@@ -226,7 +298,7 @@ function generateCustomerEmailTemplate(order) {
                         <p style="margin: 5px 0; font-size: 14px;"><strong>Requested Pickup:</strong> ${order.customer.pickupRequest || order.customer.notes}</p>
                         <p style="margin: 10px 0 5px 0; font-size: 14px;">Important Notes:</p>
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
-                          <li style="margin: 5px 0;">We will text you at <strong>${order.customer.phone}</strong> to confirm your pickup date and time.</li>
+                          <li style="margin: 5px 0;">For items that are in stock, we will text you at <strong>${order.customer.phone}</strong> to confirm your pickup date and time.</li>
                           <li style="margin: 5px 0;">If you need to make changes to your pickup time after confirmation, please text us.</li>
                         </ul>
                       </td>
@@ -329,9 +401,14 @@ function generateCustomerEmailTemplate(order) {
  * @return {string} The generated HTML template
  */
 function generateButtonsEmailTemplate(order) {
+  // Separate items by invoice status (same as customer email)
+  const invoiceNowItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow !== false));
+  const invoiceLaterItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow === false));
+  const hasMixedInvoicing = invoiceNowItems.length > 0 && invoiceLaterItems.length > 0;
+
   const itemsList = order.items.map(item => `
     <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}${item.invoiceNow === false ? ' <span style="color: #3498db;">(Pre-Order)</span>' : ''}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${parseFloat(item.price).toFixed(2)}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${(item.price * item.quantity).toFixed(2)}</td>
@@ -536,28 +613,76 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                       ${itemsList}
                     </tbody>
                     <tfoot>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
-                      </tr>
-                      ${order.discount && order.discount.amount > 0 ? `
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
-                        <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
-                      </tr>
-                      ` : ''}
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
-                      </tr>
+                      ${hasMixedInvoicing ? `
+                        <!-- Split Invoicing -->
+                        <tr>
+                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
+                            <strong style="color: #2c5530; font-size: 16px;">READY FOR PICKUP (In Stock)</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.05)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.07)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; background-color: #e8f5e9;">
+                            <strong style="color: #2c5530;">INVOICE TOTAL:</strong>
+                          </td>
+                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530; background-color: #e8f5e9; font-size: 16px;">
+                            <strong>$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.12)}</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 14px; font-style: italic; color: #666; background-color: #f9f9f9;">
+                            This is your order summary. A separate invoice will be sent for payment.
+                          </td>
+                        </tr>
+                        <tr><td colspan="4" style="padding: 10px;"></td></tr>
+                        <tr>
+                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
+                            <strong style="color: #3498db; font-size: 16px;">PRE-ORDER (Invoice on Delivery)</strong>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceLaterItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 13px; font-style: italic; color: #666;">Will be invoiced when ready</td>
+                        </tr>
+                      ` : `
+                        <!-- Standard Single Invoice -->
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
+                          <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                        </tr>
+                        ${order.discount && order.discount.amount > 0 ? `
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
+                          <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
+                        </tr>
+                        ` : ''}
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
+                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
+                        </tr>
+                      `}
                     </tfoot>
                   </table>
                 </td>

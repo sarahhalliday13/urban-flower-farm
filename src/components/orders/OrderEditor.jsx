@@ -64,13 +64,32 @@ const OrderEditor = ({ orderId, closeModal }) => {
           
           // Initialize items
           if (orderDetails.items && Array.isArray(orderDetails.items)) {
-            // Simplify items, remove freebie functionality
-            const processedItems = orderDetails.items.map(item => ({
-              ...item,
-              quantity: parseInt(item.quantity, 10) || 1,
-              price: parseFloat(item.price) || 0
+            // Fetch current inventory status for each item if not present
+            const processedItems = await Promise.all(orderDetails.items.map(async (item) => {
+              let inventoryStatus = item.inventoryStatus;
+
+              // If inventory status is missing, fetch it from the plant data
+              if (!inventoryStatus && item.id) {
+                try {
+                  const plantSnapshot = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/plants/${item.id}.json`);
+                  const plantData = await plantSnapshot.json();
+                  if (plantData?.inventory?.status) {
+                    inventoryStatus = plantData.inventory.status;
+                  }
+                } catch (error) {
+                  console.error(`Error fetching inventory for item ${item.id}:`, error);
+                  inventoryStatus = 'In Stock'; // Default fallback
+                }
+              }
+
+              return {
+                ...item,
+                quantity: parseInt(item.quantity, 10) || 1,
+                price: parseFloat(item.price) || 0,
+                inventoryStatus: inventoryStatus || 'In Stock'
+              };
             }));
-            
+
             setItems(processedItems);
           }
         } else {
@@ -100,13 +119,32 @@ const OrderEditor = ({ orderId, closeModal }) => {
             setAdminNotes('');
             
             if (orderData.items && Array.isArray(orderData.items)) {
-              // Simplify items, remove freebie functionality
-              const processedItems = orderData.items.map(item => ({
-                ...item,
-                quantity: parseInt(item.quantity, 10) || 1,
-                price: parseFloat(item.price) || 0
+              // Fetch current inventory status for each item if not present
+              const processedItems = await Promise.all(orderData.items.map(async (item) => {
+                let inventoryStatus = item.inventoryStatus;
+
+                // If inventory status is missing, fetch it from the plant data
+                if (!inventoryStatus && item.id) {
+                  try {
+                    const plantSnapshot = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/plants/${item.id}.json`);
+                    const plantData = await plantSnapshot.json();
+                    if (plantData?.inventory?.status) {
+                      inventoryStatus = plantData.inventory.status;
+                    }
+                  } catch (error) {
+                    console.error(`Error fetching inventory for item ${item.id}:`, error);
+                    inventoryStatus = 'In Stock'; // Default fallback
+                  }
+                }
+
+                return {
+                  ...item,
+                  quantity: parseInt(item.quantity, 10) || 1,
+                  price: parseFloat(item.price) || 0,
+                  inventoryStatus: inventoryStatus || 'In Stock'
+                };
               }));
-              
+
               setItems(processedItems);
             }
           } else {
@@ -144,19 +182,21 @@ const OrderEditor = ({ orderId, closeModal }) => {
   // Handle toggling freebie status
   const handleToggleFreebie = (itemId, isFreebie) => {
     console.log("Toggling freebie for item:", itemId, isFreebie);
-    setItems(prevItems => 
-      prevItems.map(item => 
+    setItems(prevItems =>
+      prevItems.map(item =>
         item.id === itemId ? { ...item, isFreebie } : item
       )
     );
   };
-  
+
   // Add new item to the order
   const handleAddItem = (item) => {
     const newItem = {
       ...item,
       quantity: 1,
-      id: uuidv4()
+      id: uuidv4(),
+      // Auto-set invoiceNow based on inventory status
+      invoiceNow: item.inventoryStatus !== 'Pre-Order' && item.inventoryStatus !== 'Coming Soon'
     };
     setItems(prevItems => [...prevItems, newItem]);
   };
@@ -236,14 +276,19 @@ const OrderEditor = ({ orderId, closeModal }) => {
           ...item,
           quantity: parseInt(item.quantity, 10),
           price: parseFloat(item.price),
-          isFreebie: item.isFreebie || false
+          isFreebie: item.isFreebie || false,
+          // Auto-set invoiceNow based on inventory status
+          invoiceNow: item.inventoryStatus !== 'Pre-Order' && item.inventoryStatus !== 'Coming Soon'
         })),
         subtotal: parseFloat(subtotal.toFixed(2)),
         gst: parseFloat(gst.toFixed(2)),
         pst: parseFloat(pst.toFixed(2)),
         total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
-        adminNotes: adminNotesArray
+        adminNotes: adminNotesArray,
+        // Preserve existing payment tracking or initialize to false
+        invoiceNowPaid: currentOrder?.invoiceNowPaid || false,
+        invoiceLaterPaid: currentOrder?.invoiceLaterPaid || false
       };
       
       console.log("Saving order with data:", updateData);
@@ -315,8 +360,8 @@ const OrderEditor = ({ orderId, closeModal }) => {
               <div className="add-item-section">
                 <PlantSelector onAddItem={handleAddItem} />
               </div>
-              <OrderItemsTable 
-                items={items} 
+              <OrderItemsTable
+                items={items}
                 total={calculateTotal()}
                 editable={true}
                 onUpdateQuantity={handleUpdateQuantity}

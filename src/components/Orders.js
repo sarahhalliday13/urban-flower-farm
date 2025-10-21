@@ -461,14 +461,44 @@ const Orders = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {order.items && Array.isArray(order.items) ? order.items.map(item => (
-                                  <tr key={item.id || `item-${Math.random()}`}>
-                                    <td data-label="Item">{item.name}</td>
-                                    <td data-label="Price">${parseFloat(item.price || 0).toFixed(2)}</td>
-                                    <td data-label="Quantity">{item.quantity || 1}</td>
-                                    <td data-label="Subtotal">${parseFloat((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
-                                  </tr>
-                                )) : (
+                                {order.items && Array.isArray(order.items) ? order.items.map(item => {
+                                  // Determine status badge
+                                  const status = item.inventoryStatus || 'In Stock';
+                                  const getBadgeStyle = (status) => {
+                                    switch(status) {
+                                      case 'Pre-Order':
+                                        return { backgroundColor: '#e3f2fd', color: '#1976d2', border: '1px solid #1976d2' };
+                                      case 'Coming Soon':
+                                        return { backgroundColor: '#fff3e0', color: '#f57c00', border: '1px solid #f57c00' };
+                                      case 'In Stock':
+                                      default:
+                                        return { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #2e7d32' };
+                                    }
+                                  };
+
+                                  return (
+                                    <tr key={item.id || `item-${Math.random()}`}>
+                                      <td data-label="Item">
+                                        {item.name}
+                                        <span style={{
+                                          ...getBadgeStyle(status),
+                                          marginLeft: '8px',
+                                          padding: '2px 8px',
+                                          borderRadius: '12px',
+                                          fontSize: '0.75em',
+                                          fontWeight: '600',
+                                          display: 'inline-block',
+                                          whiteSpace: 'nowrap'
+                                        }}>
+                                          {status}
+                                        </span>
+                                      </td>
+                                      <td data-label="Price">${parseFloat(item.price || 0).toFixed(2)}</td>
+                                      <td data-label="Quantity">{item.quantity || 1}</td>
+                                      <td data-label="Subtotal">${parseFloat((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                                    </tr>
+                                  );
+                                }) : (
                                   <tr>
                                     <td colSpan="4">No items available</td>
                                   </tr>

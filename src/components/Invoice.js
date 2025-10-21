@@ -192,37 +192,8 @@ export const generateInvoiceHTML = (order) => {
 
               <!-- Payment Information -->
               <tr>
-                <td style="padding: 0 30px;">
-                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f8f8f8; border-radius: 4px;">
-                    <tr>
-                      <td style="padding: 15px;">
-                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Payment Information</h3>
-                        
-                        ${order.payment && order.payment.method ? `
-                        <p style="margin: 5px 0; font-size: 14px;"><strong>Payment Method:</strong> ${order.payment.method.split('-').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}</p>
-                        ${order.payment.timing ? `
-                        <p style="margin: 5px 0; font-size: 14px;"><strong>Payment Timing:</strong> ${order.payment.timing.split('-').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}</p>
-                        ` : ''}
-                        ` : `
-                        <p style="margin: 5px 0; font-size: 14px;">Please complete your payment using one of the following methods:</p>
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 10px 0;">
-                          <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
-                          </tr>
-                          <tr>
-
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
-                          </tr>
-                        </table>
-                        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
-                        `}
-                      </td>
-                    </tr>
-                  </table>
+                <td style="padding: 0 30px 20px 30px;">
+                  <p style="margin: 0; font-size: 14px; color: #666;">This is your order summary. A separate invoice will be sent for payment.</p>
                 </td>
               </tr>
 
@@ -255,14 +226,89 @@ export const generateInvoiceHTML = (order) => {
  * @param {string} props.invoiceType - Whether this is a 'preliminary' or 'final' invoice
  * @param {boolean} props.standalone - Whether this is a standalone invoice page (allows email regardless of sent status)
  */
-const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false }) => {
+const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = false, itemFilter = 'all' }) => {
   const invoiceContainerRef = useRef(null);
-  
+
   // Guard against missing order data
   if (!order) {
     return <div className="invoice-error">Order data is missing or invalid</div>;
   }
-  
+
+  // Filter items based on itemFilter parameter and inventoryStatus
+  const filterItems = (items) => {
+    if (!items || !Array.isArray(items)) return [];
+
+    if (itemFilter === 'instock') {
+      return items.filter(item => {
+        const status = (item.inventoryStatus || 'In Stock').toLowerCase();
+        return status === 'in stock';
+      });
+    }
+    if (itemFilter === 'preorder') {
+      return items.filter(item => {
+        const status = (item.inventoryStatus || 'In Stock').toLowerCase();
+        return status === 'pre-order' || status === 'coming soon';
+      });
+    }
+
+    return items; // 'all'
+  };
+
+  // Determine if discount should be applied to this invoice based on discount.applyTo setting
+  const shouldApplyDiscount = () => {
+    if (!order.discount || !order.discount.amount || parseFloat(order.discount.amount) <= 0) {
+      return false;
+    }
+
+    const applyTo = order.discount.applyTo || 'all';
+
+    // 'all' - only show on full invoice
+    if (applyTo === 'all') {
+      return itemFilter === 'all';
+    }
+
+    // 'instock' - only show on in stock invoice
+    if (applyTo === 'instock') {
+      return itemFilter === 'instock' || itemFilter === 'all';
+    }
+
+    // 'preorder' - only show on pre-order invoice
+    if (applyTo === 'preorder') {
+      return itemFilter === 'preorder' || itemFilter === 'all';
+    }
+
+    // 'split' - show proportionally on all invoices
+    if (applyTo === 'split') {
+      return true;
+    }
+
+    return false;
+  };
+
+  // Calculate the discount amount to apply based on applyTo setting
+  const getApplicableDiscount = () => {
+    if (!shouldApplyDiscount()) {
+      return 0;
+    }
+
+    const discountAmount = parseFloat(order.discount.amount);
+    const applyTo = order.discount.applyTo || 'all';
+
+    // For 'split', calculate proportional discount
+    if (applyTo === 'split' && itemFilter !== 'all') {
+      const fullSubtotal = calculateSubtotal(order.items || []);
+      const filteredSubtotal = calculateSubtotal(filterItems(order.items || []));
+
+      if (fullSubtotal === 0) return 0;
+
+      // Proportional discount = (filtered subtotal / full subtotal) * total discount
+      return (filteredSubtotal / fullSubtotal) * discountAmount;
+    }
+
+    // For other cases, return full discount amount
+    return discountAmount;
+  };
+
   const formatDate = (dateString) => {
     try {
       const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -344,19 +390,41 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
     return 'Email Invoice';
   };
 
+  // Generate invoice number with suffix based on filter
+  const getInvoiceNumber = () => {
+    if (itemFilter === 'instock') {
+      return `${order.id}-A`;
+    }
+    if (itemFilter === 'preorder') {
+      return `${order.id}-B`;
+    }
+    return order.id;
+  };
+
+  // Get invoice title based on filter
+  const getInvoiceTitle = () => {
+    if (itemFilter === 'instock') {
+      return 'INVOICE (In Stock Items)';
+    }
+    if (itemFilter === 'preorder') {
+      return 'INVOICE (Pre-Order Items)';
+    }
+    return 'INVOICE';
+  };
+
   return (
     <div className={`invoice-container ${type}`} ref={invoiceContainerRef}>
       <div className="invoice-header">
         <div className="invoice-logo">
-          <img 
-            src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5" 
-            alt="Buttons Urban Flower Farm" 
+          <img
+            src="https://firebasestorage.googleapis.com/v0/b/buttonsflowerfarm-8a54d.firebasestorage.app/o/logo%2Fbuff_floral_lg.png?alt=media&token=3dfddfc2-6579-4541-acc3-6e3a02aea0b5"
+            alt="Buttons Urban Flower Farm"
             className="invoice-logo-image"
           />
         </div>
         <div className="invoice-info">
-          <h2>INVOICE</h2>
-          <p><strong>Order #:</strong> {order.id}</p>
+          <h2>{getInvoiceTitle()}</h2>
+          <p><strong>Invoice #:</strong> {getInvoiceNumber()}</p>
           <p><strong>Date:</strong> {formatDate(order.date)}</p>
           <p><strong>Status:</strong> {order.status}</p>
           {orderVersion.versionNumber && (
@@ -392,7 +460,7 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
             </tr>
           </thead>
           <tbody>
-            {(orderVersion.items || []).map((item, index) => (
+            {filterItems(orderVersion.items || []).map((item, index) => (
               <tr key={index}>
                 <td style={{ textAlign: 'left' }}>{item.name || 'Product'}</td>
                 <td style={{ textAlign: 'center' }}>{item.quantity || 0}</td>
@@ -418,29 +486,29 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           <tfoot>
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>Sub-total</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(order.subtotal || calculateSubtotal(orderVersion.items))}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(calculateSubtotal(filterItems(orderVersion.items)))}</td>
             </tr>
-            {order.discount && parseFloat(order.discount.amount) > 0 && (
+            {shouldApplyDiscount() && (
               <tr>
                 <td colSpan="3" className="discount-label" style={{ textAlign: 'right' }}>Discount{order.discount.reason ? ` (${order.discount.reason})` : ''}</td>
-                <td className="discount-amount" style={{ textAlign: 'right' }}>-${formatCurrency(order.discount.amount)}</td>
+                <td className="discount-amount" style={{ textAlign: 'right' }}>-${formatCurrency(getApplicableDiscount())}</td>
               </tr>
             )}
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>GST (5%)</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.05)}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, calculateSubtotal(filterItems(orderVersion.items)) - getApplicableDiscount()) * 0.05)}</td>
             </tr>
             <tr>
               <td colSpan="3" className="total-label" style={{ textAlign: 'right' }}>PST (7%)</td>
-              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, (order.subtotal || calculateSubtotal(orderVersion.items)) - (order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0)) * 0.07)}</td>
+              <td className="total-amount" style={{ textAlign: 'right' }}>${formatCurrency(Math.max(0, calculateSubtotal(filterItems(orderVersion.items)) - getApplicableDiscount()) * 0.07)}</td>
             </tr>
             <tr>
               <td colSpan="3" className="final-total-label" style={{ textAlign: 'right' }}>Total</td>
               <td className="final-total-amount" style={{ textAlign: 'right' }}>
                 ${formatCurrency(
                   (() => {
-                    const sub = order.subtotal || calculateSubtotal(orderVersion.items);
-                    const disc = order.discount && parseFloat(order.discount.amount) > 0 ? parseFloat(order.discount.amount) : 0;
+                    const sub = calculateSubtotal(filterItems(orderVersion.items));
+                    const disc = getApplicableDiscount();
                     const subtotalAfterDiscount = Math.max(0, sub - disc);
                     const gst = subtotalAfterDiscount * 0.05;
                     const pst = subtotalAfterDiscount * 0.07;

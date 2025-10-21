@@ -1,6 +1,6 @@
 // src/pages/InvoicePage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getOrder } from '../services/firebase';
 import { sendInvoiceEmail } from '../services/invoiceService';
 import Invoice from '../components/Invoice';
@@ -91,9 +91,13 @@ const Loading = () => (
 const InvoicePage = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Get the type parameter from URL (now, later, or all/default)
+  const invoiceType = searchParams.get('type') || 'all';
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -102,7 +106,40 @@ const InvoicePage = () => {
         if (!orderData) {
           setError('Order not found');
         } else {
-          setOrder(orderData);
+          // Enrich items with current inventory status if missing
+          if (orderData.items && Array.isArray(orderData.items)) {
+            const enrichedItems = await Promise.all(
+              orderData.items.map(async (item) => {
+                // If item already has inventoryStatus, keep it
+                if (item.inventoryStatus) {
+                  return item;
+                }
+
+                // Otherwise fetch from plants database
+                try {
+                  const response = await fetch(`${process.env.REACT_APP_FIREBASE_DATABASE_URL}/plants/${item.id}.json`);
+                  const plantData = await response.json();
+                  return {
+                    ...item,
+                    inventoryStatus: plantData?.inventory?.status || 'In Stock'
+                  };
+                } catch (error) {
+                  console.error(`Error fetching inventory for ${item.name}:`, error);
+                  return {
+                    ...item,
+                    inventoryStatus: 'In Stock' // Fallback
+                  };
+                }
+              })
+            );
+
+            setOrder({
+              ...orderData,
+              items: enrichedItems
+            });
+          } else {
+            setOrder(orderData);
+          }
         }
       } catch (err) {
         console.error('Error fetching order:', err);
@@ -115,7 +152,7 @@ const InvoicePage = () => {
     fetchOrder();
   }, [orderId]);
 
-  const handleBack = () => navigate(-1);
+  const handleBack = () => navigate('/admin/orders');
 
   const handlePrint = () => {
     document.documentElement.classList.add('printing');
@@ -155,7 +192,7 @@ const InvoicePage = () => {
         </div>
 
         <div className="invoice-page-body">
-          <Invoice order={order} standalone />
+          <Invoice order={order} standalone itemFilter={invoiceType} />
         </div>
       </div>
     </OrderProvider>

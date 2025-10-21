@@ -693,4 +693,33 @@ td[data-label="Total"] {
 .orders-table tbody tr.details-row td[colspan] {
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Inventory Status Chips */
+.inventory-status-chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge-in-stock {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #2e7d32;
+}
+
+.status-badge-preorder {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #1976d2;
+}
+
+.status-badge-coming-soon {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border: 1px solid #f57c00;
 } 

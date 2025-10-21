@@ -340,6 +340,115 @@
   z-index: 10000;
 }
 
+/* Payment Status Toggles */
+.invoice-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.payment-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 4px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  transition: all 0.3s ease;
+}
+
+.payment-status-toggle:hover {
+  background-color: #e9ecef;
+}
+
+.payment-status-toggle input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.payment-status-toggle .paid {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.payment-status-toggle .unpaid {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.split-invoice-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.invoice-now-btn {
+  background-color: #2e7d32 !important;
+}
+
+.invoice-later-btn {
+  background-color: #1976d2 !important;
+}
+
+/* Reduce spacing in Order Totals section */
+.discount-section {
+  margin-bottom: 15px !important;
+}
+
+.discount-section h3 {
+  margin-bottom: 10px !important;
+}
+
+.totals-breakdown {
+  padding: 10px 0 !important;
+}
+
+.subtotal-row,
+.discount-row,
+.tax-row,
+.final-total-row {
+  padding: 6px 0 !important;
+  margin: 4px 0 !important;
+}
+
+.invoice-actions {
+  margin-top: 15px !important;
+}
+
+.invoice-actions h3 {
+  margin-bottom: 12px !important;
+}
+
+/* Invoice buttons grid */
+.invoice-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .invoice-buttons-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+  }
+}
+
+.invoice-instock-btn {
+  background-color: #2e7d32 !important;
+}
+
+.invoice-preorder-btn {
+  background-color: #1976d2 !important;
+}
+
+.invoice-all-btn {
+  background-color: #666 !important;
+}
+
 /* Responsive */
 @media (min-width: 768px) {
   .header-controls {

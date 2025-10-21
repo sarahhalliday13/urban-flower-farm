@@ -188,14 +188,20 @@ const Checkout = () => {
           name: item.name,
           price: parseFloat(item.price),
           quantity: parseInt(item.quantity, 10),
-          inventoryStatus: item.inventory?.status || 'In Stock'
+          inventoryStatus: item.inventory?.status || 'In Stock',
+          // Auto-set invoiceNow based on inventory status
+          // In Stock items should be invoiced immediately, Pre-Order items invoiced later
+          invoiceNow: item.inventory?.status !== 'Pre-Order' && item.inventory?.status !== 'Coming Soon'
         })),
         // Calculate subtotal, taxes, and total
         subtotal: parseFloat(getSubtotal().toFixed(2)),
         gst: parseFloat(getGST().toFixed(2)),
         pst: parseFloat(getPST().toFixed(2)),
         total: parseFloat(getTotal().toFixed(2)),
-        status: 'Processing'
+        status: 'Processing',
+        // Initialize payment tracking fields
+        invoiceNowPaid: false,
+        invoiceLaterPaid: false
       };
       
       // Save the order to Firebase and localStorage
@@ -324,7 +330,7 @@ const Checkout = () => {
 
           <div className="pickup-confirmation">
             <h3>Pickup Information</h3>
-            <p>We will confirm your pickup date and time by text message to <strong>{formData.phone}</strong>.</p>
+            <p>For items that are in stock, we will confirm your pickup date and time by text message to <strong>{formData.phone}</strong>.</p>
             {formData.notes && (
               <div className="requested-pickup">
                 <p><strong>Your requested pickup:</strong></p>
@@ -333,124 +339,127 @@ const Checkout = () => {
             )}
           </div>
 
-          <div className="payment-instructions">
-            <h3>Payment Instructions</h3>
-            <p>Please complete your payment using one of the following methods:</p>
-            <ul>
-              <li><strong>Cash:</strong> Available for in-person pickup</li>
-              <li><strong>E-Transfer:</strong> Send to <span className="email-with-copy">
-                buttonsflowerfarm@telus.net
-                <button
-                  className="copy-email-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const btn = e.currentTarget;
-                    const svgElement = btn.querySelector('svg');
-                    const textElement = btn.querySelector('.copy-text');
+          {completedOrder && (() => {
+            // Check if order has mixed invoicing
+            const invoiceNowItems = completedOrder.items?.filter(item => !item.isFreebie && (item.invoiceNow !== false)) || [];
+            const invoiceLaterItems = completedOrder.items?.filter(item => !item.isFreebie && (item.invoiceNow === false)) || [];
+            const hasMixedInvoicing = invoiceNowItems.length > 0 && invoiceLaterItems.length > 0;
 
-                    // Hide SVG, show "Copied" text
-                    if (svgElement) svgElement.style.display = 'none';
-                    if (textElement) textElement.style.display = 'inline';
+            // Calculate split totals
+            const invoiceNowSubtotal = invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const invoiceLaterSubtotal = invoiceLaterItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-                    navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
-                      .then(() => {
-                        // Show tooltip
-                        btn.classList.add('copied');
+            return (
+              <div className="order-summary-confirmation">
+                <h3>Order Summary</h3>
+                <div className="confirmed-items">
+                  {completedOrder.items && completedOrder.items.map((item, index) => {
+                    // Determine status badge
+                    const status = item.inventoryStatus || 'In Stock';
+                    const getBadgeStyle = (status) => {
+                      switch(status) {
+                        case 'Pre-Order':
+                          return { backgroundColor: '#e3f2fd', color: '#1976d2', border: '1px solid #1976d2' };
+                        case 'Coming Soon':
+                          return { backgroundColor: '#fff3e0', color: '#f57c00', border: '1px solid #f57c00' };
+                        case 'In Stock':
+                        default:
+                          return { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #2e7d32' };
+                      }
+                    };
 
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
-                          btn.classList.remove('copied');
-                          if (svgElement) svgElement.style.display = 'inline';
-                          if (textElement) textElement.style.display = 'none';
-                        }, 2000);
-                      })
-                      .catch(err => {
-                        console.error('Failed to copy text: ', err);
-                      });
-                  }}
-                  title="Copy email address"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  <span className="copy-text">Copied</span>
-                  <span className="copy-tooltip">Copied!</span>
-                </button>
-              </span>. Include your order number <span className="email-with-copy">
-                ({orderId})
-                <button
-                  className="copy-email-btn"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    const btn = e.currentTarget;
-                    const svgElement = btn.querySelector('svg');
-                    const textElement = btn.querySelector('.copy-text');
+                    return (
+                      <div key={index} className="confirmed-item">
+                        <span className="item-name">
+                          {item.name} × {item.quantity}
+                          <span style={{
+                            ...getBadgeStyle(status),
+                            marginLeft: '8px',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.75em',
+                            fontWeight: '600',
+                            display: 'inline-block'
+                          }}>
+                            {status}
+                          </span>
+                        </span>
+                        <span className="item-price">${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="confirmed-totals">
+                  {hasMixedInvoicing ? (
+                    <>
+                      {/* Invoice Now Section */}
+                      <div className="confirmed-total-row" style={{marginTop: '15px', paddingTop: '10px', borderTop: '2px solid #2c5530', backgroundColor: '#e8f5e9'}}>
+                        <span><strong>READY FOR PICKUP (In Stock)</strong></span>
+                        <span></span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>Sub-total:</span>
+                        <span>${invoiceNowSubtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>GST (5%):</span>
+                        <span>${(invoiceNowSubtotal * 0.05).toFixed(2)}</span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>PST (7%):</span>
+                        <span>${(invoiceNowSubtotal * 0.07).toFixed(2)}</span>
+                      </div>
+                      <div className="confirmed-total-row" style={{backgroundColor: '#e8f5e9', fontWeight: 'bold'}}>
+                        <span><strong>Invoice Total:</strong></span>
+                        <span><strong>${(invoiceNowSubtotal * 1.12).toFixed(2)}</strong></span>
+                      </div>
+                      <div className="confirmed-total-row" style={{fontSize: '0.9em', fontStyle: 'italic', color: '#666', paddingTop: '5px'}}>
+                        <span>We'll invoice you for payment</span>
+                        <span></span>
+                      </div>
 
-                    // Hide SVG, show "Copied" text
-                    if (svgElement) svgElement.style.display = 'none';
-                    if (textElement) textElement.style.display = 'inline';
-
-                    navigator.clipboard.writeText(orderId)
-                      .then(() => {
-                        // Show tooltip
-                        btn.classList.add('copied');
-
-                        // Reset button after 2 seconds
-                        setTimeout(() => {
-                          btn.classList.remove('copied');
-                          if (svgElement) svgElement.style.display = 'inline';
-                          if (textElement) textElement.style.display = 'none';
-                        }, 2000);
-                      })
-                      .catch(err => {
-                        console.error('Failed to copy text: ', err);
-                      });
-                  }}
-                  title="Copy order number"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                  </svg>
-                  <span className="copy-text">Copied</span>
-                  <span className="copy-tooltip">Copied!</span>
-                </button>
-              </span> in the payment notes.</li>
-            </ul>
-          </div>
-
-          {completedOrder && (
-            <div className="order-summary-confirmation">
-              <h3>Order Summary</h3>
-              <div className="confirmed-items">
-                {completedOrder.items && completedOrder.items.map((item, index) => (
-                  <div key={index} className="confirmed-item">
-                    <span className="item-name">{item.name} × {item.quantity}</span>
-                    <span className="item-price">${(item.price * item.quantity).toFixed(2)}</span>
-                  </div>
-                ))}
+                      {/* Invoice Later Section */}
+                      <div className="confirmed-total-row" style={{marginTop: '15px', paddingTop: '10px', borderTop: '2px solid #3498db', backgroundColor: '#e3f2fd'}}>
+                        <span><strong>PRE-ORDER (Invoice on Delivery)</strong></span>
+                        <span></span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>Sub-total:</span>
+                        <span>${invoiceLaterSubtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="confirmed-total-row" style={{fontSize: '0.9em', fontStyle: 'italic', color: '#666'}}>
+                        <span>Will be invoiced when ready</span>
+                        <span></span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Standard Single Invoice */}
+                      <div className="confirmed-total-row">
+                        <span>Sub-total:</span>
+                        <span>${completedOrder.subtotal ? completedOrder.subtotal.toFixed(2) : '0.00'}</span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>GST (5%):</span>
+                        <span>${completedOrder.gst ? completedOrder.gst.toFixed(2) : '0.00'}</span>
+                      </div>
+                      <div className="confirmed-total-row">
+                        <span>PST (7%):</span>
+                        <span>${completedOrder.pst ? completedOrder.pst.toFixed(2) : '0.00'}</span>
+                      </div>
+                      <div className="confirmed-total-row final">
+                        <span><strong>Total:</strong></span>
+                        <span><strong>${completedOrder.total ? completedOrder.total.toFixed(2) : '0.00'}</strong></span>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <p style={{textAlign: 'center', marginTop: '15px', fontStyle: 'italic', color: '#666'}}>
+                  This is your order summary. A separate invoice will be sent for payment.
+                </p>
               </div>
-              <div className="confirmed-totals">
-                <div className="confirmed-total-row">
-                  <span>Sub-total:</span>
-                  <span>${completedOrder.subtotal ? completedOrder.subtotal.toFixed(2) : '0.00'}</span>
-                </div>
-                <div className="confirmed-total-row">
-                  <span>GST (5%):</span>
-                  <span>${completedOrder.gst ? completedOrder.gst.toFixed(2) : '0.00'}</span>
-                </div>
-                <div className="confirmed-total-row">
-                  <span>PST (7%):</span>
-                  <span>${completedOrder.pst ? completedOrder.pst.toFixed(2) : '0.00'}</span>
-                </div>
-                <div className="confirmed-total-row final">
-                  <span><strong>Total:</strong></span>
-                  <span><strong>${completedOrder.total ? completedOrder.total.toFixed(2) : '0.00'}</strong></span>
-                </div>
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {inventoryUpdateStatus === 'warning' && (
             <p className="inventory-warning">
@@ -642,47 +651,7 @@ const Checkout = () => {
           </div>
           
           <div className="order-note">
-            <p>We accept cash at pick-up,</p>
-            <p>or etransfer to&nbsp;<span className="email-with-copy">
-              buttonsflowerfarm@telus.net
-              <button 
-                className="copy-email-btn" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  const btn = e.currentTarget;
-                  const svgElement = btn.querySelector('svg');
-                  const textElement = btn.querySelector('.copy-text');
-                  
-                  // Hide SVG, show "Copied" text
-                  if (svgElement) svgElement.style.display = 'none';
-                  if (textElement) textElement.style.display = 'inline';
-                  
-                  navigator.clipboard.writeText('buttonsflowerfarm@telus.net')
-                    .then(() => {
-                      // Show tooltip
-                      btn.classList.add('copied');
-                      
-                      // Reset button after 2 seconds
-                      setTimeout(() => {
-                        btn.classList.remove('copied');
-                        if (svgElement) svgElement.style.display = 'inline';
-                        if (textElement) textElement.style.display = 'none';
-                      }, 2000);
-                    })
-                    .catch(err => {
-                      console.error('Failed to copy text: ', err);
-                    });
-                }}
-                title="Copy email address"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-                <span className="copy-text">Copied</span>
-                <span className="copy-tooltip">Copied!</span>
-              </button>
-            </span></p>
+            <p>This is your order summary. A separate invoice will be sent for payment.</p>
           </div>
         </div>
       </div>

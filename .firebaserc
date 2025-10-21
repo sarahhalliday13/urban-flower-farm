@@ -7,7 +7,8 @@
     "buttonsflowerfarm-8a54d": {
       "hosting": {
         "production": [
-          "buttonsflowerfarm-8a54d"
+          "buttonsflowerfarm-8a54d",
+          "urban-flower-farm-production"
         ],
         "staging": [
           "urban-flower-farm-staging"

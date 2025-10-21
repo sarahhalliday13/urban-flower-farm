@@ -10,9 +10,9 @@ import React, { useEffect, useState } from 'react';
  * @param {function} props.onUpdateQuantity - Function to update item quantity
  * @param {function} props.onRemoveItem - Function to remove an item
  */
-const OrderItemsTable = ({ 
-  items = [], 
-  total = '0.00', 
+const OrderItemsTable = ({
+  items = [],
+  total = '0.00',
   editable = false,
   onUpdateQuantity = () => console.log('Update quantity not implemented'),
   onRemoveItem = () => console.log('Remove item not implemented'),
@@ -59,38 +59,67 @@ const OrderItemsTable = ({
       <table className="invoice-style-table">
         <thead>
           <tr>
-            <th className="product-col">Product</th>
-            <th className="quantity-col">Quantity</th>
-            <th className="price-col">Price</th>
+            <th className="product-col">Item</th>
+            <th className="status-col">Status</th>
+            <th className="quantity-col">Qty</th>
+            <th className="price-col">Each</th>
             <th className="total-col">Total</th>
             {editable && <th className="freebie-col">Freebie</th>}
           </tr>
         </thead>
         <tbody>
-          {items.map(item => (
-            <tr key={item.id}>
-              <td className="product-col">
-                {item.name}
-                {editable && (
-                  <div style={{ marginTop: '8px' }}>
-                    <button 
-                      className="remove-item-link" 
-                      onClick={() => {
-                        try {
-                          console.log(`Removing item ${item.id}`);
-                          onRemoveItem(item.id);
-                        } catch (error) {
-                          console.error("Error removing item:", error);
-                        }
-                      }}
-                      aria-label={`Remove ${item.name}`}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </td>
-              <td className="quantity-col">
+          {items.map(item => {
+            // Determine status badge
+            const status = item.inventoryStatus || 'In Stock';
+            const getBadgeStyle = (status) => {
+              switch(status) {
+                case 'Pre-Order':
+                  return { backgroundColor: '#e3f2fd', color: '#1976d2', border: '1px solid #1976d2' };
+                case 'Coming Soon':
+                  return { backgroundColor: '#fff3e0', color: '#f57c00', border: '1px solid #f57c00' };
+                case 'In Stock':
+                default:
+                  return { backgroundColor: '#e8f5e9', color: '#2e7d32', border: '1px solid #2e7d32' };
+              }
+            };
+
+            return (
+              <tr key={item.id}>
+                <td className="product-col">
+                  {item.name}
+                  {editable && (
+                    <div style={{ marginTop: '8px' }}>
+                      <button
+                        className="remove-item-link"
+                        onClick={() => {
+                          try {
+                            console.log(`Removing item ${item.id}`);
+                            onRemoveItem(item.id);
+                          } catch (error) {
+                            console.error("Error removing item:", error);
+                          }
+                        }}
+                        aria-label={`Remove ${item.name}`}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </td>
+                <td className="status-col">
+                  <span style={{
+                    ...getBadgeStyle(status),
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontSize: '0.75em',
+                    fontWeight: '600',
+                    display: 'inline-block',
+                    whiteSpace: 'nowrap'
+                  }}>
+                    {status}
+                  </span>
+                </td>
+                <td className="quantity-col">
                 {editable ? (
                   <div className="quantity-control-wrapper">
                     <button 
@@ -151,11 +180,12 @@ const OrderItemsTable = ({
                 </td>
               )}
             </tr>
-          ))}
+            );
+          })}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan="3" className="order-total-label">Order Total</td>
+            <td colSpan="4" className="order-total-label">Order Total</td>
             <td className="order-total-value">
               ${calculatedTotal}
             </td>
@@ -193,10 +223,16 @@ const OrderItemsTable = ({
         
         .product-col {
           text-align: left;
-          width: 45%;
+          width: 35%;
           padding: 5px;
         }
-        
+
+        .status-col {
+          width: 100px;
+          text-align: center;
+          padding: 5px;
+        }
+
         .invoice-style-table tr {
           border: none;
           box-shadow: none;

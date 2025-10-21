@@ -569,38 +569,56 @@ export const OrderProvider = ({ children }) => {
       addToast('Error updating payment: Invalid order ID', 'error');
       return false;
     }
-    
-    // Validate payment data
-    if (!paymentData || !paymentData.method) {
-      console.error('Invalid payment data');
-      addToast('Please select a payment method', 'error');
+
+    // Extract payment tracking fields from paymentData if present
+    const { invoiceNowPaid, invoiceLaterPaid, ...paymentInfo } = paymentData;
+
+    // Prepare update data
+    const updateData = {};
+
+    // Only validate and update payment info if method is provided
+    if (paymentInfo.method) {
+      updateData.payment = paymentInfo;
+    }
+
+    // Add payment tracking fields if provided
+    if (invoiceNowPaid !== undefined) {
+      updateData.invoiceNowPaid = invoiceNowPaid;
+    }
+    if (invoiceLaterPaid !== undefined) {
+      updateData.invoiceLaterPaid = invoiceLaterPaid;
+    }
+
+    // Must have either payment info or tracking fields
+    if (Object.keys(updateData).length === 0) {
+      console.error('No valid payment data to update');
       return false;
     }
-    
+
     try {
-      // Update in Firebase 
-      await updateOrder(orderId, { payment: paymentData });
-      
+      // Update in Firebase
+      await updateOrder(orderId, updateData);
+
       // Update in local state
       const updatedOrders = orders.map(order => {
         if (order.id === orderId) {
-          return { ...order, payment: paymentData };
+          return { ...order, ...updateData };
         }
         return order;
       });
-      
+
       setOrders(updatedOrders);
-      
+
       // Update in localStorage
       const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
       const updatedLocalOrders = localOrders.map(order => {
         if (order.id === orderId) {
-          return { ...order, payment: paymentData };
+          return { ...order, ...updateData };
         }
         return order;
       });
       localStorage.setItem('orders', JSON.stringify(updatedLocalOrders));
-      
+
       addToast('Payment information updated successfully', 'success');
       return true;
     } catch (error) {

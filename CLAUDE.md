@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-10-10
+**Last Updated**: 2025-10-21
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,20 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-10-10)
+## Recent Changes (2025-10-21)
+- Implemented Split Invoice System with Payment Tracking:
+  - Three invoice buttons: In Stock Items, Pre-Order Items, All Items
+  - Invoice number suffixes: -A (In Stock), -B (Pre-Order), none (All Items)
+  - Discount application selector with options: all items, in-stock only, pre-order only, split proportionally
+  - Invoice component respects discount applyTo setting and calculates discounts accordingly
+  - Payment tracking checkboxes under each invoice button (Paid/Unpaid status)
+  - Payment status stored separately in Firebase (orders/{id}/invoicePayments/{instock|preorder|all})
+  - Inventory status enrichment for older orders missing the field
+  - Case-insensitive filtering for inventory status
+  - Simplified order confirmation email (removed payment box, added one-line text)
+  - Optimized UI spacing in Order Totals section
+
+## Previous Changes (2025-10-10)
 - Fixed order row total calculation and invoice printing:
   - OrderTableRow now recalculates taxes on discounted amount (not stored values)
   - Added comprehensive print styles to hide navbar, feedback button, and footer
