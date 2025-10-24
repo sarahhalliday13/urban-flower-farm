@@ -193,7 +193,21 @@ export const generateInvoiceHTML = (order) => {
               <!-- Payment Information -->
               <tr>
                 <td style="padding: 0 30px 20px 30px;">
-                  <p style="margin: 0; font-size: 14px; color: #666;">This is your order summary. A separate invoice will be sent for payment.</p>
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f9f9f9; border-radius: 4px;">
+                    <tr>
+                      <td style="padding: 20px; text-align: center;">
+                        <h3 style="color: #2c5530; margin: 0 0 10px 0; font-size: 18px;">Payment Information</h3>
+                        <p style="margin: 0 0 15px 0; font-size: 14px;">Please complete your payment using one of the following methods:</p>
+                        <p style="margin: 5px 0; font-size: 14px;">
+                          <strong>Cash:</strong> Available for in-person pickup
+                        </p>
+                        <p style="margin: 5px 0 15px 0; font-size: 14px;">
+                          <strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net
+                        </p>
+                        <p style="margin: 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
+                      </td>
+                    </tr>
+                  </table>
                 </td>
               </tr>
 

@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-10-21
+**Last Updated**: 2025-10-24
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,13 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-10-21)
+## Recent Changes (2025-10-24)
+- Fixed email invoice to include payment information:
+  - Added Payment Information section with cash and e-transfer methods
+  - Centered, compact layout matching on-screen invoice display
+  - Includes order number reminder for payment notes
+
+## Previous Changes (2025-10-21)
 - Implemented Split Invoice System with Payment Tracking:
   - Three invoice buttons: In Stock Items, Pre-Order Items, All Items
   - Invoice number suffixes: -A (In Stock), -B (Pre-Order), none (All Items)
