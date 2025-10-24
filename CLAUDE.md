@@ -23,6 +23,11 @@
   - Added Payment Information section with cash and e-transfer methods
   - Centered, compact layout matching on-screen invoice display
   - Includes order number reminder for payment notes
+- Simplified order confirmation email:
+  - Removed tax breakdown from customer email (shown on invoice instead)
+  - Added section headers for mixed in-stock/pre-order items (READY FOR PICKUP / PRE-ORDER)
+  - Simplified checkout page to show only total (taxes shown on invoice)
+  - Added note about taxes being included on invoice
 
 ## Previous Changes (2025-10-21)
 - Implemented Split Invoice System with Payment Tracking:

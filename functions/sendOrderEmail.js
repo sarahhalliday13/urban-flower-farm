@@ -54,12 +54,17 @@ function generateCustomerEmailTemplate(order) {
     }
   };
 
-  // Separate items by invoice status
-  const invoiceNowItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow !== false));
-  const invoiceLaterItems = order.items.filter(item => !item.isFreebie && (item.invoiceNow === false));
-  const freebieItems = order.items.filter(item => item.isFreebie);
+  // Separate items by inventory status (In Stock vs Pre-Order)
+  const instockItems = order.items.filter(item => {
+    const status = (item.inventoryStatus || 'In Stock').toLowerCase();
+    return status === 'in stock';
+  });
+  const preorderItems = order.items.filter(item => {
+    const status = (item.inventoryStatus || 'In Stock').toLowerCase();
+    return status === 'pre-order' || status === 'coming soon';
+  });
 
-  const hasMixedInvoicing = invoiceNowItems.length > 0 && invoiceLaterItems.length > 0;
+  const hasMixedInvoicing = instockItems.length > 0 && preorderItems.length > 0;
 
   // Function to generate item rows
   const generateItemRow = (item) => {
@@ -99,7 +104,27 @@ function generateCustomerEmailTemplate(order) {
   `;
   };
 
-  const itemsList = order.items.map(generateItemRow).join('');
+  // Generate items list with section headers
+  let itemsList = '';
+
+  if (hasMixedInvoicing) {
+    // Add "READY FOR PICKUP" header
+    itemsList += `
+    <tr>
+      <td colspan="4" style="padding: 12px 8px 8px; font-weight: bold; background-color: #f5f5f5; border-top: 2px solid #ddd;">READY FOR PICKUP</td>
+    </tr>`;
+    itemsList += instockItems.map(generateItemRow).join('');
+
+    // Add "PRE-ORDER" header
+    itemsList += `
+    <tr>
+      <td colspan="4" style="padding: 12px 8px 8px; font-weight: bold; background-color: #f5f5f5; border-top: 2px solid #ddd; color: #1976d2;">PRE-ORDER</td>
+    </tr>`;
+    itemsList += preorderItems.map(generateItemRow).join('');
+  } else {
+    // No mixed invoicing, just list all items
+    itemsList = order.items.map(generateItemRow).join('');
+  }
 
   return `
     <!DOCTYPE html>
@@ -211,78 +236,6 @@ function generateCustomerEmailTemplate(order) {
                     <tbody>
                       ${itemsList}
                     </tbody>
-                    <tfoot>
-                      ${hasMixedInvoicing ? `
-                        <!-- Split Invoicing -->
-                        <tr>
-                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
-                            <strong style="color: #2c5530; font-size: 16px;">READY FOR PICKUP (In Stock)</strong>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.05)}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 0.07)}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; background-color: #e8f5e9;">
-                            <strong style="color: #2c5530;">INVOICE TOTAL:</strong>
-                          </td>
-                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530; background-color: #e8f5e9; font-size: 16px;">
-                            <strong>$${formatCurrency(invoiceNowItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.12)}</strong>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 14px; font-style: italic; color: #666; background-color: #f9f9f9;">
-                            This is your order summary. A separate invoice will be sent for payment.
-                          </td>
-                        </tr>
-                        <tr><td colspan="4" style="padding: 10px;"></td></tr>
-                        <tr>
-                          <td colspan="4" style="padding: 15px 10px 10px; text-align: center; background-color: #f8f8f8; border-top: 2px solid #ddd;">
-                            <strong style="color: #3498db; font-size: 16px;">PRE-ORDER (Invoice on Delivery)</strong>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(invoiceLaterItems.reduce((sum, item) => sum + (item.price * item.quantity), 0))}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="4" style="padding: 10px; text-align: center; font-size: 13px; font-style: italic; color: #666;">Will be invoiced when ready</td>
-                        </tr>
-                      ` : `
-                        <!-- Standard Single Invoice -->
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
-                          <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
-                        </tr>
-                        ${order.discount && order.discount.amount > 0 ? `
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">Discount${order.discount.reason ? ` (${order.discount.reason})` : ''}:</td>
-                          <td style="padding: 10px; text-align: right; color: #27ae60;">-$${formatCurrency(order.discount.amount)}</td>
-                        </tr>
-                        ` : ''}
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
-                        </tr>
-                      `}
-                    </tfoot>
                   </table>
                 </td>
               </tr>
@@ -300,6 +253,7 @@ function generateCustomerEmailTemplate(order) {
                         <ul style="margin: 5px 0; padding-left: 20px; font-size: 14px;">
                           <li style="margin: 5px 0;">For items that are in stock, we will text you at <strong>${order.customer.phone}</strong> to confirm your pickup date and time.</li>
                           <li style="margin: 5px 0;">If you need to make changes to your pickup time after confirmation, please text us.</li>
+                          ${hasMixedInvoicing ? '<li style="margin: 5px 0;">We will notify you when Pre-Order items arrive at the farm</li>' : ''}
                         </ul>
                       </td>
                     </tr>
@@ -307,56 +261,11 @@ function generateCustomerEmailTemplate(order) {
                 </td>
               </tr>
 
-              <!-- Admin Notes or Customer Notes Section -->
-              ${order.adminNotes && order.adminNotes.length > 0 ? `
-              <tr>
-                <td style="padding: 0 30px;">
-                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f9f9f9; border-radius: 4px; border-left: 5px solid #27ae60;">
-                    <tr>
-                      <td style="padding: 15px;">
-                        <h3 style="color: #27ae60; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Order Notes</h3>
-                        <p style="margin: 0; font-size: 14px; font-style: italic;">${order.adminNotes[order.adminNotes.length - 1].note}</p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              ` : order.customer.notes ? `
-              <!-- Customer Notes Section -->
-              <tr>
-                <td style="padding: 0 30px;">
-                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f9f9f9; border-radius: 4px; border-left: 5px solid #27ae60;">
-                    <tr>
-                      <td style="padding: 15px;">
-                        <h3 style="color: #27ae60; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Your Pickup Request</h3>
-                        <p style="margin: 0; font-size: 14px; font-style: italic;">${order.customer.notes}</p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-              ` : ''}
 
-              <!-- Payment Information -->
+              <!-- Payment Note -->
               <tr>
-                <td style="padding: 0 30px;">
-                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #f8f8f8; border-radius: 4px;">
-                    <tr>
-                      <td style="padding: 15px;">
-                        <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Payment Information</h3>
-                        <p style="margin: 5px 0; font-size: 14px;">Please complete your payment using one of the following methods:</p>
-                        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 10px 0;">
-                          <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
-                          </tr>
-                          <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
-                          </tr>
-                        </table>
-                        <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
-                      </td>
-                    </tr>
-                  </table>
+                <td style="padding: 0 30px 20px 30px;">
+                  <p style="margin: 0; font-size: 14px; color: #666;">This is your order summary. A separate invoice will be sent for payment.</p>
                 </td>
               </tr>
 

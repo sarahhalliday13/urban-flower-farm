@@ -629,20 +629,7 @@ const Checkout = () => {
           </div>
           
           <div className="order-total">
-            <h3>Order Summary</h3>
             <div className="total-breakdown">
-              <div className="total-row subtotal-row">
-                <span>Sub-total:</span>
-                <span>${getSubtotal().toFixed(2)}</span>
-              </div>
-              <div className="total-row tax-row">
-                <span>GST (5%):</span>
-                <span>${getGST().toFixed(2)}</span>
-              </div>
-              <div className="total-row tax-row">
-                <span>PST (7%):</span>
-                <span>${getPST().toFixed(2)}</span>
-              </div>
               <div className="total-row final-total-row">
                 <span>Total:</span>
                 <span>${getTotal().toFixed(2)}</span>
@@ -651,7 +638,7 @@ const Checkout = () => {
           </div>
           
           <div className="order-note">
-            <p>This is your order summary. A separate invoice will be sent for payment.</p>
+            <p>This is your order summary. A separate invoice will be sent for payment which will also include GST + PST.</p>
           </div>
         </div>
       </div>
