@@ -528,6 +528,29 @@ const OrderDetails = () => {
               </div>
             </div>
 
+            {/* Customer Note Section - Visible to customer */}
+            {orderDetails.customerNote && (
+              <div className="customer-note-display" style={{
+                backgroundColor: '#fff3cd',
+                border: '2px solid #ffc107',
+                borderRadius: '8px',
+                padding: '15px',
+                marginBottom: '15px'
+              }}>
+                <h3 style={{color: '#856404', marginTop: 0, marginBottom: '10px'}}>Note About Your Order</h3>
+                <div style={{
+                  backgroundColor: 'white',
+                  padding: '12px',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  color: '#333'
+                }}>
+                  {orderDetails.customerNote}
+                </div>
+              </div>
+            )}
+
             {/* Admin Notes Section */}
             {orderDetails.adminNotes && orderDetails.adminNotes.length > 0 && (
               <div className="admin-notes-display">

@@ -29,6 +29,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
   const [saveInProgress, setSaveInProgress] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adminNotes, setAdminNotes] = useState('');
+  const [customerNote, setCustomerNote] = useState('');
   
   // Load order details
   useEffect(() => {
@@ -55,12 +56,15 @@ const OrderEditor = ({ orderId, closeModal }) => {
             notes: orderDetails.notes || '',
             paymentMethod: orderDetails.paymentMethod || 'card',
             total: orderDetails.total || '0.00',
-            adminNotes: orderDetails.adminNotes || []
+            adminNotes: orderDetails.adminNotes || [],
+            customerNote: orderDetails.customerNote || ''
           });
-          
+
           // DO NOT pre-populate admin notes - keep it empty for new entries
           // This prevents duplicate notes when saving without changes
           setAdminNotes('');
+          // Load existing customer note if present
+          setCustomerNote(orderDetails.customerNote || '');
           
           // Initialize items
           if (orderDetails.items && Array.isArray(orderDetails.items)) {
@@ -111,12 +115,15 @@ const OrderEditor = ({ orderId, closeModal }) => {
               notes: orderData.notes || '',
               paymentMethod: orderData.paymentMethod || 'card',
               total: orderData.total || '0.00',
-              adminNotes: orderData.adminNotes || []
+              adminNotes: orderData.adminNotes || [],
+              customerNote: orderData.customerNote || ''
             });
-            
+
             // DO NOT pre-populate admin notes - keep it empty for new entries
             // This prevents duplicate notes when saving without changes
             setAdminNotes('');
+            // Load existing customer note if present
+            setCustomerNote(orderData.customerNote || '');
             
             if (orderData.items && Array.isArray(orderData.items)) {
               // Fetch current inventory status for each item if not present
@@ -286,6 +293,7 @@ const OrderEditor = ({ orderId, closeModal }) => {
         total: parseFloat(newTotal),
         updatedAt: new Date().toISOString(),
         adminNotes: adminNotesArray,
+        customerNote: customerNote.trim() || '', // Save customer note
         // Preserve existing payment tracking or initialize to false
         invoiceNowPaid: currentOrder?.invoiceNowPaid || false,
         invoiceLaterPaid: currentOrder?.invoiceLaterPaid || false
@@ -372,16 +380,52 @@ const OrderEditor = ({ orderId, closeModal }) => {
           </div>
           
           {/* Right Column - Actions */}
-          <div className="editor-column">            
+          <div className="editor-column">
+            <div className="editor-card" style={{backgroundColor: '#fff3cd', borderLeft: '4px solid #ffc107'}}>
+              <h3 style={{color: '#856404'}}>Customer Message</h3>
+              <p style={{fontSize: '0.9em', color: '#856404', marginBottom: '10px'}}>
+                This message will be visible to the customer on their invoice and order details.
+              </p>
+              <div className="customer-note-section">
+                <textarea
+                  className="customer-note-input"
+                  placeholder="Explain order changes to the customer..."
+                  value={customerNote}
+                  onChange={(e) => setCustomerNote(e.target.value)}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+            </div>
+
             <div className="editor-card">
-              <h3>Admin Notes</h3>
+              <h3>Admin Notes (Internal Only)</h3>
               <div className="admin-notes-section">
                 <textarea
                   className="admin-notes-input"
-                  placeholder="Add a new internal note about this order edit (optional)"
+                  placeholder="Add internal note (optional)"
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
                   rows={3}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
                 />
                 {orderData.adminNotes && orderData.adminNotes.length > 0 && (
                   <div className="previous-notes">

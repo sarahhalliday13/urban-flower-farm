@@ -174,6 +174,22 @@ export const generateInvoiceHTML = (order) => {
                 </td>
               </tr>
 
+              <!-- Customer Note Section (if available) -->
+              ${order.customerNote ? `
+              <tr>
+                <td style="padding: 0 30px;">
+                  <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px; background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 8px;">
+                    <tr>
+                      <td style="padding: 20px;">
+                        <h3 style="color: #856404; margin-top: 0; margin-bottom: 10px; font-size: 18px;">Note About Your Order</h3>
+                        <div style="background-color: white; padding: 12px; border-radius: 4px; margin: 0; font-size: 14px; line-height: 1.6;">${order.customerNote}</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              ` : ''}
+
               <!-- Notes Section (if available) -->
               ${order.notes ? `
               <tr>
@@ -534,6 +550,27 @@ const Invoice = ({ order, type = 'print', invoiceType = 'final', standalone = fa
           </tfoot>
         </table>
       </div>
+
+      {order.customerNote && (
+        <div className="customer-note-invoice" style={{
+          backgroundColor: '#fff3cd',
+          border: '2px solid #ffc107',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{color: '#856404', margin: '0 0 10px 0', fontSize: '1.1rem'}}>Note About Your Order</h3>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '12px',
+            borderRadius: '4px',
+            fontSize: '14px',
+            lineHeight: '1.6'
+          }}>
+            {order.customerNote}
+          </div>
+        </div>
+      )}
 
       {order.notes && (
         <div className="invoice-notes">

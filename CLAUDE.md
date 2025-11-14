@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-10-24
+**Last Updated**: 2025-11-13
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,16 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-10-24)
+## Recent Changes (2025-11-13)
+- Added customer-visible notes for order edits:
+  - New "Customer Message" field in OrderEditor (distinct from internal admin notes)
+  - Yellow highlighted display in OrderDetails for customer visibility
+  - Customer note appears on printed and emailed invoices
+  - Included in both order confirmation and invoice email templates
+  - Enables transparent communication when orders are modified
+  - Stored as `customerNote` field in order data
+
+## Previous Changes (2025-10-24)
 - Fixed email invoice to include payment information:
   - Added Payment Information section with cash and e-transfer methods
   - Centered, compact layout matching on-screen invoice display
