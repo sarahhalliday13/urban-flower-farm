@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-11-13
+**Last Updated**: 2025-12-08
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,7 +18,16 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-11-13)
+## Recent Changes (2025-12-08)
+- **CRITICAL BUG FIX**: Fixed order data loss when updating payment information:
+  - Changed `updateOrder()` in firebase.js to use `update()` instead of `set()`
+  - Previously, updating payment info would replace entire order, wiping out customer data, items, and totals
+  - This caused orders to appear as "#Unknown" with no customer info in admin dashboard
+  - Bug affected 4 orders: ORD-2025-1001-1223, ORD-2025-1001-4144, ORD-2025-1001-7629, ORD-2025-1084-7811
+  - Fix ensures partial updates merge with existing data rather than replacing entire order
+  - Applies to all order updates: payment, discount, items, notes, status changes
+
+## Previous Changes (2025-11-13)
 - Added customer-visible notes for order edits:
   - New "Customer Message" field in OrderEditor (distinct from internal admin notes)
   - Yellow highlighted display in OrderDetails for customer visibility

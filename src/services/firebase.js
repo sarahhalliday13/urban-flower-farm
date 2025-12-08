@@ -1883,7 +1883,11 @@ export const updateOrder = async (orderId, orderData) => {
   try {
     console.log(`Updating order ${orderId} with data:`, orderData);
     const orderRef = ref(database, `orders/${orderId}`);
-    await set(orderRef, orderData);  // Use set instead of update to replace the entire order
+
+    // CRITICAL FIX: Use update() instead of set() to merge data, not replace the entire order
+    // This prevents wiping out existing order data when updating partial fields like payment
+    await update(orderRef, orderData);
+
     console.log(`Order ${orderId} updated successfully`);
     return true;
   } catch (error) {
