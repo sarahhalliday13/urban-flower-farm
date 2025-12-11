@@ -382,14 +382,21 @@ const InventoryImportExport = () => {
       // Create main data sheet
       const ws = XLSX.utils.json_to_sheet(rows);
       
-      // Format plant_id column (column A) as numbers
+      // Format plant_id column (column A) as numbers (only if they're numeric)
       const range = XLSX.utils.decode_range(ws['!ref']);
       for (let row = 1; row <= range.e.r; row++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: 0 }); // Column A
         if (ws[cellAddress] && ws[cellAddress].v) {
-          ws[cellAddress].t = 'n'; // Set type to number
-          ws[cellAddress].v = parseInt(ws[cellAddress].v); // Ensure it's an integer
-          ws[cellAddress].z = '0'; // Number format with no decimals
+          const parsedValue = parseInt(ws[cellAddress].v);
+          // Only format as number if it's actually numeric
+          if (!isNaN(parsedValue)) {
+            ws[cellAddress].t = 'n'; // Set type to number
+            ws[cellAddress].v = parsedValue;
+            ws[cellAddress].z = '0'; // Number format with no decimals
+          } else {
+            // Keep as text for non-numeric IDs (like gift certificates)
+            ws[cellAddress].t = 's'; // Set type to string
+          }
         }
       }
       
