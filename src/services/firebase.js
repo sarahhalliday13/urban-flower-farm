@@ -1092,6 +1092,7 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
     let newPlantsCount = 0;
     let updatedPlantsCount = 0;
     let archivedPlantsCount = 0;
+    let deletedPlantsCount = 0;
     
     console.log(`Import mode: ${importMode}`);
     
@@ -1125,6 +1126,8 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
           action = 'hide_from_shop';
         } else if (action === 'add' || action === 'add_new') {
           action = 'add';
+        } else if (action === 'delete' || action === 'remove') {
+          action = 'delete';
         } else if (action === 'update' || action === 'update_existing' || action === '') {
           action = 'update';
         } else {
@@ -1218,11 +1221,29 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
             id: plantId
           };
           archivedPlantsCount++;
+        } else if (action === 'delete') {
+          console.log(`Plant ${plantId} - deleting plant and inventory data`);
+
+          // Remove plant from plantsObject
+          delete plantsObject[plantId];
+
+          // Also remove inventory data
+          if (inventoryObject[plantId]) {
+            delete inventoryObject[plantId];
+            console.log(`Plant ${plantId} - deleted inventory data`);
+          }
+
+          deletedPlantsCount++;
         }
       } else {
         // New plant - add it regardless of mode
         if (action === 'hide_from_shop' || action === 'archive') {
           console.log(`Plant ${plantId} - cannot hide non-existent plant, skipping`);
+          return;
+        }
+
+        if (action === 'delete') {
+          console.log(`Plant ${plantId} - cannot delete non-existent plant, skipping`);
           return;
         }
         
@@ -1289,31 +1310,33 @@ export const importPlantsFromSheets = async (plantsData, inventoryData = [], imp
       });
     }
     
-    console.log(`Results: ${newPlantsCount} added, ${updatedPlantsCount} updated, ${archivedPlantsCount} archived`);
-    
+    console.log(`Results: ${newPlantsCount} added, ${updatedPlantsCount} updated, ${archivedPlantsCount} archived, ${deletedPlantsCount} deleted`);
+
     // Update Firebase - this still uses set() but now includes existing data
     const plantsRef = ref(database, 'plants');
     const inventoryRef = ref(database, 'inventory');
-    
+
     await set(plantsRef, plantsObject);
     await set(inventoryRef, inventoryObject);
-    
+
     // Build result message based on what happened
     const actions = [];
     if (newPlantsCount > 0) actions.push(`${newPlantsCount} added`);
     if (updatedPlantsCount > 0) actions.push(`${updatedPlantsCount} updated`);
     if (archivedPlantsCount > 0) actions.push(`${archivedPlantsCount} archived`);
-    
-    const message = actions.length > 0 
+    if (deletedPlantsCount > 0) actions.push(`${deletedPlantsCount} deleted`);
+
+    const message = actions.length > 0
       ? `Successfully processed plants: ${actions.join(', ')}`
       : 'No changes made';
-    
+
     return {
       success: true,
       message,
       plantsCount: newPlantsCount,
       updatedCount: updatedPlantsCount,
       archivedCount: archivedPlantsCount,
+      deletedCount: deletedPlantsCount,
       inventoryCount: Object.keys(inventoryObject).length,
       skippedCount: 0,
       totalPlants: Object.keys(plantsObject).length

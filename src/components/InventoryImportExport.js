@@ -404,7 +404,7 @@ const InventoryImportExport = () => {
         type: 'list',
         allowBlank: true,
         sqref: validationRange,
-        formula1: '"add,update,hide"'
+        formula1: '"add,update,hide,delete"'
       });
       
       // Set column widths
@@ -468,6 +468,7 @@ const InventoryImportExport = () => {
         { 'Instructions': '     • Leave blank or "update" = Update the plant data (respects hidden column value)' },
         { 'Instructions': '     • "add" = Add as new plant (only if plant_id doesn\'t exist)' },
         { 'Instructions': '     • "hide" = Hide plant AND update data (forces hidden to TRUE, ignores hidden column)' },
+        { 'Instructions': '     • "delete" = PERMANENTLY DELETE plant and inventory (cannot be undone!)' },
         { 'Instructions': '' },
         { 'Instructions': '2. ADDING NEW PLANTS:' },
         { 'Instructions': '   - Add new rows at the bottom' },
@@ -487,6 +488,7 @@ const InventoryImportExport = () => {
         { 'Instructions': '' },
         { 'Instructions': '5. IMPORTANT NOTES:' },
         { 'Instructions': '   - Do NOT change plant_id for existing plants' },
+        { 'Instructions': '   - Do NOT use "delete" for plants that have been ordered (use "hide" instead)' },
         { 'Instructions': '   - Order history is preserved when updating or archiving' },
         { 'Instructions': '   - Upload this file in the Import section when ready' }
       ];
@@ -537,15 +539,18 @@ const InventoryImportExport = () => {
       let addCount = 0;
       let updateCount = 0;
       let archiveCount = 0;
-      
+      let deleteCount = 0;
+
       rowsToProcess.forEach(row => {
         const mode = row.update_mode.toLowerCase().trim();
-        
+
         // Handle all variations of the update modes
         if (mode === 'add' || mode === 'add_new') {
           addCount++;
         } else if (mode === 'hide' || mode === 'hide_plant' || mode === 'hide_from_shop' || mode === 'archive') {
           archiveCount++;
+        } else if (mode === 'delete' || mode === 'remove') {
+          deleteCount++;
         } else {
           // For 'update', 'update_existing', or any other explicit value
           updateCount++;
@@ -571,6 +576,7 @@ const InventoryImportExport = () => {
           add: addCount,
           update: updateCount,
           archive: archiveCount,
+          delete: deleteCount,
           skipped: masterData.length - rowsToProcess.length
         }
       });
@@ -841,7 +847,7 @@ const InventoryImportExport = () => {
                     marginBottom: '20px'
                   }}>
                     <h4 style={{marginTop: 0, marginBottom: '10px'}}>📊 Summary of Actions</h4>
-                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '15px'}}>
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px'}}>
                       <div style={{textAlign: 'center'}}>
                         <div style={{fontSize: '24px', fontWeight: 'bold', color: '#28a745'}}>
                           {previewData.summary.add}
@@ -855,10 +861,16 @@ const InventoryImportExport = () => {
                         <div style={{fontSize: '12px', color: '#6c757d'}}>To Update</div>
                       </div>
                       <div style={{textAlign: 'center'}}>
-                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#dc3545'}}>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#ffc107'}}>
                           {previewData.summary.archive}
                         </div>
                         <div style={{fontSize: '12px', color: '#6c757d'}}>To Archive</div>
+                      </div>
+                      <div style={{textAlign: 'center'}}>
+                        <div style={{fontSize: '24px', fontWeight: 'bold', color: '#dc3545'}}>
+                          {previewData.summary.delete}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#6c757d'}}>To Delete</div>
                       </div>
                     </div>
                   </div>
@@ -894,17 +906,20 @@ const InventoryImportExport = () => {
                                 borderRadius: '4px',
                                 fontSize: '11px',
                                 fontWeight: 'bold',
-                                backgroundColor: 
+                                backgroundColor:
                                   plant.action === 'add' ? '#d4edda' :
-                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#f8d7da' :
+                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#fff3cd' :
+                                  (plant.action === 'delete' || plant.action === 'remove') ? '#f8d7da' :
                                   '#cce5ff',
                                 color:
                                   plant.action === 'add' ? '#155724' :
-                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#721c24' :
+                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? '#856404' :
+                                  (plant.action === 'delete' || plant.action === 'remove') ? '#721c24' :
                                   '#004085'
                               }}>
                                 {plant.action === 'add' ? 'ADD' :
                                  (plant.action === 'hide' || plant.action === 'hide_from_shop') ? 'HIDE' :
+                                 (plant.action === 'delete' || plant.action === 'remove') ? 'DELETE' :
                                  'UPDATE'}
                               </span>
                             </td>
