@@ -35,7 +35,7 @@ exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {
       port: 587,
       secure: false,
       auth: {
-        user: "buttonsflowerfarm@telus.net",
+        user: "buttonsflowerfarm@gmail.com",
         pass: process.env.GMAIL_PASSWORD,
       },
     });
@@ -46,7 +46,7 @@ exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {
 
     const msg = {
       to,
-      from: "buttonsflowerfarm@telus.net",
+      from: "buttonsflowerfarm@gmail.com",
       subject,
       html,
     };

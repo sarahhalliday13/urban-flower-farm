@@ -67,7 +67,7 @@ app.use(cors({
 app.use(express.json());
 
 // Configure email settings
-const BUTTONS_EMAIL = 'buttonsflowerfarm@telus.net';
+const BUTTONS_EMAIL = 'buttonsflowerfarm@gmail.com';
 
 // Create transporter with Gmail SMTP settings
 const createTransporter = async () => {

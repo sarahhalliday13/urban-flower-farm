@@ -214,7 +214,7 @@ function generateCustomerEmailTemplate(order) {
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@gmail.com</p>
                       </td>
                     </tr>
                   </table>
@@ -516,7 +516,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                       <td width="48%" class="stack-column" valign="top" style="padding-left: 4%;">
                         <h3 style="color: #2c5530; margin-top: 0; margin-bottom: 10px; font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 5px;">From</h3>
                         <p style="margin: 5px 0; font-size: 14px;">Buttons Urban Flower Farm</p>
-                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@telus.net</p>
+                        <p style="margin: 5px 0; font-size: 14px;">Email: buttonsflowerfarm@gmail.com</p>
                       </td>
                     </tr>
                   </table>
@@ -641,7 +641,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                             <td style="padding: 5px 0; font-size: 14px;"><strong>Cash:</strong> Available for in-person pickup</td>
                           </tr>
                           <tr>
-                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@telus.net</td>
+                            <td style="padding: 5px 0; font-size: 14px;"><strong>E-Transfer:</strong> Send to buttonsflowerfarm@gmail.com</td>
                           </tr>
                         </table>
                         <p style="margin: 5px 0; font-size: 14px;">Please include your order number (${order.id}) in the payment notes.</p>
@@ -711,7 +711,7 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
       port: 587,
       secure: false,
       auth: {
-        user: "buttonsflowerfarm@telus.net",
+        user: "buttonsflowerfarm@gmail.com",
         pass: process.env.GMAIL_PASSWORD,
       },
     });
@@ -725,7 +725,7 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
     // Send customer confirmation email
     const customerInfo = await transporter.sendMail({
-      from: "buttonsflowerfarm@telus.net",
+      from: "buttonsflowerfarm@gmail.com",
       to: orderData.customer.email,
       subject: `Order Confirmation - ${orderData.id}`,
       html: customerEmailHtml,
@@ -735,8 +735,8 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
     // Send business notification
     const buttonsInfo = await transporter.sendMail({
-      from: "buttonsflowerfarm@telus.net",
-      to: "buttonsflowerfarm@telus.net",
+      from: "buttonsflowerfarm@gmail.com",
+      to: "buttonsflowerfarm@gmail.com",
       subject: `New Order Received - ${orderData.id}`,
       html: buttonsEmailHtml,
     });
