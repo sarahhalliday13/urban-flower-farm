@@ -1867,27 +1867,16 @@ export const getOrder = async (orderId) => {
 export const updateOrderStatus = async (orderId, newStatus) => {
   try {
     console.log(`Updating status for order ${orderId} to ${newStatus}`);
-    
-    // First get the current order data
+
     const orderRef = ref(database, `orders/${orderId}`);
-    const snapshot = await get(orderRef);
-    
-    if (!snapshot.exists()) {
-      console.error(`Order ${orderId} not found`);
-      return false;
-    }
-    
-    // Get current order data
-    const currentOrder = snapshot.val();
-    
-    // Use set to replace the entire order with updated status
-    // This ensures all nested objects (like customer) are preserved correctly
-    await set(orderRef, {
-      ...currentOrder,
+
+    // CRITICAL FIX: Use update() instead of set() to merge data, not replace the entire order
+    // This prevents wiping out existing order data (customer, items, totals) when updating status
+    await update(orderRef, {
       status: newStatus,
       lastUpdated: new Date().toISOString()
     });
-    
+
     console.log(`Successfully updated status for order ${orderId}`);
     return true;
   } catch (error) {

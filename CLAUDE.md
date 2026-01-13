@@ -3,7 +3,7 @@
 ## Project Overview
 **Name**: Urban Flower Farm (Buttons Flower Farm)
 **Type**: E-commerce React application for local flower farm
-**Last Updated**: 2025-12-08
+**Last Updated**: 2026-01-13
 
 ## Tech Stack
 - **Frontend**: React 17.0.2 with React Router v6
@@ -18,14 +18,23 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2025-12-08)
-- **CRITICAL BUG FIX**: Fixed order data loss when updating payment information:
+## Recent Changes (2026-01-13)
+- **URGENT CRITICAL BUG FIX**: Fixed order data loss when updating order status:
+  - Changed `updateOrderStatus()` in firebase.js to use `update()` instead of `set()`
+  - This was a second instance of the bug partially fixed on Dec 8 (which only fixed `updateOrder()`)
+  - updateOrderStatus() was still using `set()`, causing data corruption when order status changed
+  - New corruption confirmed: ORD-2026-1001-5691 (created Jan 11, 2026) corrupted after Dec 8 fix
+  - Status updates now merge data instead of replacing entire order
+  - Prevents wiping out customer data, items, and totals when changing order status
+  - All order update paths now safely use `update()` for partial updates
+
+## Previous Changes (2025-12-08)
+- **CRITICAL BUG FIX**: Fixed order data loss when updating payment information (PARTIAL):
   - Changed `updateOrder()` in firebase.js to use `update()` instead of `set()`
   - Previously, updating payment info would replace entire order, wiping out customer data, items, and totals
   - This caused orders to appear as "#Unknown" with no customer info in admin dashboard
   - Bug affected 4 orders: ORD-2025-1001-1223, ORD-2025-1001-4144, ORD-2025-1001-7629, ORD-2025-1084-7811
-  - Fix ensures partial updates merge with existing data rather than replacing entire order
-  - Applies to all order updates: payment, discount, items, notes, status changes
+  - NOTE: This fix was incomplete - updateOrderStatus() was missed (fixed Jan 13, 2026)
 
 ## Previous Changes (2025-11-13)
 - Added customer-visible notes for order edits:
