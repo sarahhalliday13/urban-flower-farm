@@ -707,8 +707,16 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
     // Create transporter with Gmail SMTP settings
     // Try .env first (local), then fall back to Firebase config (production)
-    const gmailPassword = process.env.GMAIL_PASSWORD ||
-                          (functions.config().email?.gmail_password || '').replace(/ /g, '');
+    const envPassword = process.env.GMAIL_PASSWORD;
+    const configPassword = functions.config().email?.gmail_password;
+    const gmailPassword = envPassword || (configPassword || '').replace(/ /g, '');
+
+    console.log('🔐 Password sources:', {
+      hasEnvPassword: !!envPassword,
+      hasConfigPassword: !!configPassword,
+      configPasswordLength: configPassword?.length,
+      finalPasswordLength: gmailPassword?.length
+    });
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
