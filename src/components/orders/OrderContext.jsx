@@ -976,7 +976,10 @@ export const OrderProvider = ({ children }) => {
         total: orders.length
       });
     }
-    
+
+    // Ensure filtered orders are sorted by date (newest first)
+    filteredOrders.sort((a, b) => new Date(b.date) - new Date(a.date));
+
     return {
       orders: filteredOrders,
       statusCounts
