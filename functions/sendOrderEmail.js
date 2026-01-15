@@ -735,7 +735,7 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
     // Send business notification
     const buttonsInfo = await transporter.sendMail({
       from: "buttonsflowerfarm@telus.net",
-      to: "buttonsflowerfarm@telus.net",
+      to: "buttonsflowerfarm@gmail.com",
       subject: `New Order Received - ${orderData.id}`,
       html: buttonsEmailHtml,
     });

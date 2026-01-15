@@ -276,7 +276,8 @@ const OrderDetails = () => {
 
   // Get final total including taxes after discount
   const getFinalTotal = () => {
-    const subtotal = orderDetails.subtotal || calculateSubtotal();
+    // Always recalculate subtotal from items (don't trust stored value)
+    const subtotal = calculateSubtotal();
     const discount = getDiscountAmount();
     const subtotalAfterDiscount = Math.max(0, subtotal - discount);
     // Always recalculate taxes based on subtotal after discount
@@ -430,7 +431,7 @@ const OrderDetails = () => {
                 {/* Standard Invoice Display */}
                 <div className="subtotal-row" style={{padding: '1px 0', margin: '1px 0'}}>
                   <span>Sub-total:</span>
-                  <span>${formatCurrency(orderDetails.subtotal || calculateSubtotal())}</span>
+                  <span>${formatCurrency(calculateSubtotal())}</span>
                 </div>
 
                 {/* Discount Row */}
@@ -512,12 +513,12 @@ const OrderDetails = () => {
                 {/* Tax rows - calculated on subtotal after discount */}
                 <div className="tax-row" style={{padding: '1px 0', margin: '1px 0'}}>
                   <span>GST (5%):</span>
-                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.05)}</span>
+                  <span>${formatCurrency(Math.max(0, calculateSubtotal() - getDiscountAmount()) * 0.05)}</span>
                 </div>
 
                 <div className="tax-row" style={{padding: '1px 0', margin: '1px 0'}}>
                   <span>PST (7%):</span>
-                  <span>${formatCurrency(Math.max(0, (orderDetails.subtotal || calculateSubtotal()) - getDiscountAmount()) * 0.07)}</span>
+                  <span>${formatCurrency(Math.max(0, calculateSubtotal() - getDiscountAmount()) * 0.07)}</span>
                 </div>
 
                 {/* Final Total */}

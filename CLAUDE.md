@@ -18,7 +18,21 @@
 3. **Order System**: Cart, checkout, email confirmations with invoices (includes GST/PST tax calculations)
 4. **Authentication**: Firebase Auth with admin role management
 
-## Recent Changes (2026-01-13)
+## Recent Changes (2026-01-14)
+- **CRITICAL EMAIL FIX**: Corrected admin email notification recipient:
+  - Admin order notifications now sent to buttonsflowerfarm@gmail.com (shop's actual inbox)
+  - Previously sent to buttonsflowerfarm@telus.net which is send-only
+  - Still sends FROM buttonsflowerfarm@telus.net using Gmail SMTP with Google App Password
+  - Customer emails work correctly
+
+- **CRITICAL CALCULATION FIX**: Fixed order total display with discounts and freebies:
+  - OrderDetails now recalculates subtotal from items instead of using stored value
+  - Stored subtotal doesn't account for freebies, causing incorrect total display
+  - Fixed mismatch: table row showed correct total, expanded details showed wrong total
+  - Example: Order with $20 items + $5 freebie + $2 discount now shows $20.16 consistently
+  - Taxes (GST/PST) now calculated on correct subtotal after discount
+
+## Previous Changes (2026-01-13)
 - **URGENT CRITICAL BUG FIX**: Fixed order data loss when updating order status:
   - Changed `updateOrderStatus()` in firebase.js to use `update()` instead of `set()`
   - This was a second instance of the bug partially fixed on Dec 8 (which only fixed `updateOrder()`)
