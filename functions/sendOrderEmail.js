@@ -775,17 +775,11 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
 
   } catch (error) {
     console.error("❌ Error sending emails:", error);
+    // Ensure CORS headers are set even on error
+    res.set('Access-Control-Allow-Origin', '*');
     res.status(500).json({
       success: false,
       error: error.message,
-    });
-  } catch (outerError) {
-    // Ensure CORS headers are set even if there's an error
-    res.set('Access-Control-Allow-Origin', '*');
-    console.error("❌ Unexpected error:", outerError);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
     });
   }
 }); 
