@@ -675,28 +675,27 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
 
 // Export the Cloud Function
 exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
-  // Set CORS headers for all requests
-  res.set('Access-Control-Allow-Origin', '*');
-  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.set('Access-Control-Allow-Headers', '*');
-  res.set('Access-Control-Max-Age', '3600');
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.status(204).send('');
-    return;
-  }
-
-  // Only allow POST requests
-  if (req.method !== 'POST') {
-    res.status(405).json({
-      success: false,
-      error: 'Method not allowed'
-    });
-    return;
-  }
-
   try {
+    // Set CORS headers for all requests
+    res.set('Access-Control-Allow-Origin', '*');
+    res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.set('Access-Control-Allow-Headers', '*');
+    res.set('Access-Control-Max-Age', '3600');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      res.status(204).send('');
+      return;
+    }
+
+    // Only allow POST requests
+    if (req.method !== 'POST') {
+      res.status(405).json({
+        success: false,
+        error: 'Method not allowed'
+      });
+      return;
+    }
     const orderData = req.body;
     console.log("📦 Received order data:", orderData.id);
 
@@ -779,6 +778,14 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message,
+    });
+  } catch (outerError) {
+    // Ensure CORS headers are set even if there's an error
+    res.set('Access-Control-Allow-Origin', '*');
+    console.error("❌ Unexpected error:", outerError);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error'
     });
   }
 }); 
