@@ -704,25 +704,14 @@ exports.sendOrderEmail = functions.https.onRequest(async (req, res) => {
       throw new Error("Customer email is required");
     }
 
-    // Create transporter with Telus SMTP settings
-    // Try .env first (local), then fall back to Firebase config (production)
-    const envPassword = process.env.TELUS_PASSWORD;
-    const configPassword = functions.config().email?.telus_password;
-    const emailPassword = envPassword || configPassword || '';
-
-    console.log('🔐 Password sources:', {
-      hasEnvPassword: !!envPassword,
-      hasConfigPassword: !!configPassword,
-      finalPasswordLength: emailPassword?.length
-    });
-
+    // Create transporter - Telus email through Gmail SMTP
     const transporter = nodemailer.createTransport({
-      host: "smtp.telus.net",
+      host: "smtp.gmail.com",
       port: 587,
       secure: false,
       auth: {
         user: "buttonsflowerfarm@telus.net",
-        pass: emailPassword,
+        pass: process.env.GMAIL_PASSWORD,
       },
     });
 
