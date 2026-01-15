@@ -29,18 +29,17 @@ exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {
       throw new functions.https.HttpsError('invalid-argument', 'Missing or invalid order ID');
     }
 
-    // Create transporter with Gmail SMTP settings
+    // Create transporter with Telus SMTP settings
     // Try .env first (local), then fall back to Firebase config (production)
-    const gmailPassword = process.env.GMAIL_PASSWORD ||
-                          (functions.config().email?.gmail_password || '').replace(/ /g, '');
+    const emailPassword = process.env.TELUS_PASSWORD || functions.config().email?.telus_password || '';
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
+      host: "smtp.telus.net",
       port: 587,
       secure: false,
       auth: {
-        user: "buttonsflowerfarm@gmail.com",
-        pass: gmailPassword,
+        user: "buttonsflowerfarm@telus.net",
+        pass: emailPassword,
       },
     });
 
@@ -50,7 +49,7 @@ exports.sendInvoiceEmail = functions.https.onCall(async (data, context) => {
 
     const msg = {
       to,
-      from: "buttonsflowerfarm@gmail.com",
+      from: "buttonsflowerfarm@telus.net",
       subject,
       html,
     };
