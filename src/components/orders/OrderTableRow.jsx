@@ -14,18 +14,21 @@ const OrderTableRow = ({ order }) => {
   
   // Calculate final total with discount
   const getFinalTotal = () => {
-    // Always calculate from items to account for freebies
-    const items = Array.isArray(order.items) ? order.items : [];
+    // Use stored subtotal as source of truth (what customer was charged)
+    // Fallback to calculating from items only if no stored subtotal exists
+    let subtotal = parseFloat(order.subtotal) || 0;
 
-    // Get the subtotal from items, excluding freebies
-    const subtotal = items.reduce((sum, item) => {
-      // Skip freebies from calculation
-      if (item.isFreebie) return sum;
-
-      const price = parseFloat(item.price) || 0;
-      const quantity = parseInt(item.quantity, 10) || 0;
-      return sum + (price * quantity);
-    }, 0);
+    // If no stored subtotal, calculate from items excluding freebies
+    if (!subtotal || subtotal === 0) {
+      const items = Array.isArray(order.items) ? order.items : [];
+      subtotal = items.reduce((sum, item) => {
+        // Skip freebies from calculation
+        if (item.isFreebie) return sum;
+        const price = parseFloat(item.price) || 0;
+        const quantity = parseInt(item.quantity, 10) || 0;
+        return sum + (price * quantity);
+      }, 0);
+    }
 
     // Apply discount first
     const discount = parseFloat(order.discount?.amount || 0);

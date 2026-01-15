@@ -1,0 +1,135 @@
+{
+  "orders": [
+    {
+      "id": "ORD-2025-1001-1223",
+      "date": "2025-10-01T__:__:__.___Z",
+      "status": "processing",
+      "customer": {
+        "firstName": "",
+        "lastName": "",
+        "email": "",
+        "phone": "",
+        "pickupRequest": "",
+        "notes": ""
+      },
+      "items": [
+        {
+          "id": "",
+          "name": "",
+          "price": 0.00,
+          "quantity": 1,
+          "inventoryStatus": "In Stock",
+          "isFreebie": false
+        }
+      ],
+      "subtotal": 0.00,
+      "gst": 0.00,
+      "pst": 0.00,
+      "total": 0.00,
+      "payment": {
+        "method": "cash",
+        "timing": "paid-on-pickup",
+        "updatedAt": "2025-12-04T19:46:20.119Z"
+      }
+    },
+    {
+      "id": "ORD-2025-1001-4144",
+      "date": "2025-10-01T__:__:__.___Z",
+      "status": "processing",
+      "customer": {
+        "firstName": "",
+        "lastName": "",
+        "email": "",
+        "phone": "",
+        "pickupRequest": "",
+        "notes": ""
+      },
+      "items": [
+        {
+          "id": "",
+          "name": "",
+          "price": 0.00,
+          "quantity": 1,
+          "inventoryStatus": "In Stock",
+          "isFreebie": false
+        }
+      ],
+      "subtotal": 0.00,
+      "gst": 0.00,
+      "pst": 0.00,
+      "total": 0.00,
+      "payment": {
+        "method": "e-transfer",
+        "timing": "paid-on-pickup",
+        "updatedAt": "2025-11-06T17:53:32.586Z"
+      }
+    },
+    {
+      "id": "ORD-2025-1001-7629",
+      "date": "2025-10-01T__:__:__.___Z",
+      "status": "processing",
+      "customer": {
+        "firstName": "",
+        "lastName": "",
+        "email": "",
+        "phone": "",
+        "pickupRequest": "",
+        "notes": ""
+      },
+      "items": [
+        {
+          "id": "",
+          "name": "",
+          "price": 0.00,
+          "quantity": 1,
+          "inventoryStatus": "In Stock",
+          "isFreebie": false
+        }
+      ],
+      "subtotal": 0.00,
+      "gst": 0.00,
+      "pst": 0.00,
+      "total": 0.00,
+      "payment": {
+        "method": "e-transfer",
+        "timing": "paid-in-advance",
+        "updatedAt": "2025-11-14T04:15:51.252Z"
+      }
+    },
+    {
+      "id": "ORD-2025-1084-7811",
+      "date": "2025-10-84T__:__:__.___Z",
+      "status": "processing",
+      "customer": {
+        "firstName": "",
+        "lastName": "",
+        "email": "",
+        "phone": "",
+        "pickupRequest": "",
+        "notes": ""
+      },
+      "items": [
+        {
+          "id": "",
+          "name": "",
+          "price": 0.00,
+          "quantity": 1,
+          "inventoryStatus": "In Stock",
+          "isFreebie": false
+        }
+      ],
+      "subtotal": 0.00,
+      "gst": 0.00,
+      "pst": 0.00,
+      "total": 0.00,
+      "payment": {
+        "method": "cash",
+        "timing": "paid-on-pickup",
+        "updatedAt": "2025-12-02T17:41:41.998Z"
+      },
+      "emailSent": true,
+      "emailSentTimestamp": 1764697329689,
+      "lastEmailId": "<aa5ded38-bce4-2dc4-a983-7b4ca5e9d75b@telus.net>"
+    }
+  ]
+}

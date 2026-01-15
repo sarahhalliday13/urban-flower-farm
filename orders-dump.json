@@ -1,0 +1,951 @@
+{
+  "ORD-2025-1001-0074" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "jennhartman00@gmail.com",
+      "firstName" : "Jenn",
+      "lastName" : "Hartman",
+      "name" : "Jenn Hartman",
+      "notes" : "Flexible evenings and weekends ",
+      "phone" : "6043177274"
+    },
+    "customerNote" : "Hey Jenn,\n\nSarah has been working on our invoicing. Hope this works :)\n\nReceived your order including the request for a Buttercup Dahlia. The Dahlias are expected to arrive late March/early April. We will contact you then.\n\nNo pre-payment required.\n\nLet us know if you have any questions.\n\nThanks\n\nColleen and Bernie",
+    "date" : "2025-11-12T04:43:20.074Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1763093710539,
+    "gst" : 1.5,
+    "id" : "ORD-2025-1001-0074",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "408",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Mister Frans TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "389",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Jowey Frambo TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "400",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Milenia Fleur TUBER",
+      "price" : 10,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<ed73de1d-e3ff-8339-6c7a-b93ebae8f958@telus.net>",
+    "pst" : 2.1,
+    "status" : "Processing",
+    "subtotal" : 30,
+    "total" : 33.6,
+    "updatedAt" : "2025-11-14T04:14:51.435Z"
+  },
+  "ORD-2025-1001-0271" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "annelawson8@gmail.com",
+      "firstName" : "Anne",
+      "lastName" : "Lawson",
+      "notes" : "",
+      "phone" : "6048619234"
+    },
+    "date" : "2025-10-24T20:46:30.271Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761338796855,
+    "gst" : 0.65,
+    "id" : "ORD-2025-1001-0271",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "463",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Fullstar Pink BULBS",
+      "price" : 2.05,
+      "quantity" : 4
+    }, {
+      "id" : "465",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Bridal Crown Poetaz BULBS",
+      "price" : 1.2,
+      "quantity" : 4
+    } ],
+    "lastEmailId" : "<1cccafbf-ad59-34f6-a978-c285d7e58810@telus.net>",
+    "pst" : 0.91,
+    "status" : "Processing",
+    "subtotal" : 13,
+    "total" : 14.56
+  },
+  "ORD-2025-1001-1223" : {
+    "payment" : {
+      "method" : "cash",
+      "timing" : "paid-on-pickup",
+      "updatedAt" : "2025-12-04T19:46:20.119Z"
+    }
+  },
+  "ORD-2025-1001-1567" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "sandygarnham@gmail.com",
+      "firstName" : "Sandy",
+      "lastName" : "Garnham",
+      "notes" : "Let me know when ready as will pick up all together. Thank-you!",
+      "phone" : "6047635870"
+    },
+    "date" : "2025-10-23T12:42:21.567Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761223347386,
+    "gst" : 9.6,
+    "id" : "ORD-2025-1001-1567",
+    "items" : [ {
+      "id" : "389",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Jowey Frambo TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "390",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Linda's Baby TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "393",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Sweet Fabienne TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "398",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "L.A.T.E Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "475",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Bonbon BULBS",
+      "price" : 2.5,
+      "quantity" : 7
+    }, {
+      "id" : "476",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Marshmallow BULBS",
+      "price" : 2.5,
+      "quantity" : 13
+    }, {
+      "id" : "478",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Salmon BULBS",
+      "price" : 2.5,
+      "quantity" : 7
+    }, {
+      "id" : "479",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine White BULBS",
+      "price" : 2.5,
+      "quantity" : 9
+    }, {
+      "id" : "436",
+      "inventoryStatus" : "In Stock",
+      "name" : "Avant Garde BULBS",
+      "price" : 1.4,
+      "quantity" : 10
+    }, {
+      "id" : "465",
+      "inventoryStatus" : "In Stock",
+      "name" : "Bridal Crown Poetaz BULBS",
+      "price" : 1.2,
+      "quantity" : 5
+    }, {
+      "id" : "458",
+      "inventoryStatus" : "In Stock",
+      "name" : "De Caen 'Sylphide' BULBS",
+      "price" : 0.45,
+      "quantity" : 11
+    }, {
+      "id" : "463",
+      "inventoryStatus" : "In Stock",
+      "name" : "Fullstar Pink BULBS",
+      "price" : 2.05,
+      "quantity" : 5
+    }, {
+      "id" : "467",
+      "inventoryStatus" : "In Stock",
+      "name" : "Mount Hood BULBS",
+      "price" : 2.2,
+      "quantity" : 4
+    }, {
+      "id" : "442",
+      "inventoryStatus" : "In Stock",
+      "name" : "Purple Sensation BULBS",
+      "price" : 0.95,
+      "quantity" : 10
+    }, {
+      "id" : "443",
+      "inventoryStatus" : "In Stock",
+      "name" : "Roseum BULBS",
+      "price" : 0.35,
+      "quantity" : 10
+    } ],
+    "lastEmailId" : "<1eb8a899-38e2-bd3d-940d-6cee6f729af9@telus.net>",
+    "pst" : 13.44,
+    "status" : "Processing",
+    "subtotal" : 192,
+    "total" : 215.04
+  },
+  "ORD-2025-1001-1635" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "blaire1617@gmail.com",
+      "firstName" : "Emily",
+      "lastName" : "Blair",
+      "notes" : "",
+      "phone" : "6048175696"
+    },
+    "date" : "2025-10-25T02:35:11.635Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761359718558,
+    "gst" : 0.7,
+    "id" : "ORD-2025-1001-1635",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "481",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Snowy Morning",
+      "price" : 6.5,
+      "quantity" : 1
+    }, {
+      "id" : "483",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Golden Morning",
+      "price" : 7.5,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<f04b0aaf-a3e4-cf19-fae9-d6178b8368f7@telus.net>",
+    "pst" : 0.98,
+    "status" : "Processing",
+    "subtotal" : 14,
+    "total" : 15.68
+  },
+  "ORD-2025-1001-2318" : {
+    "adminNotes" : [ {
+      "addedBy" : "admin",
+      "note" : "You can DM us on the Facebook site to schedule a pick up or we can do a simple Proch pick up. let us know",
+      "timestamp" : "2025-10-21T06:29:07.313Z"
+    } ],
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "camschoen@gmail.com",
+      "firstName" : "Carol",
+      "lastName" : "Schoen",
+      "name" : "Carol Schoen",
+      "notes" : "Hey there. I can’t do weekend pick ups, as I live in Vancouver .\n\nIsn’t it less expensive if I order 10 ?",
+      "phone" : "7788368606"
+    },
+    "date" : "2025-10-21T00:03:02.318Z",
+    "discount" : {
+      "amount" : 2.15,
+      "reason" : "Tard 10 for $3.85 and Saffron 10 for $5.00",
+      "type" : "amount"
+    },
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761028164781,
+    "gst" : 0.5,
+    "id" : "ORD-2025-1001-2318",
+    "items" : [ {
+      "id" : "415",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Dasystemon Tarda (Mini Botanical) BULBS",
+      "price" : 0.45,
+      "quantity" : 10
+    }, {
+      "id" : "446",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Sativus Tops - Saffron BULBS",
+      "price" : 0.55,
+      "quantity" : 10
+    } ],
+    "lastEmailId" : "<cf014ec9-32d8-0ef5-7827-ba59017aa712@telus.net>",
+    "lastUpdated" : "2025-10-21T06:27:37.476Z",
+    "pst" : 0.7,
+    "status" : "Processing",
+    "subtotal" : 10,
+    "total" : 11.2,
+    "updatedAt" : "2025-10-21T06:29:07.313Z"
+  },
+  "ORD-2025-1001-2709" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "c.dingle@gmail.com",
+      "firstName" : "Caroline ",
+      "lastName" : "Dingle",
+      "notes" : "",
+      "phone" : "7787895110"
+    },
+    "date" : "2025-10-22T05:00:22.709Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761109227777,
+    "gst" : 0.5,
+    "id" : "ORD-2025-1001-2709",
+    "items" : [ {
+      "id" : "408",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Mister Frans TUBER",
+      "price" : 10,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<3e71bd3b-081d-3ff8-29c5-5d40956b4560@telus.net>",
+    "pst" : 0.7,
+    "status" : "Processing",
+    "subtotal" : 10,
+    "total" : 11.2
+  },
+  "ORD-2025-1001-4144" : {
+    "payment" : {
+      "method" : "e-transfer",
+      "timing" : "paid-on-pickup",
+      "updatedAt" : "2025-11-06T17:53:32.586Z"
+    }
+  },
+  "ORD-2025-1001-5934" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "laurakcarey1@gmail.com",
+      "firstName" : "Carey",
+      "lastName" : "Laura",
+      "notes" : "",
+      "phone" : "6135467879"
+    },
+    "date" : "2025-10-31T01:08:05.934Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761872891570,
+    "gst" : 3.75,
+    "id" : "ORD-2025-1001-5934",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "384",
+      "inventoryStatus" : "Pre-order",
+      "invoiceNow" : true,
+      "name" : "Life Style TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "458",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "De Caen 'Sylphide' BULBS",
+      "price" : 0.45,
+      "quantity" : 7
+    }, {
+      "id" : "462",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Fullstar Blue BULBS",
+      "price" : 2.05,
+      "quantity" : 4
+    }, {
+      "id" : "464",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Rainbow Blueberry BULBS",
+      "price" : 2.05,
+      "quantity" : 4
+    }, {
+      "id" : "404",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Rhubarb Custard Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "405",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Strawberry Cream TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "461",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Carmel Pastel Mix BULBS",
+      "price" : 2.05,
+      "quantity" : 6
+    }, {
+      "id" : "460",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "name" : "Bordeaux  BULBS",
+      "price" : 2.05,
+      "quantity" : 4
+    } ],
+    "lastEmailId" : "<766784c8-fb1a-8cb9-16d3-505cd4b700d1@telus.net>",
+    "lastUpdated" : "2025-11-06T17:51:27.383Z",
+    "pst" : 5.25,
+    "status" : "Cancelled",
+    "subtotal" : 75.05,
+    "total" : 84.06
+  },
+  "ORD-2025-1001-7520" : {
+    "adminNotes" : [ {
+      "addedBy" : "admin",
+      "note" : "Hi Gill, Thanks for trying out the online ordering. I hope it worked well for you. We can schedule a pick up via facebook DM or maybe you have been chatting with Colleen?",
+      "timestamp" : "2025-10-21T06:33:12.335Z"
+    } ],
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "gillbass@telus.net",
+      "firstName" : "Gillian",
+      "lastName" : "Bassett",
+      "name" : "Gillian Bassett",
+      "notes" : "",
+      "phone" : "6042305702"
+    },
+    "date" : "2025-10-21T03:56:57.520Z",
+    "discount" : {
+      "amount" : 3,
+      "reason" : "First order discount. Thanks!!",
+      "type" : "amount"
+    },
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761028429486,
+    "gst" : 1.67,
+    "id" : "ORD-2025-1001-7520",
+    "items" : [ {
+      "id" : "476",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Amandine Marshmallow BULBS",
+      "price" : 2.5,
+      "quantity" : 3
+    }, {
+      "id" : "478",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Amandine Salmon BULBS",
+      "price" : 2.5,
+      "quantity" : 3
+    }, {
+      "id" : "460",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Bordeaux  BULBS",
+      "price" : 2.05,
+      "quantity" : 6
+    }, {
+      "id" : "463",
+      "inventoryStatus" : "In Stock",
+      "isFreebie" : false,
+      "name" : "Fullstar Pink BULBS",
+      "price" : 2.05,
+      "quantity" : 3
+    } ],
+    "lastEmailId" : "<a2512e63-e924-9584-fdf4-7ef4e806454e@telus.net>",
+    "lastUpdated" : "2025-10-21T06:33:37.479Z",
+    "pst" : 2.34,
+    "status" : "Processing",
+    "subtotal" : 33.449999999999996,
+    "total" : 30.449999999999996,
+    "updatedAt" : "2025-10-21T06:33:12.335Z"
+  },
+  "ORD-2025-1001-7629" : {
+    "payment" : {
+      "method" : "e-transfer",
+      "timing" : "paid-in-advance",
+      "updatedAt" : "2025-11-14T04:15:51.252Z"
+    }
+  },
+  "ORD-2025-1078-2826" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "ceparr23@gmail.com",
+      "firstName" : "Carolyn",
+      "lastName" : "Parr",
+      "notes" : "",
+      "phone" : "6045625610"
+    },
+    "date" : "2025-10-18T20:18:52.826Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1760818739707,
+    "gst" : 7.08,
+    "id" : "ORD-2025-1078-2826",
+    "items" : [ {
+      "id" : "387",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Bail Brown Sugar Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "390",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Ball Linda's baby TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "393",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Ball Sweet Fabienne TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "394",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Crème de Cognac TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "395",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Dinnerplate Hamari Gold Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "391",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Ball Marble Ball TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "475",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Bonbon BULBS",
+      "price" : 2.5,
+      "quantity" : 1
+    }, {
+      "id" : "476",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Marshmallow BULBS",
+      "price" : 2.5,
+      "quantity" : 1
+    }, {
+      "id" : "477",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Pauline BULBS",
+      "price" : 2.5,
+      "quantity" : 1
+    }, {
+      "id" : "479",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine White BULBS",
+      "price" : 2.5,
+      "quantity" : 1
+    }, {
+      "id" : "480",
+      "inventoryStatus" : "In Stock",
+      "name" : "Amandine Yellow BULBS",
+      "price" : 2.5,
+      "quantity" : 1
+    }, {
+      "id" : "412",
+      "inventoryStatus" : "In Stock",
+      "name" : "Blue Wow BULBS",
+      "price" : 1.8,
+      "quantity" : 5
+    }, {
+      "id" : "383",
+      "inventoryStatus" : "In Stock",
+      "name" : "AAA - Test Inventory",
+      "price" : 5,
+      "quantity" : 1
+    }, {
+      "id" : "396",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "High Fidelity Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "397",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "Joel's Favourite Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "398",
+      "inventoryStatus" : "Pre-Order",
+      "name" : "L.A.T.E Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<97f59dc2-7ba4-e0bd-87f4-7088ce333df2@telus.net>",
+    "pst" : 9.91,
+    "status" : "Processing",
+    "subtotal" : 141.5,
+    "total" : 158.48
+  },
+  "ORD-2025-1080-3094" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "meryldyson@gmail.com",
+      "firstName" : "Meryl",
+      "lastName" : "Dyson",
+      "notes" : "Hi Meryl. This is Bernie. Your order has been saved and we will contact you in the March/April time frame when we receive our order. Please reach out if you have any questions.\n\nPayment ONLY upon receipt of product. No need to pay now.",
+      "phone" : "604-512-5973"
+    },
+    "date" : "2025-10-26T15:57:43.094Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1761494269976,
+    "gst" : 2.25,
+    "id" : "ORD-2025-1080-3094",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "526",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Roselily Esra",
+      "price" : 4,
+      "quantity" : 2
+    }, {
+      "id" : "525",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Roselily Ludwina",
+      "price" : 4,
+      "quantity" : 1
+    }, {
+      "id" : "517",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Red Twin Kiss",
+      "price" : 3.25,
+      "quantity" : 2
+    }, {
+      "id" : "514",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Forever Susan",
+      "price" : 2.75,
+      "quantity" : 2
+    }, {
+      "id" : "507",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Tiny Parrots",
+      "price" : 3,
+      "quantity" : 3
+    }, {
+      "id" : "488",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Touchstone",
+      "price" : 4,
+      "quantity" : 1
+    }, {
+      "id" : "490",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Lasting Love",
+      "price" : 4,
+      "quantity" : 2
+    } ],
+    "lastEmailId" : "<4be78e4c-0e8b-f65c-aa55-a6b2ceac0db6@telus.net>",
+    "pst" : 3.15,
+    "status" : "Processing",
+    "subtotal" : 45,
+    "total" : 50.4
+  },
+  "ORD-2025-1081-1676" : {
+    "adminNotes" : [ {
+      "addedBy" : "admin",
+      "note" : "Really, she's a cunt but she's a good customer.",
+      "timestamp" : "2025-11-11T21:33:23.585Z"
+    }, {
+      "addedBy" : "admin",
+      "note" : "Is this the internal note or the customer-facing note?",
+      "timestamp" : "2025-11-13T00:44:30.144Z"
+    } ],
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "sarah.halliday@gmail.com",
+      "firstName" : "Sarah",
+      "lastName" : "Halliday",
+      "name" : "Sarah Halliday",
+      "notes" : "Testing customer note setup",
+      "phone" : "6043516650"
+    },
+    "customerNote" : "I've made your AAA pre-order on us because YOU, Sarah Halliday are special! Really special. Like really, really special. Can you see this update, Sarah?",
+    "date" : "2025-11-11T21:24:31.676Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1763093303240,
+    "gst" : 0.75,
+    "id" : "ORD-2025-1081-1676",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "383",
+      "inventoryStatus" : "In Stock",
+      "invoiceNow" : true,
+      "isFreebie" : false,
+      "name" : "AAA - Test In-Stock Inventory",
+      "price" : 5,
+      "quantity" : 3
+    }, {
+      "id" : "574",
+      "inventoryStatus" : "Pre-order",
+      "invoiceNow" : true,
+      "isFreebie" : true,
+      "name" : "AAA - Test Pre-Order Inventory ",
+      "price" : 5,
+      "quantity" : 3
+    } ],
+    "lastEmailId" : "<2f94f00a-c8b7-4feb-11e2-bf003f016153@telus.net>",
+    "pst" : 1.05,
+    "status" : "Processing",
+    "subtotal" : 15,
+    "total" : 16.8,
+    "updatedAt" : "2025-11-14T03:59:28.332Z"
+  },
+  "ORD-2025-1082-1622" : {
+    "adminNotes" : [ {
+      "addedBy" : "admin",
+      "note" : "yada yada yada lobster bisque",
+      "timestamp" : "2025-11-14T04:00:11.446Z"
+    } ],
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "bernard.max.kuhn@gmail.com",
+      "firstName" : "b",
+      "lastName" : "kuhn",
+      "name" : "b kuhn",
+      "notes" : "",
+      "phone" : "6045125973"
+    },
+    "customerNote" : "You are receiving this email because. Well. You know",
+    "date" : "2025-11-14T03:55:31.622Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1763093507531,
+    "gst" : 0.75,
+    "id" : "ORD-2025-1082-1622",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "383",
+      "inventoryStatus" : "Out of Stock",
+      "invoiceNow" : true,
+      "isFreebie" : false,
+      "name" : "AAA - Test In-Stock Inventory",
+      "price" : 5,
+      "quantity" : 3
+    } ],
+    "lastEmailId" : "<9cd4b311-6032-473c-1749-237c2cd0f8b5@telus.net>",
+    "pst" : 1.05,
+    "status" : "Processing",
+    "subtotal" : 15,
+    "total" : 16.8,
+    "updatedAt" : "2025-11-14T04:12:46.651Z"
+  },
+  "ORD-2025-1083-8544" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "gillies.amelia@gmail.com",
+      "firstName" : "Amelia",
+      "lastName" : "Gillies",
+      "name" : "Amelia Gillies",
+      "notes" : "No rush for pickup ;) ",
+      "phone" : "6042300225"
+    },
+    "customerNote" : "Thanks for your order, Amelia. The tubers should arrive in the March/April time frame. We will be sure to message you about pickup and payment at that time.\n\nBernie and Colleen",
+    "date" : "2025-11-20T18:10:28.544Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1763669643267,
+    "gst" : 2.59,
+    "id" : "ORD-2025-1083-8544",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "543",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Café au Lait Twist Dinnerplate TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "562",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Buttercup TUBER",
+      "price" : 14.75,
+      "quantity" : 1
+    }, {
+      "id" : "563",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Ping Pong TUBER",
+      "price" : 16.95,
+      "quantity" : 1
+    }, {
+      "id" : "540",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "isFreebie" : false,
+      "name" : "Labyrinth Dinnerplate TUBER",
+      "price" : 10,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<18b39461-6895-8284-bb23-eeeb6a21a570@telus.net>",
+    "pst" : 3.62,
+    "status" : "Processing",
+    "subtotal" : 51.7,
+    "total" : 57.904,
+    "updatedAt" : "2025-11-20T20:13:48.443Z"
+  },
+  "ORD-2025-1084-7811" : {
+    "emailSent" : true,
+    "emailSentTimestamp" : 1764697329689,
+    "lastEmailId" : "<aa5ded38-bce4-2dc4-a983-7b4ca5e9d75b@telus.net>",
+    "payment" : {
+      "method" : "cash",
+      "timing" : "paid-on-pickup",
+      "updatedAt" : "2025-12-02T17:41:41.998Z"
+    }
+  },
+  "ORD-2025-1085-9599" : {
+    "customer" : {
+      "address" : {
+        "city" : "",
+        "state" : "",
+        "street" : "",
+        "zip" : ""
+      },
+      "email" : "kestewart01@gmail.com",
+      "firstName" : "Kate ",
+      "lastName" : "Stewart",
+      "notes" : "March pick up or we’ll deliver! ",
+      "phone" : "(250) 317-1413"
+    },
+    "date" : "2025-11-26T21:16:09.599Z",
+    "emailSent" : true,
+    "emailSentTimestamp" : 1764191775915,
+    "gst" : 3.7,
+    "id" : "ORD-2025-1085-9599",
+    "invoiceLaterPaid" : false,
+    "invoiceNowPaid" : false,
+    "items" : [ {
+      "id" : "399",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "La Belle Epoque Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "404",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Rhubarb Custard Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "397",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Joel's Favourite Premium TUBER",
+      "price" : 15,
+      "quantity" : 1
+    }, {
+      "id" : "536",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Penhill Watermelon Dinnerplate TUBER",
+      "price" : 10,
+      "quantity" : 1
+    }, {
+      "id" : "558",
+      "inventoryStatus" : "Pre-Order",
+      "invoiceNow" : false,
+      "name" : "Glossy Olivia TUBER",
+      "price" : 18.95,
+      "quantity" : 1
+    } ],
+    "lastEmailId" : "<bffc87f8-1543-9c59-7764-08e7bc23e490@telus.net>",
+    "pst" : 5.18,
+    "status" : "Processing",
+    "subtotal" : 73.95,
+    "total" : 82.82
+  }
+}
+
