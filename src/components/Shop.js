@@ -333,7 +333,7 @@ function Shop() {
           .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       case 'type-perennial':
         return [...statusFilteredPlants]
-          .filter(plant => plant.plantType?.toLowerCase() === 'perennial')
+          .filter(plant => plant.plantType?.toLowerCase().includes('perennial'))
           .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
       default:
         return [...statusFilteredPlants].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
