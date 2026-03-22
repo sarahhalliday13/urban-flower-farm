@@ -196,7 +196,7 @@ function Shop() {
       
       // Define special keywords and their corresponding filters
       const specialKeywords = {
-        'perennial': (plant) => plant.plantType?.toLowerCase() === 'perennial',
+        'perennial': (plant) => plant.plantType?.toLowerCase().includes('perennial'),
         'annual': (plant) => plant.plantType?.toLowerCase() === 'annual',
         // Color matching - check both dedicated color field and text mentions
         'pink': (plant) => 
