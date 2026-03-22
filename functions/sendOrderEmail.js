@@ -252,6 +252,24 @@ function generateCustomerEmailTemplate(order) {
                     <tbody>
                       ${itemsList}
                     </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Subtotal:</td>
+                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total:</td>
+                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
+                      </tr>
+                    </tfoot>
                   </table>
                 </td>
               </tr>
