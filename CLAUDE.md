@@ -27,12 +27,16 @@
   - Fixed display order: Subtotal → Discount → GST/PST → Total
   - Applied to customer confirmation, admin notification, and invoice emails
 
-- **Smart Search Enhancement**: Shop search now auto-detects inventory status:
-  - Detects status phrases: "in stock", "coming soon", "pre order" (and variations)
-  - Automatically extracts status and applies filter
-  - Removes status phrase from search query for cleaner results
-  - Updates sort dropdown to match detected status
-  - Example: "tulips in stock" → searches "tulips" with In Stock filter applied
+- **Smart Search Enhancement**: Shop search now auto-detects filters from search queries:
+  - Detects inventory status: "in stock", "coming soon", "pre order" (and variations)
+  - Detects plant types: "annual", "perennial", "featured" (and variations)
+  - Automatically extracts filter keyword and applies appropriate filter
+  - Removes filter phrase from search query for cleaner results
+  - Updates sort dropdown to match detected filter
+  - Examples:
+    - "tulips in stock" → searches "tulips" with In Stock filter applied
+    - "annual pink" → searches "pink" with Annuals filter applied
+    - "perennial shade" → searches "shade" with Perennials filter applied
 
 - **Order Totals Display Improvement**: Clearer breakdown in OrderDetails:
   - Renamed "Sub-total" to "Order Total" (sum of items before discount)
