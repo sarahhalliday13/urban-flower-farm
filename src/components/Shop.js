@@ -731,20 +731,25 @@ function Shop() {
 
     // Step 1: Normalize the search query
     let processedQuery = searchTerm.toLowerCase().trim();
-    let detectedStatus = sortOption; // Default to current sortOption
+    let detectedFilter = sortOption; // Default to current sortOption
 
-    // Step 2: Detect and extract status phrases
-    const statusPhrases = [
+    // Step 2: Detect and extract filter phrases
+    const filterPhrases = [
+      // Status filters
       { phrases: ['in stock', 'instock', 'in-stock'], filter: 'status-in-stock' },
       { phrases: ['coming soon', 'comingsoon', 'coming-soon'], filter: 'status-coming-soon' },
-      { phrases: ['pre order', 'pre-order', 'preorder'], filter: 'status-pre-order' }
+      { phrases: ['pre order', 'pre-order', 'preorder'], filter: 'status-pre-order' },
+      // Plant type filters
+      { phrases: ['annual', 'annuals'], filter: 'type-annual' },
+      { phrases: ['perennial', 'perennials'], filter: 'type-perennial' },
+      { phrases: ['featured'], filter: 'type-featured' }
     ];
 
-    // Check for status phrases and remove them from query
-    for (const { phrases, filter } of statusPhrases) {
+    // Check for filter phrases and remove them from query
+    for (const { phrases, filter } of filterPhrases) {
       for (const phrase of phrases) {
         if (processedQuery.includes(phrase)) {
-          detectedStatus = filter;
+          detectedFilter = filter;
           // Step 3: Remove the matched phrase from the query
           processedQuery = processedQuery.replace(phrase, '').trim();
           // Collapse multiple spaces into one
@@ -752,15 +757,15 @@ function Shop() {
           break;
         }
       }
-      if (detectedStatus !== sortOption) break; // Stop after first match
+      if (detectedFilter !== sortOption) break; // Stop after first match
     }
 
     // Update the displayed search term with the cleaned query
     setDisplayedSearchTerm(processedQuery);
 
-    // Step 4: Update sortOption to reflect detected status
-    if (detectedStatus !== sortOption) {
-      setSortOption(detectedStatus);
+    // Step 4: Update sortOption to reflect detected filter
+    if (detectedFilter !== sortOption) {
+      setSortOption(detectedFilter);
     }
 
     // Blur the input to prevent the onFocus handler from reopening the dropdown
@@ -768,8 +773,8 @@ function Shop() {
       searchInputRef.current.blur();
     }
 
-    // Update the URL and navigate with detected status filter
-    navigate(`/shop?page=1&sort=${detectedStatus}${processedQuery ? `&search=${processedQuery}` : ''}`);
+    // Update the URL and navigate with detected filter
+    navigate(`/shop?page=1&sort=${detectedFilter}${processedQuery ? `&search=${processedQuery}` : ''}`);
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;
