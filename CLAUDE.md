@@ -19,6 +19,16 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2026-03-29)
+- **Orphaned Inventory Fix** (TESTING ON STAGING): Fixed export and editing of orphaned inventory:
+  - Master Database export now includes ALL inventory entries, even without plant data
+  - Orphaned inventory entries marked with "⚠️ ORPHANED INVENTORY (ID: X)" in export
+  - Export iterates through both plants and inventory collections
+  - Tweak button now has better error handling for missing plant data
+  - Added diagnostic logging to identify data inconsistencies
+  - Allows editing of orphaned inventory entries with default values
+  - Fixes "######" display issue in exported spreadsheets
+  - Helps identify flowers added via phone without complete plant records
+
 - **Tax Calculation Fix**: Corrected tax calculation order in all email templates:
   - Taxes (GST/PST) now calculated on amount AFTER discount is applied
   - Previously taxes were calculated on pre-discount amount, resulting in overcharging

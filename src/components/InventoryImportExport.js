@@ -163,9 +163,19 @@ const InventoryImportExport = () => {
       
       // Prepare data for spreadsheet
       const rows = [];
-      
-      // Process each plant
-      Object.entries(plants).forEach(([plantId, plant]) => {
+
+      // Get all unique IDs from both plants and inventory
+      const allIds = new Set([
+        ...Object.keys(plants),
+        ...Object.keys(inventory)
+      ]);
+
+      console.log(`Total unique IDs (plants + inventory): ${allIds.size}`);
+      console.log(`Plants: ${Object.keys(plants).length}, Inventory: ${Object.keys(inventory).length}`);
+
+      // Process each unique ID
+      allIds.forEach((plantId) => {
+        const plant = plants[plantId] || {};
         const inventoryData = inventory[plantId] || {};
         
         // Debug: Check if we're getting inventory data
@@ -180,14 +190,21 @@ const InventoryImportExport = () => {
           console.log('Plant 46 imageMetadata:', plant.imageMetadata);
         }
         
+        // Check if this is an orphaned inventory entry (no plant data)
+        const isOrphanedInventory = !plant.name && inventoryData.currentStock !== undefined;
+
+        if (isOrphanedInventory) {
+          console.warn(`⚠️  Orphaned inventory found - ID: ${plantId}, Stock: ${inventoryData.currentStock}, Status: ${inventoryData.status}`);
+        }
+
         // Create row with all plant and inventory data
         const row = {
           // Core fields
           'plant_id': plantId,
           'update_mode': '', // Empty by default, shows dropdown when clicked
-          
+
           // Plant data
-          'name': plant.name || '',
+          'name': isOrphanedInventory ? `⚠️ ORPHANED INVENTORY (ID: ${plantId})` : (plant.name || ''),
           'latinname': plant.scientificName || '',
           'commonname': plant.commonName || '',
           'price': plant.price || 0,

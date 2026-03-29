@@ -192,37 +192,60 @@ const ModularInventoryManager = () => {
 
   // Handle edit button click
   const handleEdit = useCallback((plantId) => {
-    // Initialize edit values with current plant values
-    const plant = plants.find(p => p.id === plantId);
-    if (plant) {
-      const currentStock = plant.inventory?.currentStock || 0;
-      
-      // Determine proper status if it's unknown
-      let status = plant.inventory?.status || 'Unknown';
-      if (status === 'Unknown') {
-        if (currentStock <= 0) status = "Out of Stock";
-        else if (currentStock < 5) status = "Low Stock";
-        else status = "In Stock";
-      }
-      
-      setEditValues(prev => ({
-        ...prev,
-        [plantId]: {
-          price: plant.price || 0,
-          currentStock: currentStock,
-          status: status,
-          restockDate: plant.inventory?.restockDate || '',
-          notes: plant.inventory?.notes || '',
-          featured: plant.featured === true || plant.featured === 'true',
-          hidden: plant.hidden === true || plant.hidden === 'true'
+    try {
+      console.log('handleEdit called for plantId:', plantId);
+
+      // Initialize edit values with current plant values
+      const plant = plants.find(p => p.id === plantId);
+
+      if (!plant) {
+        console.error('Plant not found for ID:', plantId);
+        // Still allow edit mode for orphaned inventory entries
+        setEditValues(prev => ({
+          ...prev,
+          [plantId]: {
+            price: 0,
+            currentStock: 0,
+            status: 'Unknown',
+            restockDate: '',
+            notes: 'ERROR: Plant data missing',
+            featured: false,
+            hidden: false
+          }
+        }));
+      } else {
+        const currentStock = plant.inventory?.currentStock || 0;
+
+        // Determine proper status if it's unknown
+        let status = plant.inventory?.status || 'Unknown';
+        if (status === 'Unknown') {
+          if (currentStock <= 0) status = "Out of Stock";
+          else if (currentStock < 5) status = "Low Stock";
+          else status = "In Stock";
         }
+
+        setEditValues(prev => ({
+          ...prev,
+          [plantId]: {
+            price: plant.price || 0,
+            currentStock: currentStock,
+            status: status,
+            restockDate: plant.inventory?.restockDate || '',
+            notes: plant.inventory?.notes || '',
+            featured: plant.featured === true || plant.featured === 'true',
+            hidden: plant.hidden === true || plant.hidden === 'true'
+          }
+        }));
+      }
+
+      setEditMode(prev => ({
+        ...prev,
+        [plantId]: true
       }));
+    } catch (error) {
+      console.error('Error in handleEdit:', error);
+      alert(`Error opening edit mode: ${error.message}`);
     }
-    
-    setEditMode(prev => ({
-      ...prev,
-      [plantId]: true
-    }));
   }, [plants]);
 
   // Handle cancel button click
