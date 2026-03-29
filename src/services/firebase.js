@@ -861,11 +861,25 @@ export const updateInventory = async (plantId, inventoryData) => {
   try {
     console.log(`[${process.env.NODE_ENV}] updateInventory - Starting update for plant ${plantId}`);
     console.log(`[${process.env.NODE_ENV}] updateInventory - Data:`, inventoryData);
-    
-    const { featured, ...inventoryProps } = inventoryData;
 
-    // Update Firebase inventory first
-    console.log(`[${process.env.NODE_ENV}] updateInventory - Sending update to Firebase for path: inventory/${plantId}`);
+    // CRITICAL: Check if plant exists before creating/updating inventory
+    const plantRef = ref(database, `plants/${plantId}`);
+    const plantSnapshot = await get(plantRef);
+
+    if (!plantSnapshot.exists()) {
+      const errorMsg = `Cannot update inventory: Plant ID ${plantId} does not exist. Please create the plant first.`;
+      console.error(`[${process.env.NODE_ENV}] updateInventory - ${errorMsg}`);
+      return {
+        success: false,
+        message: errorMsg,
+        error: 'PLANT_NOT_FOUND'
+      };
+    }
+
+    const { featured, ...inventoryProps} = inventoryData;
+
+    // Update Firebase inventory
+    console.log(`[${process.env.NODE_ENV}] updateInventory - Plant exists, updating inventory for path: inventory/${plantId}`);
     const inventoryRef = ref(database, `inventory/${plantId}`);
     await update(inventoryRef, {
       ...inventoryProps,
@@ -873,10 +887,9 @@ export const updateInventory = async (plantId, inventoryData) => {
     });
     console.log(`[${process.env.NODE_ENV}] updateInventory - Firebase inventory update successful`);
     
-    // Update featured status if provided
+    // Update featured status if provided (plant already validated above)
     if (featured !== undefined) {
       console.log(`[${process.env.NODE_ENV}] updateInventory - Updating featured status for plant ${plantId}`);
-      const plantRef = ref(database, `plants/${plantId}`);
       await update(plantRef, { featured });
       console.log(`[${process.env.NODE_ENV}] updateInventory - Featured status update successful`);
     }
@@ -1508,18 +1521,32 @@ export const getAvailablePlantIds = async () => {
 export const updateInventoryStock = async (inventoryData) => {
   try {
     console.log(`Updating inventory for ${inventoryData.length} items...`);
-    
+
+    // CRITICAL: Fetch existing plants to validate inventory updates
+    const plantsRef = ref(database, 'plants');
+    const plantsSnapshot = await get(plantsRef);
+    const existingPlants = plantsSnapshot.exists() ? plantsSnapshot.val() : {};
+
     const inventoryRef = ref(database, 'inventory');
     const updates = {};
-    
+    const skipped = [];
+
     inventoryData.forEach(item => {
       const plantId = item.plant_id;
       if (!plantId) {
         console.warn('Inventory item missing plant_id, skipping:', item);
+        skipped.push({ plantId: 'unknown', reason: 'Missing plant_id' });
         return;
       }
-      
-      // Update inventory data
+
+      // Validate plant exists before creating inventory
+      if (!existingPlants[plantId]) {
+        console.warn(`Plant ID ${plantId} does not exist, skipping inventory update`);
+        skipped.push({ plantId, reason: 'Plant not found' });
+        return;
+      }
+
+      // Update inventory data only for existing plants
       updates[plantId] = {
         currentStock: parseInt(item.current_stock || item.stock || item.quantity || 0),
         status: item.status || (parseInt(item.current_stock || 0) > 0 ? 'In Stock' : 'Out of Stock'),
@@ -1528,16 +1555,22 @@ export const updateInventoryStock = async (inventoryData) => {
         lastUpdated: new Date().toISOString()
       };
     });
-    
+
     // Update all inventory items at once
     await update(inventoryRef, updates);
-    
-    console.log(`Successfully updated inventory for ${Object.keys(updates).length} plants`);
-    
+
+    const successMsg = `Successfully updated inventory for ${Object.keys(updates).length} plants`;
+    if (skipped.length > 0) {
+      console.warn(`Skipped ${skipped.length} inventory items (plants not found):`, skipped);
+    }
+    console.log(successMsg);
+
     return {
       success: true,
-      message: `Updated inventory for ${Object.keys(updates).length} plants`,
-      updatedCount: Object.keys(updates).length
+      message: successMsg + (skipped.length > 0 ? ` (${skipped.length} skipped - plants not found)` : ''),
+      updatedCount: Object.keys(updates).length,
+      skippedCount: skipped.length,
+      skipped: skipped
     };
   } catch (error) {
     console.error('Error updating inventory:', error);

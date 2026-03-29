@@ -19,7 +19,16 @@
 4. **Authentication**: Firebase Auth with admin role management
 
 ## Recent Changes (2026-03-29)
-- **Orphaned Inventory Fix** (TESTING ON STAGING): Fixed export and editing of orphaned inventory:
+- **CRITICAL: Prevent Orphaned Inventory Creation** (TESTING ON STAGING):
+  - Fixed `updateInventory()` to validate plant exists before creating/updating inventory
+  - Fixed `updateInventoryStock()` to skip inventory for non-existent plants
+  - Both functions now return error if plant doesn't exist
+  - Prevents creating inventory without corresponding plant data
+  - Added detailed logging for skipped entries
+  - Created cleanup script to delete existing orphaned inventory (IDs 5-45)
+  - Fixes root cause of "######" issue when adding inventory via phone
+
+- **Orphaned Inventory Export Fix** (TESTING ON STAGING): Fixed export and editing of orphaned inventory:
   - Master Database export now includes ALL inventory entries, even without plant data
   - Orphaned inventory entries marked with "⚠️ ORPHANED INVENTORY (ID: X)" in export
   - Export iterates through both plants and inventory collections
