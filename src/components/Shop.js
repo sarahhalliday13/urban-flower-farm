@@ -725,20 +725,51 @@ function Shop() {
   // Handle form submission
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    
+
     // Force close dropdown and prevent it from reopening
     setShowSuggestions(false);
-    
-    // Update the displayed search term with the value from the input
-    setDisplayedSearchTerm(searchTerm); 
-    
+
+    // Step 1: Normalize the search query
+    let processedQuery = searchTerm.toLowerCase().trim();
+    let detectedStatus = sortOption; // Default to current sortOption
+
+    // Step 2: Detect and extract status phrases
+    const statusPhrases = [
+      { phrases: ['in stock', 'instock', 'in-stock'], filter: 'status-in-stock' },
+      { phrases: ['coming soon', 'comingsoon', 'coming-soon'], filter: 'status-coming-soon' },
+      { phrases: ['pre order', 'pre-order', 'preorder'], filter: 'status-pre-order' }
+    ];
+
+    // Check for status phrases and remove them from query
+    for (const { phrases, filter } of statusPhrases) {
+      for (const phrase of phrases) {
+        if (processedQuery.includes(phrase)) {
+          detectedStatus = filter;
+          // Step 3: Remove the matched phrase from the query
+          processedQuery = processedQuery.replace(phrase, '').trim();
+          // Collapse multiple spaces into one
+          processedQuery = processedQuery.replace(/\s+/g, ' ');
+          break;
+        }
+      }
+      if (detectedStatus !== sortOption) break; // Stop after first match
+    }
+
+    // Update the displayed search term with the cleaned query
+    setDisplayedSearchTerm(processedQuery);
+
+    // Step 4: Update sortOption to reflect detected status
+    if (detectedStatus !== sortOption) {
+      setSortOption(detectedStatus);
+    }
+
     // Blur the input to prevent the onFocus handler from reopening the dropdown
     if (searchInputRef.current) {
       searchInputRef.current.blur();
     }
-    
-    // Update the URL and navigate
-    navigate(`/shop?page=1&sort=${sortOption}${searchTerm ? `&search=${searchTerm}` : ''}`);
+
+    // Update the URL and navigate with detected status filter
+    navigate(`/shop?page=1&sort=${detectedStatus}${processedQuery ? `&search=${processedQuery}` : ''}`);
   };
 
   if (loading) return <div className="loading">Loading plants...</div>;

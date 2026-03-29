@@ -1058,14 +1058,14 @@
 
 .clear-search {
   position: absolute;
-  right: 36px;
+  right: 42px;
   top: 50%;
   transform: translateY(-50%);
   border: none;
   background: none;
   cursor: pointer;
-  font-size: 16px;
-  color: #999;
+  font-size: 20px;
+  color: #666;
   padding: 0 6px;
   height: 100%;
   display: flex;
@@ -1076,7 +1076,7 @@
 }
 
 .clear-search:hover {
-  color: #666;
+  color: #333;
 }
 
 .clear-search:focus {
@@ -1531,9 +1531,9 @@
   .search-input {
     padding-right: 70px;
   }
-  
+
   .clear-search {
-    right: 36px;
+    right: 42px;
   }
 }
 

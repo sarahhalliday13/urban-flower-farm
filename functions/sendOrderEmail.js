@@ -29,10 +29,27 @@ function calculateSubtotal(order) {
   return parseFloat(order.total || 0) + parseFloat(order.discount?.amount || 0);
 }
 
+function calculateGST(order) {
+  const subtotal = calculateSubtotal(order);
+  const discount = parseFloat(order.discount?.amount || 0);
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  return discountedSubtotal * 0.05; // 5% GST
+}
+
+function calculatePST(order) {
+  const subtotal = calculateSubtotal(order);
+  const discount = parseFloat(order.discount?.amount || 0);
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  return discountedSubtotal * 0.07; // 7% PST
+}
+
 function calculateFinalTotal(order) {
   const subtotal = calculateSubtotal(order);
   const discount = parseFloat(order.discount?.amount || 0);
-  return Math.max(0, subtotal - discount);
+  const discountedSubtotal = Math.max(0, subtotal - discount);
+  const gst = calculateGST(order);
+  const pst = calculatePST(order);
+  return discountedSubtotal + gst + pst;
 }
 
 /**
@@ -255,15 +272,7 @@ function generateCustomerEmailTemplate(order) {
                     <tfoot>
                       <tr>
                         <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Subtotal:</td>
-                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
-                      </tr>
-                      <tr>
-                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                        <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                        <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(calculateSubtotal(order))}</td>
                       </tr>
                       ${order.discount && order.discount.amount > 0 ? `
                       <tr>
@@ -272,8 +281,16 @@ function generateCustomerEmailTemplate(order) {
                       </tr>
                       ` : ''}
                       <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(calculateGST(order))}</td>
+                      </tr>
+                      <tr>
+                        <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                        <td style="padding: 10px; text-align: right;">$${formatCurrency(calculatePST(order))}</td>
+                      </tr>
+                      <tr>
                         <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total:</td>
-                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
+                        <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(calculateFinalTotal(order))}</td>
                       </tr>
                     </tfoot>
                   </table>
@@ -405,15 +422,7 @@ function generateButtonsEmailTemplate(order) {
         <tfoot>
           <tr>
             <td colspan="3" style="padding: 10px; text-align: right;">Sub-total:</td>
-            <td style="padding: 10px; text-align: right;">$${parseFloat(order.subtotal || calculateSubtotal(order)).toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-            <td style="padding: 10px; text-align: right;">$${parseFloat(order.gst || 0).toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-            <td style="padding: 10px; text-align: right;">$${parseFloat(order.pst || 0).toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(calculateSubtotal(order)).toFixed(2)}</td>
           </tr>
           ${order.discount && order.discount.amount > 0 ? `
           <tr>
@@ -422,8 +431,16 @@ function generateButtonsEmailTemplate(order) {
           </tr>
           ` : ''}
           <tr>
+            <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(calculateGST(order)).toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+            <td style="padding: 10px; text-align: right;">$${parseFloat(calculatePST(order)).toFixed(2)}</td>
+          </tr>
+          <tr>
             <td colspan="3" style="padding: 10px; text-align: right; font-weight: bold;">Total:</td>
-            <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseFloat(order.total || calculateFinalTotal(order)).toFixed(2)}</td>
+            <td style="padding: 10px; text-align: right; font-weight: bold;">$${parseFloat(calculateFinalTotal(order)).toFixed(2)}</td>
           </tr>
         </tfoot>
       </table>
@@ -627,15 +644,7 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                         <!-- Standard Single Invoice -->
                         <tr>
                           <td colspan="3" style="padding: 10px; text-align: right; border-top: 1px solid #eee;">Sub-total</td>
-                          <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(order.subtotal || calculateSubtotal(order))}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.gst || 0)}</td>
-                        </tr>
-                        <tr>
-                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
-                          <td style="padding: 10px; text-align: right;">$${formatCurrency(order.pst || 0)}</td>
+                          <td style="padding: 10px; text-align: right; border-top: 1px solid #eee;">$${formatCurrency(calculateSubtotal(order))}</td>
                         </tr>
                         ${order.discount && order.discount.amount > 0 ? `
                         <tr>
@@ -644,8 +653,16 @@ function generateInvoiceEmailTemplate(order, isAdmin = false) {
                         </tr>
                         ` : ''}
                         <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">GST (5%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(calculateGST(order))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="padding: 10px; text-align: right;">PST (7%):</td>
+                          <td style="padding: 10px; text-align: right;">$${formatCurrency(calculatePST(order))}</td>
+                        </tr>
+                        <tr>
                           <td colspan="3" style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold;">Total</td>
-                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(order.total || calculateFinalTotal(order))}</td>
+                          <td style="padding: 10px; text-align: right; border-top: 2px solid #ddd; font-weight: bold; color: #2c5530;">$${formatCurrency(calculateFinalTotal(order))}</td>
                         </tr>
                       `}
                     </tfoot>

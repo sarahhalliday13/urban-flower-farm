@@ -429,9 +429,9 @@ const OrderDetails = () => {
             <div className="discount-section" style={{marginBottom: '15px'}}>
               <h3 style={{marginBottom: '10px'}}>Order Totals</h3>
               <div className="totals-breakdown" style={{padding: '5px 0'}}>
-                {/* Standard Invoice Display */}
+                {/* Order Total (before discount) */}
                 <div className="subtotal-row" style={{padding: '1px 0', margin: '1px 0'}}>
-                  <span>Sub-total:</span>
+                  <span>Order Total:</span>
                   <span>${formatCurrency(calculateSubtotal())}</span>
                 </div>
 
@@ -509,6 +509,12 @@ const OrderDetails = () => {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Subtotal after discount (before tax) */}
+                <div className="subtotal-row" style={{padding: '1px 0', margin: '1px 0', fontWeight: '500'}}>
+                  <span>Subtotal:</span>
+                  <span>${formatCurrency(Math.max(0, calculateSubtotal() - getDiscountAmount()))}</span>
                 </div>
 
                 {/* Tax rows - calculated on subtotal after discount */}
